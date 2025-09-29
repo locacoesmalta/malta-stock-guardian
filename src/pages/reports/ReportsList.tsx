@@ -29,6 +29,7 @@ interface Report {
     photo_url: string;
     photo_comment: string;
     photo_order: number;
+    signedUrl?: string; // Add signed URL field
   }>;
 }
 
@@ -64,7 +65,36 @@ const ReportsList = () => {
         .order("report_date", { ascending: false });
 
       if (error) throw error;
-      setReports(data || []);
+      
+      // Generate signed URLs for all photos
+      const reportsWithSignedUrls = await Promise.all(
+        (data || []).map(async (report) => {
+          const photosWithSignedUrls = await Promise.all(
+            report.report_photos.map(async (photo) => {
+              try {
+                const { data: signedData } = await supabase.storage
+                  .from('report-photos')
+                  .createSignedUrl(photo.photo_url, 3600); // 1 hour expiry
+                
+                return {
+                  ...photo,
+                  signedUrl: signedData?.signedUrl || photo.photo_url
+                };
+              } catch (err) {
+                console.error('Error generating signed URL:', err);
+                return { ...photo, signedUrl: photo.photo_url };
+              }
+            })
+          );
+          
+          return {
+            ...report,
+            report_photos: photosWithSignedUrls
+          };
+        })
+      );
+      
+      setReports(reportsWithSignedUrls);
     } catch (error: any) {
       toast.error("Erro ao carregar relatórios");
       console.error(error);
@@ -173,7 +203,7 @@ const ReportsList = () => {
             ${sortedPhotos.map((photo, index) => `
               <div class="photo-item">
                 <h3>Foto ${index + 1}</h3>
-                <img src="${photo.photo_url}" alt="Foto ${index + 1}" />
+                <img src="${photo.signedUrl || photo.photo_url}" alt="Foto ${index + 1}" />
                 <div class="photo-comment">${photo.photo_comment}</div>
               </div>
             `).join('')}
@@ -330,7 +360,7 @@ const ReportsList = () => {
                         .map((photo, index) => (
                           <div key={index} className="space-y-1">
                             <img
-                              src={photo.photo_url}
+                              src={photo.signedUrl || photo.photo_url}
                               alt={`Foto ${index + 1}`}
                               className="w-full h-24 object-cover rounded border"
                             />

@@ -133,15 +133,12 @@ const NewReport = () => {
 
         if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('report-photos')
-          .getPublicUrl(fileName);
-
+        // Store the file path instead of public URL since bucket is now private
         const { error: dbError } = await supabase
           .from('report_photos')
           .insert({
             report_id: reportId,
-            photo_url: publicUrl,
+            photo_url: fileName, // Store path, not public URL
             photo_comment: photo.comment,
             photo_order: index + 1,
           });
