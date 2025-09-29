@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,17 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Minus, Plus, Trash2 } from "lucide-react";
+import { ProductSelector } from "@/components/ProductSelector";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { useConfirm } from "@/hooks/useConfirm";
+import { useProducts } from "@/hooks/useProducts";
+import { withdrawalSchema } from "@/lib/validations";
 
-interface Product {
-  id: string;
-  code: string;
-  name: string;
-  quantity: number;
-}
 
 interface WithdrawalItem {
   product_id: string;
@@ -29,28 +27,12 @@ interface WithdrawalItem {
 const MaterialWithdrawal = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [products, setProducts] = useState<Product[]>([]);
+  const { products, loading: loadingProducts } = useProducts();
+  const { isOpen, confirm, handleConfirm, handleCancel, options } = useConfirm();
   const [loading, setLoading] = useState(false);
   const [withdrawalDate, setWithdrawalDate] = useState(new Date().toISOString().split('T')[0]);
   const [withdrawalReason, setWithdrawalReason] = useState("");
   const [items, setItems] = useState<WithdrawalItem[]>([]);
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    const { data, error } = await supabase
-      .from("products")
-      .select("id, code, name, quantity")
-      .order("name");
-
-    if (error) {
-      toast.error("Erro ao carregar produtos");
-      return;
-    }
-    setProducts(data || []);
-  };
 
   const addItem = () => {
     setItems([...items, {
@@ -90,6 +72,7 @@ const MaterialWithdrawal = () => {
       return;
     }
 
+    // Validate each item
     const invalidItems = items.filter(
       item => !item.product_id || item.quantity <= 0 || item.quantity > item.availableQuantity
     );
@@ -99,30 +82,55 @@ const MaterialWithdrawal = () => {
       return;
     }
 
-    setLoading(true);
-
-    try {
-      const withdrawals = items.map(item => ({
+    // Validate with Zod
+    const validationErrors: string[] = [];
+    items.forEach((item, index) => {
+      const validation = withdrawalSchema.safeParse({
         product_id: item.product_id,
         quantity: item.quantity,
-        withdrawn_by: user?.id,
+        withdrawal_date: withdrawalDate,
         withdrawal_reason: withdrawalReason,
-        withdrawal_date: withdrawalDate
-      }));
+      });
+      
+      if (!validation.success) {
+        validationErrors.push(`Item ${index + 1}: ${validation.error.errors[0].message}`);
+      }
+    });
 
-      const { error } = await supabase
-        .from("material_withdrawals")
-        .insert(withdrawals);
-
-      if (error) throw error;
-
-      toast.success("Retirada de material registrada com sucesso!");
-      navigate("/dashboard");
-    } catch (error: any) {
-      toast.error(error.message || "Erro ao registrar retirada");
-    } finally {
-      setLoading(false);
+    if (validationErrors.length > 0) {
+      toast.error(validationErrors[0]);
+      return;
     }
+
+    confirm({
+      title: "Confirmar Retirada",
+      description: `Confirma a retirada de ${items.length} ${items.length === 1 ? 'produto' : 'produtos'}? O estoque será atualizado automaticamente.`,
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          const withdrawals = items.map(item => ({
+            product_id: item.product_id,
+            quantity: item.quantity,
+            withdrawn_by: user?.id,
+            withdrawal_reason: withdrawalReason,
+            withdrawal_date: withdrawalDate
+          }));
+
+          const { error } = await supabase
+            .from("material_withdrawals")
+            .insert(withdrawals);
+
+          if (error) throw error;
+
+          toast.success("Retirada de material registrada com sucesso!");
+          navigate("/inventory/history");
+        } catch (error: any) {
+          toast.error(error.message || "Erro ao registrar retirada");
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
   };
 
   return (
@@ -195,22 +203,13 @@ const MaterialWithdrawal = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Produto *</Label>
-                      <Select
+                      <ProductSelector
+                        products={products}
                         value={item.product_id}
                         onValueChange={(value) => updateItem(index, "product_id", value)}
-                        required
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um produto" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {products.map((product) => (
-                            <SelectItem key={product.id} value={product.id}>
-                              {product.code} - {product.name} (Estoque: {product.quantity})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        showStock={true}
+                        required={true}
+                      />
                     </div>
 
                     <div className="space-y-2">
@@ -268,6 +267,17 @@ const MaterialWithdrawal = () => {
           </Button>
         </div>
       </form>
+
+      <ConfirmDialog
+        open={isOpen}
+        onOpenChange={() => {}}
+        title={options?.title || ""}
+        description={options?.description || ""}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+        confirmText="Confirmar"
+        cancelText="Cancelar"
+      />
     </div>
   );
 };

@@ -14,6 +14,7 @@ import Settings from "./pages/admin/Settings";
 import NewReport from "./pages/reports/NewReport";
 import ReportsList from "./pages/reports/ReportsList";
 import MaterialWithdrawal from "./pages/inventory/MaterialWithdrawal";
+import WithdrawalHistory from "./pages/inventory/WithdrawalHistory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -79,6 +80,7 @@ const App = () => (
             <Route path="/reports/new" element={<ProtectedLayout><NewReport /></ProtectedLayout>} />
             <Route path="/reports" element={<ProtectedLayout><ReportsList /></ProtectedLayout>} />
             <Route path="/inventory/withdrawal" element={<ProtectedLayout><MaterialWithdrawal /></ProtectedLayout>} />
+            <Route path="/inventory/history" element={<ProtectedLayout><WithdrawalHistory /></ProtectedLayout>} />
             <Route path="/admin/products" element={<ProtectedLayout><AdminRoute><Products /></AdminRoute></ProtectedLayout>} />
             <Route path="/admin/users" element={<ProtectedLayout><AdminRoute><Users /></AdminRoute></ProtectedLayout>} />
             <Route path="/admin/settings" element={<ProtectedLayout><AdminRoute><Settings /></AdminRoute></ProtectedLayout>} />

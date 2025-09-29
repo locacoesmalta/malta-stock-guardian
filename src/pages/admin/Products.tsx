@@ -1,14 +1,18 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { StockBadge } from "@/components/StockBadge";
 import { useAuth } from "@/contexts/AuthContext";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { useConfirm } from "@/hooks/useConfirm";
+import { useProducts } from "@/hooks/useProducts";
+import { productSchema } from "@/lib/validations";
 
 interface Product {
   id: string;
@@ -22,9 +26,11 @@ interface Product {
 
 const Products = () => {
   const { user } = useAuth();
-  const [products, setProducts] = useState<Product[]>([]);
+  const { products, loading, searchTerm, setSearchTerm, refetch } = useProducts();
+  const { isOpen, confirm, handleConfirm, handleCancel, options } = useConfirm();
   const [open, setOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     code: "",
     name: "",
@@ -33,26 +39,11 @@ const Products = () => {
     purchase_price: "",
     sale_price: "",
   });
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .order("name");
-
-    if (error) {
-      toast.error("Erro ao carregar produtos");
-      return;
-    }
-    setProducts(data || []);
-  };
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
 
     const productData = {
       code: formData.code,
@@ -61,14 +52,31 @@ const Products = () => {
       min_quantity: Number(formData.min_quantity),
       purchase_price: formData.purchase_price ? Number(formData.purchase_price) : null,
       sale_price: formData.sale_price ? Number(formData.sale_price) : null,
-      created_by: user?.id,
     };
 
+    // Validate with Zod
+    const validation = productSchema.safeParse(productData);
+    if (!validation.success) {
+      const fieldErrors: Record<string, string> = {};
+      validation.error.errors.forEach((err) => {
+        if (err.path[0]) {
+          fieldErrors[err.path[0] as string] = err.message;
+        }
+      });
+      setErrors(fieldErrors);
+      toast.error("Por favor, corrija os erros no formulário");
+      return;
+    }
+
+    setSubmitting(true);
+
     try {
+      const dataToSave = { ...productData, created_by: user?.id };
+      
       if (editingProduct) {
         const { error } = await supabase
           .from("products")
-          .update(productData)
+          .update(dataToSave)
           .eq("id", editingProduct.id);
 
         if (error) throw error;
@@ -76,7 +84,7 @@ const Products = () => {
       } else {
         const { error } = await supabase
           .from("products")
-          .insert([productData]);
+          .insert([dataToSave]);
 
         if (error) throw error;
         toast.success("Produto cadastrado com sucesso!");
@@ -85,27 +93,33 @@ const Products = () => {
       setOpen(false);
       setEditingProduct(null);
       resetForm();
-      fetchProducts();
+      refetch();
     } catch (error: any) {
       toast.error(error.message || "Erro ao salvar produto");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Deseja realmente excluir este produto?")) return;
+  const handleDelete = async (id: string, name: string) => {
+    confirm({
+      title: "Excluir Produto",
+      description: `Tem certeza que deseja excluir o produto "${name}"? Esta ação não pode ser desfeita.`,
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase
+            .from("products")
+            .delete()
+            .eq("id", id);
 
-    try {
-      const { error } = await supabase
-        .from("products")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-      toast.success("Produto excluído com sucesso!");
-      fetchProducts();
-    } catch (error: any) {
-      toast.error("Erro ao excluir produto");
-    }
+          if (error) throw error;
+          toast.success("Produto excluído com sucesso!");
+          refetch();
+        } catch (error: any) {
+          toast.error("Erro ao excluir produto");
+        }
+      },
+    });
   };
 
   const resetForm = () => {
@@ -117,6 +131,7 @@ const Products = () => {
       purchase_price: "",
       sale_price: "",
     });
+    setErrors({});
   };
 
   const openEditDialog = (product: Product) => {
@@ -168,6 +183,9 @@ const Products = () => {
                     onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                     required
                   />
+                  {errors.code && (
+                    <p className="text-sm text-destructive">{errors.code}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="name">Nome do Produto *</Label>
@@ -177,6 +195,9 @@ const Products = () => {
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
                   />
+                  {errors.name && (
+                    <p className="text-sm text-destructive">{errors.name}</p>
+                  )}
                 </div>
               </div>
 
@@ -242,8 +263,8 @@ const Products = () => {
                 >
                   Cancelar
                 </Button>
-                <Button type="submit">
-                  {editingProduct ? "Atualizar" : "Cadastrar"}
+                <Button type="submit" disabled={submitting}>
+                  {submitting ? "Salvando..." : editingProduct ? "Atualizar" : "Cadastrar"}
                 </Button>
               </div>
             </form>
@@ -253,10 +274,25 @@ const Products = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Produtos Cadastrados</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Produtos Cadastrados</span>
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar produto..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          {products.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Carregando produtos...
+            </div>
+          ) : products.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               Nenhum produto cadastrado
             </div>
@@ -309,7 +345,7 @@ const Products = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDelete(product.id)}
+                        onClick={() => handleDelete(product.id, product.name)}
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
@@ -321,6 +357,17 @@ const Products = () => {
           )}
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={isOpen}
+        onOpenChange={() => {}}
+        title={options?.title || ""}
+        description={options?.description || ""}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+        confirmText="Excluir"
+        cancelText="Cancelar"
+      />
     </div>
   );
 };

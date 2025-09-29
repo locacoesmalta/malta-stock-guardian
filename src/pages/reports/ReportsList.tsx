@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Calendar, FileText, Printer } from "lucide-react";
+import { Calendar, FileText, Printer, Search } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -38,6 +38,7 @@ const ReportsList = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [companyFilter, setCompanyFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,7 +47,7 @@ const ReportsList = () => {
 
   useEffect(() => {
     filterReports();
-  }, [reports, startDate, endDate, companyFilter]);
+  }, [reports, startDate, endDate, companyFilter, searchTerm]);
 
   const fetchReports = async () => {
     try {
@@ -86,6 +87,17 @@ const ReportsList = () => {
     if (companyFilter) {
       filtered = filtered.filter((r) =>
         r.company.toLowerCase().includes(companyFilter.toLowerCase())
+      );
+    }
+
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (r) =>
+          r.work_site.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          r.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          r.technician_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          r.equipment_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (r.equipment_name && r.equipment_name.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -189,7 +201,20 @@ const ReportsList = () => {
           <CardTitle>Filtros</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="space-y-2 md:col-span-4">
+              <Label htmlFor="search">Buscar</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="search"
+                  placeholder="Buscar por obra, empresa, técnico ou PAT..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="start-date">Data Inicial</Label>
               <Input
@@ -216,6 +241,20 @@ const ReportsList = () => {
                 value={companyFilter}
                 onChange={(e) => setCompanyFilter(e.target.value)}
               />
+            </div>
+            <div className="space-y-2 flex items-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setStartDate("");
+                  setEndDate("");
+                  setCompanyFilter("");
+                  setSearchTerm("");
+                }}
+                className="w-full"
+              >
+                Limpar Filtros
+              </Button>
             </div>
           </div>
         </CardContent>

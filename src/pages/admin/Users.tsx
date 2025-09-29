@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Users as UsersIcon, Shield } from "lucide-react";
+import { Users as UsersIcon, Shield, Search } from "lucide-react";
 
 interface User {
   id: string;
@@ -22,11 +23,27 @@ interface User {
 
 const Users = () => {
   const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  useEffect(() => {
+    if (searchTerm) {
+      setFilteredUsers(
+        users.filter(
+          (user) =>
+            user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      );
+    } else {
+      setFilteredUsers(users);
+    }
+  }, [users, searchTerm]);
 
   const fetchUsers = async () => {
     try {
@@ -84,9 +101,20 @@ const Users = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <UsersIcon className="h-5 w-5" />
-            Usuários Cadastrados ({users.length})
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <UsersIcon className="h-5 w-5" />
+              Usuários Cadastrados ({filteredUsers.length})
+            </div>
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar usuário..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -94,13 +122,13 @@ const Users = () => {
             <div className="text-center py-8 text-muted-foreground">
               Carregando usuários...
             </div>
-          ) : users.length === 0 ? (
+          ) : filteredUsers.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Nenhum usuário cadastrado
+              Nenhum usuário encontrado
             </div>
           ) : (
             <div className="space-y-4">
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <div
                   key={user.id}
                   className="border rounded-lg p-4 space-y-4"
