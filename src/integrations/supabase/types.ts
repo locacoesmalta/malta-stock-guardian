@@ -326,6 +326,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      can_user_view_products: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       can_user_view_reports: {
         Args: { _user_id: string }
         Returns: boolean
