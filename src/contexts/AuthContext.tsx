@@ -57,14 +57,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .eq("user_id", userId)
         .single();
 
+      const isUserAdmin = roleData?.role === "admin";
+      setIsAdmin(isUserAdmin);
+
+      // Admins are always active
+      if (isUserAdmin) {
+        setIsActive(true);
+        return;
+      }
+
+      // For non-admins, check permissions
       const { data: permData } = await supabase
         .from("user_permissions")
         .select("is_active")
         .eq("user_id", userId)
         .single();
 
-      setIsAdmin(roleData?.role === "admin");
-      setIsActive(roleData?.role === "admin" || permData?.is_active === true);
+      setIsActive(permData?.is_active === true);
     } catch (error) {
       console.error("Error checking user status:", error);
       setIsAdmin(false);
