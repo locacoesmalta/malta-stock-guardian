@@ -254,6 +254,7 @@ export type Database = {
           can_view_reports: boolean | null
           created_at: string
           id: string
+          is_active: boolean | null
           updated_at: string
           user_id: string
         }
@@ -263,6 +264,7 @@ export type Database = {
           can_view_reports?: boolean | null
           created_at?: string
           id?: string
+          is_active?: boolean | null
           updated_at?: string
           user_id: string
         }
@@ -272,6 +274,7 @@ export type Database = {
           can_view_reports?: boolean | null
           created_at?: string
           id?: string
+          is_active?: boolean | null
           updated_at?: string
           user_id?: string
         }
@@ -320,6 +323,10 @@ export type Database = {
     }
     Functions: {
       is_admin: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      is_user_active: {
         Args: { _user_id: string }
         Returns: boolean
       }

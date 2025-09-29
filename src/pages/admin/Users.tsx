@@ -15,6 +15,7 @@ interface User {
   created_at: string;
   user_roles: Array<{ role: string }>;
   user_permissions: {
+    is_active: boolean;
     can_view_products: boolean;
     can_create_reports: boolean;
     can_view_reports: boolean;
@@ -52,7 +53,7 @@ const Users = () => {
         .select(`
           *,
           user_roles(role),
-          user_permissions!inner(can_view_products, can_create_reports, can_view_reports)
+          user_permissions!inner(is_active, can_view_products, can_create_reports, can_view_reports)
         `)
         .order("created_at")
         .returns<User[]>();
@@ -142,73 +143,116 @@ const Users = () => {
                         {user.email}
                       </div>
                     </div>
-                    {isAdmin(user) ? (
-                      <Badge variant="default" className="gap-1">
-                        <Shield className="h-3 w-3" />
-                        Administrador
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary">Usuário</Badge>
-                    )}
+                    <div className="flex gap-2">
+                      {isAdmin(user) ? (
+                        <Badge variant="default" className="gap-1">
+                          <Shield className="h-3 w-3" />
+                          Administrador
+                        </Badge>
+                      ) : (
+                        <>
+                          <Badge variant="secondary">Usuário</Badge>
+                          {user.user_permissions && (
+                            user.user_permissions.is_active ? (
+                              <Badge className="bg-green-600 hover:bg-green-700 text-white">
+                                Ativo
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-yellow-600 hover:bg-yellow-700 text-white">
+                                Pendente
+                              </Badge>
+                            )
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   {!isAdmin(user) && user.user_permissions && (
-                    <div className="border-t pt-4">
-                      <div className="text-sm font-medium mb-3">
-                        Permissões:
+                    <div className="border-t pt-4 space-y-4">
+                      <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                        <div>
+                          <Label htmlFor={`active-${user.id}`} className="font-semibold">
+                            Status da Conta
+                          </Label>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {user.user_permissions.is_active
+                              ? "Usuário pode acessar o sistema"
+                              : "Aguardando aprovação do administrador"}
+                          </p>
+                        </div>
+                        <Switch
+                          id={`active-${user.id}`}
+                          checked={user.user_permissions.is_active}
+                          onCheckedChange={(checked) =>
+                            updatePermission(
+                              user.id,
+                              "is_active",
+                              checked
+                            )
+                          }
+                        />
                       </div>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor={`view-products-${user.id}`}>
-                            Visualizar Produtos
-                          </Label>
-                          <Switch
-                            id={`view-products-${user.id}`}
-                            checked={user.user_permissions.can_view_products}
-                            onCheckedChange={(checked) =>
-                              updatePermission(
-                                user.id,
-                                "can_view_products",
-                                checked
-                              )
-                            }
-                          />
-                        </div>
 
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor={`create-reports-${user.id}`}>
-                            Criar Relatórios
-                          </Label>
-                          <Switch
-                            id={`create-reports-${user.id}`}
-                            checked={user.user_permissions.can_create_reports}
-                            onCheckedChange={(checked) =>
-                              updatePermission(
-                                user.id,
-                                "can_create_reports",
-                                checked
-                              )
-                            }
-                          />
-                        </div>
+                      {user.user_permissions.is_active && (
+                        <>
+                          <div className="text-sm font-medium">
+                            Permissões:
+                          </div>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <Label htmlFor={`view-products-${user.id}`}>
+                                Visualizar Produtos
+                              </Label>
+                              <Switch
+                                id={`view-products-${user.id}`}
+                                checked={user.user_permissions.can_view_products}
+                                onCheckedChange={(checked) =>
+                                  updatePermission(
+                                    user.id,
+                                    "can_view_products",
+                                    checked
+                                  )
+                                }
+                              />
+                            </div>
 
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor={`view-reports-${user.id}`}>
-                            Visualizar Relatórios
-                          </Label>
-                          <Switch
-                            id={`view-reports-${user.id}`}
-                            checked={user.user_permissions.can_view_reports}
-                            onCheckedChange={(checked) =>
-                              updatePermission(
-                                user.id,
-                                "can_view_reports",
-                                checked
-                              )
-                            }
-                          />
-                        </div>
-                      </div>
+                            <div className="flex items-center justify-between">
+                              <Label htmlFor={`create-reports-${user.id}`}>
+                                Criar Relatórios
+                              </Label>
+                              <Switch
+                                id={`create-reports-${user.id}`}
+                                checked={user.user_permissions.can_create_reports}
+                                onCheckedChange={(checked) =>
+                                  updatePermission(
+                                    user.id,
+                                    "can_create_reports",
+                                    checked
+                                  )
+                                }
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                              <Label htmlFor={`view-reports-${user.id}`}>
+                                Visualizar Relatórios
+                              </Label>
+                              <Switch
+                                id={`view-reports-${user.id}`}
+                                checked={user.user_permissions.can_view_reports}
+                                onCheckedChange={(checked) =>
+                                  updatePermission(
+                                    user.id,
+                                    "can_view_reports",
+                                    checked
+                                  )
+                                }
+                              />
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>

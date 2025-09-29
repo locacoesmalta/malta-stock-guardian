@@ -15,12 +15,13 @@ import NewReport from "./pages/reports/NewReport";
 import ReportsList from "./pages/reports/ReportsList";
 import MaterialWithdrawal from "./pages/inventory/MaterialWithdrawal";
 import WithdrawalHistory from "./pages/inventory/WithdrawalHistory";
+import PendingApproval from "./pages/PendingApproval";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
+  const { user, isActive, loading } = useAuth();
 
   if (loading) {
     return (
@@ -35,6 +36,10 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  if (!isActive) {
+    return <Navigate to="/pending-approval" replace />;
   }
 
   return (
@@ -76,6 +81,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/pending-approval" element={<PendingApproval />} />
             <Route path="/" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
             <Route path="/reports/new" element={<ProtectedLayout><NewReport /></ProtectedLayout>} />
             <Route path="/reports" element={<ProtectedLayout><ReportsList /></ProtectedLayout>} />
