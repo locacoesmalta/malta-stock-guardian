@@ -322,6 +322,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_user_create_reports: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_user_view_reports: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       is_admin: {
         Args: { _user_id: string }
         Returns: boolean
