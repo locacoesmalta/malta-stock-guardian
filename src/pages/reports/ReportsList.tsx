@@ -22,6 +22,7 @@ interface Report {
     products: {
       code: string;
       name: string;
+      purchase_price: number | null;
     };
     quantity_used: number;
   }>;
@@ -58,7 +59,7 @@ const ReportsList = () => {
           *,
           report_parts(
             quantity_used,
-            products(code, name)
+            products(code, name, purchase_price)
           ),
           report_photos(photo_url, photo_comment, photo_order)
         `)
@@ -140,13 +141,24 @@ const ReportsList = () => {
 
     const sortedPhotos = [...report.report_photos].sort((a, b) => a.photo_order - b.photo_order);
 
-    const partsTable = report.report_parts.map((part, idx) => `
-      <tr>
-        <td style="padding: 8px; border: 1px solid #ddd;">${part.products.code}</td>
-        <td style="padding: 8px; border: 1px solid #ddd;">${part.products.name}</td>
-        <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${part.quantity_used}</td>
-      </tr>
-    `).join('');
+    const totalCost = report.report_parts.reduce((sum, part) => {
+      const price = part.products.purchase_price || 0;
+      return sum + (price * part.quantity_used);
+    }, 0);
+
+    const partsTable = report.report_parts.map((part, idx) => {
+      const unitPrice = part.products.purchase_price || 0;
+      const lineCost = unitPrice * part.quantity_used;
+      return `
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ddd;">${part.products.code}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${part.products.name}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${part.quantity_used}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">R$ ${unitPrice.toFixed(2)}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">R$ ${lineCost.toFixed(2)}</td>
+        </tr>
+      `;
+    }).join('');
 
     printWindow.document.write(`
       <html>
@@ -191,11 +203,19 @@ const ReportsList = () => {
                 <th>Código</th>
                 <th>Peça</th>
                 <th>Quantidade</th>
+                <th style="text-align: right;">Preço Unit.</th>
+                <th style="text-align: right;">Custo Total</th>
               </tr>
             </thead>
             <tbody>
               ${partsTable}
             </tbody>
+            <tfoot>
+              <tr style="background: #f3f4f6; font-weight: bold;">
+                <td colspan="4" style="padding: 10px; border: 1px solid #ddd; text-align: right;">CUSTO TOTAL:</td>
+                <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">R$ ${totalCost.toFixed(2)}</td>
+              </tr>
+            </tfoot>
           </table>
 
           <h2>Fotos do Serviço</h2>
@@ -338,12 +358,29 @@ const ReportsList = () => {
 
                   <div className="border-t pt-3">
                     <div className="font-medium text-sm mb-2">Peças Utilizadas:</div>
-                    <div className="space-y-1">
-                      {report.report_parts.map((part, idx) => (
-                        <div key={idx} className="text-sm text-muted-foreground">
-                          • {part.products.code} - {part.products.name} (Qtd: {part.quantity_used})
-                        </div>
-                      ))}
+                    <div className="space-y-2">
+                      {report.report_parts.map((part, idx) => {
+                        const unitPrice = part.products.purchase_price || 0;
+                        const lineCost = unitPrice * part.quantity_used;
+                        return (
+                          <div key={idx} className="text-sm bg-muted/50 p-2 rounded">
+                            <div className="font-medium">
+                              {part.products.code} - {part.products.name}
+                            </div>
+                            <div className="text-muted-foreground flex justify-between mt-1">
+                              <span>Quantidade: {part.quantity_used}</span>
+                              <span>R$ {unitPrice.toFixed(2)} × {part.quantity_used} = R$ {lineCost.toFixed(2)}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div className="text-sm font-semibold border-t pt-2 flex justify-between">
+                        <span>CUSTO TOTAL:</span>
+                        <span>R$ {report.report_parts.reduce((sum, part) => {
+                          const price = part.products.purchase_price || 0;
+                          return sum + (price * part.quantity_used);
+                        }, 0).toFixed(2)}</span>
+                      </div>
                     </div>
                   </div>
 

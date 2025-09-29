@@ -16,6 +16,7 @@ interface Product {
   code: string;
   name: string;
   quantity: number;
+  purchase_price: number | null;
 }
 
 interface ReportPart {
@@ -23,6 +24,7 @@ interface ReportPart {
   quantity_used: number;
   productName: string;
   productCode: string;
+  purchasePrice: number | null;
 }
 
 interface PhotoData {
@@ -57,7 +59,7 @@ const NewReport = () => {
   const fetchProducts = async () => {
     const { data, error } = await supabase
       .from("products")
-      .select("id, code, name, quantity")
+      .select("id, code, name, quantity, purchase_price")
       .order("name");
 
     if (error) {
@@ -97,7 +99,8 @@ const NewReport = () => {
       product_id: "",
       quantity_used: 1,
       productName: "",
-      productCode: ""
+      productCode: "",
+      purchasePrice: null
     }]);
   };
 
@@ -114,6 +117,7 @@ const NewReport = () => {
       if (product) {
         newParts[index].productName = product.name;
         newParts[index].productCode = product.code;
+        newParts[index].purchasePrice = product.purchase_price;
       }
     }
     
@@ -283,37 +287,52 @@ const NewReport = () => {
                     </Button>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Produto *</Label>
-                      <Select
-                        value={part.product_id}
-                        onValueChange={(value) => updatePart(index, "product_id", value)}
-                        required
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um produto" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {products.map((product) => (
-                            <SelectItem key={product.id} value={product.id}>
-                              {product.code} - {product.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Produto *</Label>
+                        <Select
+                          value={part.product_id}
+                          onValueChange={(value) => updatePart(index, "product_id", value)}
+                          required
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um produto" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {products.map((product) => (
+                              <SelectItem key={product.id} value={product.id}>
+                                {product.code} - {product.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Quantidade Utilizada *</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={part.quantity_used}
+                          onChange={(e) => updatePart(index, "quantity_used", Number(e.target.value))}
+                          required
+                        />
+                      </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>Quantidade Utilizada *</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        value={part.quantity_used}
-                        onChange={(e) => updatePart(index, "quantity_used", Number(e.target.value))}
-                        required
-                      />
-                    </div>
+                    {part.purchasePrice !== null && (
+                      <div className="bg-muted/50 p-3 rounded-md text-sm space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Preço unitário:</span>
+                          <span className="font-medium">R$ {part.purchasePrice.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between border-t pt-1">
+                          <span className="text-muted-foreground">Custo total:</span>
+                          <span className="font-semibold">R$ {(part.purchasePrice * part.quantity_used).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))
