@@ -16,11 +16,15 @@ interface Report {
   company: string;
   technician_name: string;
   service_comments: string;
-  quantity_used: number;
-  products: {
-    code: string;
-    name: string;
-  };
+  equipment_code: string;
+  equipment_name: string | null;
+  report_parts: Array<{
+    products: {
+      code: string;
+      name: string;
+    };
+    quantity_used: number;
+  }>;
   report_photos: Array<{
     photo_url: string;
     photo_comment: string;
@@ -50,7 +54,10 @@ const ReportsList = () => {
         .from("reports")
         .select(`
           *,
-          products!inner(code, name),
+          report_parts(
+            quantity_used,
+            products(code, name)
+          ),
           report_photos(photo_url, photo_comment, photo_order)
         `)
         .order("report_date", { ascending: false });
@@ -91,15 +98,26 @@ const ReportsList = () => {
 
     const sortedPhotos = [...report.report_photos].sort((a, b) => a.photo_order - b.photo_order);
 
+    const partsTable = report.report_parts.map((part, idx) => `
+      <tr>
+        <td style="padding: 8px; border: 1px solid #ddd;">${part.products.code}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">${part.products.name}</td>
+        <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${part.quantity_used}</td>
+      </tr>
+    `).join('');
+
     printWindow.document.write(`
       <html>
         <head>
-          <title>Relatório - ${report.products.code}</title>
+          <title>Relatório - ${report.equipment_code}</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 20px; }
             h1 { color: #1e40af; }
+            h2 { color: #374151; margin-top: 30px; }
             .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
             .info-item { padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+            .parts-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            .parts-table th { background: #f3f4f6; padding: 10px; border: 1px solid #ddd; text-align: left; }
             .photos { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; }
             .photo-item { page-break-inside: avoid; }
             .photo-item img { width: 100%; max-height: 300px; object-fit: contain; border: 1px solid #ddd; }
@@ -108,22 +126,35 @@ const ReportsList = () => {
           </style>
         </head>
         <body>
-          <h1>Malta Locações - Relatório de Serviço</h1>
+          <h1>Malta Locações - Relatório de Manutenção</h1>
           
           <div class="info-grid">
-            <div class="info-item"><strong>Código:</strong> ${report.products.code}</div>
-            <div class="info-item"><strong>Produto:</strong> ${report.products.name}</div>
+            <div class="info-item"><strong>Código PAT:</strong> ${report.equipment_code}</div>
+            <div class="info-item"><strong>Equipamento:</strong> ${report.equipment_name || 'N/A'}</div>
             <div class="info-item"><strong>Obra:</strong> ${report.work_site}</div>
             <div class="info-item"><strong>Empresa:</strong> ${report.company}</div>
             <div class="info-item"><strong>Funcionário:</strong> ${report.technician_name}</div>
             <div class="info-item"><strong>Data:</strong> ${format(new Date(report.report_date), "dd/MM/yyyy", { locale: ptBR })}</div>
-            <div class="info-item"><strong>Quantidade:</strong> ${report.quantity_used}</div>
           </div>
 
           <div style="margin: 20px 0;">
             <strong>Comentários do Serviço:</strong>
             <p>${report.service_comments}</p>
           </div>
+
+          <h2>Peças Utilizadas</h2>
+          <table class="parts-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Peça</th>
+                <th>Quantidade</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${partsTable}
+            </tbody>
+          </table>
 
           <h2>Fotos do Serviço</h2>
           <div class="photos">
@@ -213,7 +244,8 @@ const ReportsList = () => {
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <div className="font-semibold text-lg">
-                        {report.products.code} - {report.products.name}
+                        PAT: {report.equipment_code}
+                        {report.equipment_name && ` - ${report.equipment_name}`}
                       </div>
                       <div className="text-sm text-muted-foreground space-y-1">
                         <div className="flex items-center gap-2">
@@ -223,7 +255,6 @@ const ReportsList = () => {
                         <div>Obra: {report.work_site}</div>
                         <div>Empresa: {report.company}</div>
                         <div>Funcionário: {report.technician_name}</div>
-                        <div>Quantidade: {report.quantity_used}</div>
                       </div>
                     </div>
                     <Button
@@ -234,6 +265,17 @@ const ReportsList = () => {
                       <Printer className="h-4 w-4 mr-2" />
                       Imprimir
                     </Button>
+                  </div>
+
+                  <div className="border-t pt-3">
+                    <div className="font-medium text-sm mb-2">Peças Utilizadas:</div>
+                    <div className="space-y-1">
+                      {report.report_parts.map((part, idx) => (
+                        <div key={idx} className="text-sm text-muted-foreground">
+                          • {part.products.code} - {part.products.name} (Qtd: {part.quantity_used})
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="border-t pt-3">

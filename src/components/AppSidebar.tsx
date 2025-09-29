@@ -1,4 +1,4 @@
-import { Home, Package, FileText, Users, Settings, LogOut } from "lucide-react";
+import { Home, Package, FileText, Users, Settings, LogOut, PackageMinus } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -63,6 +63,15 @@ export function AppSidebar() {
                   <NavLink to="/reports" className={getNavCls}>
                     <FileText className="h-4 w-4" />
                     <span>Histórico</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/inventory/withdrawal" className={getNavCls}>
+                    <PackageMinus className="h-4 w-4" />
+                    <span>Retirada de Material</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>

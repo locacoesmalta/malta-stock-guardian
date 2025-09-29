@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      material_withdrawals: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          quantity: number
+          withdrawal_date: string
+          withdrawal_reason: string | null
+          withdrawn_by: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          quantity: number
+          withdrawal_date?: string
+          withdrawal_reason?: string | null
+          withdrawn_by: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+          withdrawal_date?: string
+          withdrawal_reason?: string | null
+          withdrawn_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_withdrawals_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           code: string
@@ -85,6 +123,45 @@ export type Database = {
         }
         Relationships: []
       }
+      report_parts: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          quantity_used: number
+          report_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          quantity_used?: number
+          report_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantity_used?: number
+          report_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_parts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_parts_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_photos: {
         Row: {
           created_at: string
@@ -125,9 +202,9 @@ export type Database = {
           company: string
           created_at: string
           created_by: string
+          equipment_code: string
+          equipment_name: string | null
           id: string
-          product_id: string
-          quantity_used: number
           report_date: string
           service_comments: string
           technician_name: string
@@ -138,9 +215,9 @@ export type Database = {
           company: string
           created_at?: string
           created_by: string
+          equipment_code?: string
+          equipment_name?: string | null
           id?: string
-          product_id: string
-          quantity_used?: number
           report_date?: string
           service_comments: string
           technician_name: string
@@ -151,9 +228,9 @@ export type Database = {
           company?: string
           created_at?: string
           created_by?: string
+          equipment_code?: string
+          equipment_name?: string | null
           id?: string
-          product_id?: string
-          quantity_used?: number
           report_date?: string
           service_comments?: string
           technician_name?: string
@@ -166,13 +243,6 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reports_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]

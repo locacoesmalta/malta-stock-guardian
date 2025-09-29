@@ -18,6 +18,13 @@ interface Product {
   quantity: number;
 }
 
+interface ReportPart {
+  product_id: string;
+  quantity_used: number;
+  productName: string;
+  productCode: string;
+}
+
 interface PhotoData {
   file: File | null;
   preview: string;
@@ -30,14 +37,15 @@ const NewReport = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    product_id: "",
+    equipment_code: "",
+    equipment_name: "",
     work_site: "",
     company: "",
     technician_name: "",
     report_date: new Date().toISOString().split('T')[0],
     service_comments: "",
-    quantity_used: 1,
   });
+  const [parts, setParts] = useState<ReportPart[]>([]);
   const [photos, setPhotos] = useState<PhotoData[]>(
     Array(6).fill(null).map(() => ({ file: null, preview: "", comment: "" }))
   );
@@ -84,6 +92,34 @@ const NewReport = () => {
     setPhotos(newPhotos);
   };
 
+  const addPart = () => {
+    setParts([...parts, {
+      product_id: "",
+      quantity_used: 1,
+      productName: "",
+      productCode: ""
+    }]);
+  };
+
+  const removePart = (index: number) => {
+    setParts(parts.filter((_, i) => i !== index));
+  };
+
+  const updatePart = (index: number, field: keyof ReportPart, value: any) => {
+    const newParts = [...parts];
+    newParts[index] = { ...newParts[index], [field]: value };
+    
+    if (field === "product_id") {
+      const product = products.find(p => p.id === value);
+      if (product) {
+        newParts[index].productName = product.name;
+        newParts[index].productCode = product.code;
+      }
+    }
+    
+    setParts(newParts);
+  };
+
   const uploadPhotos = async (reportId: string) => {
     const uploadPromises = photos
       .filter((photo) => photo.file)
@@ -119,6 +155,11 @@ const NewReport = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!formData.equipment_code.trim()) {
+      toast.error("Código do equipamento (PAT) é obrigatório!");
+      return;
+    }
+
     const uploadedPhotosCount = photos.filter((p) => p.file).length;
     if (uploadedPhotosCount !== 6) {
       toast.error("É obrigatório anexar 6 fotos!");
@@ -128,6 +169,17 @@ const NewReport = () => {
     const hasEmptyComments = photos.some((p) => p.file && !p.comment.trim());
     if (hasEmptyComments) {
       toast.error("Todas as fotos devem ter comentários!");
+      return;
+    }
+
+    if (parts.length === 0) {
+      toast.error("Adicione pelo menos uma peça utilizada!");
+      return;
+    }
+
+    const invalidParts = parts.filter(part => !part.product_id || part.quantity_used <= 0);
+    if (invalidParts.length > 0) {
+      toast.error("Verifique as peças: todas devem ter produto e quantidade!");
       return;
     }
 
@@ -144,6 +196,19 @@ const NewReport = () => {
         .single();
 
       if (reportError) throw reportError;
+
+      // Salvar as peças usadas
+      const partsData = parts.map(part => ({
+        report_id: reportData.id,
+        product_id: part.product_id,
+        quantity_used: part.quantity_used
+      }));
+
+      const { error: partsError } = await supabase
+        .from("report_parts")
+        .insert(partsData);
+
+      if (partsError) throw partsError;
 
       await uploadPhotos(reportData.id);
 
@@ -166,42 +231,96 @@ const NewReport = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Informações do Produto</CardTitle>
+            <CardTitle>Informações do Equipamento</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="product">Produto *</Label>
-                <Select
-                  value={formData.product_id}
-                  onValueChange={(value) => setFormData({ ...formData, product_id: value })}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um produto" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {products.map((product) => (
-                      <SelectItem key={product.id} value={product.id}>
-                        {product.code} - {product.name} (Estoque: {product.quantity})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="quantity">Quantidade Utilizada *</Label>
+                <Label htmlFor="equipment_code">Código do Equipamento (PAT) *</Label>
                 <Input
-                  id="quantity"
-                  type="number"
-                  min="1"
-                  value={formData.quantity_used}
-                  onChange={(e) => setFormData({ ...formData, quantity_used: Number(e.target.value) })}
+                  id="equipment_code"
+                  value={formData.equipment_code}
+                  onChange={(e) => setFormData({ ...formData, equipment_code: e.target.value })}
+                  placeholder="Ex: PAT-001"
                   required
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="equipment_name">Nome do Equipamento</Label>
+                <Input
+                  id="equipment_name"
+                  value={formData.equipment_name}
+                  onChange={(e) => setFormData({ ...formData, equipment_name: e.target.value })}
+                  placeholder="Ex: Compressor de Ar"
+                />
+              </div>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Peças Utilizadas na Manutenção</CardTitle>
+            <Button type="button" onClick={addPart} size="sm">
+              Adicionar Peça
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {parts.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">
+                Nenhuma peça adicionada. Clique em "Adicionar Peça" para começar.
+              </p>
+            ) : (
+              parts.map((part, index) => (
+                <div key={index} className="border rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium">Peça {index + 1}</h4>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removePart(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Produto *</Label>
+                      <Select
+                        value={part.product_id}
+                        onValueChange={(value) => updatePart(index, "product_id", value)}
+                        required
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um produto" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {products.map((product) => (
+                            <SelectItem key={product.id} value={product.id}>
+                              {product.code} - {product.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Quantidade Utilizada *</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={part.quantity_used}
+                        onChange={(e) => updatePart(index, "quantity_used", Number(e.target.value))}
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
 
