@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Calendar, FileText, Printer, Search } from "lucide-react";
+import { Calendar, FileText, Printer, Search, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -42,6 +42,7 @@ const ReportsList = () => {
   const [companyFilter, setCompanyFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [expandedReportId, setExpandedReportId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchReports();
@@ -133,6 +134,10 @@ const ReportsList = () => {
     }
 
     setFilteredReports(filtered);
+  };
+
+  const toggleReportExpansion = (reportId: string) => {
+    setExpandedReportId(expandedReportId === reportId ? null : reportId);
   };
 
   const handlePrint = (report: Report) => {
@@ -324,92 +329,121 @@ const ReportsList = () => {
               Nenhum relatório encontrado
             </div>
           ) : (
-            <div className="space-y-4">
-              {filteredReports.map((report) => (
-                <div
-                  key={report.id}
-                  className="border rounded-lg p-4 space-y-3"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <div className="font-semibold text-lg">
-                        PAT: {report.equipment_code}
-                        {report.equipment_name && ` - ${report.equipment_name}`}
-                      </div>
-                      <div className="text-sm text-muted-foreground space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4" />
-                          {format(new Date(report.report_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            <div className="space-y-3">
+              {filteredReports.map((report) => {
+                const isExpanded = expandedReportId === report.id;
+                const totalCost = report.report_parts.reduce((sum, part) => {
+                  const price = part.products.purchase_price || 0;
+                  return sum + (price * part.quantity_used);
+                }, 0);
+
+                return (
+                  <div
+                    key={report.id}
+                    className="border rounded-lg overflow-hidden"
+                  >
+                    {/* Compact Header - Always Visible */}
+                    <div className="p-4 bg-muted/30 hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-base truncate">
+                            PAT: {report.equipment_code}
+                            {report.equipment_name && ` - ${report.equipment_name}`}
+                          </div>
+                          <div className="text-sm text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {format(new Date(report.report_date), "dd/MM/yyyy")}
+                            </span>
+                            <span>Obra: {report.work_site}</span>
+                            <span>Empresa: {report.company}</span>
+                            <span className="font-medium">Custo: R$ {totalCost.toFixed(2)}</span>
+                          </div>
                         </div>
-                        <div>Obra: {report.work_site}</div>
-                        <div>Empresa: {report.company}</div>
-                        <div>Funcionário: {report.technician_name}</div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePrint(report)}
+                          >
+                            <Printer className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleReportExpansion(report.id)}
+                          >
+                            {isExpanded ? (
+                              <ChevronUp className="h-5 w-5" />
+                            ) : (
+                              <ChevronDown className="h-5 w-5" />
+                            )}
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePrint(report)}
-                    >
-                      <Printer className="h-4 w-4 mr-2" />
-                      Imprimir
-                    </Button>
-                  </div>
 
-                  <div className="border-t pt-3">
-                    <div className="font-medium text-sm mb-2">Peças Utilizadas:</div>
-                    <div className="space-y-2">
-                      {report.report_parts.map((part, idx) => {
-                        const unitPrice = part.products.purchase_price || 0;
-                        const lineCost = unitPrice * part.quantity_used;
-                        return (
-                          <div key={idx} className="text-sm bg-muted/50 p-2 rounded">
-                            <div className="font-medium">
-                              {part.products.code} - {part.products.name}
-                            </div>
-                            <div className="text-muted-foreground flex justify-between mt-1">
-                              <span>Quantidade: {part.quantity_used}</span>
-                              <span>R$ {unitPrice.toFixed(2)} × {part.quantity_used} = R$ {lineCost.toFixed(2)}</span>
+                    {/* Expanded Content - Only visible when expanded */}
+                    {isExpanded && (
+                      <div className="p-4 space-y-4 border-t">
+                        <div className="text-sm">
+                          <span className="font-medium">Funcionário:</span> {report.technician_name}
+                        </div>
+
+                        <div className="border-t pt-3">
+                          <div className="font-medium text-sm mb-2">Peças Utilizadas:</div>
+                          <div className="space-y-2">
+                            {report.report_parts.map((part, idx) => {
+                              const unitPrice = part.products.purchase_price || 0;
+                              const lineCost = unitPrice * part.quantity_used;
+                              return (
+                                <div key={idx} className="text-sm bg-muted/50 p-2 rounded">
+                                  <div className="font-medium">
+                                    {part.products.code} - {part.products.name}
+                                  </div>
+                                  <div className="text-muted-foreground flex justify-between mt-1">
+                                    <span>Quantidade: {part.quantity_used}</span>
+                                    <span>R$ {unitPrice.toFixed(2)} × {part.quantity_used} = R$ {lineCost.toFixed(2)}</span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                            <div className="text-sm font-semibold border-t pt-2 flex justify-between">
+                              <span>CUSTO TOTAL:</span>
+                              <span>R$ {totalCost.toFixed(2)}</span>
                             </div>
                           </div>
-                        );
-                      })}
-                      <div className="text-sm font-semibold border-t pt-2 flex justify-between">
-                        <span>CUSTO TOTAL:</span>
-                        <span>R$ {report.report_parts.reduce((sum, part) => {
-                          const price = part.products.purchase_price || 0;
-                          return sum + (price * part.quantity_used);
-                        }, 0).toFixed(2)}</span>
+                        </div>
+
+                        <div className="border-t pt-3">
+                          <div className="font-medium text-sm mb-2">Comentários do Serviço:</div>
+                          <p className="text-sm text-muted-foreground">{report.service_comments}</p>
+                        </div>
+
+                        <div className="border-t pt-3">
+                          <div className="font-medium text-sm mb-3">Fotos ({report.report_photos.length}):</div>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {report.report_photos
+                              .sort((a, b) => a.photo_order - b.photo_order)
+                              .map((photo, index) => (
+                                <div key={index} className="space-y-1">
+                                  <img
+                                    src={photo.signedUrl || photo.photo_url}
+                                    alt={`Foto ${index + 1}`}
+                                    className="w-full h-32 object-cover rounded border"
+                                  />
+                                  <p className="text-xs text-muted-foreground line-clamp-2">
+                                    {photo.photo_comment}
+                                  </p>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
-
-                  <div className="border-t pt-3">
-                    <div className="font-medium text-sm mb-2">Comentários do Serviço:</div>
-                    <p className="text-sm text-muted-foreground">{report.service_comments}</p>
-                  </div>
-
-                  <div className="border-t pt-3">
-                    <div className="font-medium text-sm mb-3">Fotos ({report.report_photos.length}):</div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {report.report_photos
-                        .sort((a, b) => a.photo_order - b.photo_order)
-                        .map((photo, index) => (
-                          <div key={index} className="space-y-1">
-                            <img
-                              src={photo.signedUrl || photo.photo_url}
-                              alt={`Foto ${index + 1}`}
-                              className="w-full h-24 object-cover rounded border"
-                            />
-                            <p className="text-xs text-muted-foreground line-clamp-2">
-                              {photo.photo_comment}
-                            </p>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
