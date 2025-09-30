@@ -1,0 +1,90 @@
+/* Estilos de impressão para relatórios */
+@media print {
+  /* Configuração da página */
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
+
+  /* Esconder elementos que não devem aparecer na impressão */
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  /* Layout do relatório */
+  .report-photos-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1cm;
+    page-break-inside: avoid;
+  }
+
+  /* Item de foto com dimensões específicas */
+  .report-photo-item {
+    page-break-inside: avoid;
+    border: 1px solid #ddd;
+    padding: 0.5cm;
+  }
+
+  /* Imagens com dimensões exatas: 12.34cm de largura x 6.83cm de altura */
+  .report-photo-img {
+    width: 12.34cm !important;
+    height: 6.83cm !important;
+    object-fit: cover;
+    display: block;
+    margin: 0 auto;
+  }
+
+  /* Comentários das fotos */
+  .report-photo-comment {
+    margin-top: 0.3cm;
+    font-size: 10pt;
+    line-height: 1.2;
+    border: none;
+    background: transparent;
+    padding: 0;
+  }
+
+  /* Quebra de página entre seções */
+  .space-y-6 > * {
+    page-break-after: auto;
+    page-break-inside: avoid;
+  }
+
+  /* Cards de informação */
+  .card {
+    page-break-inside: avoid;
+    margin-bottom: 0.5cm;
+  }
+
+  /* Títulos */
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+
+  /* Garantir que pares de fotos fiquem juntos */
+  .report-photo-item:nth-child(odd) {
+    page-break-after: avoid;
+  }
+
+  /* Forçar nova página após cada 3 linhas de fotos (6 fotos) */
+  .report-photo-item:nth-child(6) {
+    page-break-after: always;
+  }
+}
+
+/* Estilos para visualização em tela mantendo proporção */
+.report-photo-img {
+  aspect-ratio: 12.34 / 6.83;
+}
+
+.report-photos-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.report-photo-item {
+  display: flex;
+  flex-direction: column;
+}
