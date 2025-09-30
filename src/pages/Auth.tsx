@@ -57,7 +57,7 @@ const Auth = () => {
       if (error) throw error;
       
       toast.success("Login realizado com sucesso!");
-      navigate("/welcome");
+      navigate("/");
     } catch (error: any) {
       toast.error(error.message || "Erro ao fazer login");
     } finally {
@@ -100,7 +100,7 @@ const Auth = () => {
       if (error) throw error;
       
       toast.success("Cadastro realizado! Você já pode fazer login.");
-      navigate("/welcome");
+      navigate("/");
     } catch (error: any) {
       toast.error(error.message || "Erro ao cadastrar");
     } finally {

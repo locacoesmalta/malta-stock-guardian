@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Package, QrCode } from "lucide-react";
 import maltaLogo from "@/assets/malta-logo.png";
-import { Card } from "@/components/ui/card";
 
 const Welcome = () => {
   const navigate = useNavigate();
@@ -19,6 +17,13 @@ const Welcome = () => {
     if (user) {
       const name = user.user_metadata?.full_name || user.email?.split("@")[0] || "Usuário";
       setUserName(name);
+      
+      // Redirecionar automaticamente após 3 segundos
+      const timer = setTimeout(() => {
+        navigate("/dashboard");
+      }, 3000);
+
+      return () => clearTimeout(timer);
     }
   }, [user, loading, navigate]);
 
@@ -28,58 +33,26 @@ const Welcome = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-malta-primary/10 via-background to-malta-primary/5 p-4">
-      <div className="text-center space-y-8 max-w-4xl w-full">
-        <div className="flex justify-center">
+      <div className="text-center space-y-8 max-w-2xl w-full">
+        <div className="flex justify-center animate-fade-in">
           <img 
             src={maltaLogo} 
             alt="Malta Locações Logo" 
-            className="w-32 h-32 md:w-48 md:h-48 object-contain animate-fade-in"
+            className="w-40 h-40 md:w-56 md:h-56 object-contain"
           />
         </div>
         
-        <div className="space-y-4 animate-fade-in">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+        <div className="space-y-6 animate-fade-in" style={{ animationDelay: "0.2s" }}>
+          <h1 className="text-3xl md:text-5xl font-bold text-foreground">
             Bem-vindo à Malta Locações, {userName}!
           </h1>
-          <p className="text-muted-foreground text-base md:text-lg">
-            Escolha o módulo que deseja acessar
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
-          <Card 
-            className="p-6 md:p-8 cursor-pointer hover:shadow-xl transition-all hover:scale-105 group"
-            onClick={() => navigate("/dashboard")}
-          >
-            <div className="text-center space-y-4">
-              <div className="flex justify-center">
-                <div className="p-4 md:p-6 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                  <Package className="h-12 w-12 md:h-16 md:w-16 text-primary" />
-                </div>
-              </div>
-              <h2 className="text-xl md:text-2xl font-bold">Controle de Estoque</h2>
-              <p className="text-sm md:text-base text-muted-foreground">
-                Gerencie produtos, retiradas de material e relatórios de serviço
-              </p>
-            </div>
-          </Card>
-
-          <Card 
-            className="p-6 md:p-8 cursor-pointer hover:shadow-xl transition-all hover:scale-105 group"
-            onClick={() => navigate("/assets")}
-          >
-            <div className="text-center space-y-4">
-              <div className="flex justify-center">
-                <div className="p-4 md:p-6 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                  <QrCode className="h-12 w-12 md:h-16 md:w-16 text-primary" />
-                </div>
-              </div>
-              <h2 className="text-xl md:text-2xl font-bold">Gestão de Patrimônio</h2>
-              <p className="text-sm md:text-base text-muted-foreground">
-                Cadastre e consulte equipamentos via QR Code pelo celular
-              </p>
-            </div>
-          </Card>
+          
+          <div className="flex flex-col items-center gap-4 mt-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-primary"></div>
+            <p className="text-muted-foreground text-lg">
+              Preparando o sistema...
+            </p>
+          </div>
         </div>
       </div>
     </div>
