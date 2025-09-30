@@ -20,6 +20,8 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
     password: "",
     full_name: "",
     is_active: false,
+    can_access_main_menu: false,
+    can_access_admin: false,
     can_view_products: false,
     can_create_reports: false,
     can_view_reports: false,
@@ -43,6 +45,8 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
           full_name: formData.full_name,
           permissions: {
             is_active: formData.is_active,
+            can_access_main_menu: formData.can_access_main_menu,
+            can_access_admin: formData.can_access_admin,
             can_view_products: formData.can_view_products,
             can_create_reports: formData.can_create_reports,
             can_view_reports: formData.can_view_reports,
@@ -64,6 +68,8 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
         password: "",
         full_name: "",
         is_active: false,
+        can_access_main_menu: false,
+        can_access_admin: false,
         can_view_products: false,
         can_create_reports: false,
         can_view_reports: false,
@@ -147,6 +153,42 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
 
             {formData.is_active && (
               <div className="space-y-3 pl-4">
+                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                  <div>
+                    <Label htmlFor="can_access_main_menu" className="font-semibold">
+                      Acesso ao Menu Principal
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Permite acesso às funcionalidades básicas do sistema
+                    </p>
+                  </div>
+                  <Switch
+                    id="can_access_main_menu"
+                    checked={formData.can_access_main_menu}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, can_access_main_menu: checked })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                  <div>
+                    <Label htmlFor="can_access_admin" className="font-semibold">
+                      Acesso à Administração
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Permite acesso ao painel administrativo
+                    </p>
+                  </div>
+                  <Switch
+                    id="can_access_admin"
+                    checked={formData.can_access_admin}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, can_access_admin: checked })
+                    }
+                  />
+                </div>
+
                 <div className="flex items-center justify-between">
                   <Label htmlFor="can_view_products">Visualizar Produtos</Label>
                   <Switch

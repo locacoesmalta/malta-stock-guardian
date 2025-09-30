@@ -249,6 +249,8 @@ export type Database = {
       }
       user_permissions: {
         Row: {
+          can_access_admin: boolean | null
+          can_access_main_menu: boolean | null
           can_create_reports: boolean | null
           can_view_products: boolean | null
           can_view_reports: boolean | null
@@ -259,6 +261,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          can_access_admin?: boolean | null
+          can_access_main_menu?: boolean | null
           can_create_reports?: boolean | null
           can_view_products?: boolean | null
           can_view_reports?: boolean | null
@@ -269,6 +273,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          can_access_admin?: boolean | null
+          can_access_main_menu?: boolean | null
           can_create_reports?: boolean | null
           can_view_products?: boolean | null
           can_view_reports?: boolean | null

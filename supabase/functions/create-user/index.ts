@@ -66,6 +66,8 @@ Deno.serve(async (req) => {
       .from('user_permissions')
       .update({
         is_active: permissions.is_active,
+        can_access_main_menu: permissions.can_access_main_menu,
+        can_access_admin: permissions.can_access_admin,
         can_view_products: permissions.can_view_products,
         can_create_reports: permissions.can_create_reports,
         can_view_reports: permissions.can_view_reports,

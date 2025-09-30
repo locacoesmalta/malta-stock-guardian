@@ -17,6 +17,8 @@ interface User {
   user_roles: Array<{ role: string }>;
   user_permissions: {
     is_active: boolean;
+    can_access_main_menu: boolean;
+    can_access_admin: boolean;
     can_view_products: boolean;
     can_create_reports: boolean;
     can_view_reports: boolean;
@@ -54,7 +56,7 @@ const Users = () => {
         .select(`
           *,
           user_roles(role),
-          user_permissions!inner(is_active, can_view_products, can_create_reports, can_view_reports)
+          user_permissions!inner(is_active, can_access_main_menu, can_access_admin, can_view_products, can_create_reports, can_view_reports)
         `)
         .order("created_at")
         .returns<User[]>();
@@ -198,10 +200,58 @@ const Users = () => {
 
                       {user.user_permissions.is_active && (
                         <>
-                          <div className="text-sm font-medium">
-                            Permissões:
+                          <div className="text-sm font-medium mb-2">
+                            Permissões de Acesso:
                           </div>
                           <div className="space-y-3">
+                            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                              <div>
+                                <Label htmlFor={`menu-${user.id}`} className="font-semibold">
+                                  Acesso ao Menu Principal
+                                </Label>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Dashboard, relatórios e inventário
+                                </p>
+                              </div>
+                              <Switch
+                                id={`menu-${user.id}`}
+                                checked={user.user_permissions.can_access_main_menu}
+                                onCheckedChange={(checked) =>
+                                  updatePermission(
+                                    user.id,
+                                    "can_access_main_menu",
+                                    checked
+                                  )
+                                }
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                              <div>
+                                <Label htmlFor={`admin-${user.id}`} className="font-semibold">
+                                  Acesso à Administração
+                                </Label>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Produtos, usuários e configurações
+                                </p>
+                              </div>
+                              <Switch
+                                id={`admin-${user.id}`}
+                                checked={user.user_permissions.can_access_admin}
+                                onCheckedChange={(checked) =>
+                                  updatePermission(
+                                    user.id,
+                                    "can_access_admin",
+                                    checked
+                                  )
+                                }
+                              />
+                            </div>
+
+                            <div className="text-sm font-medium mt-4 mb-2">
+                              Permissões Específicas:
+                            </div>
+
                             <div className="flex items-center justify-between">
                               <Label htmlFor={`view-products-${user.id}`}>
                                 Visualizar Produtos
