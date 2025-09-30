@@ -18,14 +18,13 @@ import WithdrawalHistory from "./pages/inventory/WithdrawalHistory";
 import AssetsList from "./pages/assets/AssetsList";
 import AssetForm from "./pages/assets/AssetForm";
 import AssetScanner from "./pages/assets/AssetScanner";
-import PendingApproval from "./pages/PendingApproval";
 import NotFound from "./pages/NotFound";
 import Welcome from "./pages/Welcome";
 
 const queryClient = new QueryClient();
 
 const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
-  const { user, isActive, loading } = useAuth();
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -40,10 +39,6 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
-  }
-
-  if (!isActive) {
-    return <Navigate to="/pending-approval" replace />;
   }
 
   return (
@@ -85,7 +80,6 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
-            <Route path="/pending-approval" element={<PendingApproval />} />
             <Route path="/welcome" element={<ProtectedLayout><Welcome /></ProtectedLayout>} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
