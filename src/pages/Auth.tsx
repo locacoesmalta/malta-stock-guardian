@@ -7,8 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Package } from "lucide-react";
 import { authSchema } from "@/lib/validations";
+import maltaLogo from "@/assets/malta-logo.png";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -57,7 +57,7 @@ const Auth = () => {
       if (error) throw error;
       
       toast.success("Login realizado com sucesso!");
-      navigate("/");
+      navigate("/welcome");
     } catch (error: any) {
       toast.error(error.message || "Erro ao fazer login");
     } finally {
@@ -100,7 +100,7 @@ const Auth = () => {
       if (error) throw error;
       
       toast.success("Cadastro realizado! Você já pode fazer login.");
-      navigate("/");
+      navigate("/welcome");
     } catch (error: any) {
       toast.error(error.message || "Erro ao cadastrar");
     } finally {
@@ -112,10 +112,12 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/10 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <div className="flex items-center justify-center mb-2">
-            <div className="bg-primary rounded-xl p-3">
-              <Package className="h-8 w-8 text-primary-foreground" />
-            </div>
+          <div className="flex items-center justify-center mb-4">
+            <img 
+              src={maltaLogo} 
+              alt="Malta Locações Logo" 
+              className="w-32 h-32 object-contain"
+            />
           </div>
           <CardTitle className="text-2xl font-bold">Malta Locações</CardTitle>
           <CardDescription>Sistema de Controle de Estoque</CardDescription>

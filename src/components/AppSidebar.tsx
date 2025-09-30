@@ -1,5 +1,6 @@
 import { Home, Package, FileText, Users, Settings, LogOut, PackageMinus, History } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import maltaLogo from "@/assets/malta-logo.png";
 import {
   Sidebar,
   SidebarContent,
@@ -24,13 +25,15 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r">
       <SidebarHeader className="border-b px-6 py-4">
-        <div className="flex items-center gap-2">
-          <div className="bg-primary rounded-lg p-2">
-            <Package className="h-5 w-5 text-primary-foreground" />
-          </div>
+        <div className="flex items-center gap-3">
+          <img 
+            src={maltaLogo} 
+            alt="Malta Locações" 
+            className="w-12 h-12 object-contain"
+          />
           <div>
             <h2 className="font-semibold text-sidebar-foreground">Malta Locações</h2>
-            <p className="text-xs text-muted-foreground">Controle de Estoque</p>
+            <p className="text-xs text-sidebar-foreground/70">Controle de Estoque</p>
           </div>
         </div>
       </SidebarHeader>

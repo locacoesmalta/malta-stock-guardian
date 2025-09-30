@@ -17,6 +17,7 @@ import MaterialWithdrawal from "./pages/inventory/MaterialWithdrawal";
 import WithdrawalHistory from "./pages/inventory/WithdrawalHistory";
 import PendingApproval from "./pages/PendingApproval";
 import NotFound from "./pages/NotFound";
+import Welcome from "./pages/Welcome";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +82,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/welcome" element={<Welcome />} />
             <Route path="/pending-approval" element={<PendingApproval />} />
             <Route path="/" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
             <Route path="/reports/new" element={<ProtectedLayout><NewReport /></ProtectedLayout>} />
