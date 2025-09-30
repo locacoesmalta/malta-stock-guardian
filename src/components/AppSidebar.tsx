@@ -23,7 +23,10 @@ export function AppSidebar() {
     isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "";
 
   return (
-    <Sidebar className="border-r">
+    <Sidebar
+      className="border-r"
+      collapsible="icon"
+    >
       <SidebarHeader className="border-b px-6 py-4">
         <div className="flex items-center gap-3">
           <img 

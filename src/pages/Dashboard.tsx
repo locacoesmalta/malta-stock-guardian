@@ -53,66 +53,66 @@ const Dashboard = () => {
   const totalProducts = products.length;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-        <p className="text-muted-foreground">
+    <div className="space-y-4 md:space-y-6">
+      <div className="px-2 md:px-0">
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">Dashboard</h1>
+        <p className="text-sm md:text-base text-muted-foreground">
           Visão geral do estoque Malta Locações
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 px-2 md:px-0">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total de Produtos</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-medium">Total de Produtos</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalProducts}</div>
+            <div className="text-xl md:text-2xl font-bold">{totalProducts}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Estoque Baixo</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-medium">Estoque Baixo</CardTitle>
             <AlertTriangle className="h-4 w-4 text-warning" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{lowStockProducts.length}</div>
+            <div className="text-xl md:text-2xl font-bold">{lowStockProducts.length}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Sem Estoque</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-medium">Sem Estoque</CardTitle>
             <TrendingUp className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{outOfStockProducts.length}</div>
+            <div className="text-xl md:text-2xl font-bold">{outOfStockProducts.length}</div>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
+      <Card className="mx-2 md:mx-0">
         <CardHeader>
-          <CardTitle>Produtos em Estoque</CardTitle>
+          <CardTitle className="text-base md:text-lg">Produtos em Estoque</CardTitle>
           <div className="relative mt-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por código ou nome..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
+              className="pl-9 text-sm md:text-base"
             />
           </div>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-sm md:text-base text-muted-foreground">
               Carregando produtos...
             </div>
           ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-sm md:text-base text-muted-foreground">
               Nenhum produto encontrado
             </div>
           ) : (
@@ -120,17 +120,17 @@ const Dashboard = () => {
               {filteredProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 md:p-4 border rounded-lg hover:bg-muted/50 transition-colors gap-2 sm:gap-4"
                 >
-                  <div className="space-y-1">
-                    <div className="font-medium">{product.name}</div>
-                    <div className="text-sm text-muted-foreground">
+                  <div className="space-y-1 flex-1">
+                    <div className="font-medium text-sm md:text-base">{product.name}</div>
+                    <div className="text-xs md:text-sm text-muted-foreground">
                       Código: {product.code}
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <div className="font-semibold">{product.quantity}</div>
+                  <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
+                    <div className="text-left sm:text-right">
+                      <div className="font-semibold text-sm md:text-base">{product.quantity}</div>
                       <div className="text-xs text-muted-foreground">
                         Mín: {product.min_quantity}
                       </div>
