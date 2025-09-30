@@ -85,8 +85,8 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
-            <Route path="/welcome" element={<Welcome />} />
             <Route path="/pending-approval" element={<PendingApproval />} />
+            <Route path="/welcome" element={<ProtectedLayout><Welcome /></ProtectedLayout>} />
             <Route path="/" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
             <Route path="/reports/new" element={<ProtectedLayout><NewReport /></ProtectedLayout>} />
             <Route path="/reports" element={<ProtectedLayout><ReportsList /></ProtectedLayout>} />

@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setSession(null);
     setIsAdmin(false);
     setIsActive(false);
-    navigate("/auth");
+    navigate("/welcome");
   };
 
   return (
