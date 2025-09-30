@@ -209,12 +209,16 @@ export type Database = {
       reports: {
         Row: {
           company: string
+          considerations: string | null
           created_at: string
           created_by: string
           equipment_code: string
           equipment_name: string | null
           id: string
+          observations: string | null
+          receiver: string | null
           report_date: string
+          responsible: string | null
           service_comments: string
           technician_name: string
           updated_at: string
@@ -222,12 +226,16 @@ export type Database = {
         }
         Insert: {
           company: string
+          considerations?: string | null
           created_at?: string
           created_by: string
           equipment_code?: string
           equipment_name?: string | null
           id?: string
+          observations?: string | null
+          receiver?: string | null
           report_date?: string
+          responsible?: string | null
           service_comments: string
           technician_name: string
           updated_at?: string
@@ -235,12 +243,16 @@ export type Database = {
         }
         Update: {
           company?: string
+          considerations?: string | null
           created_at?: string
           created_by?: string
           equipment_code?: string
           equipment_name?: string | null
           id?: string
+          observations?: string | null
+          receiver?: string | null
           report_date?: string
+          responsible?: string | null
           service_comments?: string
           technician_name?: string
           updated_at?: string

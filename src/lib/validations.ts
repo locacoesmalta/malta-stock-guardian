@@ -54,6 +54,22 @@ export const reportSchema = z.object({
     .trim()
     .min(1, "Comentários são obrigatórios")
     .max(5000, "Comentários devem ter no máximo 5000 caracteres"),
+  considerations: z.string()
+    .trim()
+    .max(5000, "Considerações devem ter no máximo 5000 caracteres")
+    .optional(),
+  observations: z.string()
+    .trim()
+    .max(5000, "Observações devem ter no máximo 5000 caracteres")
+    .optional(),
+  receiver: z.string()
+    .trim()
+    .max(200, "Nome do recebedor deve ter no máximo 200 caracteres")
+    .optional(),
+  responsible: z.string()
+    .trim()
+    .max(200, "Nome do responsável deve ter no máximo 200 caracteres")
+    .optional(),
 });
 
 // Material withdrawal validation
