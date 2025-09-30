@@ -1,44 +1,18 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { StockBadge } from "@/components/StockBadge";
 import { Package, AlertTriangle, TrendingUp, Search } from "lucide-react";
 import { toast } from "sonner";
-
-interface Product {
-  id: string;
-  code: string;
-  name: string;
-  quantity: number;
-  min_quantity: number;
-}
+import { useProductsQuery } from "@/hooks/useProductsQuery";
 
 const Dashboard = () => {
-  const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [loading, setLoading] = useState(true);
+  const { data: products = [], isLoading, error } = useProductsQuery();
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .order("name");
-
-      if (error) throw error;
-      setProducts(data || []);
-    } catch (error: any) {
-      toast.error("Erro ao carregar produtos");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (error) {
+    toast.error("Erro ao carregar produtos");
+  }
 
   const filteredProducts = products.filter(
     (product) =>
@@ -107,7 +81,7 @@ const Dashboard = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {isLoading ? (
             <div className="text-center py-8 text-sm md:text-base text-muted-foreground">
               Carregando produtos...
             </div>

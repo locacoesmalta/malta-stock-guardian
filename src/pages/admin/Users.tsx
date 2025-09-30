@@ -1,74 +1,48 @@
-import { useEffect, useState } from "react";
+import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Users as UsersIcon, Shield, Search } from "lucide-react";
+import { Users as UsersIcon, Shield, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { AddUserDialog } from "@/components/AddUserDialog";
+import { useUsersQuery } from "@/hooks/useUsersQuery";
+import { useQueryClient } from "@tanstack/react-query";
 
-interface User {
-  id: string;
-  email: string;
-  full_name: string | null;
-  created_at: string;
-  user_roles: Array<{ role: string }>;
-  user_permissions: {
-    is_active: boolean;
-    can_access_main_menu: boolean;
-    can_access_admin: boolean;
-    can_view_products: boolean;
-    can_create_reports: boolean;
-    can_view_reports: boolean;
-  } | null;
-}
+const USERS_PER_PAGE = 10;
 
 const Users = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const queryClient = useQueryClient();
+  
+  const { data, isLoading, error } = useUsersQuery({ 
+    page: currentPage, 
+    pageSize: USERS_PER_PAGE 
+  });
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const users = data?.data || [];
+  const totalCount = data?.count || 0;
+  const totalPages = Math.ceil(totalCount / USERS_PER_PAGE);
 
-  useEffect(() => {
-    if (searchTerm) {
-      setFilteredUsers(
-        users.filter(
-          (user) =>
-            user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      );
-    } else {
-      setFilteredUsers(users);
-    }
+  if (error) {
+    toast.error("Erro ao carregar usuários");
+  }
+
+  const filteredUsers = useMemo(() => {
+    if (!searchTerm) return users;
+    return users.filter(
+      (user) =>
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   }, [users, searchTerm]);
 
-  const fetchUsers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select(`
-          *,
-          user_roles(role),
-          user_permissions!inner(is_active, can_access_main_menu, can_access_admin, can_view_products, can_create_reports, can_view_reports)
-        `)
-        .order("created_at")
-        .returns<User[]>();
-
-      if (error) throw error;
-      setUsers(data || []);
-    } catch (error: any) {
-      toast.error("Erro ao carregar usuários");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+  const refetchUsers = () => {
+    queryClient.invalidateQueries({ queryKey: ["users"] });
   };
 
   const updatePermission = async (
@@ -84,13 +58,13 @@ const Users = () => {
 
       if (error) throw error;
       toast.success("Permissão atualizada!");
-      fetchUsers();
+      refetchUsers();
     } catch (error: any) {
       toast.error("Erro ao atualizar permissão");
     }
   };
 
-  const isAdmin = (user: User) => {
+  const isAdmin = (user: typeof users[0]) => {
     return user.user_roles.some((r) => r.role === "admin");
   };
 
@@ -108,22 +82,47 @@ const Users = () => {
           <div className="flex items-center justify-between mb-4">
             <CardTitle className="flex items-center gap-2">
               <UsersIcon className="h-5 w-5" />
-              Usuários Cadastrados ({filteredUsers.length})
+              Usuários Cadastrados ({totalCount})
             </CardTitle>
-            <AddUserDialog onUserAdded={fetchUsers} />
+            <AddUserDialog onUserAdded={refetchUsers} />
           </div>
-          <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar usuário..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
-            />
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar usuário..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                  disabled={currentPage === 0}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Página {currentPage + 1} de {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                  disabled={currentPage >= totalPages - 1}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">
               Carregando usuários...
             </div>

@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,32 +7,10 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Search, FileText } from "lucide-react";
-
-interface Withdrawal {
-  id: string;
-  product_id: string;
-  quantity: number;
-  withdrawal_date: string;
-  withdrawal_reason: string | null;
-  withdrawn_by: string;
-  created_at: string;
-  equipment_code: string;
-  work_site: string;
-  company: string;
-  products: {
-    code: string;
-    name: string;
-  };
-  profiles: {
-    full_name: string | null;
-    email: string;
-  };
-}
+import { useWithdrawalsQuery } from "@/hooks/useWithdrawalsQuery";
 
 const WithdrawalHistory = () => {
-  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
-  const [filteredWithdrawals, setFilteredWithdrawals] = useState<Withdrawal[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: withdrawals = [], isLoading, error } = useWithdrawalsQuery();
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -41,53 +18,11 @@ const WithdrawalHistory = () => {
   const [companyFilter, setCompanyFilter] = useState("");
   const [equipmentCodeFilter, setEquipmentCodeFilter] = useState("");
 
-  useEffect(() => {
-    fetchWithdrawals();
-  }, []);
+  if (error) {
+    toast.error("Erro ao carregar histórico");
+  }
 
-  useEffect(() => {
-    filterWithdrawals();
-  }, [withdrawals, startDate, endDate, searchTerm, workSiteFilter, companyFilter, equipmentCodeFilter]);
-
-  const fetchWithdrawals = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("material_withdrawals")
-        .select(`
-          *,
-          products(code, name)
-        `)
-        .order("withdrawal_date", { ascending: false });
-
-      if (error) throw error;
-
-      // Fetch user profiles separately
-      const withdrawalsWithProfiles = await Promise.all(
-        (data || []).map(async (withdrawal) => {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("full_name, email")
-            .eq("id", withdrawal.withdrawn_by)
-            .single();
-
-          return {
-            ...withdrawal,
-            profiles: profile || { full_name: null, email: "Desconhecido" },
-          };
-        })
-      );
-
-      setWithdrawals(withdrawalsWithProfiles);
-    } catch (error: any) {
-      toast.error("Erro ao carregar histórico");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filterWithdrawals = () => {
+  const filteredWithdrawals = useMemo(() => {
     let filtered = [...withdrawals];
 
     if (startDate) {
@@ -125,8 +60,8 @@ const WithdrawalHistory = () => {
       );
     }
 
-    setFilteredWithdrawals(filtered);
-  };
+    return filtered;
+  }, [withdrawals, startDate, endDate, searchTerm, workSiteFilter, companyFilter, equipmentCodeFilter]);
 
   const handleExport = () => {
     const csvContent = [
@@ -249,7 +184,7 @@ const WithdrawalHistory = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">
               Carregando histórico...
             </div>

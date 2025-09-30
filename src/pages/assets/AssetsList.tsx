@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,52 +9,17 @@ import { toast } from "sonner";
 import { Plus, Search, QrCode, Building2, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
-interface Asset {
-  id: string;
-  asset_code: string;
-  equipment_name: string;
-  location_type: string;
-  rental_company?: string;
-  rental_work_site?: string;
-  rental_start_date?: string;
-  rental_end_date?: string;
-  deposito_description?: string;
-  available_for_rental?: boolean;
-  maintenance_company?: string;
-  maintenance_work_site?: string;
-  maintenance_description?: string;
-  is_new_equipment?: boolean;
-  created_at: string;
-}
+import { useAssetsQuery } from "@/hooks/useAssetsQuery";
 
 export default function AssetsList() {
-  const [assets, setAssets] = useState<Asset[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+  const { data: assets = [], isLoading, error } = useAssetsQuery();
 
-  useEffect(() => {
-    fetchAssets();
-  }, []);
-
-  const fetchAssets = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("assets")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setAssets(data || []);
-    } catch (error) {
-      console.error("Erro ao buscar patrimônios:", error);
-      toast.error("Erro ao carregar patrimônios");
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (error) {
+    toast.error("Erro ao carregar patrimônios");
+  }
 
   const getLocationLabel = (locationType: string) => {
     switch (locationType) {
@@ -95,7 +59,7 @@ export default function AssetsList() {
       asset.rental_work_site?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="container mx-auto p-4 md:p-6">
         <p>Carregando...</p>

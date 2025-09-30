@@ -1,43 +1,14 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { toast } from "sonner";
-
-interface Product {
-  id: string;
-  code: string;
-  name: string;
-  quantity: number;
-  min_quantity: number;
-  purchase_price: number | null;
-  sale_price: number | null;
-}
+import { useProductsQuery } from "./useProductsQuery";
 
 export const useProducts = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const { data: products = [], isLoading, error, refetch } = useProductsQuery();
 
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .order("name");
-
-      if (error) throw error;
-      setProducts(data || []);
-    } catch (error: any) {
-      toast.error("Erro ao carregar produtos");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  if (error) {
+    toast.error("Erro ao carregar produtos");
+  }
 
   const filteredProducts = products.filter(
     (product) =>
@@ -48,9 +19,9 @@ export const useProducts = () => {
   return {
     products: filteredProducts,
     allProducts: products,
-    loading,
+    loading: isLoading,
     searchTerm,
     setSearchTerm,
-    refetch: fetchProducts,
+    refetch,
   };
 };

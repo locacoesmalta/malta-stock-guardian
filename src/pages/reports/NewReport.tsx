@@ -12,14 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Upload, X } from "lucide-react";
 import maltaLogo from "@/assets/malta-logo.png";
 import "@/styles/report-print.css";
-
-interface Product {
-  id: string;
-  code: string;
-  name: string;
-  quantity: number;
-  purchase_price: number | null;
-}
+import { useProductsQuery } from "@/hooks/useProductsQuery";
 
 interface ReportPart {
   product_id: string;
@@ -38,7 +31,7 @@ interface PhotoData {
 const NewReport = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [products, setProducts] = useState<Product[]>([]);
+  const { data: products = [], isLoading: productsLoading } = useProductsQuery();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     equipment_code: "",
@@ -59,24 +52,23 @@ const NewReport = () => {
   );
   const [additionalPhotos, setAdditionalPhotos] = useState<PhotoData[]>([]);
 
+  // Cleanup preview URLs on unmount
   useEffect(() => {
-    fetchProducts();
+    return () => {
+      photos.forEach((photo) => {
+        if (photo.preview) URL.revokeObjectURL(photo.preview);
+      });
+      additionalPhotos.forEach((photo) => {
+        if (photo.preview) URL.revokeObjectURL(photo.preview);
+      });
+    };
   }, []);
 
-  const fetchProducts = async () => {
-    const { data, error } = await supabase
-      .from("products")
-      .select("id, code, name, quantity, purchase_price")
-      .order("name");
-
-    if (error) {
-      toast.error("Erro ao carregar produtos");
-      return;
-    }
-    setProducts(data || []);
-  };
-
   const handlePhotoChange = (index: number, file: File) => {
+    // Revoke old URL before creating new one
+    if (photos[index].preview) {
+      URL.revokeObjectURL(photos[index].preview);
+    }
     const newPhotos = [...photos];
     newPhotos[index] = {
       ...newPhotos[index],
@@ -106,6 +98,10 @@ const NewReport = () => {
   };
 
   const handleAdditionalPhotoChange = (index: number, file: File) => {
+    // Revoke old URL before creating new one
+    if (additionalPhotos[index]?.preview) {
+      URL.revokeObjectURL(additionalPhotos[index].preview);
+    }
     const newPhotos = [...additionalPhotos];
     newPhotos[index] = {
       ...newPhotos[index],
