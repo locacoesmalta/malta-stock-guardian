@@ -389,17 +389,6 @@ export default function AssetForm() {
                   <p className="text-sm text-destructive">{errors.maintenance_description.message}</p>
                 )}
               </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="is_new_equipment"
-                  checked={isNewEquipment}
-                  onCheckedChange={(checked) => setValue("is_new_equipment", checked as boolean)}
-                />
-                <Label htmlFor="is_new_equipment" className="font-normal cursor-pointer">
-                  Equipamento Novo
-                </Label>
-              </div>
             </>
           )}
 
@@ -456,6 +445,17 @@ export default function AssetForm() {
               </div>
             </>
           )}
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="is_new_equipment"
+              checked={isNewEquipment}
+              onCheckedChange={(checked) => setValue("is_new_equipment", checked as boolean)}
+            />
+            <Label htmlFor="is_new_equipment" className="font-normal cursor-pointer">
+              Equipamento Novo
+            </Label>
+          </div>
 
           <div className="flex gap-2 pt-4">
             <Button type="submit" disabled={loading} className="flex-1">
