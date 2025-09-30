@@ -18,13 +18,7 @@ export default defineConfig(({ mode }) => ({
   build: {
     // Otimizações de performance
     target: "esnext",
-    minify: "terser",
-    terserOptions: {
-      compress: {
-        drop_console: mode === "production",
-        drop_debugger: mode === "production",
-      },
-    },
+    minify: "esbuild",
     rollupOptions: {
       output: {
         // Code splitting para melhor cache
