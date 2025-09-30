@@ -50,7 +50,16 @@ export function AppSidebar() {
                 <SidebarMenuButton asChild>
                   <NavLink to="/" end className={getNavCls}>
                     <Home className="h-4 w-4" />
-                    <span>Dashboard</span>
+                    <span>Início</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/dashboard" className={getNavCls}>
+                    <Package className="h-4 w-4" />
+                    <span>Controle de Estoque</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>

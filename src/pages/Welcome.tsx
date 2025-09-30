@@ -49,7 +49,7 @@ const Welcome = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
           <Card 
             className="p-6 md:p-8 cursor-pointer hover:shadow-xl transition-all hover:scale-105 group"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/dashboard")}
           >
             <div className="text-center space-y-4">
               <div className="flex justify-center">
