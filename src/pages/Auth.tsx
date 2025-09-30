@@ -22,7 +22,7 @@ const Auth = () => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate("/");
+        navigate("/welcome");
       }
     };
     checkUser();
@@ -57,7 +57,7 @@ const Auth = () => {
       if (error) throw error;
       
       toast.success("Login realizado com sucesso!");
-      navigate("/");
+      navigate("/welcome");
     } catch (error: any) {
       toast.error(error.message || "Erro ao fazer login");
     } finally {
@@ -100,7 +100,7 @@ const Auth = () => {
       if (error) throw error;
       
       toast.success("Cadastro realizado! Você já pode fazer login.");
-      navigate("/");
+      navigate("/welcome");
     } catch (error: any) {
       toast.error(error.message || "Erro ao cadastrar");
     } finally {
