@@ -109,7 +109,8 @@ export const assetSchema = z.object({
   asset_code: z.string()
     .trim()
     .min(1, "Código do patrimônio é obrigatório")
-    .max(100, "Código deve ter no máximo 100 caracteres"),
+    .max(100, "Código deve ter no máximo 100 caracteres")
+    .regex(/^[a-zA-Z0-9_-]+$/, "Código deve conter apenas letras, números, hífens e underscores"),
   equipment_name: z.string()
     .trim()
     .min(1, "Nome do equipamento é obrigatório")
@@ -127,7 +128,9 @@ export const assetSchema = z.object({
     .optional(),
   rental_start_date: z.string().optional(),
   rental_end_date: z.string().optional(),
-  qr_code_data: z.string().optional(),
+  qr_code_data: z.string()
+    .max(500, "Dados do QR Code devem ter no máximo 500 caracteres")
+    .optional(),
 }).refine(
   (data) => {
     if (data.location_type === "locacao") {
