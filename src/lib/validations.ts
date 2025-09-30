@@ -104,7 +104,45 @@ export const authSchema = z.object({
     .optional(),
 });
 
+// Asset validation
+export const assetSchema = z.object({
+  asset_code: z.string()
+    .trim()
+    .min(1, "Código do patrimônio é obrigatório")
+    .max(100, "Código deve ter no máximo 100 caracteres"),
+  equipment_name: z.string()
+    .trim()
+    .min(1, "Nome do equipamento é obrigatório")
+    .max(200, "Nome deve ter no máximo 200 caracteres"),
+  location_type: z.enum(["escritorio", "locacao"], {
+    required_error: "Tipo de localização é obrigatório",
+  }),
+  rental_company: z.string()
+    .trim()
+    .max(200, "Empresa deve ter no máximo 200 caracteres")
+    .optional(),
+  rental_work_site: z.string()
+    .trim()
+    .max(200, "Obra deve ter no máximo 200 caracteres")
+    .optional(),
+  rental_start_date: z.string().optional(),
+  rental_end_date: z.string().optional(),
+  qr_code_data: z.string().optional(),
+}).refine(
+  (data) => {
+    if (data.location_type === "locacao") {
+      return !!data.rental_company && !!data.rental_work_site && !!data.rental_start_date;
+    }
+    return true;
+  },
+  {
+    message: "Empresa, obra e data inicial são obrigatórios para locação",
+    path: ["rental_company"],
+  }
+);
+
 export type ProductFormData = z.infer<typeof productSchema>;
 export type ReportFormData = z.infer<typeof reportSchema>;
 export type WithdrawalFormData = z.infer<typeof withdrawalSchema>;
 export type AuthFormData = z.infer<typeof authSchema>;
+export type AssetFormData = z.infer<typeof assetSchema>;

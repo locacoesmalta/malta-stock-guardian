@@ -15,6 +15,9 @@ import NewReport from "./pages/reports/NewReport";
 import ReportsList from "./pages/reports/ReportsList";
 import MaterialWithdrawal from "./pages/inventory/MaterialWithdrawal";
 import WithdrawalHistory from "./pages/inventory/WithdrawalHistory";
+import AssetsList from "./pages/assets/AssetsList";
+import AssetForm from "./pages/assets/AssetForm";
+import AssetScanner from "./pages/assets/AssetScanner";
 import PendingApproval from "./pages/PendingApproval";
 import NotFound from "./pages/NotFound";
 import Welcome from "./pages/Welcome";
@@ -89,6 +92,10 @@ const App = () => (
             <Route path="/reports" element={<ProtectedLayout><ReportsList /></ProtectedLayout>} />
             <Route path="/inventory/withdrawal" element={<ProtectedLayout><MaterialWithdrawal /></ProtectedLayout>} />
             <Route path="/inventory/history" element={<ProtectedLayout><WithdrawalHistory /></ProtectedLayout>} />
+            <Route path="/assets" element={<ProtectedLayout><AssetsList /></ProtectedLayout>} />
+            <Route path="/assets/scanner" element={<ProtectedLayout><AssetScanner /></ProtectedLayout>} />
+            <Route path="/assets/new" element={<ProtectedLayout><AdminRoute><AssetForm /></AdminRoute></ProtectedLayout>} />
+            <Route path="/assets/edit/:id" element={<ProtectedLayout><AdminRoute><AssetForm /></AdminRoute></ProtectedLayout>} />
             <Route path="/admin/products" element={<ProtectedLayout><AdminRoute><Products /></AdminRoute></ProtectedLayout>} />
             <Route path="/admin/users" element={<ProtectedLayout><AdminRoute><Users /></AdminRoute></ProtectedLayout>} />
             <Route path="/admin/settings" element={<ProtectedLayout><AdminRoute><Settings /></AdminRoute></ProtectedLayout>} />

@@ -1,40 +1,67 @@
 import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ConfirmOptions {
   title: string;
   description: string;
-  onConfirm: () => void | Promise<void>;
-  onCancel?: () => void;
 }
 
 export const useConfirm = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [options, setOptions] = useState<ConfirmOptions | null>(null);
+  const [options, setOptions] = useState<ConfirmOptions>({
+    title: "",
+    description: "",
+  });
+  const [resolvePromise, setResolvePromise] = useState<((value: boolean) => void) | null>(null);
 
-  const confirm = (opts: ConfirmOptions) => {
+  const confirm = (opts: ConfirmOptions): Promise<boolean> => {
     setOptions(opts);
     setIsOpen(true);
+    return new Promise((resolve) => {
+      setResolvePromise(() => resolve);
+    });
   };
 
-  const handleConfirm = async () => {
-    if (options?.onConfirm) {
-      await options.onConfirm();
+  const handleConfirm = () => {
+    if (resolvePromise) {
+      resolvePromise(true);
     }
     setIsOpen(false);
   };
 
   const handleCancel = () => {
-    if (options?.onCancel) {
-      options.onCancel();
+    if (resolvePromise) {
+      resolvePromise(false);
     }
     setIsOpen(false);
   };
 
+  const ConfirmDialog = () => (
+    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{options.title}</AlertDialogTitle>
+          <AlertDialogDescription>{options.description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={handleCancel}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={handleConfirm}>Confirmar</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
   return {
-    isOpen,
     confirm,
-    handleConfirm,
-    handleCancel,
-    options,
+    ConfirmDialog,
   };
 };

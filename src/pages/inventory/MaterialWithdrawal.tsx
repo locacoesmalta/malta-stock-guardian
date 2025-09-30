@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { ProductSelector } from "@/components/ProductSelector";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useProducts } from "@/hooks/useProducts";
 import { withdrawalSchema } from "@/lib/validations";
@@ -28,7 +27,7 @@ const MaterialWithdrawal = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { products, loading: loadingProducts } = useProducts();
-  const { isOpen, confirm, handleConfirm, handleCancel, options } = useConfirm();
+  const { confirm, ConfirmDialog } = useConfirm();
   const [loading, setLoading] = useState(false);
   const [withdrawalDate, setWithdrawalDate] = useState(new Date().toISOString().split('T')[0]);
   const [withdrawalReason, setWithdrawalReason] = useState("");
@@ -110,38 +109,39 @@ const MaterialWithdrawal = () => {
       return;
     }
 
-    confirm({
+    const confirmed = await confirm({
       title: "Confirmar Retirada",
       description: `Confirma a retirada de ${items.length} ${items.length === 1 ? 'produto' : 'produtos'}? O estoque será atualizado automaticamente.`,
-      onConfirm: async () => {
-        setLoading(true);
-        try {
-          const withdrawals = items.map(item => ({
-            product_id: item.product_id,
-            quantity: item.quantity,
-            withdrawn_by: user?.id,
-            withdrawal_reason: withdrawalReason,
-            withdrawal_date: withdrawalDate,
-            equipment_code: equipmentCode,
-            work_site: workSite,
-            company: company
-          }));
-
-          const { error } = await supabase
-            .from("material_withdrawals")
-            .insert(withdrawals);
-
-          if (error) throw error;
-
-          toast.success("Retirada de material registrada com sucesso!");
-          navigate("/inventory/history");
-        } catch (error: any) {
-          toast.error(error.message || "Erro ao registrar retirada");
-        } finally {
-          setLoading(false);
-        }
-      },
     });
+
+    if (!confirmed) return;
+
+    setLoading(true);
+    try {
+      const withdrawals = items.map(item => ({
+        product_id: item.product_id,
+        quantity: item.quantity,
+        withdrawn_by: user?.id,
+        withdrawal_reason: withdrawalReason,
+        withdrawal_date: withdrawalDate,
+        equipment_code: equipmentCode,
+        work_site: workSite,
+        company: company
+      }));
+
+      const { error } = await supabase
+        .from("material_withdrawals")
+        .insert(withdrawals);
+
+      if (error) throw error;
+
+      toast.success("Retirada de material registrada com sucesso!");
+      navigate("/inventory/history");
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao registrar retirada");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -320,16 +320,7 @@ const MaterialWithdrawal = () => {
         </div>
       </form>
 
-      <ConfirmDialog
-        open={isOpen}
-        onOpenChange={() => {}}
-        title={options?.title || ""}
-        description={options?.description || ""}
-        onConfirm={handleConfirm}
-        onCancel={handleCancel}
-        confirmText="Confirmar"
-        cancelText="Cancelar"
-      />
+      <ConfirmDialog />
     </div>
   );
 };

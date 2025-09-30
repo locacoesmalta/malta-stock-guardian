@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      assets: {
+        Row: {
+          asset_code: string
+          created_at: string
+          created_by: string | null
+          equipment_name: string
+          id: string
+          location_type: string
+          qr_code_data: string | null
+          rental_company: string | null
+          rental_end_date: string | null
+          rental_start_date: string | null
+          rental_work_site: string | null
+          updated_at: string
+        }
+        Insert: {
+          asset_code: string
+          created_at?: string
+          created_by?: string | null
+          equipment_name: string
+          id?: string
+          location_type: string
+          qr_code_data?: string | null
+          rental_company?: string | null
+          rental_end_date?: string | null
+          rental_start_date?: string | null
+          rental_work_site?: string | null
+          updated_at?: string
+        }
+        Update: {
+          asset_code?: string
+          created_at?: string
+          created_by?: string | null
+          equipment_name?: string
+          id?: string
+          location_type?: string
+          qr_code_data?: string | null
+          rental_company?: string | null
+          rental_end_date?: string | null
+          rental_start_date?: string | null
+          rental_work_site?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       material_withdrawals: {
         Row: {
           company: string

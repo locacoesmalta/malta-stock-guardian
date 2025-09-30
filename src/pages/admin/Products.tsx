@@ -27,7 +27,7 @@ interface Product {
 const Products = () => {
   const { user } = useAuth();
   const { products, loading, searchTerm, setSearchTerm, refetch } = useProducts();
-  const { isOpen, confirm, handleConfirm, handleCancel, options } = useConfirm();
+  const { confirm, ConfirmDialog } = useConfirm();
   const [open, setOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -102,24 +102,25 @@ const Products = () => {
   };
 
   const handleDelete = async (id: string, name: string) => {
-    confirm({
+    const confirmed = await confirm({
       title: "Excluir Produto",
       description: `Tem certeza que deseja excluir o produto "${name}"? Esta ação não pode ser desfeita.`,
-      onConfirm: async () => {
-        try {
-          const { error } = await supabase
-            .from("products")
-            .delete()
-            .eq("id", id);
-
-          if (error) throw error;
-          toast.success("Produto excluído com sucesso!");
-          refetch();
-        } catch (error: any) {
-          toast.error("Erro ao excluir produto");
-        }
-      },
     });
+
+    if (!confirmed) return;
+
+    try {
+      const { error } = await supabase
+        .from("products")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+      toast.success("Produto excluído com sucesso!");
+      refetch();
+    } catch (error: any) {
+      toast.error("Erro ao excluir produto");
+    }
   };
 
   const resetForm = () => {
@@ -358,16 +359,7 @@ const Products = () => {
         </CardContent>
       </Card>
 
-      <ConfirmDialog
-        open={isOpen}
-        onOpenChange={() => {}}
-        title={options?.title || ""}
-        description={options?.description || ""}
-        onConfirm={handleConfirm}
-        onCancel={handleCancel}
-        confirmText="Excluir"
-        cancelText="Cancelar"
-      />
+      <ConfirmDialog />
     </div>
   );
 };
