@@ -17,11 +17,17 @@ export type Database = {
       assets: {
         Row: {
           asset_code: string
+          available_for_rental: boolean | null
           created_at: string
           created_by: string | null
+          deposito_description: string | null
           equipment_name: string
           id: string
+          is_new_equipment: boolean | null
           location_type: string
+          maintenance_company: string | null
+          maintenance_description: string | null
+          maintenance_work_site: string | null
           qr_code_data: string | null
           rental_company: string | null
           rental_end_date: string | null
@@ -31,11 +37,17 @@ export type Database = {
         }
         Insert: {
           asset_code: string
+          available_for_rental?: boolean | null
           created_at?: string
           created_by?: string | null
+          deposito_description?: string | null
           equipment_name: string
           id?: string
+          is_new_equipment?: boolean | null
           location_type: string
+          maintenance_company?: string | null
+          maintenance_description?: string | null
+          maintenance_work_site?: string | null
           qr_code_data?: string | null
           rental_company?: string | null
           rental_end_date?: string | null
@@ -45,11 +57,17 @@ export type Database = {
         }
         Update: {
           asset_code?: string
+          available_for_rental?: boolean | null
           created_at?: string
           created_by?: string | null
+          deposito_description?: string | null
           equipment_name?: string
           id?: string
+          is_new_equipment?: boolean | null
           location_type?: string
+          maintenance_company?: string | null
+          maintenance_description?: string | null
+          maintenance_work_site?: string | null
           qr_code_data?: string | null
           rental_company?: string | null
           rental_end_date?: string | null

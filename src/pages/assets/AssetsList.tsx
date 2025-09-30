@@ -20,6 +20,12 @@ interface Asset {
   rental_work_site?: string;
   rental_start_date?: string;
   rental_end_date?: string;
+  deposito_description?: string;
+  available_for_rental?: boolean;
+  maintenance_company?: string;
+  maintenance_work_site?: string;
+  maintenance_description?: string;
+  is_new_equipment?: boolean;
   created_at: string;
 }
 
@@ -48,6 +54,36 @@ export default function AssetsList() {
       toast.error("Erro ao carregar patrimônios");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getLocationLabel = (locationType: string) => {
+    switch (locationType) {
+      case "deposito_malta":
+        return "Depósito Malta";
+      case "liberado_locacao":
+        return "Liberado para Locação";
+      case "em_manutencao":
+        return "Em Manutenção";
+      case "locacao":
+        return "Locação";
+      default:
+        return locationType;
+    }
+  };
+
+  const getLocationVariant = (locationType: string) => {
+    switch (locationType) {
+      case "deposito_malta":
+        return "secondary" as const;
+      case "liberado_locacao":
+        return "outline" as const;
+      case "em_manutencao":
+        return "destructive" as const;
+      case "locacao":
+        return "default" as const;
+      default:
+        return "secondary" as const;
     }
   };
 
@@ -126,10 +162,47 @@ export default function AssetsList() {
                   <h3 className="font-semibold text-lg">{asset.equipment_name}</h3>
                   <p className="text-sm text-muted-foreground">PAT: {asset.asset_code}</p>
                 </div>
-                <Badge variant={asset.location_type === "escritorio" ? "secondary" : "default"}>
-                  {asset.location_type === "escritorio" ? "Escritório" : "Locação"}
+                <Badge variant={getLocationVariant(asset.location_type)}>
+                  {getLocationLabel(asset.location_type)}
                 </Badge>
               </div>
+
+              {asset.location_type === "deposito_malta" && asset.deposito_description && (
+                <div className="text-sm text-muted-foreground">
+                  <p>{asset.deposito_description}</p>
+                </div>
+              )}
+
+              {asset.location_type === "liberado_locacao" && (
+                <div className="text-sm text-muted-foreground">
+                  <p>{asset.available_for_rental ? "Disponível para locação" : "Indisponível"}</p>
+                </div>
+              )}
+
+              {asset.location_type === "em_manutencao" && (
+                <div className="space-y-2 text-sm">
+                  {asset.maintenance_company && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Building2 className="h-4 w-4" />
+                      <span>{asset.maintenance_company}</span>
+                    </div>
+                  )}
+                  {asset.maintenance_work_site && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="h-4 w-4" />
+                      <span>{asset.maintenance_work_site}</span>
+                    </div>
+                  )}
+                  {asset.maintenance_description && (
+                    <p className="text-xs text-muted-foreground mt-2">{asset.maintenance_description}</p>
+                  )}
+                  {asset.is_new_equipment !== undefined && (
+                    <Badge variant="outline" className="text-xs">
+                      {asset.is_new_equipment ? "Novo" : "Usado"}
+                    </Badge>
+                  )}
+                </div>
+              )}
 
               {asset.location_type === "locacao" && (
                 <div className="space-y-2 text-sm">

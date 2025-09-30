@@ -8,8 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { ArrowLeft, QrCode } from "lucide-react";
+import { ArrowLeft, QrCode, Camera } from "lucide-react";
 import { assetSchema, type AssetFormData } from "@/lib/validations";
 import { useConfirm } from "@/hooks/useConfirm";
 
@@ -17,7 +19,7 @@ export default function AssetForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [showQrScanner, setShowQrScanner] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const { ConfirmDialog, confirm } = useConfirm();
 
   const {
@@ -29,15 +31,26 @@ export default function AssetForm() {
   } = useForm<AssetFormData>({
     resolver: zodResolver(assetSchema),
     defaultValues: {
-      location_type: "escritorio",
+      location_type: "deposito_malta",
+      available_for_rental: false,
+      is_new_equipment: true,
     },
   });
 
   const locationType = watch("location_type");
+  const availableForRental = watch("available_for_rental");
+  const isNewEquipment = watch("is_new_equipment");
 
   useEffect(() => {
     if (id) {
       fetchAsset();
+    } else {
+      // Preencher código se vier da URL (do scanner)
+      const urlParams = new URLSearchParams(window.location.search);
+      const codeFromUrl = urlParams.get('code');
+      if (codeFromUrl) {
+        setValue('asset_code', codeFromUrl);
+      }
     }
   }, [id]);
 
@@ -54,7 +67,13 @@ export default function AssetForm() {
       if (data) {
         setValue("asset_code", data.asset_code);
         setValue("equipment_name", data.equipment_name);
-        setValue("location_type", data.location_type as "escritorio" | "locacao");
+        setValue("location_type", data.location_type as any);
+        setValue("deposito_description", data.deposito_description || "");
+        setValue("available_for_rental", data.available_for_rental || false);
+        setValue("maintenance_company", data.maintenance_company || "");
+        setValue("maintenance_work_site", data.maintenance_work_site || "");
+        setValue("maintenance_description", data.maintenance_description || "");
+        setValue("is_new_equipment", data.is_new_equipment ?? true);
         setValue("rental_company", data.rental_company || "");
         setValue("rental_work_site", data.rental_work_site || "");
         setValue("rental_start_date", data.rental_start_date || "");
@@ -68,19 +87,85 @@ export default function AssetForm() {
     }
   };
 
+  const startCamera = async () => {
+    try {
+      setScanning(true);
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: "environment" } 
+      });
+      
+      // Aqui você pode integrar uma biblioteca de leitura de QR Code
+      // Por enquanto, vou apenas mostrar um toast informativo
+      toast.info("Câmera iniciada! Aponte para o código de barras.");
+      
+      // Parar o stream após alguns segundos (exemplo)
+      setTimeout(() => {
+        stream.getTracks().forEach(track => track.stop());
+        setScanning(false);
+      }, 5000);
+    } catch (error) {
+      console.error("Erro ao acessar câmera:", error);
+      toast.error("Não foi possível acessar a câmera do dispositivo");
+      setScanning(false);
+    }
+  };
+
   const onSubmit = async (data: AssetFormData) => {
     setLoading(true);
     try {
-      const payload = {
+      const payload: any = {
         asset_code: data.asset_code,
         equipment_name: data.equipment_name,
         location_type: data.location_type,
-        rental_company: data.location_type === "locacao" ? data.rental_company : null,
-        rental_work_site: data.location_type === "locacao" ? data.rental_work_site : null,
-        rental_start_date: data.location_type === "locacao" ? data.rental_start_date : null,
-        rental_end_date: data.location_type === "locacao" ? data.rental_end_date : null,
         qr_code_data: data.qr_code_data || null,
       };
+
+      // Limpar campos baseado no tipo de localização
+      if (data.location_type === "deposito_malta") {
+        payload.deposito_description = data.deposito_description || null;
+        payload.available_for_rental = null;
+        payload.maintenance_company = null;
+        payload.maintenance_work_site = null;
+        payload.maintenance_description = null;
+        payload.is_new_equipment = null;
+        payload.rental_company = null;
+        payload.rental_work_site = null;
+        payload.rental_start_date = null;
+        payload.rental_end_date = null;
+      } else if (data.location_type === "liberado_locacao") {
+        payload.deposito_description = null;
+        payload.available_for_rental = data.available_for_rental || false;
+        payload.maintenance_company = null;
+        payload.maintenance_work_site = null;
+        payload.maintenance_description = null;
+        payload.is_new_equipment = null;
+        payload.rental_company = null;
+        payload.rental_work_site = null;
+        payload.rental_start_date = null;
+        payload.rental_end_date = null;
+      } else if (data.location_type === "em_manutencao") {
+        payload.deposito_description = null;
+        payload.available_for_rental = null;
+        payload.maintenance_company = data.maintenance_company;
+        payload.maintenance_work_site = data.maintenance_work_site;
+        payload.maintenance_description = data.maintenance_description;
+        payload.is_new_equipment = data.is_new_equipment ?? true;
+        payload.rental_company = null;
+        payload.rental_work_site = null;
+        payload.rental_start_date = null;
+        payload.rental_end_date = null;
+      } else if (data.location_type === "locacao") {
+        payload.deposito_description = null;
+        payload.available_for_rental = null;
+        payload.maintenance_company = null;
+        payload.maintenance_work_site = null;
+        payload.maintenance_description = null;
+        payload.is_new_equipment = null;
+        payload.rental_company = data.rental_company;
+        payload.rental_work_site = data.rental_work_site;
+        payload.rental_start_date = data.rental_start_date;
+        payload.rental_end_date = data.rental_end_date || null;
+      }
 
       if (id) {
         const { error } = await supabase
@@ -161,9 +246,10 @@ export default function AssetForm() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate("/assets/scanner")}
+                onClick={startCamera}
+                disabled={scanning}
               >
-                <QrCode className="h-4 w-4" />
+                <Camera className="h-4 w-4" />
               </Button>
             </div>
             {errors.asset_code && (
@@ -184,15 +270,27 @@ export default function AssetForm() {
           </div>
 
           <div className="space-y-2">
-            <Label>Localização*</Label>
+            <Label>Local do Equipamento*</Label>
             <RadioGroup
               value={locationType}
-              onValueChange={(value) => setValue("location_type", value as "escritorio" | "locacao")}
+              onValueChange={(value) => setValue("location_type", value as any)}
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="escritorio" id="escritorio" />
-                <Label htmlFor="escritorio" className="font-normal cursor-pointer">
-                  Escritório
+                <RadioGroupItem value="deposito_malta" id="deposito_malta" />
+                <Label htmlFor="deposito_malta" className="font-normal cursor-pointer">
+                  Depósito Malta
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="liberado_locacao" id="liberado_locacao" />
+                <Label htmlFor="liberado_locacao" className="font-normal cursor-pointer">
+                  Liberado para Locação
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="em_manutencao" id="em_manutencao" />
+                <Label htmlFor="em_manutencao" className="font-normal cursor-pointer">
+                  Em Manutenção
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -203,6 +301,86 @@ export default function AssetForm() {
               </div>
             </RadioGroup>
           </div>
+
+          {locationType === "deposito_malta" && (
+            <div className="space-y-2">
+              <Label htmlFor="deposito_description">Descrição</Label>
+              <Textarea
+                id="deposito_description"
+                {...register("deposito_description")}
+                placeholder="Informações adicionais sobre o equipamento"
+                rows={3}
+              />
+              {errors.deposito_description && (
+                <p className="text-sm text-destructive">{errors.deposito_description.message}</p>
+              )}
+            </div>
+          )}
+
+          {locationType === "liberado_locacao" && (
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="available_for_rental"
+                checked={availableForRental}
+                onCheckedChange={(checked) => setValue("available_for_rental", checked as boolean)}
+              />
+              <Label htmlFor="available_for_rental" className="font-normal cursor-pointer">
+                Equipamento disponível para locação
+              </Label>
+            </div>
+          )}
+
+          {locationType === "em_manutencao" && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="maintenance_company">Empresa*</Label>
+                <Input
+                  id="maintenance_company"
+                  {...register("maintenance_company")}
+                  placeholder="Ex: Construtora ABC"
+                />
+                {errors.maintenance_company && (
+                  <p className="text-sm text-destructive">{errors.maintenance_company.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="maintenance_work_site">Obra*</Label>
+                <Input
+                  id="maintenance_work_site"
+                  {...register("maintenance_work_site")}
+                  placeholder="Ex: Obra Centro"
+                />
+                {errors.maintenance_work_site && (
+                  <p className="text-sm text-destructive">{errors.maintenance_work_site.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="maintenance_description">Descrição/Motivo*</Label>
+                <Textarea
+                  id="maintenance_description"
+                  {...register("maintenance_description")}
+                  placeholder="Descreva o motivo da manutenção"
+                  rows={3}
+                />
+                {errors.maintenance_description && (
+                  <p className="text-sm text-destructive">{errors.maintenance_description.message}</p>
+                )}
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="is_new_equipment"
+                  checked={isNewEquipment}
+                  onCheckedChange={(checked) => setValue("is_new_equipment", checked as boolean)}
+                />
+                <Label htmlFor="is_new_equipment" className="font-normal cursor-pointer">
+                  Equipamento Novo
+                </Label>
+              </div>
+            </>
+          )}
 
           {locationType === "locacao" && (
             <>
@@ -244,12 +422,15 @@ export default function AssetForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="rental_end_date">Data Final</Label>
+                  <Label htmlFor="rental_end_date">Data Final (Devolução)</Label>
                   <Input
                     id="rental_end_date"
                     type="date"
                     {...register("rental_end_date")}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Será preenchida quando o equipamento for devolvido
+                  </p>
                 </div>
               </div>
             </>

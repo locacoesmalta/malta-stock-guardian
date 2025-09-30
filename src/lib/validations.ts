@@ -115,9 +115,31 @@ export const assetSchema = z.object({
     .trim()
     .min(1, "Nome do equipamento é obrigatório")
     .max(200, "Nome deve ter no máximo 200 caracteres"),
-  location_type: z.enum(["escritorio", "locacao"], {
-    required_error: "Tipo de localização é obrigatório",
+  location_type: z.enum(["deposito_malta", "liberado_locacao", "em_manutencao", "locacao"], {
+    required_error: "Local do equipamento é obrigatório",
   }),
+  // Campos para Depósito Malta
+  deposito_description: z.string()
+    .trim()
+    .max(500, "Descrição deve ter no máximo 500 caracteres")
+    .optional(),
+  // Campos para Liberado para Locação
+  available_for_rental: z.boolean().optional(),
+  // Campos para Em Manutenção
+  maintenance_company: z.string()
+    .trim()
+    .max(200, "Empresa deve ter no máximo 200 caracteres")
+    .optional(),
+  maintenance_work_site: z.string()
+    .trim()
+    .max(200, "Obra deve ter no máximo 200 caracteres")
+    .optional(),
+  maintenance_description: z.string()
+    .trim()
+    .max(1000, "Descrição deve ter no máximo 1000 caracteres")
+    .optional(),
+  is_new_equipment: z.boolean().optional(),
+  // Campos para Locação
   rental_company: z.string()
     .trim()
     .max(200, "Empresa deve ter no máximo 200 caracteres")
@@ -132,6 +154,17 @@ export const assetSchema = z.object({
     .max(500, "Dados do QR Code devem ter no máximo 500 caracteres")
     .optional(),
 }).refine(
+  (data) => {
+    if (data.location_type === "em_manutencao") {
+      return !!data.maintenance_company && !!data.maintenance_work_site && !!data.maintenance_description;
+    }
+    return true;
+  },
+  {
+    message: "Empresa, obra e descrição são obrigatórios para manutenção",
+    path: ["maintenance_company"],
+  }
+).refine(
   (data) => {
     if (data.location_type === "locacao") {
       return !!data.rental_company && !!data.rental_work_site && !!data.rental_start_date;
