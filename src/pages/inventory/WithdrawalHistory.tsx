@@ -17,6 +17,9 @@ interface Withdrawal {
   withdrawal_reason: string | null;
   withdrawn_by: string;
   created_at: string;
+  equipment_code: string;
+  work_site: string;
+  company: string;
   products: {
     code: string;
     name: string;
@@ -34,6 +37,9 @@ const WithdrawalHistory = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [workSiteFilter, setWorkSiteFilter] = useState("");
+  const [companyFilter, setCompanyFilter] = useState("");
+  const [equipmentCodeFilter, setEquipmentCodeFilter] = useState("");
 
   useEffect(() => {
     fetchWithdrawals();
@@ -41,7 +47,7 @@ const WithdrawalHistory = () => {
 
   useEffect(() => {
     filterWithdrawals();
-  }, [withdrawals, startDate, endDate, searchTerm]);
+  }, [withdrawals, startDate, endDate, searchTerm, workSiteFilter, companyFilter, equipmentCodeFilter]);
 
   const fetchWithdrawals = async () => {
     try {
@@ -101,12 +107,30 @@ const WithdrawalHistory = () => {
       );
     }
 
+    if (workSiteFilter) {
+      filtered = filtered.filter((w) =>
+        w.work_site.toLowerCase().includes(workSiteFilter.toLowerCase())
+      );
+    }
+
+    if (companyFilter) {
+      filtered = filtered.filter((w) =>
+        w.company.toLowerCase().includes(companyFilter.toLowerCase())
+      );
+    }
+
+    if (equipmentCodeFilter) {
+      filtered = filtered.filter((w) =>
+        w.equipment_code.toLowerCase().includes(equipmentCodeFilter.toLowerCase())
+      );
+    }
+
     setFilteredWithdrawals(filtered);
   };
 
   const handleExport = () => {
     const csvContent = [
-      ["Data", "Produto", "Código", "Quantidade", "Motivo", "Responsável"],
+      ["Data", "Produto", "Código", "Quantidade", "Motivo", "Responsável", "PAT", "Obra", "Empresa"],
       ...filteredWithdrawals.map((w) => [
         format(new Date(w.withdrawal_date), "dd/MM/yyyy", { locale: ptBR }),
         w.products.name,
@@ -114,6 +138,9 @@ const WithdrawalHistory = () => {
         w.quantity.toString(),
         w.withdrawal_reason || "-",
         w.profiles.full_name || w.profiles.email,
+        w.equipment_code,
+        w.work_site,
+        w.company,
       ]),
     ]
       .map((row) => row.join(","))
@@ -181,6 +208,36 @@ const WithdrawalHistory = () => {
                 onChange={(e) => setEndDate(e.target.value)}
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="equipmentCode">PAT do Equipamento</Label>
+              <Input
+                id="equipmentCode"
+                placeholder="Filtrar por PAT..."
+                value={equipmentCodeFilter}
+                onChange={(e) => setEquipmentCodeFilter(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="workSite">Obra</Label>
+              <Input
+                id="workSite"
+                placeholder="Filtrar por obra..."
+                value={workSiteFilter}
+                onChange={(e) => setWorkSiteFilter(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="company">Empresa</Label>
+              <Input
+                id="company"
+                placeholder="Filtrar por empresa..."
+                value={companyFilter}
+                onChange={(e) => setCompanyFilter(e.target.value)}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -211,6 +268,9 @@ const WithdrawalHistory = () => {
                     <div className="font-medium">{withdrawal.products.name}</div>
                     <div className="text-sm text-muted-foreground">
                       Código: {withdrawal.products.code}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      PAT: {withdrawal.equipment_code} | Obra: {withdrawal.work_site} | Empresa: {withdrawal.company}
                     </div>
                     {withdrawal.withdrawal_reason && (
                       <div className="text-sm text-muted-foreground">
