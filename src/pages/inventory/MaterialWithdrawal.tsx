@@ -32,6 +32,9 @@ const MaterialWithdrawal = () => {
   const [loading, setLoading] = useState(false);
   const [withdrawalDate, setWithdrawalDate] = useState(new Date().toISOString().split('T')[0]);
   const [withdrawalReason, setWithdrawalReason] = useState("");
+  const [equipmentCode, setEquipmentCode] = useState("");
+  const [workSite, setWorkSite] = useState("");
+  const [company, setCompany] = useState("");
   const [items, setItems] = useState<WithdrawalItem[]>([]);
 
   const addItem = () => {
@@ -66,6 +69,11 @@ const MaterialWithdrawal = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!equipmentCode || !workSite || !company) {
+      toast.error("Preencha todos os campos obrigatórios: PAT do Equipamento, Obra e Empresa!");
+      return;
+    }
 
     if (items.length === 0) {
       toast.error("Adicione pelo menos um item!");
@@ -113,7 +121,10 @@ const MaterialWithdrawal = () => {
             quantity: item.quantity,
             withdrawn_by: user?.id,
             withdrawal_reason: withdrawalReason,
-            withdrawal_date: withdrawalDate
+            withdrawal_date: withdrawalDate,
+            equipment_code: equipmentCode,
+            work_site: workSite,
+            company: company
           }));
 
           const { error } = await supabase
@@ -147,6 +158,42 @@ const MaterialWithdrawal = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="equipment">PAT do Equipamento *</Label>
+                <Input
+                  id="equipment"
+                  type="text"
+                  value={equipmentCode}
+                  onChange={(e) => setEquipmentCode(e.target.value)}
+                  placeholder="Digite o PAT do equipamento"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="workSite">Obra *</Label>
+                <Input
+                  id="workSite"
+                  type="text"
+                  value={workSite}
+                  onChange={(e) => setWorkSite(e.target.value)}
+                  placeholder="Digite a obra"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="company">Empresa *</Label>
+                <Input
+                  id="company"
+                  type="text"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  placeholder="Digite a empresa"
+                  required
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="date">Data da Retirada *</Label>
                 <Input
@@ -241,10 +288,15 @@ const MaterialWithdrawal = () => {
                           <Plus className="h-4 w-4" />
                         </Button>
                       </div>
-                      {item.availableQuantity > 0 && (
-                        <p className="text-xs text-muted-foreground">
-                          Disponível: {item.availableQuantity}
-                        </p>
+                      {item.product_id && (
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">
+                            Estoque atual: {item.availableQuantity}
+                          </p>
+                          <p className="text-xs font-medium text-warning">
+                            Após retirada: {item.availableQuantity - item.quantity}
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>

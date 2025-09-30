@@ -16,31 +16,40 @@ export type Database = {
     Tables: {
       material_withdrawals: {
         Row: {
+          company: string
           created_at: string
+          equipment_code: string
           id: string
           product_id: string
           quantity: number
           withdrawal_date: string
           withdrawal_reason: string | null
           withdrawn_by: string
+          work_site: string
         }
         Insert: {
+          company: string
           created_at?: string
+          equipment_code: string
           id?: string
           product_id: string
           quantity: number
           withdrawal_date?: string
           withdrawal_reason?: string | null
           withdrawn_by: string
+          work_site: string
         }
         Update: {
+          company?: string
           created_at?: string
+          equipment_code?: string
           id?: string
           product_id?: string
           quantity?: number
           withdrawal_date?: string
           withdrawal_reason?: string | null
           withdrawn_by?: string
+          work_site?: string
         }
         Relationships: [
           {
