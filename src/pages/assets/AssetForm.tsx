@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { ArrowLeft, QrCode, Camera } from "lucide-react";
 import { assetSchema, type AssetFormData } from "@/lib/validations";
 import { useConfirm } from "@/hooks/useConfirm";
+import { Html5QrcodeScanner } from "html5-qrcode";
 
 export default function AssetForm() {
   const { id } = useParams();
@@ -87,27 +88,30 @@ export default function AssetForm() {
     }
   };
 
-  const startCamera = async () => {
-    try {
-      setScanning(true);
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "environment" } 
-      });
-      
-      // Aqui você pode integrar uma biblioteca de leitura de QR Code
-      // Por enquanto, vou apenas mostrar um toast informativo
-      toast.info("Câmera iniciada! Aponte para o código de barras.");
-      
-      // Parar o stream após alguns segundos (exemplo)
-      setTimeout(() => {
-        stream.getTracks().forEach(track => track.stop());
+  const startCamera = () => {
+    setScanning(true);
+    
+    const scanner = new Html5QrcodeScanner(
+      "qr-reader-form",
+      {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0,
+      },
+      false
+    );
+
+    scanner.render(
+      (decodedText) => {
+        setValue('asset_code', decodedText);
+        toast.success("QR Code lido com sucesso!");
+        scanner.clear();
         setScanning(false);
-      }, 5000);
-    } catch (error) {
-      console.error("Erro ao acessar câmera:", error);
-      toast.error("Não foi possível acessar a câmera do dispositivo");
-      setScanning(false);
-    }
+      },
+      (error) => {
+        console.log("QR Code scan error:", error);
+      }
+    );
   };
 
   const onSubmit = async (data: AssetFormData) => {
@@ -242,6 +246,7 @@ export default function AssetForm() {
                 id="asset_code"
                 {...register("asset_code")}
                 placeholder="Ex: PAT001"
+                disabled={scanning}
               />
               <Button
                 type="button"
@@ -252,6 +257,22 @@ export default function AssetForm() {
                 <Camera className="h-4 w-4" />
               </Button>
             </div>
+            {scanning && (
+              <div className="mt-4">
+                <div
+                  id="qr-reader-form"
+                  className="w-full rounded-lg overflow-hidden"
+                />
+                <Button
+                  type="button"
+                  onClick={() => setScanning(false)}
+                  variant="outline"
+                  className="w-full mt-2"
+                >
+                  Cancelar Scanner
+                </Button>
+              </div>
+            )}
             {errors.asset_code && (
               <p className="text-sm text-destructive">{errors.asset_code.message}</p>
             )}
