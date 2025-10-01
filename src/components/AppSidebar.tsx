@@ -87,6 +87,7 @@ export function AppSidebar() {
             src={maltaLogo} 
             alt="Malta Locações" 
             className="w-12 h-12 object-contain"
+            fetchPriority="high"
           />
           <div>
             <h2 className="font-semibold text-sidebar-foreground">Malta Locações</h2>

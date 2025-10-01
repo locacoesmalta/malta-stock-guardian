@@ -35,6 +35,7 @@ const Welcome = () => {
             src={maltaLogo} 
             alt="Malta Locações Logo" 
             className="w-32 h-32 md:w-40 md:h-40 object-contain"
+            fetchPriority="high"
           />
         </div>
         

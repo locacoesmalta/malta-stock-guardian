@@ -117,6 +117,7 @@ const Auth = () => {
               src={maltaLogo} 
               alt="Malta Locações Logo" 
               className="w-32 h-32 object-contain"
+              fetchPriority="high"
             />
           </div>
           <CardTitle className="text-2xl font-bold">Malta Locações</CardTitle>
