@@ -1,4 +1,4 @@
-import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield } from "lucide-react";
+import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -57,6 +57,12 @@ export function AppSidebar() {
       icon: History,
       label: "Histórico de Retiradas",
       show: permissions.can_view_withdrawal_history || isAdmin,
+    },
+    {
+      path: "/assets/control",
+      icon: BarChart3,
+      label: "Controle de Patrimônio",
+      show: permissions.can_access_assets || isAdmin,
     },
     {
       path: "/assets",
