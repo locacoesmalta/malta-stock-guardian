@@ -223,20 +223,29 @@ const Products = () => {
         // Verificar se o produto já existe pelo código
         const { data: existingProduct } = await supabase
           .from("products")
-          .select("id, quantity")
+          .select("id, quantity, purchase_price, sale_price")
           .eq("code", productData.code)
           .maybeSingle();
 
         if (existingProduct) {
-          // Atualizar somando a quantidade
+          // Calcular média de preços se houver mudança
+          const newPurchasePrice = productData.purchase_price && existingProduct.purchase_price
+            ? (existingProduct.purchase_price + productData.purchase_price) / 2
+            : productData.purchase_price || existingProduct.purchase_price;
+          
+          const newSalePrice = productData.sale_price && existingProduct.sale_price
+            ? (existingProduct.sale_price + productData.sale_price) / 2
+            : productData.sale_price || existingProduct.sale_price;
+
+          // Atualizar somando a quantidade e calculando média dos preços
           await supabase
             .from("products")
             .update({
               quantity: existingProduct.quantity + productData.quantity,
               name: productData.name,
               min_quantity: productData.min_quantity,
-              purchase_price: productData.purchase_price,
-              sale_price: productData.sale_price,
+              purchase_price: newPurchasePrice,
+              sale_price: newSalePrice,
               comments: productData.comments,
             })
             .eq("id", existingProduct.id);
@@ -464,6 +473,11 @@ const Products = () => {
                             Venda: R$ {product.sale_price.toFixed(2)}
                           </span>
                         )}
+                      </div>
+                    )}
+                    {product.comments && (
+                      <div className="text-sm text-muted-foreground italic">
+                        {product.comments}
                       </div>
                     )}
                   </div>
