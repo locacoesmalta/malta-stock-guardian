@@ -36,9 +36,9 @@ const WithdrawalHistory = () => {
     if (searchTerm) {
       filtered = filtered.filter(
         (w) =>
-          w.products.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          w.products.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (w.profiles.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
+          w.products?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          w.products?.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (w.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
       );
     }
 
@@ -68,11 +68,11 @@ const WithdrawalHistory = () => {
       ["Data", "Produto", "Código", "Quantidade", "Motivo", "Responsável", "PAT", "Obra", "Empresa"],
       ...filteredWithdrawals.map((w) => [
         format(new Date(w.withdrawal_date), "dd/MM/yyyy", { locale: ptBR }),
-        w.products.name,
-        w.products.code,
+        w.products?.name || "Sem permissão",
+        w.products?.code || "-",
         w.quantity.toString(),
         w.withdrawal_reason || "-",
-        w.profiles.full_name || w.profiles.email,
+        w.profiles?.full_name || w.profiles?.email || "-",
         w.equipment_code,
         w.work_site,
         w.company,
@@ -200,9 +200,11 @@ const WithdrawalHistory = () => {
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex-1 space-y-1">
-                    <div className="font-medium">{withdrawal.products.name}</div>
+                    <div className="font-medium">
+                      {withdrawal.products?.name || "Produto (sem permissão para visualizar)"}
+                    </div>
                     <div className="text-sm text-muted-foreground">
-                      Código: {withdrawal.products.code}
+                      Código: {withdrawal.products?.code || "-"}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       PAT: {withdrawal.equipment_code} | Obra: {withdrawal.work_site} | Empresa: {withdrawal.company}
@@ -224,7 +226,7 @@ const WithdrawalHistory = () => {
                       })}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {withdrawal.profiles.full_name || withdrawal.profiles.email}
+                      {withdrawal.profiles?.full_name || withdrawal.profiles?.email || "-"}
                     </div>
                   </div>
                 </div>
