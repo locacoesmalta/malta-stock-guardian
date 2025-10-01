@@ -45,7 +45,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    let mounted = true;
+
+    const initAuth = async () => {
+      try {
+        // Get initial session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          await checkAdminStatus(session.user.id);
+        }
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -56,24 +83,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         // Registrar login
         if (event === 'SIGNED_IN') {
-          try {
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("email, full_name")
-              .eq("id", session.user.id)
-              .single();
+          setTimeout(async () => {
+            try {
+              const { data: profile } = await supabase
+                .from("profiles")
+                .select("email, full_name")
+                .eq("id", session.user.id)
+                .single();
 
-            await supabase.from("audit_logs").insert({
-              user_id: session.user.id,
-              user_email: profile?.email || session.user.email || "unknown",
-              user_name: profile?.full_name,
-              action: "LOGIN",
-              table_name: null,
-              record_id: null,
-            });
-          } catch (error) {
-            console.error("Erro ao registrar login:", error);
-          }
+              await supabase.from("audit_logs").insert({
+                user_id: session.user.id,
+                user_email: profile?.email || session.user.email || "unknown",
+                user_name: profile?.full_name,
+                action: "LOGIN",
+                table_name: null,
+                record_id: null,
+              });
+            } catch (error) {
+              console.error("Erro ao registrar login:", error);
+            }
+          }, 0);
         }
       } else {
         setIsAdmin(false);
@@ -82,16 +111,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        checkAdminStatus(session.user.id);
-      }
-      setLoading(false);
-    });
+    initAuth();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const checkAdminStatus = async (userId: string) => {
@@ -153,8 +178,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsAdmin(false);
       setIsActive(false);
       setPermissions(null);
-    } finally {
-      setLoading(false);
     }
   };
 
