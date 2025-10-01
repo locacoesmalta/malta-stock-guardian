@@ -96,21 +96,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAdminStatus = async (userId: string) => {
     try {
-      const { data: roleData } = await supabase
+      const { data: roleData, error: roleError } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", userId)
         .single();
 
+      if (roleError) {
+        console.error("Error fetching role:", roleError);
+      }
+
       const isUserAdmin = roleData?.role === "admin";
       setIsAdmin(isUserAdmin);
 
       // Fetch all permissions
-      const { data: permData } = await supabase
+      const { data: permData, error: permError } = await supabase
         .from("user_permissions")
         .select("*")
         .eq("user_id", userId)
         .single();
+
+      if (permError) {
+        console.error("Error fetching permissions:", permError);
+      }
 
       if (permData) {
         setPermissions(permData as UserPermissions);
@@ -145,6 +153,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsAdmin(false);
       setIsActive(false);
       setPermissions(null);
+    } finally {
+      setLoading(false);
     }
   };
 
