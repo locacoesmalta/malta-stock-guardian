@@ -89,7 +89,7 @@ export type Database = {
           table_name: string | null
           user_agent: string | null
           user_email: string
-          user_id: string
+          user_id: string | null
           user_name: string | null
         }
         Insert: {
@@ -103,7 +103,7 @@ export type Database = {
           table_name?: string | null
           user_agent?: string | null
           user_email: string
-          user_id: string
+          user_id?: string | null
           user_name?: string | null
         }
         Update: {
@@ -117,7 +117,7 @@ export type Database = {
           table_name?: string | null
           user_agent?: string | null
           user_email?: string
-          user_id?: string
+          user_id?: string | null
           user_name?: string | null
         }
         Relationships: []
