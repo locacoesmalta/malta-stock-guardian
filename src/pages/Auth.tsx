@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { authSchema } from "@/lib/validations";
-import maltaLogo from "@/assets/malta-logo.png";
+import maltaLogo from "@/assets/malta-logo.webp";
 
 const Auth = () => {
   const navigate = useNavigate();

@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Upload, X } from "lucide-react";
-import maltaLogo from "@/assets/malta-logo.png";
+import maltaLogo from "@/assets/malta-logo.webp";
 import "@/styles/report-print.css";
 import { useProductsQuery } from "@/hooks/useProductsQuery";
 
