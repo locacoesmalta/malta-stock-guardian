@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Package, Warehouse } from "lucide-react";
-import maltaLogo from "@/assets/malta-logo-optimized.webp";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -32,7 +31,7 @@ const Welcome = () => {
       <div className="text-center space-y-8 max-w-2xl w-full">
         <div className="flex justify-center animate-fade-in">
           <img 
-            src={maltaLogo} 
+            src="/malta-logo.webp" 
             alt="Malta Locações Logo" 
             className="w-32 h-32 md:w-40 md:h-40 object-contain"
             fetchPriority="high"

@@ -1,6 +1,5 @@
 import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield } from "lucide-react";
 import { NavLink } from "react-router-dom";
-import maltaLogo from "@/assets/malta-logo-optimized.webp";
 import {
   Sidebar,
   SidebarContent,
@@ -84,7 +83,7 @@ export function AppSidebar() {
       <SidebarHeader className="border-b px-6 py-4">
         <div className="flex items-center gap-3">
           <img 
-            src={maltaLogo} 
+            src="/malta-logo.webp" 
             alt="Malta Locações" 
             className="w-12 h-12 object-contain"
             fetchPriority="high"

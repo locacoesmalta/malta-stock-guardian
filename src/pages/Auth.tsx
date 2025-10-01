@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { authSchema } from "@/lib/validations";
-import maltaLogo from "@/assets/malta-logo-optimized.webp";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -114,7 +113,7 @@ const Auth = () => {
         <CardHeader className="space-y-1 text-center">
           <div className="flex items-center justify-center mb-4">
             <img 
-              src={maltaLogo} 
+              src="/malta-logo.webp" 
               alt="Malta Locações Logo" 
               className="w-32 h-32 object-contain"
               fetchPriority="high"

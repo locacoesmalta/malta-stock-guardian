@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Upload, X } from "lucide-react";
-import maltaLogo from "@/assets/malta-logo-optimized.webp";
 import "@/styles/report-print.css";
 import { useProductsQuery } from "@/hooks/useProductsQuery";
 
@@ -264,7 +263,7 @@ const NewReport = () => {
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-center gap-4">
-        <img src={maltaLogo} alt="Malta Locações" className="h-12" />
+        <img src="/malta-logo.webp" alt="Malta Locações" className="h-12" />
         <div>
           <h1 className="text-3xl font-bold">Relatório Fotográfico de Avarias</h1>
           <p className="text-muted-foreground">Registre a saída de produtos e serviços executados</p>
