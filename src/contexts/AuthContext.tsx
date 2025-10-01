@@ -3,11 +3,32 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
+interface UserPermissions {
+  is_active: boolean;
+  can_access_main_menu: boolean;
+  can_access_admin: boolean;
+  can_view_products: boolean;
+  can_create_reports: boolean;
+  can_view_reports: boolean;
+  can_create_withdrawals: boolean;
+  can_view_withdrawal_history: boolean;
+  can_edit_products: boolean;
+  can_delete_products: boolean;
+  can_edit_reports: boolean;
+  can_delete_reports: boolean;
+  can_access_assets: boolean;
+  can_create_assets: boolean;
+  can_edit_assets: boolean;
+  can_delete_assets: boolean;
+  can_scan_assets: boolean;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   isAdmin: boolean;
   isActive: boolean;
+  permissions: UserPermissions | null;
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -19,6 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isActive, setIsActive] = useState(false);
+  const [permissions, setPermissions] = useState<UserPermissions | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -34,6 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setIsAdmin(false);
         setIsActive(false);
+        setPermissions(null);
       }
     });
 
@@ -60,24 +83,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const isUserAdmin = roleData?.role === "admin";
       setIsAdmin(isUserAdmin);
 
-      // Admins are always active
-      if (isUserAdmin) {
-        setIsActive(true);
-        return;
-      }
-
-      // For non-admins, check permissions
+      // Fetch all permissions
       const { data: permData } = await supabase
         .from("user_permissions")
-        .select("is_active")
+        .select("*")
         .eq("user_id", userId)
         .single();
 
-      setIsActive(permData?.is_active === true);
+      if (permData) {
+        setPermissions(permData as UserPermissions);
+        setIsActive(permData.is_active === true);
+      } else {
+        // Admins get all permissions by default
+        if (isUserAdmin) {
+          setPermissions({
+            is_active: true,
+            can_access_main_menu: true,
+            can_access_admin: true,
+            can_view_products: true,
+            can_create_reports: true,
+            can_view_reports: true,
+            can_create_withdrawals: true,
+            can_view_withdrawal_history: true,
+            can_edit_products: true,
+            can_delete_products: true,
+            can_edit_reports: true,
+            can_delete_reports: true,
+            can_access_assets: true,
+            can_create_assets: true,
+            can_edit_assets: true,
+            can_delete_assets: true,
+            can_scan_assets: true,
+          });
+          setIsActive(true);
+        }
+      }
     } catch (error) {
       console.error("Error checking user status:", error);
       setIsAdmin(false);
       setIsActive(false);
+      setPermissions(null);
     }
   };
 
@@ -87,11 +132,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setSession(null);
     setIsAdmin(false);
     setIsActive(false);
+    setPermissions(null);
     navigate("/auth");
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, isAdmin, isActive, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, isAdmin, isActive, permissions, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

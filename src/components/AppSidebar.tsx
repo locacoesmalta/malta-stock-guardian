@@ -17,10 +17,64 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 
 export function AppSidebar() {
-  const { isAdmin, signOut, user } = useAuth();
+  const { isAdmin, signOut, user, permissions } = useAuth();
 
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "";
+
+  // Se não tem permissões carregadas, não mostrar menu
+  if (!permissions) {
+    return null;
+  }
+
+  // Menu items principais com suas permissões
+  const mainMenuItems = [
+    {
+      path: "/dashboard",
+      icon: Package,
+      label: "Controle de Estoque",
+      show: permissions.can_view_products || isAdmin,
+    },
+    {
+      path: "/reports/new",
+      icon: FileText,
+      label: "Novo Relatório",
+      show: permissions.can_create_reports || isAdmin,
+    },
+    {
+      path: "/reports",
+      icon: FileText,
+      label: "Histórico de Relatórios",
+      show: permissions.can_view_reports || isAdmin,
+    },
+    {
+      path: "/inventory/withdrawal",
+      icon: PackageMinus,
+      label: "Retirada de Material",
+      show: permissions.can_create_withdrawals || isAdmin,
+    },
+    {
+      path: "/inventory/history",
+      icon: History,
+      label: "Histórico de Retiradas",
+      show: permissions.can_view_withdrawal_history || isAdmin,
+    },
+    {
+      path: "/assets",
+      icon: QrCode,
+      label: "Gestão de Patrimônio",
+      show: permissions.can_access_assets || isAdmin,
+    },
+  ];
+
+  // Filtrar itens visíveis
+  const visibleMainMenuItems = mainMenuItems.filter(item => item.show);
+
+  // Só mostrar o menu principal se houver permissão ou se for admin
+  const showMainMenu = permissions.can_access_main_menu || isAdmin;
+
+  // Só mostrar o menu admin se tiver permissão ou for admin
+  const showAdminMenu = permissions.can_access_admin || isAdmin;
 
   return (
     <Sidebar
@@ -42,68 +96,27 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/dashboard" className={getNavCls}>
-                    <Package className="h-4 w-4" />
-                    <span>Controle de Estoque</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/reports/new" className={getNavCls}>
-                    <FileText className="h-4 w-4" />
-                    <span>Novo Relatório</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+        {showMainMenu && visibleMainMenuItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {visibleMainMenuItems.map((item) => (
+                  <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton asChild>
+                      <NavLink to={item.path} className={getNavCls}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/reports" className={getNavCls}>
-                    <FileText className="h-4 w-4" />
-                    <span>Histórico</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/inventory/withdrawal" className={getNavCls}>
-                    <PackageMinus className="h-4 w-4" />
-                    <span>Retirada de Material</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/inventory/history" className={getNavCls}>
-                    <History className="h-4 w-4" />
-                    <span>Histórico de Retiradas</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/assets" className={getNavCls}>
-                    <QrCode className="h-4 w-4" />
-                    <span>Gestão de Patrimônio</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {isAdmin && (
+        {showAdminMenu && (
           <SidebarGroup>
             <SidebarGroupLabel>Administração</SidebarGroupLabel>
             <SidebarGroupContent>

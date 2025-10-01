@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { PermissionRoute } from "@/components/PermissionRoute";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import Products from "./pages/admin/Products";
@@ -54,7 +55,7 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
 };
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAdmin, loading } = useAuth();
+  const { isAdmin, permissions, loading } = useAuth();
 
   if (loading) {
     return (
@@ -64,8 +65,20 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (!isAdmin) {
-    return <Navigate to="/" replace />;
+  if (!isAdmin && (!permissions || !permissions.can_access_admin)) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-muted-foreground">Acesso Negado</h2>
+          <p className="text-muted-foreground mt-2">
+            Você não tem permissão para acessar esta página.
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Entre em contato com o administrador para solicitar acesso.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;
@@ -82,15 +95,96 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/welcome" element={<ProtectedLayout><Welcome /></ProtectedLayout>} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<ProtectedLayout><Dashboard /></ProtectedLayout>} />
-            <Route path="/reports/new" element={<ProtectedLayout><NewReport /></ProtectedLayout>} />
-            <Route path="/reports" element={<ProtectedLayout><ReportsList /></ProtectedLayout>} />
-            <Route path="/inventory/withdrawal" element={<ProtectedLayout><MaterialWithdrawal /></ProtectedLayout>} />
-            <Route path="/inventory/history" element={<ProtectedLayout><WithdrawalHistory /></ProtectedLayout>} />
-            <Route path="/assets" element={<ProtectedLayout><AssetsList /></ProtectedLayout>} />
-            <Route path="/assets/scanner" element={<ProtectedLayout><AssetScanner /></ProtectedLayout>} />
-            <Route path="/assets/new" element={<ProtectedLayout><AdminRoute><AssetForm /></AdminRoute></ProtectedLayout>} />
-            <Route path="/assets/edit/:id" element={<ProtectedLayout><AdminRoute><AssetForm /></AdminRoute></ProtectedLayout>} />
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedLayout>
+                  <PermissionRoute permission="can_view_products">
+                    <Dashboard />
+                  </PermissionRoute>
+                </ProtectedLayout>
+              } 
+            />
+            <Route 
+              path="/reports/new" 
+              element={
+                <ProtectedLayout>
+                  <PermissionRoute permission="can_create_reports">
+                    <NewReport />
+                  </PermissionRoute>
+                </ProtectedLayout>
+              } 
+            />
+            <Route 
+              path="/reports" 
+              element={
+                <ProtectedLayout>
+                  <PermissionRoute permission="can_view_reports">
+                    <ReportsList />
+                  </PermissionRoute>
+                </ProtectedLayout>
+              } 
+            />
+            <Route 
+              path="/inventory/withdrawal" 
+              element={
+                <ProtectedLayout>
+                  <PermissionRoute permission="can_create_withdrawals">
+                    <MaterialWithdrawal />
+                  </PermissionRoute>
+                </ProtectedLayout>
+              } 
+            />
+            <Route 
+              path="/inventory/history" 
+              element={
+                <ProtectedLayout>
+                  <PermissionRoute permission="can_view_withdrawal_history">
+                    <WithdrawalHistory />
+                  </PermissionRoute>
+                </ProtectedLayout>
+              } 
+            />
+            <Route 
+              path="/assets" 
+              element={
+                <ProtectedLayout>
+                  <PermissionRoute permission="can_access_assets">
+                    <AssetsList />
+                  </PermissionRoute>
+                </ProtectedLayout>
+              } 
+            />
+            <Route 
+              path="/assets/scanner" 
+              element={
+                <ProtectedLayout>
+                  <PermissionRoute permission="can_scan_assets">
+                    <AssetScanner />
+                  </PermissionRoute>
+                </ProtectedLayout>
+              } 
+            />
+            <Route 
+              path="/assets/new" 
+              element={
+                <ProtectedLayout>
+                  <PermissionRoute permission="can_create_assets">
+                    <AssetForm />
+                  </PermissionRoute>
+                </ProtectedLayout>
+              } 
+            />
+            <Route 
+              path="/assets/edit/:id" 
+              element={
+                <ProtectedLayout>
+                  <PermissionRoute permission="can_edit_assets">
+                    <AssetForm />
+                  </PermissionRoute>
+                </ProtectedLayout>
+              } 
+            />
             <Route path="/admin/products" element={<ProtectedLayout><AdminRoute><Products /></AdminRoute></ProtectedLayout>} />
             <Route path="/admin/users" element={<ProtectedLayout><AdminRoute><Users /></AdminRoute></ProtectedLayout>} />
             <Route path="/admin/settings" element={<ProtectedLayout><AdminRoute><Settings /></AdminRoute></ProtectedLayout>} />
