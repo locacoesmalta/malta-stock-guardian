@@ -172,6 +172,7 @@ export type Database = {
       products: {
         Row: {
           code: string
+          comments: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -184,6 +185,7 @@ export type Database = {
         }
         Insert: {
           code: string
+          comments?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -196,6 +198,7 @@ export type Database = {
         }
         Update: {
           code?: string
+          comments?: string | null
           created_at?: string
           created_by?: string | null
           id?: string

@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { StockBadge } from "@/components/StockBadge";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,6 +14,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useProducts } from "@/hooks/useProducts";
 import { productSchema } from "@/lib/validations";
+import * as XLSX from "xlsx";
 
 interface Product {
   id: string;
@@ -22,6 +24,7 @@ interface Product {
   min_quantity: number;
   purchase_price: number | null;
   sale_price: number | null;
+  comments: string | null;
 }
 
 const Products = () => {
@@ -31,6 +34,8 @@ const Products = () => {
   const [open, setOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     code: "",
     name: "",
@@ -38,6 +43,7 @@ const Products = () => {
     min_quantity: 0,
     purchase_price: "",
     sale_price: "",
+    comments: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -52,6 +58,7 @@ const Products = () => {
       min_quantity: Number(formData.min_quantity),
       purchase_price: formData.purchase_price ? Number(formData.purchase_price) : null,
       sale_price: formData.sale_price ? Number(formData.sale_price) : null,
+      comments: formData.comments || null,
     };
 
     // Validate with Zod
@@ -131,6 +138,7 @@ const Products = () => {
       min_quantity: 0,
       purchase_price: "",
       sale_price: "",
+      comments: "",
     });
     setErrors({});
   };
@@ -144,8 +152,113 @@ const Products = () => {
       min_quantity: product.min_quantity,
       purchase_price: product.purchase_price?.toString() || "",
       sale_price: product.sale_price?.toString() || "",
+      comments: product.comments || "",
     });
     setOpen(true);
+  };
+
+  const downloadTemplate = () => {
+    const template = [
+      {
+        codigo: "EX001",
+        nome: "Exemplo de Produto",
+        quantidade: 10,
+        quantidade_minima: 5,
+        preco_compra: 100.50,
+        preco_venda: 150.00,
+        comentarios: "Observações sobre o produto"
+      }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(template);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Produtos");
+    
+    const colWidths = [
+      { wch: 15 }, // codigo
+      { wch: 30 }, // nome
+      { wch: 12 }, // quantidade
+      { wch: 18 }, // quantidade_minima
+      { wch: 15 }, // preco_compra
+      { wch: 15 }, // preco_venda
+      { wch: 40 }, // comentarios
+    ];
+    ws['!cols'] = colWidths;
+
+    XLSX.writeFile(wb, "template_produtos.xlsx");
+    toast.success("Template baixado com sucesso!");
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      if (jsonData.length === 0) {
+        toast.error("Arquivo Excel vazio");
+        return;
+      }
+
+      let inserted = 0;
+      let updated = 0;
+
+      for (const row of jsonData as any[]) {
+        const productData = {
+          code: row.codigo?.toString() || "",
+          name: row.nome?.toString() || "",
+          quantity: Number(row.quantidade) || 0,
+          min_quantity: Number(row.quantidade_minima) || 0,
+          purchase_price: row.preco_compra ? Number(row.preco_compra) : null,
+          sale_price: row.preco_venda ? Number(row.preco_venda) : null,
+          comments: row.comentarios?.toString() || null,
+          created_by: user?.id,
+        };
+
+        // Verificar se o produto já existe pelo código
+        const { data: existingProduct } = await supabase
+          .from("products")
+          .select("id, quantity")
+          .eq("code", productData.code)
+          .maybeSingle();
+
+        if (existingProduct) {
+          // Atualizar somando a quantidade
+          await supabase
+            .from("products")
+            .update({
+              quantity: existingProduct.quantity + productData.quantity,
+              name: productData.name,
+              min_quantity: productData.min_quantity,
+              purchase_price: productData.purchase_price,
+              sale_price: productData.sale_price,
+              comments: productData.comments,
+            })
+            .eq("id", existingProduct.id);
+          updated++;
+        } else {
+          // Inserir novo produto
+          await supabase.from("products").insert([productData]);
+          inserted++;
+        }
+      }
+
+      toast.success(`${inserted} produtos adicionados, ${updated} produtos atualizados!`);
+      refetch();
+    } catch (error: any) {
+      toast.error("Erro ao processar arquivo Excel");
+      console.error(error);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
 
   return (
@@ -155,19 +268,35 @@ const Products = () => {
           <h1 className="text-3xl font-bold">Gestão de Produtos</h1>
           <p className="text-muted-foreground">Cadastre e gerencie os produtos do estoque</p>
         </div>
-        <Dialog open={open} onOpenChange={(value) => {
-          setOpen(value);
-          if (!value) {
-            setEditingProduct(null);
-            resetForm();
-          }
-        }}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Produto
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={downloadTemplate}>
+            <Download className="h-4 w-4 mr-2" />
+            Baixar Template
+          </Button>
+          <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+            <Upload className="h-4 w-4 mr-2" />
+            {uploading ? "Processando..." : "Importar Excel"}
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          <Dialog open={open} onOpenChange={(value) => {
+            setOpen(value);
+            if (!value) {
+              setEditingProduct(null);
+              resetForm();
+            }
+          }}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Produto
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>
@@ -252,6 +381,19 @@ const Products = () => {
                 </div>
               </div>
 
+              {editingProduct && (
+                <div className="space-y-2">
+                  <Label htmlFor="comments">Comentários / Especificações</Label>
+                  <Textarea
+                    id="comments"
+                    value={formData.comments}
+                    onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
+                    placeholder="Adicione observações específicas sobre este produto..."
+                    rows={4}
+                  />
+                </div>
+              )}
+
               <div className="flex gap-2 justify-end">
                 <Button
                   type="button"
@@ -271,6 +413,7 @@ const Products = () => {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <Card>

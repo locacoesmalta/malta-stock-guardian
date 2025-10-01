@@ -24,6 +24,10 @@ export const productSchema = z.object({
     .min(0, "Preço de venda não pode ser negativo")
     .nullable()
     .optional(),
+  comments: z.string()
+    .trim()
+    .max(1000, "Comentários devem ter no máximo 1000 caracteres")
+    .optional(),
 });
 
 // Report validation

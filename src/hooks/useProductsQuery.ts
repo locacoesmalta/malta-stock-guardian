@@ -9,6 +9,7 @@ interface Product {
   min_quantity: number;
   purchase_price: number | null;
   sale_price: number | null;
+  comments: string | null;
 }
 
 const fetchProducts = async (): Promise<Product[]> => {
