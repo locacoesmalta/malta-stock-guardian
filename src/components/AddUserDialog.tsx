@@ -25,6 +25,17 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
     can_view_products: false,
     can_create_reports: false,
     can_view_reports: false,
+    can_create_withdrawals: false,
+    can_view_withdrawal_history: false,
+    can_edit_products: false,
+    can_delete_products: false,
+    can_edit_reports: false,
+    can_delete_reports: false,
+    can_access_assets: false,
+    can_create_assets: false,
+    can_edit_assets: false,
+    can_delete_assets: false,
+    can_scan_assets: false,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,6 +61,17 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
             can_view_products: formData.can_view_products,
             can_create_reports: formData.can_create_reports,
             can_view_reports: formData.can_view_reports,
+            can_create_withdrawals: formData.can_create_withdrawals,
+            can_view_withdrawal_history: formData.can_view_withdrawal_history,
+            can_edit_products: formData.can_edit_products,
+            can_delete_products: formData.can_delete_products,
+            can_edit_reports: formData.can_edit_reports,
+            can_delete_reports: formData.can_delete_reports,
+            can_access_assets: formData.can_access_assets,
+            can_create_assets: formData.can_create_assets,
+            can_edit_assets: formData.can_edit_assets,
+            can_delete_assets: formData.can_delete_assets,
+            can_scan_assets: formData.can_scan_assets,
           }
         }
       });
@@ -73,6 +95,17 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
         can_view_products: false,
         can_create_reports: false,
         can_view_reports: false,
+        can_create_withdrawals: false,
+        can_view_withdrawal_history: false,
+        can_edit_products: false,
+        can_delete_products: false,
+        can_edit_reports: false,
+        can_delete_reports: false,
+        can_access_assets: false,
+        can_create_assets: false,
+        can_edit_assets: false,
+        can_delete_assets: false,
+        can_scan_assets: false,
       });
       onUserAdded();
     } catch (error: any) {
@@ -91,7 +124,7 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
           Adicionar Usuário
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Adicionar Novo Usuário</DialogTitle>
         </DialogHeader>
@@ -189,8 +222,10 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
                   />
                 </div>
 
+                <div className="text-xs font-semibold mt-3 mb-2 text-primary">📦 Controle de Estoque</div>
+                
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="can_view_products">Visualizar Produtos</Label>
+                  <Label htmlFor="can_view_products" className="text-xs">Visualizar Produtos</Label>
                   <Switch
                     id="can_view_products"
                     checked={formData.can_view_products}
@@ -201,7 +236,53 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="can_create_reports">Criar Relatórios</Label>
+                  <Label htmlFor="can_edit_products" className="text-xs">Editar Produtos</Label>
+                  <Switch
+                    id="can_edit_products"
+                    checked={formData.can_edit_products}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, can_edit_products: checked })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="can_delete_products" className="text-xs">Excluir Produtos</Label>
+                  <Switch
+                    id="can_delete_products"
+                    checked={formData.can_delete_products}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, can_delete_products: checked })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="can_create_withdrawals" className="text-xs">Criar Saídas de Material</Label>
+                  <Switch
+                    id="can_create_withdrawals"
+                    checked={formData.can_create_withdrawals}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, can_create_withdrawals: checked })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="can_view_withdrawal_history" className="text-xs">Ver Histórico de Saídas</Label>
+                  <Switch
+                    id="can_view_withdrawal_history"
+                    checked={formData.can_view_withdrawal_history}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, can_view_withdrawal_history: checked })
+                    }
+                  />
+                </div>
+
+                <div className="text-xs font-semibold mt-3 mb-2 text-primary">📋 Relatórios</div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="can_create_reports" className="text-xs">Criar Relatórios</Label>
                   <Switch
                     id="can_create_reports"
                     checked={formData.can_create_reports}
@@ -212,12 +293,91 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="can_view_reports">Visualizar Relatórios</Label>
+                  <Label htmlFor="can_view_reports" className="text-xs">Visualizar Relatórios</Label>
                   <Switch
                     id="can_view_reports"
                     checked={formData.can_view_reports}
                     onCheckedChange={(checked) =>
                       setFormData({ ...formData, can_view_reports: checked })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="can_edit_reports" className="text-xs">Editar Relatórios</Label>
+                  <Switch
+                    id="can_edit_reports"
+                    checked={formData.can_edit_reports}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, can_edit_reports: checked })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="can_delete_reports" className="text-xs">Excluir Relatórios</Label>
+                  <Switch
+                    id="can_delete_reports"
+                    checked={formData.can_delete_reports}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, can_delete_reports: checked })
+                    }
+                  />
+                </div>
+
+                <div className="text-xs font-semibold mt-3 mb-2 text-primary">🏢 Gestão de Patrimônio</div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="can_access_assets" className="text-xs">Acessar Patrimônio</Label>
+                  <Switch
+                    id="can_access_assets"
+                    checked={formData.can_access_assets}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, can_access_assets: checked })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="can_create_assets" className="text-xs">Cadastrar Patrimônio</Label>
+                  <Switch
+                    id="can_create_assets"
+                    checked={formData.can_create_assets}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, can_create_assets: checked })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="can_edit_assets" className="text-xs">Editar Patrimônio</Label>
+                  <Switch
+                    id="can_edit_assets"
+                    checked={formData.can_edit_assets}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, can_edit_assets: checked })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="can_delete_assets" className="text-xs">Excluir Patrimônio</Label>
+                  <Switch
+                    id="can_delete_assets"
+                    checked={formData.can_delete_assets}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, can_delete_assets: checked })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="can_scan_assets" className="text-xs">Escanear Patrimônio</Label>
+                  <Switch
+                    id="can_scan_assets"
+                    checked={formData.can_scan_assets}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, can_scan_assets: checked })
                     }
                   />
                 </div>

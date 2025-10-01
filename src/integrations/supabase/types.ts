@@ -334,10 +334,21 @@ export type Database = {
       user_permissions: {
         Row: {
           can_access_admin: boolean | null
+          can_access_assets: boolean | null
           can_access_main_menu: boolean | null
+          can_create_assets: boolean | null
           can_create_reports: boolean | null
+          can_create_withdrawals: boolean | null
+          can_delete_assets: boolean | null
+          can_delete_products: boolean | null
+          can_delete_reports: boolean | null
+          can_edit_assets: boolean | null
+          can_edit_products: boolean | null
+          can_edit_reports: boolean | null
+          can_scan_assets: boolean | null
           can_view_products: boolean | null
           can_view_reports: boolean | null
+          can_view_withdrawal_history: boolean | null
           created_at: string
           id: string
           is_active: boolean | null
@@ -346,10 +357,21 @@ export type Database = {
         }
         Insert: {
           can_access_admin?: boolean | null
+          can_access_assets?: boolean | null
           can_access_main_menu?: boolean | null
+          can_create_assets?: boolean | null
           can_create_reports?: boolean | null
+          can_create_withdrawals?: boolean | null
+          can_delete_assets?: boolean | null
+          can_delete_products?: boolean | null
+          can_delete_reports?: boolean | null
+          can_edit_assets?: boolean | null
+          can_edit_products?: boolean | null
+          can_edit_reports?: boolean | null
+          can_scan_assets?: boolean | null
           can_view_products?: boolean | null
           can_view_reports?: boolean | null
+          can_view_withdrawal_history?: boolean | null
           created_at?: string
           id?: string
           is_active?: boolean | null
@@ -358,10 +380,21 @@ export type Database = {
         }
         Update: {
           can_access_admin?: boolean | null
+          can_access_assets?: boolean | null
           can_access_main_menu?: boolean | null
+          can_create_assets?: boolean | null
           can_create_reports?: boolean | null
+          can_create_withdrawals?: boolean | null
+          can_delete_assets?: boolean | null
+          can_delete_products?: boolean | null
+          can_delete_reports?: boolean | null
+          can_edit_assets?: boolean | null
+          can_edit_products?: boolean | null
+          can_edit_reports?: boolean | null
+          can_scan_assets?: boolean | null
           can_view_products?: boolean | null
           can_view_reports?: boolean | null
+          can_view_withdrawal_history?: boolean | null
           created_at?: string
           id?: string
           is_active?: boolean | null
@@ -412,7 +445,43 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_user_access_assets: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_user_create_assets: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       can_user_create_reports: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_user_create_withdrawals: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_user_delete_assets: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_user_delete_products: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_user_delete_reports: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_user_edit_assets: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_user_edit_products: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_user_edit_reports: {
         Args: { _user_id: string }
         Returns: boolean
       }

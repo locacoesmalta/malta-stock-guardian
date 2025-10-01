@@ -247,11 +247,11 @@ const Users = () => {
                               />
                             </div>
 
-                            <div className="text-sm font-medium mt-4 mb-2">
-                              Permissões Específicas:
+                          <div className="text-sm font-medium mt-4 mb-2 text-primary">
+                              📦 Controle de Estoque:
                             </div>
 
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between p-2 hover:bg-muted/50 rounded">
                               <Label htmlFor={`view-products-${user.id}`}>
                                 Visualizar Produtos
                               </Label>
@@ -268,7 +268,79 @@ const Users = () => {
                               />
                             </div>
 
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between p-2 hover:bg-muted/50 rounded">
+                              <Label htmlFor={`edit-products-${user.id}`}>
+                                Editar Produtos
+                              </Label>
+                              <Switch
+                                id={`edit-products-${user.id}`}
+                                checked={user.user_permissions.can_edit_products}
+                                onCheckedChange={(checked) =>
+                                  updatePermission(
+                                    user.id,
+                                    "can_edit_products",
+                                    checked
+                                  )
+                                }
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between p-2 hover:bg-muted/50 rounded">
+                              <Label htmlFor={`delete-products-${user.id}`}>
+                                Excluir Produtos
+                              </Label>
+                              <Switch
+                                id={`delete-products-${user.id}`}
+                                checked={user.user_permissions.can_delete_products}
+                                onCheckedChange={(checked) =>
+                                  updatePermission(
+                                    user.id,
+                                    "can_delete_products",
+                                    checked
+                                  )
+                                }
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between p-2 hover:bg-muted/50 rounded">
+                              <Label htmlFor={`create-withdrawals-${user.id}`}>
+                                Criar Saídas de Material
+                              </Label>
+                              <Switch
+                                id={`create-withdrawals-${user.id}`}
+                                checked={user.user_permissions.can_create_withdrawals}
+                                onCheckedChange={(checked) =>
+                                  updatePermission(
+                                    user.id,
+                                    "can_create_withdrawals",
+                                    checked
+                                  )
+                                }
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between p-2 hover:bg-muted/50 rounded">
+                              <Label htmlFor={`view-withdrawal-history-${user.id}`}>
+                                Ver Histórico de Saídas
+                              </Label>
+                              <Switch
+                                id={`view-withdrawal-history-${user.id}`}
+                                checked={user.user_permissions.can_view_withdrawal_history}
+                                onCheckedChange={(checked) =>
+                                  updatePermission(
+                                    user.id,
+                                    "can_view_withdrawal_history",
+                                    checked
+                                  )
+                                }
+                              />
+                            </div>
+
+                            <div className="text-sm font-medium mt-4 mb-2 text-primary">
+                              📋 Relatórios:
+                            </div>
+
+                            <div className="flex items-center justify-between p-2 hover:bg-muted/50 rounded">
                               <Label htmlFor={`create-reports-${user.id}`}>
                                 Criar Relatórios
                               </Label>
@@ -285,7 +357,7 @@ const Users = () => {
                               />
                             </div>
 
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between p-2 hover:bg-muted/50 rounded">
                               <Label htmlFor={`view-reports-${user.id}`}>
                                 Visualizar Relatórios
                               </Label>
@@ -296,6 +368,129 @@ const Users = () => {
                                   updatePermission(
                                     user.id,
                                     "can_view_reports",
+                                    checked
+                                  )
+                                }
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between p-2 hover:bg-muted/50 rounded">
+                              <Label htmlFor={`edit-reports-${user.id}`}>
+                                Editar Relatórios
+                              </Label>
+                              <Switch
+                                id={`edit-reports-${user.id}`}
+                                checked={user.user_permissions.can_edit_reports}
+                                onCheckedChange={(checked) =>
+                                  updatePermission(
+                                    user.id,
+                                    "can_edit_reports",
+                                    checked
+                                  )
+                                }
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between p-2 hover:bg-muted/50 rounded">
+                              <Label htmlFor={`delete-reports-${user.id}`}>
+                                Excluir Relatórios
+                              </Label>
+                              <Switch
+                                id={`delete-reports-${user.id}`}
+                                checked={user.user_permissions.can_delete_reports}
+                                onCheckedChange={(checked) =>
+                                  updatePermission(
+                                    user.id,
+                                    "can_delete_reports",
+                                    checked
+                                  )
+                                }
+                              />
+                            </div>
+
+                            <div className="text-sm font-medium mt-4 mb-2 text-primary">
+                              🏢 Gestão de Patrimônio:
+                            </div>
+
+                            <div className="flex items-center justify-between p-2 hover:bg-muted/50 rounded">
+                              <Label htmlFor={`access-assets-${user.id}`}>
+                                Acessar Patrimônio
+                              </Label>
+                              <Switch
+                                id={`access-assets-${user.id}`}
+                                checked={user.user_permissions.can_access_assets}
+                                onCheckedChange={(checked) =>
+                                  updatePermission(
+                                    user.id,
+                                    "can_access_assets",
+                                    checked
+                                  )
+                                }
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between p-2 hover:bg-muted/50 rounded">
+                              <Label htmlFor={`create-assets-${user.id}`}>
+                                Cadastrar Patrimônio
+                              </Label>
+                              <Switch
+                                id={`create-assets-${user.id}`}
+                                checked={user.user_permissions.can_create_assets}
+                                onCheckedChange={(checked) =>
+                                  updatePermission(
+                                    user.id,
+                                    "can_create_assets",
+                                    checked
+                                  )
+                                }
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between p-2 hover:bg-muted/50 rounded">
+                              <Label htmlFor={`edit-assets-${user.id}`}>
+                                Editar Patrimônio
+                              </Label>
+                              <Switch
+                                id={`edit-assets-${user.id}`}
+                                checked={user.user_permissions.can_edit_assets}
+                                onCheckedChange={(checked) =>
+                                  updatePermission(
+                                    user.id,
+                                    "can_edit_assets",
+                                    checked
+                                  )
+                                }
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between p-2 hover:bg-muted/50 rounded">
+                              <Label htmlFor={`delete-assets-${user.id}`}>
+                                Excluir Patrimônio
+                              </Label>
+                              <Switch
+                                id={`delete-assets-${user.id}`}
+                                checked={user.user_permissions.can_delete_assets}
+                                onCheckedChange={(checked) =>
+                                  updatePermission(
+                                    user.id,
+                                    "can_delete_assets",
+                                    checked
+                                  )
+                                }
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between p-2 hover:bg-muted/50 rounded">
+                              <Label htmlFor={`scan-assets-${user.id}`}>
+                                Escanear Patrimônio
+                              </Label>
+                              <Switch
+                                id={`scan-assets-${user.id}`}
+                                checked={user.user_permissions.can_scan_assets}
+                                onCheckedChange={(checked) =>
+                                  updatePermission(
+                                    user.id,
+                                    "can_scan_assets",
                                     checked
                                   )
                                 }

@@ -71,6 +71,17 @@ Deno.serve(async (req) => {
         can_view_products: permissions.can_view_products,
         can_create_reports: permissions.can_create_reports,
         can_view_reports: permissions.can_view_reports,
+        can_create_withdrawals: permissions.can_create_withdrawals || false,
+        can_view_withdrawal_history: permissions.can_view_withdrawal_history || false,
+        can_edit_products: permissions.can_edit_products || false,
+        can_delete_products: permissions.can_delete_products || false,
+        can_edit_reports: permissions.can_edit_reports || false,
+        can_delete_reports: permissions.can_delete_reports || false,
+        can_access_assets: permissions.can_access_assets || false,
+        can_create_assets: permissions.can_create_assets || false,
+        can_edit_assets: permissions.can_edit_assets || false,
+        can_delete_assets: permissions.can_delete_assets || false,
+        can_scan_assets: permissions.can_scan_assets || false,
       })
       .eq('user_id', newUser.user.id)
 
