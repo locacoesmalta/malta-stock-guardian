@@ -1,4 +1,4 @@
-import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode } from "lucide-react";
+import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import maltaLogo from "@/assets/malta-logo.png";
 import {
@@ -135,6 +135,15 @@ export function AppSidebar() {
                     <NavLink to="/admin/users" className={getNavCls}>
                       <Users className="h-4 w-4" />
                       <span>Usuários</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink to="/admin/logs" className={getNavCls}>
+                      <Shield className="h-4 w-4" />
+                      <span>Logs de Auditoria</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

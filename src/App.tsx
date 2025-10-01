@@ -12,6 +12,7 @@ import Auth from "./pages/Auth";
 import Products from "./pages/admin/Products";
 import Users from "./pages/admin/Users";
 import Settings from "./pages/admin/Settings";
+import AuditLogs from "./pages/admin/AuditLogs";
 import NewReport from "./pages/reports/NewReport";
 import ReportsList from "./pages/reports/ReportsList";
 import MaterialWithdrawal from "./pages/inventory/MaterialWithdrawal";
@@ -187,6 +188,7 @@ const App = () => (
             />
             <Route path="/admin/products" element={<ProtectedLayout><AdminRoute><Products /></AdminRoute></ProtectedLayout>} />
             <Route path="/admin/users" element={<ProtectedLayout><AdminRoute><Users /></AdminRoute></ProtectedLayout>} />
+            <Route path="/admin/logs" element={<ProtectedLayout><AdminRoute><AuditLogs /></AdminRoute></ProtectedLayout>} />
             <Route path="/admin/settings" element={<ProtectedLayout><AdminRoute><Settings /></AdminRoute></ProtectedLayout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

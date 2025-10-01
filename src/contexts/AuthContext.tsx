@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -53,6 +53,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setTimeout(() => {
           checkAdminStatus(session.user.id);
         }, 0);
+
+        // Registrar login
+        if (event === 'SIGNED_IN') {
+          try {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("email, full_name")
+              .eq("id", session.user.id)
+              .single();
+
+            await supabase.from("audit_logs").insert({
+              user_id: session.user.id,
+              user_email: profile?.email || session.user.email || "unknown",
+              user_name: profile?.full_name,
+              action: "LOGIN",
+              table_name: null,
+              record_id: null,
+            });
+          } catch (error) {
+            console.error("Erro ao registrar login:", error);
+          }
+        }
       } else {
         setIsAdmin(false);
         setIsActive(false);
@@ -127,6 +149,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    // Registrar logout antes de sair
+    if (user) {
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("email, full_name")
+          .eq("id", user.id)
+          .single();
+
+        await supabase.from("audit_logs").insert({
+          user_id: user.id,
+          user_email: profile?.email || user.email || "unknown",
+          user_name: profile?.full_name,
+          action: "LOGOUT",
+          table_name: null,
+          record_id: null,
+        });
+      } catch (error) {
+        console.error("Erro ao registrar logout:", error);
+      }
+    }
+
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
