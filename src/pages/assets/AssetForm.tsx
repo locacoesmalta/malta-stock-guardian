@@ -35,7 +35,7 @@ export default function AssetForm() {
     defaultValues: {
       location_type: "deposito_malta",
       available_for_rental: false,
-      is_new_equipment: true,
+      is_new_equipment: false,
     },
   });
 
@@ -75,7 +75,7 @@ export default function AssetForm() {
         setValue("maintenance_company", data.maintenance_company || "");
         setValue("maintenance_work_site", data.maintenance_work_site || "");
         setValue("maintenance_description", data.maintenance_description || "");
-        setValue("is_new_equipment", data.is_new_equipment ?? true);
+        setValue("is_new_equipment", data.is_new_equipment ?? false);
         setValue("rental_company", data.rental_company || "");
         setValue("rental_work_site", data.rental_work_site || "");
         setValue("rental_start_date", data.rental_start_date || "");
@@ -156,7 +156,7 @@ export default function AssetForm() {
         payload.maintenance_company = data.maintenance_company;
         payload.maintenance_work_site = data.maintenance_work_site;
         payload.maintenance_description = data.maintenance_description;
-        payload.is_new_equipment = data.is_new_equipment ?? true;
+        payload.is_new_equipment = data.is_new_equipment ?? false;
         payload.rental_company = null;
         payload.rental_work_site = null;
         payload.rental_start_date = null;
