@@ -10,6 +10,10 @@ export const productSchema = z.object({
     .trim()
     .min(1, "Nome é obrigatório")
     .max(200, "Nome deve ter no máximo 200 caracteres"),
+  manufacturer: z.string()
+    .trim()
+    .max(200, "Fabricante deve ter no máximo 200 caracteres")
+    .optional(),
   quantity: z.number()
     .int("Quantidade deve ser um número inteiro")
     .min(0, "Quantidade não pode ser negativa"),

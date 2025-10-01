@@ -5,6 +5,7 @@ interface Product {
   id: string;
   code: string;
   name: string;
+  manufacturer: string | null;
   quantity: number;
   min_quantity: number;
   purchase_price: number | null;

@@ -20,6 +20,7 @@ interface Product {
   id: string;
   code: string;
   name: string;
+  manufacturer: string | null;
   quantity: number;
   min_quantity: number;
   purchase_price: number | null;
@@ -39,6 +40,7 @@ const Products = () => {
   const [formData, setFormData] = useState({
     code: "",
     name: "",
+    manufacturer: "",
     quantity: 0,
     min_quantity: 0,
     purchase_price: "",
@@ -54,6 +56,7 @@ const Products = () => {
     const productData = {
       code: formData.code,
       name: formData.name,
+      manufacturer: formData.manufacturer || null,
       quantity: Number(formData.quantity),
       min_quantity: Number(formData.min_quantity),
       purchase_price: formData.purchase_price ? Number(formData.purchase_price) : null,
@@ -134,6 +137,7 @@ const Products = () => {
     setFormData({
       code: "",
       name: "",
+      manufacturer: "",
       quantity: 0,
       min_quantity: 0,
       purchase_price: "",
@@ -148,6 +152,7 @@ const Products = () => {
     setFormData({
       code: product.code,
       name: product.name,
+      manufacturer: product.manufacturer || "",
       quantity: product.quantity,
       min_quantity: product.min_quantity,
       purchase_price: product.purchase_price?.toString() || "",
@@ -158,25 +163,26 @@ const Products = () => {
   };
 
   const downloadTemplate = () => {
-    const template = [
-      {
-        codigo: "EX001",
-        nome: "Exemplo de Produto",
-        quantidade: 10,
-        quantidade_minima: 5,
-        preco_compra: 100.50,
-        preco_venda: 150.00,
-        comentarios: "Observações sobre o produto"
-      }
-    ];
+    // Exportar todos os produtos existentes
+    const exportData = products.map(product => ({
+      codigo: product.code,
+      nome: product.name,
+      fabricante: product.manufacturer || "",
+      quantidade: product.quantity,
+      quantidade_minima: product.min_quantity,
+      preco_compra: product.purchase_price || "",
+      preco_venda: product.sale_price || "",
+      comentarios: product.comments || ""
+    }));
 
-    const ws = XLSX.utils.json_to_sheet(template);
+    const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Produtos");
     
     const colWidths = [
       { wch: 15 }, // codigo
       { wch: 30 }, // nome
+      { wch: 25 }, // fabricante
       { wch: 12 }, // quantidade
       { wch: 18 }, // quantidade_minima
       { wch: 15 }, // preco_compra
@@ -185,8 +191,8 @@ const Products = () => {
     ];
     ws['!cols'] = colWidths;
 
-    XLSX.writeFile(wb, "template_produtos.xlsx");
-    toast.success("Template baixado com sucesso!");
+    XLSX.writeFile(wb, "estoque_produtos.xlsx");
+    toast.success("Estoque exportado com sucesso!");
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -212,6 +218,7 @@ const Products = () => {
         const productData = {
           code: row.codigo?.toString() || "",
           name: row.nome?.toString() || "",
+          manufacturer: row.fabricante?.toString() || null,
           quantity: Number(row.quantidade) || 0,
           min_quantity: Number(row.quantidade_minima) || 0,
           purchase_price: row.preco_compra ? Number(row.preco_compra) : null,
@@ -243,6 +250,7 @@ const Products = () => {
             .update({
               quantity: existingProduct.quantity + productData.quantity,
               name: productData.name,
+              manufacturer: productData.manufacturer,
               min_quantity: productData.min_quantity,
               purchase_price: newPurchasePrice,
               sale_price: newSalePrice,
@@ -280,7 +288,7 @@ const Products = () => {
         <div className="flex gap-2">
           <Button variant="outline" onClick={downloadTemplate}>
             <Download className="h-4 w-4 mr-2" />
-            Baixar Template
+            Exportar Estoque
           </Button>
           <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
             <Upload className="h-4 w-4 mr-2" />
@@ -338,6 +346,16 @@ const Products = () => {
                     <p className="text-sm text-destructive">{errors.name}</p>
                   )}
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="manufacturer">Fabricante</Label>
+                <Input
+                  id="manufacturer"
+                  value={formData.manufacturer}
+                  onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
+                  placeholder="Nome do fabricante ou marca"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -461,6 +479,11 @@ const Products = () => {
                     <div className="text-sm text-muted-foreground">
                       Código: {product.code}
                     </div>
+                    {product.manufacturer && (
+                      <div className="text-sm text-muted-foreground">
+                        Fabricante: {product.manufacturer}
+                      </div>
+                    )}
                     {(product.purchase_price || product.sale_price) && (
                       <div className="text-sm space-x-4">
                         {product.purchase_price && (

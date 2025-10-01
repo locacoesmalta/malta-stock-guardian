@@ -176,6 +176,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          manufacturer: string | null
           min_quantity: number
           name: string
           purchase_price: number | null
@@ -189,6 +190,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          manufacturer?: string | null
           min_quantity?: number
           name: string
           purchase_price?: number | null
@@ -202,6 +204,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          manufacturer?: string | null
           min_quantity?: number
           name?: string
           purchase_price?: number | null
