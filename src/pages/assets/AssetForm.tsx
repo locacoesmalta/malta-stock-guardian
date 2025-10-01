@@ -15,6 +15,7 @@ import { ArrowLeft, QrCode, Camera } from "lucide-react";
 import { assetSchema, type AssetFormData } from "@/lib/validations";
 import { useConfirm } from "@/hooks/useConfirm";
 import { Html5QrcodeScanner } from "html5-qrcode";
+import { formatInTimeZone } from "date-fns-tz";
 
 export default function AssetForm() {
   const { id } = useParams();
@@ -169,7 +170,8 @@ export default function AssetForm() {
         payload.is_new_equipment = null;
         payload.rental_company = data.rental_company;
         payload.rental_work_site = data.rental_work_site;
-        payload.rental_start_date = data.rental_start_date;
+        // Se não tiver data de início, usar a data atual de Belém/PA
+        payload.rental_start_date = data.rental_start_date || formatInTimeZone(new Date(), "America/Belem", "yyyy-MM-dd");
         payload.rental_end_date = data.rental_end_date || null;
       }
 

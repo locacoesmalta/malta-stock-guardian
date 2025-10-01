@@ -7,8 +7,9 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Search, QrCode, Building2, MapPin } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatInTimeZone } from "date-fns-tz";
 import { useAssetsQuery } from "@/hooks/useAssetsQuery";
 
 export default function AssetsList() {
@@ -184,9 +185,9 @@ export default function AssetsList() {
                   )}
                   {asset.rental_start_date && (
                     <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t">
-                      <span>Início: {format(new Date(asset.rental_start_date), "dd/MM/yyyy", { locale: ptBR })}</span>
+                      <span>Início: {format(parseISO(asset.rental_start_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}</span>
                       {asset.rental_end_date && (
-                        <span>Fim: {format(new Date(asset.rental_end_date), "dd/MM/yyyy", { locale: ptBR })}</span>
+                        <span>Fim: {format(parseISO(asset.rental_end_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}</span>
                       )}
                     </div>
                   )}
