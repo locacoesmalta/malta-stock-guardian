@@ -80,6 +80,7 @@ export default function AssetForm() {
         setValue("rental_start_date", data.rental_start_date || "");
         setValue("rental_end_date", data.rental_end_date || "");
         setValue("qr_code_data", data.qr_code_data || "");
+        setValue("equipment_observations", data.equipment_observations || "");
       }
     } catch (error) {
       console.error("Erro ao buscar patrimônio:", error);
@@ -122,6 +123,7 @@ export default function AssetForm() {
         equipment_name: data.equipment_name,
         location_type: data.location_type,
         qr_code_data: data.qr_code_data || null,
+        equipment_observations: data.equipment_observations || null,
       };
 
       // Limpar campos baseado no tipo de localização
@@ -321,6 +323,19 @@ export default function AssetForm() {
                 </Label>
               </div>
             </RadioGroup>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="equipment_observations">Observação</Label>
+            <Textarea
+              id="equipment_observations"
+              {...register("equipment_observations")}
+              placeholder="Comentários sobre o equipamento"
+              rows={3}
+            />
+            {errors.equipment_observations && (
+              <p className="text-sm text-destructive">{errors.equipment_observations.message}</p>
+            )}
           </div>
 
           {locationType === "deposito_malta" && (

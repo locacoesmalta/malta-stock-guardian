@@ -22,6 +22,7 @@ export type Database = {
           created_by: string | null
           deposito_description: string | null
           equipment_name: string
+          equipment_observations: string | null
           id: string
           is_new_equipment: boolean | null
           location_type: string
@@ -42,6 +43,7 @@ export type Database = {
           created_by?: string | null
           deposito_description?: string | null
           equipment_name: string
+          equipment_observations?: string | null
           id?: string
           is_new_equipment?: boolean | null
           location_type: string
@@ -62,6 +64,7 @@ export type Database = {
           created_by?: string | null
           deposito_description?: string | null
           equipment_name?: string
+          equipment_observations?: string | null
           id?: string
           is_new_equipment?: boolean | null
           location_type?: string

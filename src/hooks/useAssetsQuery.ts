@@ -16,6 +16,7 @@ interface Asset {
   maintenance_work_site?: string;
   maintenance_description?: string;
   is_new_equipment?: boolean;
+  equipment_observations?: string;
   created_at: string;
 }
 

@@ -165,6 +165,10 @@ export const assetSchema = z.object({
   qr_code_data: z.string()
     .max(500, "Dados do QR Code devem ter no máximo 500 caracteres")
     .optional(),
+  equipment_observations: z.string()
+    .trim()
+    .max(1000, "Observação deve ter no máximo 1000 caracteres")
+    .optional(),
 }).refine(
   (data) => {
     if (data.location_type === "em_manutencao") {
