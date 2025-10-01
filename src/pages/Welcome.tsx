@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Package, Warehouse } from "lucide-react";
-import maltaLogo from "@/assets/malta-logo.webp";
+import maltaLogo from "@/assets/malta-logo-optimized.webp";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 

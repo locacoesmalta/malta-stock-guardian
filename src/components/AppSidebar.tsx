@@ -1,6 +1,6 @@
 import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield } from "lucide-react";
 import { NavLink } from "react-router-dom";
-import maltaLogo from "@/assets/malta-logo.webp";
+import maltaLogo from "@/assets/malta-logo-optimized.webp";
 import {
   Sidebar,
   SidebarContent,
