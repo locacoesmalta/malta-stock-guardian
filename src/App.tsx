@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,21 +8,23 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { PermissionRoute } from "@/components/PermissionRoute";
-import Dashboard from "./pages/Dashboard";
-import Auth from "./pages/Auth";
-import Products from "./pages/admin/Products";
-import Users from "./pages/admin/Users";
-import Settings from "./pages/admin/Settings";
-import AuditLogs from "./pages/admin/AuditLogs";
-import NewReport from "./pages/reports/NewReport";
-import ReportsList from "./pages/reports/ReportsList";
-import MaterialWithdrawal from "./pages/inventory/MaterialWithdrawal";
-import WithdrawalHistory from "./pages/inventory/WithdrawalHistory";
-import AssetsList from "./pages/assets/AssetsList";
-import AssetForm from "./pages/assets/AssetForm";
-import AssetScanner from "./pages/assets/AssetScanner";
-import NotFound from "./pages/NotFound";
-import Welcome from "./pages/Welcome";
+
+// Lazy load routes for better performance
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Auth = lazy(() => import("./pages/Auth"));
+const Products = lazy(() => import("./pages/admin/Products"));
+const Users = lazy(() => import("./pages/admin/Users"));
+const Settings = lazy(() => import("./pages/admin/Settings"));
+const AuditLogs = lazy(() => import("./pages/admin/AuditLogs"));
+const NewReport = lazy(() => import("./pages/reports/NewReport"));
+const ReportsList = lazy(() => import("./pages/reports/ReportsList"));
+const MaterialWithdrawal = lazy(() => import("./pages/inventory/MaterialWithdrawal"));
+const WithdrawalHistory = lazy(() => import("./pages/inventory/WithdrawalHistory"));
+const AssetsList = lazy(() => import("./pages/assets/AssetsList"));
+const AssetForm = lazy(() => import("./pages/assets/AssetForm"));
+const AssetScanner = lazy(() => import("./pages/assets/AssetScanner"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Welcome = lazy(() => import("./pages/Welcome"));
 
 const queryClient = new QueryClient();
 
@@ -85,6 +88,15 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const LoadingFallback = () => (
+  <div className="flex min-h-screen items-center justify-center">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+      <p className="mt-2 text-muted-foreground">Carregando...</p>
+    </div>
+  </div>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -92,106 +104,108 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/welcome" element={<ProtectedLayout><Welcome /></ProtectedLayout>} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedLayout>
-                  <PermissionRoute permission="can_view_products">
-                    <Dashboard />
-                  </PermissionRoute>
-                </ProtectedLayout>
-              } 
-            />
-            <Route 
-              path="/reports/new" 
-              element={
-                <ProtectedLayout>
-                  <PermissionRoute permission="can_create_reports">
-                    <NewReport />
-                  </PermissionRoute>
-                </ProtectedLayout>
-              } 
-            />
-            <Route 
-              path="/reports" 
-              element={
-                <ProtectedLayout>
-                  <PermissionRoute permission="can_view_reports">
-                    <ReportsList />
-                  </PermissionRoute>
-                </ProtectedLayout>
-              } 
-            />
-            <Route 
-              path="/inventory/withdrawal" 
-              element={
-                <ProtectedLayout>
-                  <PermissionRoute permission="can_create_withdrawals">
-                    <MaterialWithdrawal />
-                  </PermissionRoute>
-                </ProtectedLayout>
-              } 
-            />
-            <Route 
-              path="/inventory/history" 
-              element={
-                <ProtectedLayout>
-                  <PermissionRoute permission="can_view_withdrawal_history">
-                    <WithdrawalHistory />
-                  </PermissionRoute>
-                </ProtectedLayout>
-              } 
-            />
-            <Route 
-              path="/assets" 
-              element={
-                <ProtectedLayout>
-                  <PermissionRoute permission="can_access_assets">
-                    <AssetsList />
-                  </PermissionRoute>
-                </ProtectedLayout>
-              } 
-            />
-            <Route 
-              path="/assets/scanner" 
-              element={
-                <ProtectedLayout>
-                  <PermissionRoute permission="can_scan_assets">
-                    <AssetScanner />
-                  </PermissionRoute>
-                </ProtectedLayout>
-              } 
-            />
-            <Route 
-              path="/assets/new" 
-              element={
-                <ProtectedLayout>
-                  <PermissionRoute permission="can_create_assets">
-                    <AssetForm />
-                  </PermissionRoute>
-                </ProtectedLayout>
-              } 
-            />
-            <Route 
-              path="/assets/edit/:id" 
-              element={
-                <ProtectedLayout>
-                  <PermissionRoute permission="can_edit_assets">
-                    <AssetForm />
-                  </PermissionRoute>
-                </ProtectedLayout>
-              } 
-            />
-            <Route path="/admin/products" element={<ProtectedLayout><AdminRoute><Products /></AdminRoute></ProtectedLayout>} />
-            <Route path="/admin/users" element={<ProtectedLayout><AdminRoute><Users /></AdminRoute></ProtectedLayout>} />
-            <Route path="/admin/logs" element={<ProtectedLayout><AdminRoute><AuditLogs /></AdminRoute></ProtectedLayout>} />
-            <Route path="/admin/settings" element={<ProtectedLayout><AdminRoute><Settings /></AdminRoute></ProtectedLayout>} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/welcome" element={<ProtectedLayout><Welcome /></ProtectedLayout>} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route 
+                path="/dashboard" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_view_products">
+                      <Dashboard />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/reports/new" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_create_reports">
+                      <NewReport />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/reports" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_view_reports">
+                      <ReportsList />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/inventory/withdrawal" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_create_withdrawals">
+                      <MaterialWithdrawal />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/inventory/history" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_view_withdrawal_history">
+                      <WithdrawalHistory />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/assets" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_access_assets">
+                      <AssetsList />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/assets/scanner" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_scan_assets">
+                      <AssetScanner />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/assets/new" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_create_assets">
+                      <AssetForm />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/assets/edit/:id" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_edit_assets">
+                      <AssetForm />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route path="/admin/products" element={<ProtectedLayout><AdminRoute><Products /></AdminRoute></ProtectedLayout>} />
+              <Route path="/admin/users" element={<ProtectedLayout><AdminRoute><Users /></AdminRoute></ProtectedLayout>} />
+              <Route path="/admin/logs" element={<ProtectedLayout><AdminRoute><AuditLogs /></AdminRoute></ProtectedLayout>} />
+              <Route path="/admin/settings" element={<ProtectedLayout><AdminRoute><Settings /></AdminRoute></ProtectedLayout>} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
