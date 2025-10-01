@@ -37,6 +37,11 @@ const Products = () => {
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importSummary, setImportSummary] = useState<{
+    newProducts: number;
+    updatedStock: number;
+    updatedPrice: number;
+  } | null>(null);
   const [formData, setFormData] = useState({
     code: "",
     name: "",
@@ -163,17 +168,17 @@ const Products = () => {
   };
 
   const downloadTemplate = () => {
-    // Exportar todos os produtos existentes
-    const exportData = products.map(product => ({
-      codigo: product.code,
-      nome: product.name,
-      fabricante: product.manufacturer || "",
-      quantidade: product.quantity,
-      quantidade_minima: product.min_quantity,
-      preco_compra: product.purchase_price || "",
-      preco_venda: product.sale_price || "",
-      comentarios: product.comments || ""
-    }));
+    // Exportar template vazio para preenchimento
+    const exportData = [{
+      codigo: "",
+      nome: "",
+      fabricante: "",
+      quantidade: "",
+      quantidade_minima: "",
+      preco_compra: "",
+      preco_venda: "",
+      comentarios: ""
+    }];
 
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
@@ -191,8 +196,8 @@ const Products = () => {
     ];
     ws['!cols'] = colWidths;
 
-    XLSX.writeFile(wb, "estoque_produtos.xlsx");
-    toast.success("Estoque exportado com sucesso!");
+    XLSX.writeFile(wb, "template_produtos.xlsx");
+    toast.success("Template exportado com sucesso!");
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -211,8 +216,9 @@ const Products = () => {
         return;
       }
 
-      let inserted = 0;
-      let updated = 0;
+      let newProducts = 0;
+      let updatedStock = 0;
+      let updatedPrice = 0;
 
       for (const row of jsonData as any[]) {
         const productData = {
@@ -227,6 +233,9 @@ const Products = () => {
           created_by: user?.id,
         };
 
+        // Pular linhas vazias do template
+        if (!productData.code || !productData.name) continue;
+
         // Verificar se o produto já existe pelo código
         const { data: existingProduct } = await supabase
           .from("products")
@@ -235,6 +244,8 @@ const Products = () => {
           .maybeSingle();
 
         if (existingProduct) {
+          let priceChanged = false;
+          
           // Calcular média de preços se houver mudança
           const newPurchasePrice = productData.purchase_price && existingProduct.purchase_price
             ? (existingProduct.purchase_price + productData.purchase_price) / 2
@@ -243,6 +254,14 @@ const Products = () => {
           const newSalePrice = productData.sale_price && existingProduct.sale_price
             ? (existingProduct.sale_price + productData.sale_price) / 2
             : productData.sale_price || existingProduct.sale_price;
+
+          // Verificar se houve mudança de preço
+          if (
+            (newPurchasePrice && newPurchasePrice !== existingProduct.purchase_price) ||
+            (newSalePrice && newSalePrice !== existingProduct.sale_price)
+          ) {
+            priceChanged = true;
+          }
 
           // Atualizar somando a quantidade e calculando média dos preços
           await supabase
@@ -257,15 +276,22 @@ const Products = () => {
               comments: productData.comments,
             })
             .eq("id", existingProduct.id);
-          updated++;
+          
+          if (productData.quantity > 0) updatedStock++;
+          if (priceChanged) updatedPrice++;
         } else {
           // Inserir novo produto
           await supabase.from("products").insert([productData]);
-          inserted++;
+          newProducts++;
         }
       }
 
-      toast.success(`${inserted} produtos adicionados, ${updated} produtos atualizados!`);
+      setImportSummary({
+        newProducts,
+        updatedStock,
+        updatedPrice,
+      });
+      
       refetch();
     } catch (error: any) {
       toast.error("Erro ao processar arquivo Excel");
@@ -540,6 +566,34 @@ const Products = () => {
       </Card>
 
       <ConfirmDialog />
+
+      <Dialog open={!!importSummary} onOpenChange={() => setImportSummary(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Produtos Importados</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <p className="font-medium">
+                Novos produtos: <span className="text-primary">{importSummary?.newProducts || 0}</span>
+              </p>
+              {importSummary && importSummary.updatedStock > 0 && (
+                <p className="font-medium">
+                  Produtos com estoque atualizado: <span className="text-primary">{importSummary.updatedStock}</span>
+                </p>
+              )}
+              {importSummary && importSummary.updatedPrice > 0 && (
+                <p className="font-medium">
+                  Produtos com preço atualizado: <span className="text-primary">{importSummary.updatedPrice}</span>
+                </p>
+              )}
+            </div>
+            <Button onClick={() => setImportSummary(null)} className="w-full">
+              OK
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
