@@ -172,6 +172,53 @@ export type Database = {
           },
         ]
       }
+      patrimonio_historico: {
+        Row: {
+          campo_alterado: string
+          codigo_pat: string
+          created_at: string
+          data_modificacao: string
+          historico_id: string
+          pat_id: string
+          usuario_modificacao: string | null
+          usuario_nome: string | null
+          valor_antigo: string | null
+          valor_novo: string | null
+        }
+        Insert: {
+          campo_alterado: string
+          codigo_pat: string
+          created_at?: string
+          data_modificacao?: string
+          historico_id?: string
+          pat_id: string
+          usuario_modificacao?: string | null
+          usuario_nome?: string | null
+          valor_antigo?: string | null
+          valor_novo?: string | null
+        }
+        Update: {
+          campo_alterado?: string
+          codigo_pat?: string
+          created_at?: string
+          data_modificacao?: string
+          historico_id?: string
+          pat_id?: string
+          usuario_modificacao?: string | null
+          usuario_nome?: string | null
+          valor_antigo?: string | null
+          valor_novo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patrimonio_historico_pat_id_fkey"
+            columns: ["pat_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           code: string

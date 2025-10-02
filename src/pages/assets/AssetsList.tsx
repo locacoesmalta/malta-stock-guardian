@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Search, QrCode, Building2, MapPin } from "lucide-react";
+import { Plus, Search, QrCode, Building2, MapPin, FileText } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatInTimeZone } from "date-fns-tz";
@@ -32,6 +32,8 @@ export default function AssetsList() {
         return "Em Manutenção";
       case "locacao":
         return "Locação";
+      case "aguardando_laudo":
+        return "Aguardando Laudo";
       default:
         return locationType;
     }
@@ -47,6 +49,8 @@ export default function AssetsList() {
         return "destructive" as const;
       case "locacao":
         return "default" as const;
+      case "aguardando_laudo":
+        return "outline" as const;
       default:
         return "secondary" as const;
     }
@@ -79,6 +83,14 @@ export default function AssetsList() {
             </p>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
+            <Button
+              onClick={() => navigate("/assets/traceability")}
+              variant="outline"
+              className="flex-1 sm:flex-none"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Rastreabilidade
+            </Button>
             <Button
               onClick={() => navigate("/assets/scanner")}
               variant="outline"

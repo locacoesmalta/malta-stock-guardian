@@ -127,7 +127,7 @@ export const assetSchema = z.object({
     .trim()
     .min(1, "Nome do equipamento é obrigatório")
     .max(200, "Nome deve ter no máximo 200 caracteres"),
-  location_type: z.enum(["deposito_malta", "liberado_locacao", "em_manutencao", "locacao"], {
+  location_type: z.enum(["deposito_malta", "em_manutencao", "locacao", "aguardando_laudo"], {
     required_error: "Local do equipamento é obrigatório",
   }),
   // Campos para Depósito Malta

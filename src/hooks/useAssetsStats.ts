@@ -27,7 +27,7 @@ const fetchAssetsStats = async (): Promise<AssetsStats> => {
       stats.liberadosLocacao++;
     } else if (asset.location_type === "locacao") {
       stats.locados++;
-    } else if (asset.location_type === "em_manutencao") {
+    } else if (asset.location_type === "em_manutencao" || asset.location_type === "aguardando_laudo") {
       stats.emManutencao++;
     }
   });

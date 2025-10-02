@@ -23,6 +23,7 @@ const WithdrawalHistory = lazy(() => import("./pages/inventory/WithdrawalHistory
 const AssetsList = lazy(() => import("./pages/assets/AssetsList"));
 const AssetForm = lazy(() => import("./pages/assets/AssetForm"));
 const AssetScanner = lazy(() => import("./pages/assets/AssetScanner"));
+const AssetTraceability = lazy(() => import("./pages/assets/AssetTraceability"));
 const AssetsControlDashboard = lazy(() => import("./pages/assets/AssetsControlDashboard"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Welcome = lazy(() => import("./pages/Welcome"));
@@ -186,6 +187,16 @@ const App = () => (
                   <ProtectedLayout>
                     <PermissionRoute permission="can_scan_assets">
                       <AssetScanner />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/assets/traceability" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_access_assets">
+                      <AssetTraceability />
                     </PermissionRoute>
                   </ProtectedLayout>
                 } 
