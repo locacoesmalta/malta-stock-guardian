@@ -51,7 +51,7 @@ export default function AssetsList() {
       case "locacao":
         return "default" as const;
       case "aguardando_laudo":
-        return "outline" as const;
+        return "warning" as const;
       default:
         return "secondary" as const;
     }

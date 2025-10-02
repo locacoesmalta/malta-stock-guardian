@@ -75,6 +75,23 @@ export default function StatusReports() {
     return labels[locationType] || locationType;
   };
 
+  const getLocationVariant = (locationType: string) => {
+    switch (locationType) {
+      case "deposito_malta":
+        return "secondary" as const;
+      case "liberado_locacao":
+        return "outline" as const;
+      case "em_manutencao":
+        return "destructive" as const;
+      case "locacao":
+        return "default" as const;
+      case "aguardando_laudo":
+        return "warning" as const;
+      default:
+        return "secondary" as const;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="print:hidden">
@@ -169,7 +186,7 @@ export default function StatusReports() {
                         </TableCell>
                         <TableCell>{asset.equipment_name}</TableCell>
                         <TableCell>
-                          <Badge variant="outline">
+                          <Badge variant={getLocationVariant(asset.location_type)}>
                             {getLocationLabel(asset.location_type)}
                           </Badge>
                         </TableCell>
