@@ -100,7 +100,7 @@ export function AppSidebar() {
   return (
     <Sidebar
       className="border-r"
-      collapsible="offcanvas"
+      collapsible="icon"
     >
       <SidebarHeader className="border-b px-6 py-4">
         <div className="flex items-center gap-3">
