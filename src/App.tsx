@@ -18,6 +18,7 @@ const Settings = lazy(() => import("./pages/admin/Settings"));
 const AuditLogs = lazy(() => import("./pages/admin/AuditLogs"));
 const NewReport = lazy(() => import("./pages/reports/NewReport"));
 const ReportsList = lazy(() => import("./pages/reports/ReportsList"));
+const StatusReports = lazy(() => import("./pages/reports/StatusReports"));
 const MaterialWithdrawal = lazy(() => import("./pages/inventory/MaterialWithdrawal"));
 const WithdrawalHistory = lazy(() => import("./pages/inventory/WithdrawalHistory"));
 const AssetsList = lazy(() => import("./pages/assets/AssetsList"));
@@ -137,6 +138,16 @@ const App = () => (
                   <ProtectedLayout>
                     <PermissionRoute permission="can_view_reports">
                       <ReportsList />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/reports/status" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_access_assets">
+                      <StatusReports />
                     </PermissionRoute>
                   </ProtectedLayout>
                 } 

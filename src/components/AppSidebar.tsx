@@ -1,4 +1,4 @@
-import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3 } from "lucide-react";
+import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3, ClipboardList } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -45,6 +45,12 @@ export function AppSidebar() {
       icon: FileText,
       label: "Histórico de Relatórios",
       show: permissions.can_view_reports || isAdmin,
+    },
+    {
+      path: "/reports/status",
+      icon: ClipboardList,
+      label: "Relatórios de Status",
+      show: permissions.can_access_assets || isAdmin,
     },
     {
       path: "/inventory/withdrawal",
