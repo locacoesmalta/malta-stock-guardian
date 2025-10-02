@@ -11,6 +11,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatInTimeZone } from "date-fns-tz";
 import { useAssetsQuery } from "@/hooks/useAssetsQuery";
+import { DeadlineStatusBadge } from "@/components/DeadlineStatusBadge";
 
 export default function AssetsList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -203,6 +204,12 @@ export default function AssetsList() {
                       )}
                     </div>
                   )}
+                </div>
+              )}
+
+              {asset.location_type === "aguardando_laudo" && (
+                <div className="text-sm">
+                  <DeadlineStatusBadge createdAt={asset.created_at} />
                 </div>
               )}
             </Card>
