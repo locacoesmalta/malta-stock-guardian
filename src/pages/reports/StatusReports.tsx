@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { DeadlineStatusBadge } from "@/components/DeadlineStatusBadge";
+import { differenceInDays, parseISO } from "date-fns";
 
 type FilterType = "deposito_malta" | "em_manutencao" | "locacao" | "aguardando_laudo" | null;
 
@@ -90,6 +91,13 @@ export default function StatusReports() {
       default:
         return "secondary" as const;
     }
+  };
+
+  const calculateDaysInMaintenance = (asset: any) => {
+    const startDate = asset.maintenance_arrival_date 
+      ? parseISO(asset.maintenance_arrival_date)
+      : parseISO(asset.created_at);
+    return differenceInDays(new Date(), startDate);
   };
 
   return (
@@ -173,6 +181,9 @@ export default function StatusReports() {
                       <TableHead>Empresa</TableHead>
                       <TableHead>Obra</TableHead>
                       <TableHead>Data de Cadastro</TableHead>
+                      {activeFilter === "em_manutencao" && (
+                        <TableHead>Dias em Manutenção</TableHead>
+                      )}
                       {activeFilter === "aguardando_laudo" && (
                         <TableHead>Status do Prazo</TableHead>
                       )}
@@ -207,6 +218,13 @@ export default function StatusReports() {
                         <TableCell>
                           {new Date(asset.created_at).toLocaleDateString("pt-BR")}
                         </TableCell>
+                        {activeFilter === "em_manutencao" && (
+                          <TableCell>
+                            <Badge variant="destructive">
+                              {calculateDaysInMaintenance(asset)} {calculateDaysInMaintenance(asset) === 1 ? "dia" : "dias"}
+                            </Badge>
+                          </TableCell>
+                        )}
                         {activeFilter === "aguardando_laudo" && (
                           <TableCell>
                             <DeadlineStatusBadge createdAt={asset.created_at} />
