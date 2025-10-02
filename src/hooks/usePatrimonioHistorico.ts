@@ -6,10 +6,10 @@ interface HistoricoItem {
   pat_id: string;
   codigo_pat: string;
   tipo_evento: string;
-  detalhes_evento: string | null;
   campo_alterado: string | null;
   valor_antigo: string | null;
   valor_novo: string | null;
+  detalhes_evento: string | null;
   usuario_modificacao: string | null;
   usuario_nome: string | null;
   data_modificacao: string;

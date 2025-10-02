@@ -27,35 +27,6 @@ const formatLocationLabel = (value: string) => {
   return labels[value] || value;
 };
 
-const renderEventDetails = (item: any) => {
-  // Se for uma alteração de dado, mostra valor antigo -> valor novo
-  if (item.tipo_evento === "ALTERAÇÃO DE DADO" && item.campo_alterado) {
-    const valorAntigo = item.campo_alterado === "Local do Equipamento" && item.valor_antigo
-      ? formatLocationLabel(item.valor_antigo)
-      : item.valor_antigo || "-";
-    
-    const valorNovo = item.campo_alterado === "Local do Equipamento" && item.valor_novo
-      ? formatLocationLabel(item.valor_novo)
-      : item.valor_novo || "-";
-
-    return (
-      <div className="text-sm">
-        <span className="font-medium">{item.campo_alterado}:</span>{" "}
-        <span className="text-muted-foreground">{valorAntigo}</span>
-        {" → "}
-        <span>{valorNovo}</span>
-      </div>
-    );
-  }
-
-  // Para outros eventos, mostra os detalhes
-  return (
-    <div className="text-sm">
-      {item.detalhes_evento || "Sem detalhes"}
-    </div>
-  );
-};
-
 export const AssetHistorySection = ({ assetId }: AssetHistorySectionProps) => {
   const { data: historico, isLoading } = usePatrimonioHistorico(assetId);
 
@@ -75,12 +46,41 @@ export const AssetHistorySection = ({ assetId }: AssetHistorySectionProps) => {
         <div className="flex flex-col items-center justify-center py-8 text-center">
           <History className="h-12 w-12 text-muted-foreground mb-4" />
           <p className="text-muted-foreground">
-            Nenhum evento registrado para este patrimônio
+            Nenhuma alteração registrada para este patrimônio
           </p>
         </div>
       </Card>
     );
   }
+
+  const renderEventDetails = (item: any) => {
+    // Se tem detalhes_evento, mostrar ele (eventos novos)
+    if (item.detalhes_evento) {
+      return <span className="text-sm">{item.detalhes_evento}</span>;
+    }
+
+    // Senão, mostrar no formato antigo (campo_alterado com valores)
+    if (item.campo_alterado) {
+      const valorAntigo = item.campo_alterado === "Local do Equipamento" && item.valor_antigo
+        ? formatLocationLabel(item.valor_antigo)
+        : item.valor_antigo || "-";
+      
+      const valorNovo = item.campo_alterado === "Local do Equipamento" && item.valor_novo
+        ? formatLocationLabel(item.valor_novo)
+        : item.valor_novo || "-";
+
+      return (
+        <span className="text-sm">
+          <span className="font-medium">{item.campo_alterado}:</span>{" "}
+          <span className="text-muted-foreground">{valorAntigo}</span>
+          {" → "}
+          <span>{valorNovo}</span>
+        </span>
+      );
+    }
+
+    return <span className="text-muted-foreground text-sm">-</span>;
+  };
 
   return (
     <Card className="p-6">
@@ -107,12 +107,8 @@ export const AssetHistorySection = ({ assetId }: AssetHistorySectionProps) => {
                     locale: ptBR,
                   })}
                 </TableCell>
-                <TableCell className="font-medium">
-                  {item.tipo_evento}
-                </TableCell>
-                <TableCell>
-                  {renderEventDetails(item)}
-                </TableCell>
+                <TableCell className="font-medium">{item.tipo_evento}</TableCell>
+                <TableCell>{renderEventDetails(item)}</TableCell>
                 <TableCell>{item.usuario_nome || "Sistema"}</TableCell>
               </TableRow>
             ))}
