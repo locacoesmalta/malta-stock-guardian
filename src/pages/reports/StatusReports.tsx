@@ -207,8 +207,14 @@ export default function StatusReports() {
       <style dangerouslySetInnerHTML={{
         __html: `
           @media print {
+            /* Remover elementos ocultos completamente */
             .print\\:hidden {
               display: none !important;
+              position: absolute !important;
+              left: -9999px !important;
+              height: 0 !important;
+              width: 0 !important;
+              overflow: hidden !important;
             }
             
             /* Ocultar sidebar e navegação */
@@ -226,13 +232,31 @@ export default function StatusReports() {
               width: 100% !important;
               max-width: 100% !important;
               margin: 0 !important;
-              padding: 10mm !important;
+              padding: 5mm !important;
+            }
+            
+            /* Compactar espaçamentos */
+            .space-y-6 {
+              gap: 0 !important;
+            }
+            
+            .space-y-6 > * {
+              margin-top: 0 !important;
+              margin-bottom: 0 !important;
             }
             
             /* Melhorar aparência do card na impressão */
             .card {
               border: 1px solid #ddd !important;
               box-shadow: none !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              page-break-after: avoid !important;
+            }
+            
+            /* Compactar cabeçalho do card */
+            .card > div {
+              padding: 5mm !important;
             }
             
             /* Ajustar cores para impressão */
@@ -250,17 +274,34 @@ export default function StatusReports() {
             /* Ajustar tabela para impressão */
             table {
               width: 100% !important;
-              page-break-inside: avoid;
+              page-break-inside: auto;
+              margin: 0 !important;
             }
             
-            /* Evitar quebra de página dentro de linhas */
+            /* Compactar células da tabela */
+            th, td {
+              padding: 2mm !important;
+              font-size: 9pt !important;
+            }
+            
+            /* Evitar quebra de página dentro de linhas quando possível */
             tr {
               page-break-inside: avoid;
             }
             
-            /* Adicionar título na impressão */
+            /* Configuração da página */
             @page {
-              margin: 15mm;
+              margin: 10mm;
+              size: A4;
+            }
+            
+            /* Remover overflow hidden que pode causar páginas extras */
+            * {
+              overflow: visible !important;
+            }
+            
+            .overflow-x-auto {
+              overflow: visible !important;
             }
           }
         `
