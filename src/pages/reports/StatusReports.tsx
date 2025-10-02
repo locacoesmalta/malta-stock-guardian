@@ -76,7 +76,7 @@ export default function StatusReports() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="print:hidden">
         <h1 className="text-3xl font-bold tracking-tight">Relatórios de Status</h1>
         <p className="text-muted-foreground">
           Consulte o status dos patrimônios em tempo real
@@ -84,7 +84,7 @@ export default function StatusReports() {
       </div>
 
       {/* Botões de Filtro Rápido */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 print:hidden">
         {filterButtons.map((button) => {
           const Icon = button.icon;
           const count = assets?.filter((asset) => asset.location_type === button.id).length || 0;
@@ -197,7 +197,7 @@ export default function StatusReports() {
       )}
 
       {!activeFilter && (
-        <Card>
+        <Card className="print:hidden">
           <CardContent className="py-12 text-center text-muted-foreground">
             Selecione um dos botões acima para visualizar os relatórios
           </CardContent>
@@ -210,9 +210,57 @@ export default function StatusReports() {
             .print\\:hidden {
               display: none !important;
             }
+            
+            /* Ocultar sidebar e navegação */
+            aside, nav, header, footer, [role="navigation"] {
+              display: none !important;
+            }
+            
+            /* Ocultar elementos específicos da interface */
+            button, .sidebar, [data-sidebar] {
+              display: none !important;
+            }
+            
+            /* Garantir que o conteúdo use toda a largura */
+            body, main, .container {
+              width: 100% !important;
+              max-width: 100% !important;
+              margin: 0 !important;
+              padding: 10mm !important;
+            }
+            
+            /* Melhorar aparência do card na impressão */
+            .card {
+              border: 1px solid #ddd !important;
+              box-shadow: none !important;
+            }
+            
+            /* Ajustar cores para impressão */
             body {
               print-color-adjust: exact;
               -webkit-print-color-adjust: exact;
+              background: white !important;
+            }
+            
+            /* Garantir que badges e cores sejam impressas */
+            .badge {
+              border: 1px solid #000 !important;
+            }
+            
+            /* Ajustar tabela para impressão */
+            table {
+              width: 100% !important;
+              page-break-inside: avoid;
+            }
+            
+            /* Evitar quebra de página dentro de linhas */
+            tr {
+              page-break-inside: avoid;
+            }
+            
+            /* Adicionar título na impressão */
+            @page {
+              margin: 15mm;
             }
           }
         `
