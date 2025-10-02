@@ -1,9 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useAssetsStats } from "@/hooks/useAssetsStats";
-import { Package, Wrench, Building2, BarChart3 } from "lucide-react";
+import { useAssetsQuery } from "@/hooks/useAssetsQuery";
+import { Package, Wrench, Building2, BarChart3, Clock } from "lucide-react";
+import { parseISO } from "date-fns";
 
 export default function AssetsControlDashboard() {
   const { data: stats, isLoading } = useAssetsStats();
+  const { data: assets = [] } = useAssetsQuery();
+  
+  // Filtrar equipamentos em manutenção
+  const assetsInMaintenance = assets.filter(
+    (asset) => asset.location_type === "em_manutencao" && asset.maintenance_arrival_date
+  );
 
   if (isLoading) {
     return (
@@ -74,6 +83,49 @@ export default function AssetsControlDashboard() {
           );
         })}
       </div>
+
+      {/* Seção de Equipamentos em Manutenção com Dias */}
+      {assetsInMaintenance.length > 0 && (
+        <Card className="mt-6 border-destructive/50">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-destructive" />
+              <CardTitle>Equipamentos em Manutenção - Detalhes</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3">
+              {assetsInMaintenance.map((asset) => {
+                const arrival = parseISO(asset.maintenance_arrival_date + "T00:00:00");
+                const today = new Date();
+                const diffTime = today.getTime() - arrival.getTime();
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                
+                return (
+                  <div
+                    key={asset.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 border rounded-lg bg-muted/30"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold">{asset.asset_code}</span>
+                        <span className="text-muted-foreground">•</span>
+                        <span>{asset.equipment_name}</span>
+                      </div>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        {asset.maintenance_company} - {asset.maintenance_work_site}
+                      </div>
+                    </div>
+                    <Badge variant="destructive" className="font-semibold whitespace-nowrap">
+                      ⏱️ {diffDays} {diffDays === 1 ? "dia" : "dias"}
+                    </Badge>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

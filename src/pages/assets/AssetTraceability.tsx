@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -20,8 +21,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { usePatrimonioHistoricoFiltered } from "@/hooks/usePatrimonioHistorico";
-import { ArrowLeft, Search, FileText } from "lucide-react";
-import { format } from "date-fns";
+import { useAssetsQuery } from "@/hooks/useAssetsQuery";
+import { ArrowLeft, Search, FileText, Clock } from "lucide-react";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const formatLocationLabel = (value: string) => {
@@ -56,6 +58,12 @@ export default function AssetTraceability() {
   });
 
   const { data: historico, isLoading } = usePatrimonioHistoricoFiltered(searchFilters);
+  const { data: assets = [] } = useAssetsQuery();
+  
+  // Filtrar equipamentos em manutenção
+  const assetsInMaintenance = assets.filter(
+    (asset) => asset.location_type === "em_manutencao" && asset.maintenance_arrival_date
+  );
 
   // Busca automática quando o código PAT é digitado
   useEffect(() => {
@@ -104,11 +112,22 @@ export default function AssetTraceability() {
         : item.valor_novo || "-";
 
       return (
-        <div className="text-sm">
-          <span className="font-medium">{item.campo_alterado}:</span>{" "}
-          <span className="text-muted-foreground">{valorAntigo}</span>
-          {" → "}
-          <span>{valorNovo}</span>
+        <div className="text-sm space-y-1">
+          <div>
+            <span className="font-medium">{item.campo_alterado}:</span>{" "}
+            <span className="text-muted-foreground">{valorAntigo}</span>
+            {" → "}
+            <span>{valorNovo}</span>
+          </div>
+          
+          {/* Mostrar aviso de dias em manutenção quando alterar para "em_manutencao" */}
+          {item.campo_alterado === "Local do Equipamento" && item.valor_novo === "em_manutencao" && (
+            <div className="mt-2 inline-block">
+              <span className="text-xs bg-destructive text-destructive-foreground px-2 py-1 rounded font-medium">
+                ⏱️ Equipamento entrou em manutenção
+              </span>
+            </div>
+          )}
         </div>
       );
     }
@@ -140,6 +159,47 @@ export default function AssetTraceability() {
           Consulte a linha do tempo completa de todos os eventos relacionados aos patrimônios
         </p>
       </div>
+
+      {/* Seção de Equipamentos em Manutenção */}
+      {assetsInMaintenance.length > 0 && (
+        <Card className="p-6 mb-6 border-destructive/50">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock className="h-5 w-5 text-destructive" />
+            <h2 className="text-xl font-semibold">
+              Equipamentos em Manutenção ({assetsInMaintenance.length})
+            </h2>
+          </div>
+          <div className="grid gap-3">
+            {assetsInMaintenance.map((asset) => {
+              const arrival = parseISO(asset.maintenance_arrival_date + "T00:00:00");
+              const today = new Date();
+              const diffTime = today.getTime() - arrival.getTime();
+              const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+              
+              return (
+                <div
+                  key={asset.id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 border rounded-lg bg-muted/30"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold">{asset.asset_code}</span>
+                      <span className="text-muted-foreground">•</span>
+                      <span>{asset.equipment_name}</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {asset.maintenance_company} - {asset.maintenance_work_site}
+                    </div>
+                  </div>
+                  <Badge variant="destructive" className="font-semibold whitespace-nowrap">
+                    ⏱️ {diffDays} {diffDays === 1 ? "dia" : "dias"}
+                  </Badge>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       <Card className="p-6 mb-6">
         <h2 className="text-xl font-semibold mb-4">Filtros de Busca</h2>

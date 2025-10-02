@@ -159,6 +159,19 @@ export default function AssetsList() {
 
               {asset.location_type === "em_manutencao" && (
                 <div className="space-y-2 text-sm">
+                  {asset.maintenance_arrival_date && (
+                    <div className="mb-3">
+                      <Badge variant="destructive" className="text-sm font-semibold">
+                        ⏱️ {(() => {
+                          const arrival = parseISO(asset.maintenance_arrival_date + "T00:00:00");
+                          const today = new Date();
+                          const diffTime = today.getTime() - arrival.getTime();
+                          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                          return `${diffDays} ${diffDays === 1 ? "dia" : "dias"} em manutenção`;
+                        })()}
+                      </Badge>
+                    </div>
+                  )}
                   {asset.maintenance_company && (
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Building2 className="h-4 w-4" />
