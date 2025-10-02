@@ -178,8 +178,10 @@ export type Database = {
           codigo_pat: string
           created_at: string
           data_modificacao: string
+          detalhes_evento: string | null
           historico_id: string
           pat_id: string
+          tipo_evento: string
           usuario_modificacao: string | null
           usuario_nome: string | null
           valor_antigo: string | null
@@ -190,8 +192,10 @@ export type Database = {
           codigo_pat: string
           created_at?: string
           data_modificacao?: string
+          detalhes_evento?: string | null
           historico_id?: string
           pat_id: string
+          tipo_evento?: string
           usuario_modificacao?: string | null
           usuario_nome?: string | null
           valor_antigo?: string | null
@@ -202,8 +206,10 @@ export type Database = {
           codigo_pat?: string
           created_at?: string
           data_modificacao?: string
+          detalhes_evento?: string | null
           historico_id?: string
           pat_id?: string
+          tipo_evento?: string
           usuario_modificacao?: string | null
           usuario_nome?: string | null
           valor_antigo?: string | null
@@ -601,6 +607,18 @@ export type Database = {
       is_user_active: {
         Args: { _user_id: string }
         Returns: boolean
+      }
+      registrar_evento_patrimonio: {
+        Args: {
+          p_campo_alterado?: string
+          p_codigo_pat: string
+          p_detalhes_evento: string
+          p_pat_id: string
+          p_tipo_evento: string
+          p_valor_antigo?: string
+          p_valor_novo?: string
+        }
+        Returns: string
       }
     }
     Enums: {

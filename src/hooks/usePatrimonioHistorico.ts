@@ -5,7 +5,9 @@ interface HistoricoItem {
   historico_id: string;
   pat_id: string;
   codigo_pat: string;
-  campo_alterado: string;
+  tipo_evento: string;
+  detalhes_evento: string | null;
+  campo_alterado: string | null;
   valor_antigo: string | null;
   valor_novo: string | null;
   usuario_modificacao: string | null;
@@ -19,6 +21,7 @@ interface HistoricoFilters {
   data_fim?: string;
   usuario?: string;
   campo?: string;
+  tipo_evento?: string;
 }
 
 export const usePatrimonioHistorico = (patId?: string) => {
@@ -69,6 +72,10 @@ export const usePatrimonioHistoricoFiltered = (filters: HistoricoFilters) => {
 
       if (filters.campo) {
         query = query.eq("campo_alterado", filters.campo);
+      }
+
+      if (filters.tipo_evento) {
+        query = query.eq("tipo_evento", filters.tipo_evento);
       }
 
       const { data, error } = await query;

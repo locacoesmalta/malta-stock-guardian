@@ -43,6 +43,7 @@ export default function AssetTraceability() {
     data_fim: "",
     usuario: "",
     campo: "all",
+    tipo_evento: "all",
   });
 
   const [searchFilters, setSearchFilters] = useState({
@@ -51,6 +52,7 @@ export default function AssetTraceability() {
     data_fim: "",
     usuario: "",
     campo: "",
+    tipo_evento: "",
   });
 
   const { data: historico, isLoading } = usePatrimonioHistoricoFiltered(searchFilters);
@@ -59,6 +61,7 @@ export default function AssetTraceability() {
     setSearchFilters({
       ...filters,
       campo: filters.campo === "all" ? "" : filters.campo,
+      tipo_evento: filters.tipo_evento === "all" ? "" : filters.tipo_evento,
     });
   };
 
@@ -69,9 +72,37 @@ export default function AssetTraceability() {
       data_fim: "",
       usuario: "",
       campo: "all",
+      tipo_evento: "all",
     };
     setFilters(emptyFilters);
-    setSearchFilters({ ...emptyFilters, campo: "" });
+    setSearchFilters({ ...emptyFilters, campo: "", tipo_evento: "" });
+  };
+
+  const renderEventDetails = (item: any) => {
+    if (item.tipo_evento === "ALTERAÇÃO DE DADO" && item.campo_alterado) {
+      const valorAntigo = item.campo_alterado === "Local do Equipamento" && item.valor_antigo
+        ? formatLocationLabel(item.valor_antigo)
+        : item.valor_antigo || "-";
+      
+      const valorNovo = item.campo_alterado === "Local do Equipamento" && item.valor_novo
+        ? formatLocationLabel(item.valor_novo)
+        : item.valor_novo || "-";
+
+      return (
+        <div className="text-sm">
+          <span className="font-medium">{item.campo_alterado}:</span>{" "}
+          <span className="text-muted-foreground">{valorAntigo}</span>
+          {" → "}
+          <span>{valorNovo}</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="text-sm">
+        {item.detalhes_evento || "Sem detalhes"}
+      </div>
+    );
   };
 
   return (
@@ -88,10 +119,10 @@ export default function AssetTraceability() {
       <div className="mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <FileText className="h-8 w-8" />
-          Rastreabilidade de Patrimônio
+          Rastreabilidade Integrada de Patrimônio
         </h1>
         <p className="text-muted-foreground mt-2">
-          Consulte o histórico completo de alterações dos patrimônios
+          Consulte a linha do tempo completa de todos os eventos relacionados aos patrimônios
         </p>
       </div>
 
@@ -136,11 +167,37 @@ export default function AssetTraceability() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="campo">Campo Alterado</Label>
+            <Label htmlFor="tipo_evento">Tipo de Evento</Label>
+            <Select
+              value={filters.tipo_evento}
+              onValueChange={(value) =>
+                setFilters({ ...filters, tipo_evento: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Todos os eventos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os eventos</SelectItem>
+                <SelectItem value="ALTERAÇÃO DE DADO">Alteração de Dado</SelectItem>
+                <SelectItem value="ABERTURA DE ORDEM DE SERVIÇO">Abertura de OS</SelectItem>
+                <SelectItem value="CONCLUSÃO DE ORDEM DE SERVIÇO">Conclusão de OS</SelectItem>
+                <SelectItem value="TROCA DE COMPONENTE">Troca de Componente</SelectItem>
+                <SelectItem value="INÍCIO DE LOCAÇÃO">Início de Locação</SelectItem>
+                <SelectItem value="DEVOLUÇÃO DE LOCAÇÃO">Devolução de Locação</SelectItem>
+                <SelectItem value="SAÍDA PARA CLIENTE">Saída para Cliente</SelectItem>
+                <SelectItem value="TRANSFERÊNCIA INTERNA">Transferência Interna</SelectItem>
+                <SelectItem value="ANEXO DE LAUDO">Anexo de Laudo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="campo">Campo Alterado (apenas para Alteração de Dado)</Label>
             <Select
               value={filters.campo}
               onValueChange={(value) =>
-                setFilters({ ...filters, campo: value === "all" ? "" : value })
+                setFilters({ ...filters, campo: value })
               }
             >
               <SelectTrigger>
@@ -204,9 +261,8 @@ export default function AssetTraceability() {
                 <TableRow>
                   <TableHead>Código PAT</TableHead>
                   <TableHead>Data/Hora</TableHead>
-                  <TableHead>Campo</TableHead>
-                  <TableHead>Informação Anterior</TableHead>
-                  <TableHead>Nova Informação</TableHead>
+                  <TableHead>Tipo de Evento</TableHead>
+                  <TableHead>Detalhes</TableHead>
                   <TableHead>Usuário</TableHead>
                 </TableRow>
               </TableHeader>
@@ -223,18 +279,11 @@ export default function AssetTraceability() {
                         { locale: ptBR }
                       )}
                     </TableCell>
-                    <TableCell>{item.campo_alterado}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {item.campo_alterado === "Local do Equipamento" &&
-                      item.valor_antigo
-                        ? formatLocationLabel(item.valor_antigo)
-                        : item.valor_antigo || "-"}
+                    <TableCell className="font-medium">
+                      {item.tipo_evento}
                     </TableCell>
                     <TableCell>
-                      {item.campo_alterado === "Local do Equipamento" &&
-                      item.valor_novo
-                        ? formatLocationLabel(item.valor_novo)
-                        : item.valor_novo || "-"}
+                      {renderEventDetails(item)}
                     </TableCell>
                     <TableCell>{item.usuario_nome || "Sistema"}</TableCell>
                   </TableRow>
