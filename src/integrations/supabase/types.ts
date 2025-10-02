@@ -26,7 +26,10 @@ export type Database = {
           id: string
           is_new_equipment: boolean | null
           location_type: string
+          maintenance_arrival_date: string | null
           maintenance_company: string | null
+          maintenance_delay_observations: string | null
+          maintenance_departure_date: string | null
           maintenance_description: string | null
           maintenance_work_site: string | null
           qr_code_data: string | null
@@ -47,7 +50,10 @@ export type Database = {
           id?: string
           is_new_equipment?: boolean | null
           location_type: string
+          maintenance_arrival_date?: string | null
           maintenance_company?: string | null
+          maintenance_delay_observations?: string | null
+          maintenance_departure_date?: string | null
           maintenance_description?: string | null
           maintenance_work_site?: string | null
           qr_code_data?: string | null
@@ -68,7 +74,10 @@ export type Database = {
           id?: string
           is_new_equipment?: boolean | null
           location_type?: string
+          maintenance_arrival_date?: string | null
           maintenance_company?: string | null
+          maintenance_delay_observations?: string | null
+          maintenance_departure_date?: string | null
           maintenance_description?: string | null
           maintenance_work_site?: string | null
           qr_code_data?: string | null

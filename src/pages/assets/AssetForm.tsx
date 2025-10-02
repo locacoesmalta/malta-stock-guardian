@@ -84,6 +84,9 @@ export default function AssetForm() {
         setValue("maintenance_company", data.maintenance_company || "");
         setValue("maintenance_work_site", data.maintenance_work_site || "");
         setValue("maintenance_description", data.maintenance_description || "");
+        setValue("maintenance_arrival_date", data.maintenance_arrival_date || "");
+        setValue("maintenance_departure_date", data.maintenance_departure_date || "");
+        setValue("maintenance_delay_observations", data.maintenance_delay_observations || "");
         setValue("is_new_equipment", data.is_new_equipment ?? false);
         setValue("rental_company", data.rental_company || "");
         setValue("rental_work_site", data.rental_work_site || "");
@@ -142,6 +145,9 @@ export default function AssetForm() {
         payload.maintenance_company = null;
         payload.maintenance_work_site = null;
         payload.maintenance_description = null;
+        payload.maintenance_arrival_date = null;
+        payload.maintenance_departure_date = null;
+        payload.maintenance_delay_observations = null;
         payload.is_new_equipment = null;
         payload.rental_company = null;
         payload.rental_work_site = null;
@@ -152,6 +158,9 @@ export default function AssetForm() {
         payload.maintenance_company = data.maintenance_company;
         payload.maintenance_work_site = data.maintenance_work_site;
         payload.maintenance_description = data.maintenance_description;
+        payload.maintenance_arrival_date = data.maintenance_arrival_date || null;
+        payload.maintenance_departure_date = data.maintenance_departure_date || null;
+        payload.maintenance_delay_observations = data.maintenance_delay_observations || null;
         payload.is_new_equipment = data.is_new_equipment ?? false;
         payload.rental_company = null;
         payload.rental_work_site = null;
@@ -162,6 +171,9 @@ export default function AssetForm() {
         payload.maintenance_company = null;
         payload.maintenance_work_site = null;
         payload.maintenance_description = null;
+        payload.maintenance_arrival_date = null;
+        payload.maintenance_departure_date = null;
+        payload.maintenance_delay_observations = null;
         payload.is_new_equipment = null;
         payload.rental_company = data.rental_company;
         payload.rental_work_site = data.rental_work_site;
@@ -174,6 +186,9 @@ export default function AssetForm() {
         payload.maintenance_company = null;
         payload.maintenance_work_site = null;
         payload.maintenance_description = null;
+        payload.maintenance_arrival_date = null;
+        payload.maintenance_departure_date = null;
+        payload.maintenance_delay_observations = null;
         payload.is_new_equipment = null;
         payload.rental_company = null;
         payload.rental_work_site = null;
@@ -401,6 +416,68 @@ export default function AssetForm() {
                 />
                 {errors.maintenance_description && (
                   <p className="text-sm text-destructive">{errors.maintenance_description.message}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="maintenance_arrival_date">Data de Chegada*</Label>
+                  <Input
+                    id="maintenance_arrival_date"
+                    type="date"
+                    {...register("maintenance_arrival_date")}
+                    disabled={isAwaitingReport}
+                  />
+                  {errors.maintenance_arrival_date && (
+                    <p className="text-sm text-destructive">{errors.maintenance_arrival_date.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="maintenance_departure_date">Data de Saída</Label>
+                  <Input
+                    id="maintenance_departure_date"
+                    type="date"
+                    {...register("maintenance_departure_date")}
+                    disabled={isAwaitingReport}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Opcional - será preenchida quando o equipamento sair da manutenção
+                  </p>
+                </div>
+              </div>
+
+              {watch("maintenance_arrival_date") && (
+                <div className="bg-muted p-4 rounded-lg space-y-2">
+                  <p className="text-sm font-medium">Tempo em Manutenção</p>
+                  <p className="text-2xl font-bold">
+                    {(() => {
+                      const arrival = new Date(watch("maintenance_arrival_date") || "");
+                      const departure = watch("maintenance_departure_date") 
+                        ? new Date(watch("maintenance_departure_date") || "")
+                        : new Date();
+                      const diffTime = Math.abs(departure.getTime() - arrival.getTime());
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      return `${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`;
+                    })()}
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="maintenance_delay_observations">Observações sobre o Tempo de Manutenção</Label>
+                <Textarea
+                  id="maintenance_delay_observations"
+                  {...register("maintenance_delay_observations")}
+                  placeholder="Descreva o que causou atraso, se houver"
+                  rows={3}
+                  disabled={isAwaitingReport}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Utilize para documentar atrasos ou observações sobre o tempo de manutenção
+                </p>
+                {errors.maintenance_delay_observations && (
+                  <p className="text-sm text-destructive">{errors.maintenance_delay_observations.message}</p>
                 )}
               </div>
             </>
@@ -637,6 +714,65 @@ export default function AssetForm() {
             />
             {errors.maintenance_description && (
               <p className="text-sm text-destructive">{errors.maintenance_description.message}</p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="maintenance_arrival_date">Data de Chegada*</Label>
+              <Input
+                id="maintenance_arrival_date"
+                type="date"
+                {...register("maintenance_arrival_date")}
+              />
+              {errors.maintenance_arrival_date && (
+                <p className="text-sm text-destructive">{errors.maintenance_arrival_date.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="maintenance_departure_date">Data de Saída</Label>
+              <Input
+                id="maintenance_departure_date"
+                type="date"
+                {...register("maintenance_departure_date")}
+              />
+              <p className="text-xs text-muted-foreground">
+                Opcional - será preenchida quando o equipamento sair da manutenção
+              </p>
+            </div>
+          </div>
+
+          {watch("maintenance_arrival_date") && (
+            <div className="bg-muted p-4 rounded-lg space-y-2">
+              <p className="text-sm font-medium">Tempo em Manutenção</p>
+              <p className="text-2xl font-bold">
+                {(() => {
+                  const arrival = new Date(watch("maintenance_arrival_date") || "");
+                  const departure = watch("maintenance_departure_date") 
+                    ? new Date(watch("maintenance_departure_date") || "")
+                    : new Date();
+                  const diffTime = Math.abs(departure.getTime() - arrival.getTime());
+                  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                  return `${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`;
+                })()}
+              </p>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="maintenance_delay_observations">Observações sobre o Tempo de Manutenção</Label>
+            <Textarea
+              id="maintenance_delay_observations"
+              {...register("maintenance_delay_observations")}
+              placeholder="Descreva o que causou atraso, se houver"
+              rows={3}
+            />
+            <p className="text-xs text-muted-foreground">
+              Utilize para documentar atrasos ou observações sobre o tempo de manutenção
+            </p>
+            {errors.maintenance_delay_observations && (
+              <p className="text-sm text-destructive">{errors.maintenance_delay_observations.message}</p>
             )}
           </div>
         </>

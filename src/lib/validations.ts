@@ -150,6 +150,12 @@ export const assetSchema = z.object({
     .trim()
     .max(1000, "Descrição deve ter no máximo 1000 caracteres")
     .optional(),
+  maintenance_arrival_date: z.string().optional(),
+  maintenance_departure_date: z.string().optional(),
+  maintenance_delay_observations: z.string()
+    .trim()
+    .max(1000, "Observações devem ter no máximo 1000 caracteres")
+    .optional(),
   is_new_equipment: z.boolean().optional(),
   // Campos para Locação
   rental_company: z.string()
@@ -172,13 +178,13 @@ export const assetSchema = z.object({
 }).refine(
   (data) => {
     if (data.location_type === "em_manutencao") {
-      return !!data.maintenance_company && !!data.maintenance_work_site && !!data.maintenance_description;
+      return !!data.maintenance_company && !!data.maintenance_work_site && !!data.maintenance_description && !!data.maintenance_arrival_date;
     }
     return true;
   },
   {
-    message: "Empresa, obra e descrição são obrigatórios para manutenção",
-    path: ["maintenance_company"],
+    message: "Empresa, obra, descrição e data de chegada são obrigatórios para manutenção",
+    path: ["maintenance_arrival_date"],
   }
 ).refine(
   (data) => {
