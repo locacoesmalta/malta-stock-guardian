@@ -1,19 +1,11 @@
 import { Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export function MobileMenuButton() {
   return (
-    <div className="fixed top-4 left-4 z-50 lg:hidden">
-      <SidebarTrigger asChild>
-        <Button 
-          size="icon" 
-          variant="default"
-          className="h-12 w-12 rounded-full shadow-lg hover:shadow-xl transition-shadow"
-        >
-          <Menu className="h-6 w-6" />
-        </Button>
-      </SidebarTrigger>
-    </div>
+    <SidebarTrigger className="h-10 w-10 rounded-lg bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 hover:shadow-xl transition-all flex items-center justify-center">
+      <Menu className="h-5 w-5" />
+      <span className="sr-only">Abrir menu</span>
+    </SidebarTrigger>
   );
 }
