@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { DeadlineStatusBadge } from "@/components/DeadlineStatusBadge";
 
 type FilterType = "deposito_malta" | "em_manutencao" | "locacao" | "aguardando_laudo" | null;
 
@@ -155,6 +156,9 @@ export default function StatusReports() {
                       <TableHead>Empresa</TableHead>
                       <TableHead>Obra</TableHead>
                       <TableHead>Data de Cadastro</TableHead>
+                      {activeFilter === "aguardando_laudo" && (
+                        <TableHead>Status do Prazo</TableHead>
+                      )}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -186,6 +190,11 @@ export default function StatusReports() {
                         <TableCell>
                           {new Date(asset.created_at).toLocaleDateString("pt-BR")}
                         </TableCell>
+                        {activeFilter === "aguardando_laudo" && (
+                          <TableCell>
+                            <DeadlineStatusBadge createdAt={asset.created_at} />
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>
