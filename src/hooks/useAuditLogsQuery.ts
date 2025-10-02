@@ -67,9 +67,13 @@ const fetchAuditLogs = async (options: UseAuditLogsQueryOptions = {}): Promise<{
     query = query.lte("created_at", endDate);
   }
 
-  const { data, error, count } = await query.returns<AuditLog[]>();
+  const { data, error, count } = await query;
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error fetching audit logs:', error);
+    throw error;
+  }
+  
   return { data: data || [], count: count || 0 };
 };
 
