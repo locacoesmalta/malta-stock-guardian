@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { PermissionRoute } from "@/components/PermissionRoute";
+import { MobileMenuButton } from "@/components/MobileMenuButton";
 
 // Lazy load routes for better performance
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -53,9 +54,12 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
-        <main className="flex-1 p-2 sm:p-4 md:p-6 overflow-auto">
-          {children}
-        </main>
+        <div className="flex-1 flex flex-col overflow-auto">
+          <MobileMenuButton />
+          <main className="flex-1 p-2 sm:p-4 md:p-6">
+            {children}
+          </main>
+        </div>
       </div>
     </SidebarProvider>
   );
