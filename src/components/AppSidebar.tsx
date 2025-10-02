@@ -26,14 +26,46 @@ export function AppSidebar() {
     return null;
   }
 
-  // Menu items principais com suas permissões
-  const mainMenuItems = [
+  // CONTROLE DE ESTOQUE
+  const inventoryMenuItems = [
     {
       path: "/dashboard",
       icon: Package,
       label: "Controle de Estoque",
       show: permissions.can_view_products || isAdmin,
     },
+    {
+      path: "/inventory/withdrawal",
+      icon: PackageMinus,
+      label: "Retirada de Material",
+      show: permissions.can_create_withdrawals || isAdmin,
+    },
+    {
+      path: "/inventory/history",
+      icon: History,
+      label: "Histórico de Retiradas",
+      show: permissions.can_view_withdrawal_history || isAdmin,
+    },
+  ];
+
+  // GESTÃO DE PATRIMÔNIO
+  const assetsMenuItems = [
+    {
+      path: "/assets/control",
+      icon: BarChart3,
+      label: "Controle de Patrimônio",
+      show: permissions.can_access_assets || isAdmin,
+    },
+    {
+      path: "/assets",
+      icon: QrCode,
+      label: "Gestão de Patrimônio",
+      show: permissions.can_access_assets || isAdmin,
+    },
+  ];
+
+  // RELATÓRIOS
+  const reportsMenuItems = [
     {
       path: "/reports/new",
       icon: FileText,
@@ -52,34 +84,12 @@ export function AppSidebar() {
       label: "Relatórios de Status",
       show: permissions.can_access_assets || isAdmin,
     },
-    {
-      path: "/inventory/withdrawal",
-      icon: PackageMinus,
-      label: "Retirada de Material",
-      show: permissions.can_create_withdrawals || isAdmin,
-    },
-    {
-      path: "/inventory/history",
-      icon: History,
-      label: "Histórico de Retiradas",
-      show: permissions.can_view_withdrawal_history || isAdmin,
-    },
-    {
-      path: "/assets/control",
-      icon: BarChart3,
-      label: "Controle de Patrimônio",
-      show: permissions.can_access_assets || isAdmin,
-    },
-    {
-      path: "/assets",
-      icon: QrCode,
-      label: "Gestão de Patrimônio",
-      show: permissions.can_access_assets || isAdmin,
-    },
   ];
 
   // Filtrar itens visíveis
-  const visibleMainMenuItems = mainMenuItems.filter(item => item.show);
+  const visibleInventoryItems = inventoryMenuItems.filter(item => item.show);
+  const visibleAssetsItems = assetsMenuItems.filter(item => item.show);
+  const visibleReportsItems = reportsMenuItems.filter(item => item.show);
 
   // Só mostrar o menu principal se houver permissão ou se for admin
   const showMainMenu = permissions.can_access_main_menu || isAdmin;
@@ -108,12 +118,52 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {showMainMenu && visibleMainMenuItems.length > 0 && (
+        {showMainMenu && visibleInventoryItems.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
+            <SidebarGroupLabel>Controle de Estoque</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {visibleMainMenuItems.map((item) => (
+                {visibleInventoryItems.map((item) => (
+                  <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton asChild>
+                      <NavLink to={item.path} className={getNavCls}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {showMainMenu && visibleAssetsItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Gestão de Patrimônio</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {visibleAssetsItems.map((item) => (
+                  <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton asChild>
+                      <NavLink to={item.path} className={getNavCls}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {showMainMenu && visibleReportsItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Relatórios</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {visibleReportsItems.map((item) => (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton asChild>
                       <NavLink to={item.path} className={getNavCls}>
