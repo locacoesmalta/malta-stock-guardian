@@ -42,7 +42,7 @@ export default function AssetTraceability() {
     data_inicio: "",
     data_fim: "",
     usuario: "",
-    campo: "",
+    campo: "all",
   });
 
   const [searchFilters, setSearchFilters] = useState({
@@ -56,7 +56,10 @@ export default function AssetTraceability() {
   const { data: historico, isLoading } = usePatrimonioHistoricoFiltered(searchFilters);
 
   const handleSearch = () => {
-    setSearchFilters(filters);
+    setSearchFilters({
+      ...filters,
+      campo: filters.campo === "all" ? "" : filters.campo,
+    });
   };
 
   const handleClear = () => {
@@ -65,10 +68,10 @@ export default function AssetTraceability() {
       data_inicio: "",
       data_fim: "",
       usuario: "",
-      campo: "",
+      campo: "all",
     };
     setFilters(emptyFilters);
-    setSearchFilters(emptyFilters);
+    setSearchFilters({ ...emptyFilters, campo: "" });
   };
 
   return (
@@ -137,14 +140,14 @@ export default function AssetTraceability() {
             <Select
               value={filters.campo}
               onValueChange={(value) =>
-                setFilters({ ...filters, campo: value })
+                setFilters({ ...filters, campo: value === "all" ? "" : value })
               }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Todos os campos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os campos</SelectItem>
+                <SelectItem value="all">Todos os campos</SelectItem>
                 <SelectItem value="Local do Equipamento">
                   Local do Equipamento
                 </SelectItem>
