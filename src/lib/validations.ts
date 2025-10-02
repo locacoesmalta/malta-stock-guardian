@@ -156,6 +156,13 @@ export const assetSchema = z.object({
     .trim()
     .max(1000, "Observações devem ter no máximo 1000 caracteres")
     .optional(),
+  returns_to_work_site: z.boolean().optional(),
+  was_replaced: z.boolean().optional(),
+  replaced_by_asset_id: z.string().optional(),
+  replacement_reason: z.string()
+    .trim()
+    .max(500, "Motivo deve ter no máximo 500 caracteres")
+    .optional(),
   is_new_equipment: z.boolean().optional(),
   // Campos para Locação
   rental_company: z.string()

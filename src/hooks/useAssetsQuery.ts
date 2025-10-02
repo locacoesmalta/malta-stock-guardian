@@ -18,6 +18,10 @@ interface Asset {
   maintenance_arrival_date?: string;
   maintenance_departure_date?: string;
   maintenance_delay_observations?: string;
+  returns_to_work_site?: boolean;
+  was_replaced?: boolean;
+  replaced_by_asset_id?: string;
+  replacement_reason?: string;
   is_new_equipment?: boolean;
   equipment_observations?: string;
   created_at: string;

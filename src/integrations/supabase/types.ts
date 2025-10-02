@@ -37,7 +37,11 @@ export type Database = {
           rental_end_date: string | null
           rental_start_date: string | null
           rental_work_site: string | null
+          replaced_by_asset_id: string | null
+          replacement_reason: string | null
+          returns_to_work_site: boolean | null
           updated_at: string
+          was_replaced: boolean | null
         }
         Insert: {
           asset_code: string
@@ -61,7 +65,11 @@ export type Database = {
           rental_end_date?: string | null
           rental_start_date?: string | null
           rental_work_site?: string | null
+          replaced_by_asset_id?: string | null
+          replacement_reason?: string | null
+          returns_to_work_site?: boolean | null
           updated_at?: string
+          was_replaced?: boolean | null
         }
         Update: {
           asset_code?: string
@@ -85,9 +93,21 @@ export type Database = {
           rental_end_date?: string | null
           rental_start_date?: string | null
           rental_work_site?: string | null
+          replaced_by_asset_id?: string | null
+          replacement_reason?: string | null
+          returns_to_work_site?: boolean | null
           updated_at?: string
+          was_replaced?: boolean | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "assets_replaced_by_asset_id_fkey"
+            columns: ["replaced_by_asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       audit_logs: {
         Row: {
