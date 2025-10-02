@@ -25,7 +25,7 @@ const Welcome = () => {
   }
 
   return (
-    <div className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden">
+    <div className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden bg-slate-950">
       {/* Sparkles Background */}
       <div className="absolute inset-0 w-full h-full">
         <SparklesCore
@@ -51,19 +51,19 @@ const Welcome = () => {
           />
         </div>
         
-        <div className="text-center space-y-4 animate-fade-in" style={{ animationDelay: "0.2s" }}>
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/80">
+        <div className="text-center space-y-6 animate-fade-in" style={{ animationDelay: "0.2s" }}>
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white drop-shadow-lg">
             Bem-vindo, {userName}!
           </h1>
           
-          <p className="text-white/90 text-lg md:text-xl max-w-2xl">
+          <p className="text-white text-lg md:text-xl max-w-2xl">
             Sistema de Controle de Estoque Malta Locações
           </p>
         </div>
       </div>
 
-      {/* Gradient Mask */}
-      <div className="absolute inset-0 w-full h-full bg-gradient-to-b from-background/20 via-transparent to-background/20 pointer-events-none"></div>
+      {/* Radial Gradient to prevent sharp edges */}
+      <div className="absolute inset-0 w-full h-full bg-slate-950 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)] pointer-events-none"></div>
     </div>
   );
 };
