@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,6 +56,21 @@ export default function AssetTraceability() {
   });
 
   const { data: historico, isLoading } = usePatrimonioHistoricoFiltered(searchFilters);
+
+  // Busca automática quando o código PAT é digitado
+  useEffect(() => {
+    if (filters.codigo_pat.trim().length >= 3) {
+      const timeoutId = setTimeout(() => {
+        setSearchFilters({
+          ...filters,
+          campo: filters.campo === "all" ? "" : filters.campo,
+          tipo_evento: filters.tipo_evento === "all" ? "" : filters.tipo_evento,
+        });
+      }, 500); // Debounce de 500ms
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [filters.codigo_pat]);
 
   const handleSearch = () => {
     setSearchFilters({
