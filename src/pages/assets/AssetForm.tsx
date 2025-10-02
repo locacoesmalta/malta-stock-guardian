@@ -103,6 +103,7 @@ export default function AssetForm() {
         setValue("rental_end_date", data.rental_end_date || "");
         setValue("qr_code_data", data.qr_code_data || "");
         setValue("equipment_observations", data.equipment_observations || "");
+        setValue("malta_collaborator", data.malta_collaborator || "");
       }
     } catch (error) {
       console.error("Erro ao buscar patrimônio:", error);
@@ -146,6 +147,7 @@ export default function AssetForm() {
         location_type: data.location_type,
         qr_code_data: data.qr_code_data || null,
         equipment_observations: data.equipment_observations || null,
+        malta_collaborator: data.malta_collaborator || null,
       };
 
       // Limpar campos baseado no tipo de localização
@@ -369,6 +371,19 @@ export default function AssetForm() {
               <p className="text-sm text-amber-600">
                 ⚠️ Equipamento aguardando laudo. Apenas o campo "Local do Equipamento" pode ser editado.
               </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="malta_collaborator">Colaborador Malta Responsável</Label>
+            <Input
+              id="malta_collaborator"
+              {...register("malta_collaborator")}
+              placeholder="Nome do colaborador Malta que está fazendo o serviço"
+              disabled={isAwaitingReport}
+            />
+            {errors.malta_collaborator && (
+              <p className="text-sm text-destructive">{errors.malta_collaborator.message}</p>
             )}
           </div>
 

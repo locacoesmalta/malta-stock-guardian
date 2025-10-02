@@ -25,6 +25,7 @@ interface Asset {
   is_new_equipment?: boolean;
   destination_after_maintenance?: string;
   equipment_observations?: string;
+  malta_collaborator?: string;
   created_at: string;
 }
 

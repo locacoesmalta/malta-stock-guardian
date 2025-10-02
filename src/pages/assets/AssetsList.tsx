@@ -136,9 +136,14 @@ export default function AssetsList() {
               onClick={() => isAdmin && navigate(`/assets/edit/${asset.id}`)}
             >
               <div className="flex justify-between items-start mb-3">
-                <div>
+                <div className="flex-1">
                   <h3 className="font-semibold text-lg">{asset.equipment_name}</h3>
                   <p className="text-sm text-muted-foreground">PAT: {asset.asset_code}</p>
+                  {asset.malta_collaborator && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Responsável: {asset.malta_collaborator}
+                    </p>
+                  )}
                 </div>
                 <Badge variant={getLocationVariant(asset.location_type)}>
                   {getLocationLabel(asset.location_type)}

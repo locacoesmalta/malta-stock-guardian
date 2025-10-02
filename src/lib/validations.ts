@@ -183,6 +183,10 @@ export const assetSchema = z.object({
     .trim()
     .max(1000, "Observação deve ter no máximo 1000 caracteres")
     .optional(),
+  malta_collaborator: z.string()
+    .trim()
+    .max(200, "Nome do colaborador deve ter no máximo 200 caracteres")
+    .optional(),
 }).refine(
   (data) => {
     if (data.location_type === "em_manutencao") {

@@ -33,6 +33,7 @@ export type Database = {
           maintenance_departure_date: string | null
           maintenance_description: string | null
           maintenance_work_site: string | null
+          malta_collaborator: string | null
           qr_code_data: string | null
           rental_company: string | null
           rental_end_date: string | null
@@ -62,6 +63,7 @@ export type Database = {
           maintenance_departure_date?: string | null
           maintenance_description?: string | null
           maintenance_work_site?: string | null
+          malta_collaborator?: string | null
           qr_code_data?: string | null
           rental_company?: string | null
           rental_end_date?: string | null
@@ -91,6 +93,7 @@ export type Database = {
           maintenance_departure_date?: string | null
           maintenance_description?: string | null
           maintenance_work_site?: string | null
+          malta_collaborator?: string | null
           qr_code_data?: string | null
           rental_company?: string | null
           rental_end_date?: string | null

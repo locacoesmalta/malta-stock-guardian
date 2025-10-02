@@ -173,34 +173,36 @@ export default function StatusReports() {
             ) : (
               <div className="overflow-x-auto">
                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Código</TableHead>
-                      <TableHead>Nome do Equipamento</TableHead>
-                      <TableHead>Local</TableHead>
-                      <TableHead>Empresa</TableHead>
-                      <TableHead>Obra</TableHead>
-                      <TableHead>Data de Cadastro</TableHead>
-                      {activeFilter === "em_manutencao" && (
-                        <TableHead>Dias em Manutenção</TableHead>
-                      )}
-                      {activeFilter === "aguardando_laudo" && (
-                        <TableHead>Status do Prazo</TableHead>
-                      )}
-                    </TableRow>
-                  </TableHeader>
+                   <TableHeader>
+                     <TableRow>
+                       <TableHead>Código</TableHead>
+                       <TableHead>Nome do Equipamento</TableHead>
+                       <TableHead>Colaborador Malta</TableHead>
+                       <TableHead>Local</TableHead>
+                       <TableHead>Empresa</TableHead>
+                       <TableHead>Obra</TableHead>
+                       <TableHead>Data de Cadastro</TableHead>
+                       {activeFilter === "em_manutencao" && (
+                         <TableHead>Dias em Manutenção</TableHead>
+                       )}
+                       {activeFilter === "aguardando_laudo" && (
+                         <TableHead>Status do Prazo</TableHead>
+                       )}
+                     </TableRow>
+                   </TableHeader>
                   <TableBody>
                     {filteredAssets.map((asset) => (
-                      <TableRow key={asset.id}>
-                        <TableCell className="font-mono font-semibold">
-                          {asset.asset_code}
-                        </TableCell>
-                        <TableCell>{asset.equipment_name}</TableCell>
-                        <TableCell>
-                          <Badge variant={getLocationVariant(asset.location_type)}>
-                            {getLocationLabel(asset.location_type)}
-                          </Badge>
-                        </TableCell>
+                       <TableRow key={asset.id}>
+                         <TableCell className="font-mono font-semibold">
+                           {asset.asset_code}
+                         </TableCell>
+                         <TableCell>{asset.equipment_name}</TableCell>
+                         <TableCell>{asset.malta_collaborator || "-"}</TableCell>
+                         <TableCell>
+                           <Badge variant={getLocationVariant(asset.location_type)}>
+                             {getLocationLabel(asset.location_type)}
+                           </Badge>
+                         </TableCell>
                         <TableCell>
                           {asset.location_type === "locacao"
                             ? asset.rental_company
