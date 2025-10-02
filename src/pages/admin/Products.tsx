@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Search, Download, Upload } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Pencil, Trash2, Search, Download, Upload, Layers } from "lucide-react";
 import { toast } from "sonner";
 import { StockBadge } from "@/components/StockBadge";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,6 +38,8 @@ const Products = () => {
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [brandFilter, setBrandFilter] = useState<string>("all");
+  const [groupByBrand, setGroupByBrand] = useState(false);
   const [importSummary, setImportSummary] = useState<{
     newProducts: number;
     updatedStock: number;
@@ -53,6 +56,40 @@ const Products = () => {
     comments: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Extrair marcas únicas dos produtos
+  const availableBrands = useMemo(() => {
+    const brands = new Set<string>();
+    products.forEach((product) => {
+      if (product.manufacturer) {
+        brands.add(product.manufacturer);
+      }
+    });
+    return Array.from(brands).sort();
+  }, [products]);
+
+  // Filtrar produtos por marca
+  const filteredProducts = useMemo(() => {
+    if (brandFilter === "all") return products;
+    if (brandFilter === "no-brand") return products.filter((p) => !p.manufacturer);
+    return products.filter((p) => p.manufacturer === brandFilter);
+  }, [products, brandFilter]);
+
+  // Agrupar produtos por marca
+  const groupedProducts = useMemo(() => {
+    if (!groupByBrand) return null;
+    
+    const groups: Record<string, Product[]> = {};
+    filteredProducts.forEach((product) => {
+      const brand = product.manufacturer || "Sem Marca";
+      if (!groups[brand]) {
+        groups[brand] = [];
+      }
+      groups[brand].push(product);
+    });
+    
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  }, [filteredProducts, groupByBrand]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -471,9 +508,9 @@ const Products = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Produtos Cadastrados</span>
-            <div className="relative w-64">
+          <CardTitle>Produtos Cadastrados</CardTitle>
+          <div className="flex flex-wrap items-center gap-3 mt-4">
+            <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar produto..."
@@ -482,20 +519,117 @@ const Products = () => {
                 className="pl-9"
               />
             </div>
-          </CardTitle>
+            <Select value={brandFilter} onValueChange={setBrandFilter}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Filtrar por marca" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as Marcas</SelectItem>
+                <SelectItem value="no-brand">Sem Marca</SelectItem>
+                {availableBrands.map((brand) => (
+                  <SelectItem key={brand} value={brand}>
+                    {brand}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant={groupByBrand ? "default" : "outline"}
+              size="sm"
+              onClick={() => setGroupByBrand(!groupByBrand)}
+            >
+              <Layers className="h-4 w-4 mr-2" />
+              {groupByBrand ? "Desagrupar" : "Agrupar por Marca"}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">
               Carregando produtos...
             </div>
-          ) : products.length === 0 ? (
+          ) : filteredProducts.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Nenhum produto cadastrado
+              Nenhum produto encontrado
+            </div>
+          ) : groupByBrand && groupedProducts ? (
+            <div className="space-y-6">
+              {groupedProducts.map(([brand, brandProducts]) => (
+                <div key={brand} className="space-y-3">
+                  <div className="flex items-center gap-2 pb-2 border-b">
+                    <h3 className="font-semibold text-lg">{brand}</h3>
+                    <span className="text-sm text-muted-foreground">
+                      ({brandProducts.length} produtos)
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {brandProducts.map((product) => (
+                      <div
+                        key={product.id}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
+                        <div className="flex-1 space-y-1">
+                          <div className="font-medium">{product.name}</div>
+                          <div className="text-sm text-muted-foreground">
+                            Código: {product.code}
+                          </div>
+                          {(product.purchase_price || product.sale_price) && (
+                            <div className="text-sm space-x-4">
+                              {product.purchase_price && (
+                                <span className="text-muted-foreground">
+                                  Compra: R$ {product.purchase_price.toFixed(2)}
+                                </span>
+                              )}
+                              {product.sale_price && (
+                                <span className="text-muted-foreground">
+                                  Venda: R$ {product.sale_price.toFixed(2)}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          {product.comments && (
+                            <div className="text-sm text-muted-foreground italic">
+                              {product.comments}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <div className="font-semibold">{product.quantity}</div>
+                            <div className="text-xs text-muted-foreground">
+                              Mín: {product.min_quantity}
+                            </div>
+                          </div>
+                          <StockBadge
+                            quantity={product.quantity}
+                            minQuantity={product.min_quantity}
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEditDialog(product)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(product.id, product.name)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="space-y-2">
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <div
                   key={product.id}
                   className="flex items-center justify-between p-4 border rounded-lg"
