@@ -22,8 +22,8 @@ const LOGS_PER_PAGE = 50;
 const AuditLogs = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
-  const [actionFilter, setActionFilter] = useState<string>("");
-  const [tableFilter, setTableFilter] = useState<string>("");
+  const [actionFilter, setActionFilter] = useState<string>("all");
+  const [tableFilter, setTableFilter] = useState<string>("all");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [selectedLog, setSelectedLog] = useState<any>(null);
@@ -31,8 +31,8 @@ const AuditLogs = () => {
   const { data, isLoading, error } = useAuditLogsQuery({
     page: currentPage,
     pageSize: LOGS_PER_PAGE,
-    action: actionFilter || undefined,
-    tableName: tableFilter || undefined,
+    action: actionFilter !== "all" ? actionFilter : undefined,
+    tableName: tableFilter !== "all" ? tableFilter : undefined,
     startDate: startDate || undefined,
     endDate: endDate || undefined,
   });
@@ -162,7 +162,7 @@ const AuditLogs = () => {
                   <SelectValue placeholder="Todas as ações" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas</SelectItem>
+                  <SelectItem value="all">Todas</SelectItem>
                   <SelectItem value="INSERT">Criação</SelectItem>
                   <SelectItem value="UPDATE">Atualização</SelectItem>
                   <SelectItem value="DELETE">Exclusão</SelectItem>
@@ -177,7 +177,7 @@ const AuditLogs = () => {
                   <SelectValue placeholder="Todas as tabelas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas</SelectItem>
+                  <SelectItem value="all">Todas</SelectItem>
                   <SelectItem value="products">Produtos</SelectItem>
                   <SelectItem value="material_withdrawals">Retiradas</SelectItem>
                   <SelectItem value="reports">Relatórios</SelectItem>
