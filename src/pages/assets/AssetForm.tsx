@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AssetHistorySection } from "@/components/AssetHistorySection";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function AssetForm() {
   const { id } = useParams();
@@ -51,6 +52,8 @@ export default function AssetForm() {
   const isNewEquipment = watch("is_new_equipment");
   const returnsToWorkSite = watch("returns_to_work_site");
   const wasReplaced = watch("was_replaced");
+  const maintenanceDepartureDate = watch("maintenance_departure_date");
+  const destinationAfterMaintenance = watch("destination_after_maintenance");
   
   // Regra de negócio: bloquear campos quando status = "aguardando_laudo"
   const isAwaitingReport = locationType === "aguardando_laudo";
@@ -93,6 +96,7 @@ export default function AssetForm() {
         setValue("was_replaced", data.was_replaced ?? undefined);
         setValue("replacement_reason", data.replacement_reason || "");
         setValue("is_new_equipment", data.is_new_equipment ?? false);
+        setValue("destination_after_maintenance", data.destination_after_maintenance || "");
         setValue("rental_company", data.rental_company || "");
         setValue("rental_work_site", data.rental_work_site || "");
         setValue("rental_start_date", data.rental_start_date || "");
@@ -154,6 +158,7 @@ export default function AssetForm() {
         payload.maintenance_departure_date = null;
         payload.maintenance_delay_observations = null;
         payload.returns_to_work_site = null;
+        payload.destination_after_maintenance = null;
         payload.was_replaced = null;
         payload.replacement_reason = null;
         payload.is_new_equipment = null;
@@ -170,9 +175,10 @@ export default function AssetForm() {
         payload.maintenance_departure_date = data.maintenance_departure_date || null;
         payload.maintenance_delay_observations = data.maintenance_delay_observations || null;
         payload.returns_to_work_site = data.returns_to_work_site ?? null;
-        payload.was_replaced = data.was_replaced ?? null;
+        payload.destination_after_maintenance = data.destination_after_maintenance || null;
+        payload.was_replaced = data.destination_after_maintenance === "troca_equipamento" || null;
         payload.replacement_reason = data.replacement_reason || null;
-        payload.is_new_equipment = data.is_new_equipment ?? false;
+        payload.is_new_equipment = data.is_new_equipment ?? null;
         payload.rental_company = null;
         payload.rental_work_site = null;
         payload.rental_start_date = null;
@@ -186,6 +192,7 @@ export default function AssetForm() {
         payload.maintenance_departure_date = null;
         payload.maintenance_delay_observations = null;
         payload.returns_to_work_site = null;
+        payload.destination_after_maintenance = null;
         payload.was_replaced = null;
         payload.replacement_reason = null;
         payload.is_new_equipment = null;
@@ -204,6 +211,7 @@ export default function AssetForm() {
         payload.maintenance_departure_date = null;
         payload.maintenance_delay_observations = null;
         payload.returns_to_work_site = null;
+        payload.destination_after_maintenance = null;
         payload.was_replaced = null;
         payload.replacement_reason = null;
         payload.is_new_equipment = null;
@@ -498,55 +506,23 @@ export default function AssetForm() {
                 )}
               </div>
 
-              <div className="border-t pt-6 space-y-4">
-                <div className="space-y-3">
-                  <Label className="text-base font-semibold">Esse equipamento vai voltar para a obra?</Label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        value="true"
-                        checked={returnsToWorkSite === true}
-                        onChange={() => {
-                          setValue("returns_to_work_site", true);
-                          setValue("was_replaced", undefined);
-                        }}
-                        disabled={isAwaitingReport}
-                        className="w-4 h-4"
-                      />
-                      <span>Sim</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        value="false"
-                        checked={returnsToWorkSite === false}
-                        onChange={() => setValue("returns_to_work_site", false)}
-                        disabled={isAwaitingReport}
-                        className="w-4 h-4"
-                      />
-                      <span>Não</span>
-                    </label>
-                  </div>
-                  {returnsToWorkSite === true && (
-                    <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg text-sm">
-                      <p className="text-blue-900 dark:text-blue-100">
-                        ✓ A data de saída da manutenção será associada ao retorno do equipamento para a obra.
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {returnsToWorkSite === false && (
-                  <div className="space-y-3 pl-4 border-l-2 border-amber-500">
-                    <Label className="text-base font-semibold">Foi trocado por outro equipamento?</Label>
+              {/* Mostrar perguntas somente após preencher data de saída */}
+              {maintenanceDepartureDate && (
+                <div className="border-t pt-6 space-y-4">
+                  <div className="space-y-3">
+                    <Label className="text-base font-semibold">Esse equipamento vai voltar para a obra?</Label>
                     <div className="flex gap-4">
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="radio"
                           value="true"
-                          checked={wasReplaced === true}
-                          onChange={() => setValue("was_replaced", true)}
+                          checked={returnsToWorkSite === true}
+                          onChange={() => {
+                            setValue("returns_to_work_site", true);
+                            setValue("destination_after_maintenance", "");
+                            setValue("was_replaced", undefined);
+                            setValue("replacement_reason", "");
+                          }}
                           disabled={isAwaitingReport}
                           className="w-4 h-4"
                         />
@@ -556,55 +532,101 @@ export default function AssetForm() {
                         <input
                           type="radio"
                           value="false"
-                          checked={wasReplaced === false}
-                          onChange={() => setValue("was_replaced", false)}
+                          checked={returnsToWorkSite === false}
+                          onChange={() => setValue("returns_to_work_site", false)}
                           disabled={isAwaitingReport}
                           className="w-4 h-4"
                         />
                         <span>Não</span>
                       </label>
                     </div>
-
-                    {wasReplaced === true && (
-                      <div className="space-y-4 mt-4 p-4 bg-amber-50 dark:bg-amber-950 rounded-lg">
-                        <div className="flex items-center gap-2 text-amber-900 dark:text-amber-100 mb-3">
-                          <span className="text-lg">⚠️</span>
-                          <p className="font-medium">Cadastro de Equipamento Substituto</p>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor="replacement_reason">Motivo da Troca</Label>
-                          <Textarea
-                            id="replacement_reason"
-                            {...register("replacement_reason")}
-                            placeholder="Descreva o motivo da troca de equipamento"
-                            rows={2}
-                            disabled={isAwaitingReport}
-                          />
-                        </div>
-
-                        <div className="bg-white dark:bg-gray-900 p-4 rounded border-2 border-amber-300">
-                          <p className="text-sm text-amber-900 dark:text-amber-100 mb-3">
-                            Após salvar este registro, você precisará cadastrar o novo equipamento que substituiu este.
-                            O novo equipamento será automaticamente associado à mesma obra: <strong>{watch("maintenance_work_site")}</strong>
-                          </p>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                              toast.info("Salve este formulário primeiro. Após salvar, você poderá cadastrar o equipamento substituto.");
-                            }}
-                            disabled={isAwaitingReport}
-                            className="w-full"
-                          >
-                            Cadastrar Novo Equipamento (após salvar)
-                          </Button>
-                        </div>
+                    {returnsToWorkSite === true && (
+                      <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg text-sm">
+                        <p className="text-blue-900 dark:text-blue-100">
+                          ✓ A data de saída da manutenção será associada ao retorno do equipamento para a obra.
+                        </p>
                       </div>
                     )}
                   </div>
-                )}
-              </div>
+
+                  {/* Se não vai voltar, mostrar opções de destino */}
+                  {returnsToWorkSite === false && (
+                    <div className="space-y-4 pl-4 border-l-2 border-amber-500">
+                      <div className="space-y-2">
+                        <Label htmlFor="destination_after_maintenance" className="text-base font-semibold">
+                          Para onde o equipamento irá? *
+                        </Label>
+                        <select
+                          id="destination_after_maintenance"
+                          {...register("destination_after_maintenance")}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                          disabled={isAwaitingReport}
+                        >
+                          <option value="">Selecione o destino...</option>
+                          <option value="deposito_malta">Depósito Malta</option>
+                          <option value="locacao">Locação</option>
+                          <option value="aguardando_laudo">Aguardando Laudo</option>
+                          <option value="troca_equipamento">Troca de Equipamento</option>
+                        </select>
+                      </div>
+
+                      {/* Se escolheu troca de equipamento */}
+                      {destinationAfterMaintenance === "troca_equipamento" && (
+                        <div className="space-y-4 mt-4 p-4 bg-amber-50 dark:bg-amber-950 rounded-lg">
+                          <div className="flex items-center gap-2 text-amber-900 dark:text-amber-100 mb-3">
+                            <span className="text-lg">⚠️</span>
+                            <p className="font-medium">Cadastro de Equipamento Substituto</p>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="replacement_reason">Motivo da Troca *</Label>
+                            <Textarea
+                              id="replacement_reason"
+                              {...register("replacement_reason")}
+                              placeholder="Descreva o motivo da troca de equipamento"
+                              rows={2}
+                              disabled={isAwaitingReport}
+                            />
+                            {errors.replacement_reason && (
+                              <p className="text-sm text-destructive">{errors.replacement_reason.message}</p>
+                            )}
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="is_new_equipment"
+                              checked={isNewEquipment}
+                              onCheckedChange={(checked) => setValue("is_new_equipment", checked === true)}
+                              disabled={isAwaitingReport}
+                            />
+                            <Label htmlFor="is_new_equipment" className="cursor-pointer">
+                              É equipamento novo?
+                            </Label>
+                          </div>
+
+                          <div className="bg-white dark:bg-gray-900 p-4 rounded border-2 border-amber-300">
+                            <p className="text-sm text-amber-900 dark:text-amber-100 mb-3">
+                              <strong>Importante:</strong> Após salvar este registro, você deve cadastrar o novo equipamento
+                              que substituiu este. O novo patrimônio ficará associado à obra: <strong>{watch("maintenance_work_site")}</strong>
+                            </p>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                toast.info("Salve este formulário primeiro. Após salvar, você poderá cadastrar o equipamento substituto.");
+                              }}
+                              disabled={isAwaitingReport}
+                              className="w-full"
+                            >
+                              Cadastrar Novo Equipamento (após salvar)
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
 

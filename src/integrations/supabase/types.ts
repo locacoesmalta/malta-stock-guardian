@@ -21,6 +21,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           deposito_description: string | null
+          destination_after_maintenance: string | null
           equipment_name: string
           equipment_observations: string | null
           id: string
@@ -49,6 +50,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deposito_description?: string | null
+          destination_after_maintenance?: string | null
           equipment_name: string
           equipment_observations?: string | null
           id?: string
@@ -77,6 +79,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deposito_description?: string | null
+          destination_after_maintenance?: string | null
           equipment_name?: string
           equipment_observations?: string | null
           id?: string

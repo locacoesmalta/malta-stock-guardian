@@ -164,6 +164,7 @@ export const assetSchema = z.object({
     .max(500, "Motivo deve ter no máximo 500 caracteres")
     .optional(),
   is_new_equipment: z.boolean().optional(),
+  destination_after_maintenance: z.string().optional(),
   // Campos para Locação
   rental_company: z.string()
     .trim()

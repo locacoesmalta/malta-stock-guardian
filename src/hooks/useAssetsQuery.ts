@@ -23,6 +23,7 @@ interface Asset {
   replaced_by_asset_id?: string;
   replacement_reason?: string;
   is_new_equipment?: boolean;
+  destination_after_maintenance?: string;
   equipment_observations?: string;
   created_at: string;
 }
