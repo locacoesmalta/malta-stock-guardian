@@ -41,22 +41,22 @@ const Welcome = () => {
       </div>
 
       {/* Content */}
-      <div className="relative z-20 flex flex-col items-center justify-center gap-8 px-4">
+      <div className="relative z-20 flex flex-col items-center justify-center gap-12 px-4 text-center">
         <div className="flex justify-center animate-fade-in">
           <img 
             src="/malta-logo.webp" 
             alt="Malta Locações Logo" 
-            className="w-32 h-32 md:w-48 md:h-48 object-contain drop-shadow-2xl"
+            className="w-48 h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 object-contain drop-shadow-2xl"
             fetchPriority="high"
           />
         </div>
         
-        <div className="text-center space-y-6 animate-fade-in" style={{ animationDelay: "0.2s" }}>
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white drop-shadow-lg">
+        <div className="space-y-6 animate-fade-in" style={{ animationDelay: "0.2s" }}>
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white drop-shadow-lg mx-auto">
             Bem-vindo, {userName}!
           </h1>
           
-          <p className="text-white text-lg md:text-xl max-w-2xl">
+          <p className="text-white text-lg md:text-xl max-w-3xl mx-auto">
             Sistema de Controle de Estoque Malta Locações
           </p>
         </div>
