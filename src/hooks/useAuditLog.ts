@@ -22,23 +22,9 @@ export const useAuditLog = () => {
     if (!user) return;
 
     try {
-      // Buscar informações do usuário
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("email, full_name")
-        .eq("id", user.id)
-        .single();
-
-      await supabase.from("audit_logs").insert({
-        user_id: user.id,
-        user_email: profile?.email || user.email || "unknown",
-        user_name: profile?.full_name,
-        action,
-        table_name: tableName,
-        record_id: recordId,
-        old_data: oldData,
-        new_data: newData,
-      });
+      // Note: Audit logs are now handled automatically by database triggers
+      // This hook is kept for backward compatibility but doesn't insert directly
+      console.log("Audit log would be created:", { action, tableName, recordId });
     } catch (error) {
       console.error("Erro ao registrar log de auditoria:", error);
     }
