@@ -16,6 +16,12 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function AppSidebar() {
   const { isAdmin, signOut, user, permissions } = useAuth();
@@ -101,10 +107,11 @@ export function AppSidebar() {
   const showAdminMenu = permissions.can_access_admin || isAdmin;
 
   return (
-    <Sidebar
-      className="border-r"
-      collapsible="icon"
-    >
+    <TooltipProvider delayDuration={0}>
+      <Sidebar
+        className="border-r"
+        collapsible="icon"
+      >
       <SidebarHeader className="border-b p-3 sm:p-4 md:px-6 md:py-4">
         <div className="flex items-center justify-between gap-2 sm:gap-3">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -133,12 +140,21 @@ export function AppSidebar() {
               <SidebarMenu>
                 {visibleInventoryItems.map((item) => (
                   <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton asChild>
-                      <NavLink to={item.path} className={getNavCls}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.label}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <SidebarMenuButton asChild>
+                          <NavLink to={item.path} className={getNavCls}>
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.label}</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </TooltipTrigger>
+                      {!open && (
+                        <TooltipContent side="right" className="font-normal">
+                          {item.label}
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
@@ -153,12 +169,21 @@ export function AppSidebar() {
               <SidebarMenu>
                 {visibleAssetsItems.map((item) => (
                   <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton asChild>
-                      <NavLink to={item.path} className={getNavCls}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.label}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <SidebarMenuButton asChild>
+                          <NavLink to={item.path} className={getNavCls}>
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.label}</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </TooltipTrigger>
+                      {!open && (
+                        <TooltipContent side="right" className="font-normal">
+                          {item.label}
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
@@ -173,12 +198,21 @@ export function AppSidebar() {
               <SidebarMenu>
                 {visibleReportsItems.map((item) => (
                   <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton asChild>
-                      <NavLink to={item.path} className={getNavCls}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.label}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <SidebarMenuButton asChild>
+                          <NavLink to={item.path} className={getNavCls}>
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.label}</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </TooltipTrigger>
+                      {!open && (
+                        <TooltipContent side="right" className="font-normal">
+                          {item.label}
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
@@ -192,39 +226,75 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <NavLink to="/admin/products" className={getNavCls}>
-                      <Package className="h-4 w-4" />
-                      <span>Produtos</span>
-                    </NavLink>
-                  </SidebarMenuButton>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton asChild>
+                        <NavLink to="/admin/products" className={getNavCls}>
+                          <Package className="h-4 w-4" />
+                          <span>Produtos</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    {!open && (
+                      <TooltipContent side="right" className="font-normal">
+                        Produtos
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
                 </SidebarMenuItem>
 
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <NavLink to="/admin/users" className={getNavCls}>
-                      <Users className="h-4 w-4" />
-                      <span>Usuários</span>
-                    </NavLink>
-                  </SidebarMenuButton>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton asChild>
+                        <NavLink to="/admin/users" className={getNavCls}>
+                          <Users className="h-4 w-4" />
+                          <span>Usuários</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    {!open && (
+                      <TooltipContent side="right" className="font-normal">
+                        Usuários
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
                 </SidebarMenuItem>
 
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <NavLink to="/admin/logs" className={getNavCls}>
-                      <Shield className="h-4 w-4" />
-                      <span>Logs de Auditoria</span>
-                    </NavLink>
-                  </SidebarMenuButton>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton asChild>
+                        <NavLink to="/admin/logs" className={getNavCls}>
+                          <Shield className="h-4 w-4" />
+                          <span>Logs de Auditoria</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    {!open && (
+                      <TooltipContent side="right" className="font-normal">
+                        Logs de Auditoria
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
                 </SidebarMenuItem>
 
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <NavLink to="/admin/settings" className={getNavCls}>
-                      <Settings className="h-4 w-4" />
-                      <span>Configurações</span>
-                    </NavLink>
-                  </SidebarMenuButton>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton asChild>
+                        <NavLink to="/admin/settings" className={getNavCls}>
+                          <Settings className="h-4 w-4" />
+                          <span>Configurações</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    {!open && (
+                      <TooltipContent side="right" className="font-normal">
+                        Configurações
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
@@ -239,16 +309,26 @@ export function AppSidebar() {
               {user?.email}
             </p>
           )}
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start text-sm" 
-            onClick={signOut}
-          >
-            <LogOut className="h-4 w-4 mr-2 flex-shrink-0" />
-            {open && <span>Sair</span>}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start text-sm" 
+                onClick={signOut}
+              >
+                <LogOut className="h-4 w-4 mr-2 flex-shrink-0" />
+                {open && <span>Sair</span>}
+              </Button>
+            </TooltipTrigger>
+            {!open && (
+              <TooltipContent side="right" className="font-normal">
+                Sair
+              </TooltipContent>
+            )}
+          </Tooltip>
         </div>
       </SidebarFooter>
     </Sidebar>
+    </TooltipProvider>
   );
 }
