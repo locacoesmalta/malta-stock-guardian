@@ -127,6 +127,34 @@ export const assetSchema = z.object({
     .trim()
     .min(1, "Nome do equipamento é obrigatório")
     .max(200, "Nome deve ter no máximo 200 caracteres"),
+  manufacturer: z.string()
+    .trim()
+    .min(1, "Marca/Fabricante é obrigatório")
+    .max(200, "Marca deve ter no máximo 200 caracteres"),
+  model: z.string()
+    .trim()
+    .max(200, "Modelo deve ter no máximo 200 caracteres")
+    .optional(),
+  serial_number: z.string()
+    .trim()
+    .max(100, "Número de série deve ter no máximo 100 caracteres")
+    .optional(),
+  voltage_combustion: z.enum(["110V", "220V", "GASOLINA", "DIESEL", "GÁS"]).optional(),
+  supplier: z.string()
+    .trim()
+    .max(200, "Fornecedor deve ter no máximo 200 caracteres")
+    .optional(),
+  purchase_date: z.string().optional(),
+  unit_value: z.number()
+    .min(0, "Valor deve ser positivo")
+    .optional(),
+  equipment_condition: z.enum(["NOVO", "USADO"]).optional(),
+  manual_attachment: z.string().optional(),
+  exploded_drawing_attachment: z.string().optional(),
+  comments: z.string()
+    .trim()
+    .max(1000, "Comentários devem ter no máximo 1000 caracteres")
+    .optional(),
   location_type: z.enum(["deposito_malta", "em_manutencao", "locacao", "aguardando_laudo"], {
     required_error: "Local do equipamento é obrigatório",
   }),

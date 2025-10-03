@@ -18,12 +18,15 @@ export type Database = {
         Row: {
           asset_code: string
           available_for_rental: boolean | null
+          comments: string | null
           created_at: string
           created_by: string | null
           deposito_description: string | null
           destination_after_maintenance: string | null
+          equipment_condition: string | null
           equipment_name: string
           equipment_observations: string | null
+          exploded_drawing_attachment: string | null
           id: string
           is_new_equipment: boolean | null
           location_type: string
@@ -34,6 +37,10 @@ export type Database = {
           maintenance_description: string | null
           maintenance_work_site: string | null
           malta_collaborator: string | null
+          manual_attachment: string | null
+          manufacturer: string
+          model: string | null
+          purchase_date: string | null
           qr_code_data: string | null
           rental_company: string | null
           rental_end_date: string | null
@@ -42,18 +49,25 @@ export type Database = {
           replaced_by_asset_id: string | null
           replacement_reason: string | null
           returns_to_work_site: boolean | null
+          serial_number: string | null
+          supplier: string | null
+          unit_value: number | null
           updated_at: string
+          voltage_combustion: string | null
           was_replaced: boolean | null
         }
         Insert: {
           asset_code: string
           available_for_rental?: boolean | null
+          comments?: string | null
           created_at?: string
           created_by?: string | null
           deposito_description?: string | null
           destination_after_maintenance?: string | null
+          equipment_condition?: string | null
           equipment_name: string
           equipment_observations?: string | null
+          exploded_drawing_attachment?: string | null
           id?: string
           is_new_equipment?: boolean | null
           location_type: string
@@ -64,6 +78,10 @@ export type Database = {
           maintenance_description?: string | null
           maintenance_work_site?: string | null
           malta_collaborator?: string | null
+          manual_attachment?: string | null
+          manufacturer: string
+          model?: string | null
+          purchase_date?: string | null
           qr_code_data?: string | null
           rental_company?: string | null
           rental_end_date?: string | null
@@ -72,18 +90,25 @@ export type Database = {
           replaced_by_asset_id?: string | null
           replacement_reason?: string | null
           returns_to_work_site?: boolean | null
+          serial_number?: string | null
+          supplier?: string | null
+          unit_value?: number | null
           updated_at?: string
+          voltage_combustion?: string | null
           was_replaced?: boolean | null
         }
         Update: {
           asset_code?: string
           available_for_rental?: boolean | null
+          comments?: string | null
           created_at?: string
           created_by?: string | null
           deposito_description?: string | null
           destination_after_maintenance?: string | null
+          equipment_condition?: string | null
           equipment_name?: string
           equipment_observations?: string | null
+          exploded_drawing_attachment?: string | null
           id?: string
           is_new_equipment?: boolean | null
           location_type?: string
@@ -94,6 +119,10 @@ export type Database = {
           maintenance_description?: string | null
           maintenance_work_site?: string | null
           malta_collaborator?: string | null
+          manual_attachment?: string | null
+          manufacturer?: string
+          model?: string | null
+          purchase_date?: string | null
           qr_code_data?: string | null
           rental_company?: string | null
           rental_end_date?: string | null
@@ -102,7 +131,11 @@ export type Database = {
           replaced_by_asset_id?: string | null
           replacement_reason?: string | null
           returns_to_work_site?: boolean | null
+          serial_number?: string | null
+          supplier?: string | null
+          unit_value?: number | null
           updated_at?: string
+          voltage_combustion?: string | null
           was_replaced?: boolean | null
         }
         Relationships: [

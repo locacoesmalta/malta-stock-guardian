@@ -5,6 +5,17 @@ interface Asset {
   id: string;
   asset_code: string;
   equipment_name: string;
+  manufacturer?: string;
+  model?: string;
+  serial_number?: string;
+  voltage_combustion?: string;
+  supplier?: string;
+  purchase_date?: string;
+  unit_value?: number;
+  equipment_condition?: string;
+  manual_attachment?: string;
+  exploded_drawing_attachment?: string;
+  comments?: string;
   location_type: string;
   rental_company?: string;
   rental_work_site?: string;
