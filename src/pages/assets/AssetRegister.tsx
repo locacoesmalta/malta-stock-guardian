@@ -67,7 +67,6 @@ const equipmentSchema = z.object({
   unit_value: z.number().nonnegative("Valor deve ser positivo").optional(),
   equipment_condition: z.enum(["NOVO", "USADO"]).optional(),
   comments: z.string().optional(),
-  malta_collaborator: z.string().optional(),
 });
 
 type EquipmentFormData = z.infer<typeof equipmentSchema>;
@@ -98,7 +97,6 @@ export default function AssetRegister() {
       supplier: "",
       unit_value: 0,
       comments: "",
-      malta_collaborator: "",
     },
   });
 
@@ -204,8 +202,7 @@ export default function AssetRegister() {
         manual_attachment: manualUrl,
         exploded_drawing_attachment: drawingUrl,
         comments: data.comments || null,
-        malta_collaborator: data.malta_collaborator || null,
-        location_type: "deposito", // Default para novo cadastro
+        location_type: "deposito_malta", // Default para novo cadastro
         deposito_description: "Aguardando definição de localização",
       };
 
@@ -610,21 +607,6 @@ export default function AssetRegister() {
                         <SelectItem value="USADO">Usado</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Colaborador Malta */}
-              <FormField
-                control={form.control}
-                name="malta_collaborator"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Colaborador Malta Responsável</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Nome do colaborador" />
-                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
