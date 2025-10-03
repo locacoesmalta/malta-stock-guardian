@@ -11,12 +11,15 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
+  SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 
 export function AppSidebar() {
   const { isAdmin, signOut, user, permissions } = useAuth();
+  const { open, isMobile } = useSidebar();
 
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "";
@@ -102,18 +105,23 @@ export function AppSidebar() {
       className="border-r"
       collapsible="icon"
     >
-      <SidebarHeader className="border-b px-6 py-4">
-        <div className="flex items-center gap-3">
-          <img 
-            src="/malta-logo.webp" 
-            alt="Malta Locações" 
-            className="w-12 h-12 object-contain"
-            fetchPriority="high"
-          />
-          <div>
-            <h2 className="font-semibold text-sidebar-foreground">Malta Locações</h2>
-            <p className="text-xs text-sidebar-foreground/70">Controle de Estoque</p>
+      <SidebarHeader className="border-b p-3 sm:p-4 md:px-6 md:py-4">
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <img 
+              src="/malta-logo.webp" 
+              alt="Malta Locações" 
+              className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 object-contain flex-shrink-0"
+              fetchPriority="high"
+            />
+            {open && (
+              <div className="min-w-0">
+                <h2 className="font-semibold text-sidebar-foreground text-sm sm:text-base truncate">Malta Locações</h2>
+                <p className="text-xs text-sidebar-foreground/70 truncate">Controle de Estoque</p>
+              </div>
+            )}
           </div>
+          {isMobile && <SidebarTrigger className="flex-shrink-0" />}
         </div>
       </SidebarHeader>
 
@@ -224,18 +232,20 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="border-t p-4">
+      <SidebarFooter className="border-t p-3 sm:p-4">
         <div className="space-y-2">
-          <p className="text-sm text-muted-foreground px-2">
-            {user?.email}
-          </p>
+          {open && (
+            <p className="text-xs sm:text-sm text-muted-foreground px-2 truncate">
+              {user?.email}
+            </p>
+          )}
           <Button 
             variant="ghost" 
-            className="w-full justify-start" 
+            className="w-full justify-start text-sm" 
             onClick={signOut}
           >
-            <LogOut className="h-4 w-4 mr-2" />
-            Sair
+            <LogOut className="h-4 w-4 mr-2 flex-shrink-0" />
+            {open && <span>Sair</span>}
           </Button>
         </div>
       </SidebarFooter>

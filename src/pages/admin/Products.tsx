@@ -342,18 +342,18 @@ const Products = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Gestão de Produtos</h1>
-          <p className="text-muted-foreground">Cadastre e gerencie os produtos do estoque</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">Gestão de Produtos</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Cadastre e gerencie os produtos do estoque</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={downloadTemplate}>
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <Button variant="outline" onClick={downloadTemplate} className="flex-1 sm:flex-none text-xs sm:text-sm">
             <Download className="h-4 w-4 mr-2" />
             Exportar Estoque
           </Button>
-          <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+          <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="flex-1 sm:flex-none text-xs sm:text-sm">
             <Upload className="h-4 w-4 mr-2" />
             {uploading ? "Processando..." : "Importar Excel"}
           </Button>
@@ -372,7 +372,7 @@ const Products = () => {
             }
           }}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="flex-1 sm:flex-none text-xs sm:text-sm">
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Produto
               </Button>
@@ -384,7 +384,7 @@ const Products = () => {
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="code">Código do Produto *</Label>
                   <Input
@@ -421,7 +421,7 @@ const Products = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="quantity">Quantidade em Estoque *</Label>
                   <Input
@@ -446,7 +446,7 @@ const Products = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="purchase_price">Preço de Compra (R$)</Label>
                   <Input
@@ -484,7 +484,7 @@ const Products = () => {
                 </div>
               )}
 
-              <div className="flex gap-2 justify-end">
+              <div className="flex flex-col-reverse sm:flex-row gap-2 justify-end">
                 <Button
                   type="button"
                   variant="outline"

@@ -55,10 +55,10 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
-        <main className="flex-1 p-2 sm:p-4 md:p-6 overflow-auto">
+        <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-auto">
           {children}
         </main>
       </div>

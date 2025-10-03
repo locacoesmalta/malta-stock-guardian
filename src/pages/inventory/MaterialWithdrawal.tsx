@@ -145,21 +145,21 @@ const MaterialWithdrawal = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-4 sm:space-y-6 max-w-4xl">
       <div>
-        <h1 className="text-3xl font-bold">Retirada de Material</h1>
-        <p className="text-muted-foreground">Registre a saída de produtos do estoque</p>
+        <h1 className="text-2xl sm:text-3xl font-bold">Retirada de Material</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">Registre a saída de produtos do estoque</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Informações da Retirada</CardTitle>
+            <CardTitle className="text-base sm:text-lg">Informações da Retirada</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="equipment">PAT do Equipamento *</Label>
+                <Label htmlFor="equipment" className="text-xs sm:text-sm">PAT do Equipamento *</Label>
                 <Input
                   id="equipment"
                   type="text"
@@ -167,11 +167,12 @@ const MaterialWithdrawal = () => {
                   onChange={(e) => setEquipmentCode(e.target.value)}
                   placeholder="Digite o PAT do equipamento"
                   required
+                  className="text-sm"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="workSite">Obra *</Label>
+                <Label htmlFor="workSite" className="text-xs sm:text-sm">Obra *</Label>
                 <Input
                   id="workSite"
                   type="text"
@@ -179,11 +180,12 @@ const MaterialWithdrawal = () => {
                   onChange={(e) => setWorkSite(e.target.value)}
                   placeholder="Digite a obra"
                   required
+                  className="text-sm"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="company">Empresa *</Label>
+                <Label htmlFor="company" className="text-xs sm:text-sm">Empresa *</Label>
                 <Input
                   id="company"
                   type="text"
@@ -191,52 +193,55 @@ const MaterialWithdrawal = () => {
                   onChange={(e) => setCompany(e.target.value)}
                   placeholder="Digite a empresa"
                   required
+                  className="text-sm"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="date">Data da Retirada *</Label>
+                <Label htmlFor="date" className="text-xs sm:text-sm">Data da Retirada *</Label>
                 <Input
                   id="date"
                   type="date"
                   value={withdrawalDate}
                   onChange={(e) => setWithdrawalDate(e.target.value)}
                   required
+                  className="text-sm"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="reason">Motivo da Retirada</Label>
+              <Label htmlFor="reason" className="text-xs sm:text-sm">Motivo da Retirada</Label>
               <Textarea
                 id="reason"
                 rows={3}
                 value={withdrawalReason}
                 onChange={(e) => setWithdrawalReason(e.target.value)}
                 placeholder="Descreva o motivo da retirada..."
+                className="text-sm"
               />
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Produtos</CardTitle>
-            <Button type="button" onClick={addItem} size="sm">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <CardTitle className="text-base sm:text-lg">Produtos</CardTitle>
+            <Button type="button" onClick={addItem} size="sm" className="w-full sm:w-auto text-xs sm:text-sm">
               <Plus className="h-4 w-4 mr-2" />
               Adicionar Produto
             </Button>
           </CardHeader>
           <CardContent className="space-y-4">
             {items.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
+              <p className="text-center text-sm sm:text-base text-muted-foreground py-8">
                 Nenhum produto adicionado. Clique em "Adicionar Produto" para começar.
               </p>
             ) : (
               items.map((item, index) => (
-                <div key={index} className="border rounded-lg p-4 space-y-4">
+                <div key={index} className="border rounded-lg p-3 sm:p-4 space-y-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium">Item {index + 1}</h4>
+                    <h4 className="font-medium text-sm sm:text-base">Item {index + 1}</h4>
                     <Button
                       type="button"
                       variant="ghost"
@@ -247,9 +252,9 @@ const MaterialWithdrawal = () => {
                     </Button>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Produto *</Label>
+                      <Label className="text-xs sm:text-sm">Produto *</Label>
                       <ProductSelector
                         products={products}
                         value={item.product_id}
@@ -260,13 +265,14 @@ const MaterialWithdrawal = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Quantidade *</Label>
+                      <Label className="text-xs sm:text-sm">Quantidade *</Label>
                       <div className="flex items-center gap-2">
                         <Button
                           type="button"
                           variant="outline"
                           size="icon"
                           onClick={() => updateItem(index, "quantity", Math.max(1, item.quantity - 1))}
+                          className="flex-shrink-0"
                         >
                           <Minus className="h-4 w-4" />
                         </Button>
@@ -276,7 +282,7 @@ const MaterialWithdrawal = () => {
                           max={item.availableQuantity}
                           value={item.quantity}
                           onChange={(e) => updateItem(index, "quantity", Number(e.target.value))}
-                          className="text-center"
+                          className="text-center text-sm"
                           required
                         />
                         <Button
@@ -284,6 +290,7 @@ const MaterialWithdrawal = () => {
                           variant="outline"
                           size="icon"
                           onClick={() => updateItem(index, "quantity", Math.min(item.availableQuantity, item.quantity + 1))}
+                          className="flex-shrink-0"
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
@@ -306,15 +313,16 @@ const MaterialWithdrawal = () => {
           </CardContent>
         </Card>
 
-        <div className="flex gap-4">
+        <div className="flex flex-col-reverse sm:flex-row gap-4">
           <Button
             type="button"
             variant="outline"
             onClick={() => navigate("/dashboard")}
+            className="text-xs sm:text-sm"
           >
             Cancelar
           </Button>
-          <Button type="submit" disabled={loading || items.length === 0}>
+          <Button type="submit" disabled={loading || items.length === 0} className="text-xs sm:text-sm">
             {loading ? "Salvando..." : "Registrar Retirada"}
           </Button>
         </div>

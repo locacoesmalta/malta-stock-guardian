@@ -95,19 +95,19 @@ export default function AssetView() {
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-6 max-w-6xl">
+    <div className="container mx-auto p-3 sm:p-4 md:p-6 max-w-6xl">
       <ConfirmDialog />
 
       {asset.was_replaced && (
         <Alert variant="default" className="mb-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
           <AlertCircle className="h-4 w-4 text-yellow-600" />
-          <AlertTitle>Equipamento Substituído</AlertTitle>
-          <AlertDescription>
+          <AlertTitle className="text-sm sm:text-base">Equipamento Substituído</AlertTitle>
+          <AlertDescription className="text-xs sm:text-sm">
             Este equipamento foi substituído.
             {asset.replaced_by_asset_id && (
               <Button 
                 variant="link" 
-                className="p-0 h-auto ml-2 text-yellow-700 hover:text-yellow-900"
+                className="p-0 h-auto ml-2 text-yellow-700 hover:text-yellow-900 text-xs sm:text-sm"
                 onClick={() => navigate(`/assets/view/${asset.replaced_by_asset_id}`)}
               >
                 Ver Substituto →
@@ -117,33 +117,33 @@ export default function AssetView() {
         </Alert>
       )}
       
-      <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/assets")}>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/assets")} className="flex-shrink-0">
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div className="flex-1">
-          <h1 className="text-2xl md:text-3xl font-bold">{asset.equipment_name}</h1>
-          <p className="text-muted-foreground">PAT: {asset.asset_code}</p>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">{asset.equipment_name}</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">PAT: {asset.asset_code}</p>
         </div>
-        <Badge variant={getLocationVariant(asset.location_type)}>
+        <Badge variant={getLocationVariant(asset.location_type)} className="text-xs sm:text-sm whitespace-nowrap">
           {getLocationLabel(asset.location_type)}
         </Badge>
       </div>
 
-      <div className="flex gap-2 mb-6">
+      <div className="flex flex-wrap gap-2 mb-4 sm:mb-6">
         {permissions?.can_edit_assets && (
           <>
-            <Button onClick={() => navigate(`/assets/edit/${id}`)}>
+            <Button onClick={() => navigate(`/assets/edit/${id}`)} className="flex-1 sm:flex-none text-xs sm:text-sm">
               <Edit className="h-4 w-4 mr-2" />
               Editar Cadastro
             </Button>
             {asset.location_type === "aguardando_laudo" ? (
-              <Button variant="outline" onClick={() => navigate(`/assets/post-inspection/${id}`)}>
+              <Button variant="outline" onClick={() => navigate(`/assets/post-inspection/${id}`)} className="flex-1 sm:flex-none text-xs sm:text-sm">
                 <Move className="h-4 w-4 mr-2" />
                 Registrar Decisão Pós-Laudo
               </Button>
             ) : (
-              <Button variant="outline" onClick={() => navigate(`/assets/movement/${id}`)}>
+              <Button variant="outline" onClick={() => navigate(`/assets/movement/${id}`)} className="flex-1 sm:flex-none text-xs sm:text-sm">
                 <Move className="h-4 w-4 mr-2" />
                 Registrar Movimentação
               </Button>
@@ -151,7 +151,7 @@ export default function AssetView() {
           </>
         )}
         {permissions?.can_delete_assets && (
-          <Button variant="destructive" onClick={handleDelete}>
+          <Button variant="destructive" onClick={handleDelete} className="flex-1 sm:flex-none text-xs sm:text-sm">
             <Trash2 className="h-4 w-4 mr-2" />
             Excluir
           </Button>
@@ -159,60 +159,60 @@ export default function AssetView() {
       </div>
 
       <Tabs defaultValue="technical" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="technical">Dados Técnicos</TabsTrigger>
-          <TabsTrigger value="status">Status Atual</TabsTrigger>
-          <TabsTrigger value="history">Histórico</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 h-auto">
+          <TabsTrigger value="technical" className="text-xs sm:text-sm">Dados Técnicos</TabsTrigger>
+          <TabsTrigger value="status" className="text-xs sm:text-sm">Status Atual</TabsTrigger>
+          <TabsTrigger value="history" className="text-xs sm:text-sm">Histórico</TabsTrigger>
         </TabsList>
 
         <TabsContent value="technical" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Informações Técnicas</CardTitle>
+              <CardTitle className="text-base sm:text-lg">Informações Técnicas</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Fabricante</p>
-                  <p className="text-base">{asset.manufacturer || "—"}</p>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">Fabricante</p>
+                  <p className="text-sm sm:text-base">{asset.manufacturer || "—"}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Modelo</p>
-                  <p className="text-base">{asset.model || "—"}</p>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">Modelo</p>
+                  <p className="text-sm sm:text-base">{asset.model || "—"}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Número de Série</p>
-                  <p className="text-base">{asset.serial_number || "—"}</p>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">Número de Série</p>
+                  <p className="text-sm sm:text-base break-all">{asset.serial_number || "—"}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Voltagem/Combustível</p>
-                  <p className="text-base">{asset.voltage_combustion || "—"}</p>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">Voltagem/Combustível</p>
+                  <p className="text-sm sm:text-base">{asset.voltage_combustion || "—"}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Fornecedor</p>
-                  <p className="text-base">{asset.supplier || "—"}</p>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">Fornecedor</p>
+                  <p className="text-sm sm:text-base">{asset.supplier || "—"}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Data de Compra</p>
-                  <p className="text-base">
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">Data de Compra</p>
+                  <p className="text-sm sm:text-base">
                     {asset.purchase_date ? format(parseISO(asset.purchase_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR }) : "—"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Valor Unitário</p>
-                  <p className="text-base">
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">Valor Unitário</p>
+                  <p className="text-sm sm:text-base">
                     {asset.unit_value ? `R$ ${asset.unit_value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Condição</p>
-                  <p className="text-base">{asset.equipment_condition || "—"}</p>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">Condição</p>
+                  <p className="text-sm sm:text-base">{asset.equipment_condition || "—"}</p>
                 </div>
               </div>
               {asset.comments && (
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Comentários</p>
-                  <p className="text-base">{asset.comments}</p>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">Comentários</p>
+                  <p className="text-sm sm:text-base">{asset.comments}</p>
                 </div>
               )}
             </CardContent>

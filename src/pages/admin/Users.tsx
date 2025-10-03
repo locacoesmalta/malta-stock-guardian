@@ -69,24 +69,24 @@ const Users = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Gestão de Usuários</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl sm:text-3xl font-bold">Gestão de Usuários</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Gerencie permissões dos usuários cadastrados
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between mb-4">
-            <CardTitle className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
               <UsersIcon className="h-5 w-5" />
               Usuários Cadastrados ({totalCount})
             </CardTitle>
             <AddUserDialog onUserAdded={refetchUsers} />
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -97,7 +97,7 @@ const Users = () => {
               />
             </div>
             {totalPages > 1 && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 justify-center sm:justify-start">
                 <Button
                   variant="outline"
                   size="icon"
@@ -106,7 +106,7 @@ const Users = () => {
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">
                   Página {currentPage + 1} de {totalPages}
                 </span>
                 <Button
@@ -123,11 +123,11 @@ const Users = () => {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-sm sm:text-base text-muted-foreground">
               Carregando usuários...
             </div>
           ) : filteredUsers.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-sm sm:text-base text-muted-foreground">
               Nenhum usuário encontrado
             </div>
           ) : (
@@ -135,33 +135,33 @@ const Users = () => {
               {filteredUsers.map((user) => (
                 <div
                   key={user.id}
-                  className="border rounded-lg p-4 space-y-4"
+                  className="border rounded-lg p-3 sm:p-4 space-y-4"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <div className="font-medium">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="font-medium text-sm sm:text-base truncate">
                         {user.full_name || "Sem nome"}
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-xs sm:text-sm text-muted-foreground truncate">
                         {user.email}
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2 items-start justify-end">
                       {isAdmin(user) ? (
-                        <Badge variant="default" className="gap-1">
+                        <Badge variant="default" className="gap-1 text-xs whitespace-nowrap">
                           <Shield className="h-3 w-3" />
                           Administrador
                         </Badge>
                       ) : (
                         <>
-                          <Badge variant="secondary">Usuário</Badge>
+                          <Badge variant="secondary" className="text-xs">Usuário</Badge>
                           {user.user_permissions && (
                             user.user_permissions.is_active ? (
-                              <Badge className="bg-green-600 hover:bg-green-700 text-white">
+                              <Badge className="bg-green-600 hover:bg-green-700 text-white text-xs">
                                 Ativo
                               </Badge>
                             ) : (
-                              <Badge className="bg-yellow-600 hover:bg-yellow-700 text-white">
+                              <Badge className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs">
                                 Pendente
                               </Badge>
                             )
@@ -173,9 +173,9 @@ const Users = () => {
 
                   {!isAdmin(user) && user.user_permissions && (
                     <div className="border-t pt-4 space-y-4">
-                      <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                        <div>
-                          <Label htmlFor={`active-${user.id}`} className="font-semibold">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-muted/50 rounded-lg gap-3">
+                        <div className="flex-1">
+                          <Label htmlFor={`active-${user.id}`} className="font-semibold text-sm">
                             Status da Conta
                           </Label>
                           <p className="text-xs text-muted-foreground mt-1">
@@ -194,18 +194,19 @@ const Users = () => {
                               checked
                             )
                           }
+                          className="flex-shrink-0"
                         />
                       </div>
 
                       {user.user_permissions.is_active && (
                         <>
-                          <div className="text-sm font-medium mb-2">
+                          <div className="text-xs sm:text-sm font-medium mb-2">
                             Permissões de Acesso:
                           </div>
                           <div className="space-y-3">
-                            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                              <div>
-                                <Label htmlFor={`menu-${user.id}`} className="font-semibold">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-muted/30 rounded-lg gap-3">
+                              <div className="flex-1">
+                                <Label htmlFor={`menu-${user.id}`} className="font-semibold text-sm">
                                   Acesso ao Menu Principal
                                 </Label>
                                 <p className="text-xs text-muted-foreground mt-1">
@@ -222,12 +223,13 @@ const Users = () => {
                                     checked
                                   )
                                 }
+                                className="flex-shrink-0"
                               />
                             </div>
 
-                            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                              <div>
-                                <Label htmlFor={`admin-${user.id}`} className="font-semibold">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-muted/30 rounded-lg gap-3">
+                              <div className="flex-1">
+                                <Label htmlFor={`admin-${user.id}`} className="font-semibold text-sm">
                                   Acesso à Administração
                                 </Label>
                                 <p className="text-xs text-muted-foreground mt-1">
@@ -244,15 +246,16 @@ const Users = () => {
                                     checked
                                   )
                                 }
+                                className="flex-shrink-0"
                               />
                             </div>
 
-                          <div className="text-sm font-medium mt-4 mb-2 text-primary">
+                          <div className="text-xs sm:text-sm font-medium mt-4 mb-2 text-primary">
                               📦 Controle de Estoque:
                             </div>
 
-                            <div className="flex items-center justify-between p-2 hover:bg-muted/50 rounded">
-                              <Label htmlFor={`view-products-${user.id}`}>
+                            <div className="flex items-center justify-between p-2 hover:bg-muted/50 rounded gap-3">
+                              <Label htmlFor={`view-products-${user.id}`} className="text-xs sm:text-sm flex-1">
                                 Visualizar Produtos
                               </Label>
                               <Switch
@@ -265,11 +268,12 @@ const Users = () => {
                                     checked
                                   )
                                 }
+                                className="flex-shrink-0"
                               />
                             </div>
 
-                            <div className="flex items-center justify-between p-2 hover:bg-muted/50 rounded">
-                              <Label htmlFor={`edit-products-${user.id}`}>
+                            <div className="flex items-center justify-between p-2 hover:bg-muted/50 rounded gap-3">
+                              <Label htmlFor={`edit-products-${user.id}`} className="text-xs sm:text-sm flex-1">
                                 Editar Produtos
                               </Label>
                               <Switch
