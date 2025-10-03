@@ -37,6 +37,7 @@ interface Asset {
   destination_after_maintenance?: string;
   equipment_observations?: string;
   malta_collaborator?: string;
+  inspection_start_date?: string;
   created_at: string;
 }
 

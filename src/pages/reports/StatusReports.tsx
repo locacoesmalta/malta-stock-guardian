@@ -229,7 +229,11 @@ export default function StatusReports() {
                         )}
                         {activeFilter === "aguardando_laudo" && (
                           <TableCell>
-                            <DeadlineStatusBadge createdAt={asset.created_at} />
+                            {asset.inspection_start_date ? (
+                              <DeadlineStatusBadge inspectionStartDate={asset.inspection_start_date} />
+                            ) : (
+                              <span className="text-xs text-muted-foreground">Aguardando</span>
+                            )}
                           </TableCell>
                         )}
                       </TableRow>

@@ -29,6 +29,8 @@ const AssetRegister = lazy(() => import("./pages/assets/AssetRegister"));
 const AssetScanner = lazy(() => import("./pages/assets/AssetScanner"));
 const AssetTraceability = lazy(() => import("./pages/assets/AssetTraceability"));
 const AssetsControlDashboard = lazy(() => import("./pages/assets/AssetsControlDashboard"));
+const PostInspection = lazy(() => import("./pages/assets/PostInspection"));
+const AssetReplacement = lazy(() => import("./pages/assets/AssetReplacement"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Welcome = lazy(() => import("./pages/Welcome"));
 
@@ -251,6 +253,26 @@ const App = () => (
                   <ProtectedLayout>
                     <PermissionRoute permission="can_edit_assets">
                       <AssetMovement />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/assets/post-inspection/:id" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_edit_assets">
+                      <PostInspection />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/assets/replacement/:id" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_edit_assets">
+                      <AssetReplacement />
                     </PermissionRoute>
                   </ProtectedLayout>
                 } 

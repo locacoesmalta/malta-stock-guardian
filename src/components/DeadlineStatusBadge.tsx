@@ -3,15 +3,15 @@ import { differenceInDays, parseISO } from "date-fns";
 import { Clock, AlertCircle } from "lucide-react";
 
 interface DeadlineStatusBadgeProps {
-  createdAt: string;
+  inspectionStartDate: string;
 }
 
-export function DeadlineStatusBadge({ createdAt }: DeadlineStatusBadgeProps) {
-  const created = parseISO(createdAt);
+export function DeadlineStatusBadge({ inspectionStartDate }: DeadlineStatusBadgeProps) {
+  const inspectionStart = parseISO(inspectionStartDate);
   const today = new Date();
-  const daysSinceCreation = differenceInDays(today, created);
+  const daysSinceInspection = differenceInDays(today, inspectionStart);
 
-  const isOverdue = daysSinceCreation > 6;
+  const isOverdue = daysSinceInspection > 5;
 
   return (
     <div className="flex items-center gap-2 mt-2 pt-2 border-t">
@@ -32,7 +32,7 @@ export function DeadlineStatusBadge({ createdAt }: DeadlineStatusBadgeProps) {
         )}
       </Badge>
       <span className="text-xs text-muted-foreground">
-        {daysSinceCreation} {daysSinceCreation === 1 ? "dia" : "dias"} aguardando laudo
+        {daysSinceInspection} {daysSinceInspection === 1 ? "dia" : "dias"} aguardando laudo
       </span>
     </div>
   );

@@ -8,11 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { ArrowLeft, Edit, Trash2, Move } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Move, AlertCircle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AssetHistorySection } from "@/components/AssetHistorySection";
+import { DeadlineStatusBadge } from "@/components/DeadlineStatusBadge";
 
 export default function AssetView() {
   const { id } = useParams();
@@ -95,6 +97,25 @@ export default function AssetView() {
   return (
     <div className="container mx-auto p-4 md:p-6 max-w-6xl">
       <ConfirmDialog />
+
+      {asset.was_replaced && (
+        <Alert variant="default" className="mb-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
+          <AlertCircle className="h-4 w-4 text-yellow-600" />
+          <AlertTitle>Equipamento Substituído</AlertTitle>
+          <AlertDescription>
+            Este equipamento foi substituído.
+            {asset.replaced_by_asset_id && (
+              <Button 
+                variant="link" 
+                className="p-0 h-auto ml-2 text-yellow-700 hover:text-yellow-900"
+                onClick={() => navigate(`/assets/view/${asset.replaced_by_asset_id}`)}
+              >
+                Ver Substituto →
+              </Button>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
       
       <div className="flex items-center gap-4 mb-6">
         <Button variant="ghost" size="icon" onClick={() => navigate("/assets")}>
@@ -116,10 +137,17 @@ export default function AssetView() {
               <Edit className="h-4 w-4 mr-2" />
               Editar Cadastro
             </Button>
-            <Button variant="outline" onClick={() => navigate(`/assets/movement/${id}`)}>
-              <Move className="h-4 w-4 mr-2" />
-              Registrar Movimentação
-            </Button>
+            {asset.location_type === "aguardando_laudo" ? (
+              <Button variant="outline" onClick={() => navigate(`/assets/post-inspection/${id}`)}>
+                <Move className="h-4 w-4 mr-2" />
+                Registrar Decisão Pós-Laudo
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={() => navigate(`/assets/movement/${id}`)}>
+                <Move className="h-4 w-4 mr-2" />
+                Registrar Movimentação
+              </Button>
+            )}
           </>
         )}
         {permissions?.can_delete_assets && (
@@ -197,6 +225,10 @@ export default function AssetView() {
               <CardTitle>Status e Localização Atual</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {asset.location_type === "aguardando_laudo" && asset.inspection_start_date && (
+                <DeadlineStatusBadge inspectionStartDate={asset.inspection_start_date} />
+              )}
+              
               {asset.location_type === "deposito_malta" && (
                 <>
                   {asset.deposito_description && (

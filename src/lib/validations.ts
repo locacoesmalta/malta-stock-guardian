@@ -361,6 +361,28 @@ export const movementAguardandoLaudoSchema = z.object({
     .optional(),
 });
 
+// Post Inspection Schemas
+export const postInspectionApproveSchema = z.object({
+  decision_notes: z.string()
+    .trim()
+    .max(500, "Notas devem ter no máximo 500 caracteres")
+    .optional(),
+});
+
+// Asset Replacement Schema
+export const assetReplacementSchema = z.object({
+  replaced_by_asset_id: z.string()
+    .uuid("Selecione um equipamento válido"),
+  replacement_reason: z.string()
+    .trim()
+    .min(10, "Descreva o motivo da substituição (mínimo 10 caracteres)")
+    .max(500, "Motivo deve ter no máximo 500 caracteres"),
+  decision_notes: z.string()
+    .trim()
+    .max(500, "Notas devem ter no máximo 500 caracteres")
+    .optional(),
+});
+
 export type ProductFormData = z.infer<typeof productSchema>;
 export type ReportFormData = z.infer<typeof reportSchema>;
 export type WithdrawalFormData = z.infer<typeof withdrawalSchema>;
@@ -371,3 +393,5 @@ export type MovementDepositoFormData = z.infer<typeof movementDepositoSchema>;
 export type MovementManutencaoFormData = z.infer<typeof movementManutencaoSchema>;
 export type MovementLocacaoFormData = z.infer<typeof movementLocacaoSchema>;
 export type MovementAguardandoLaudoFormData = z.infer<typeof movementAguardandoLaudoSchema>;
+export type PostInspectionApproveFormData = z.infer<typeof postInspectionApproveSchema>;
+export type AssetReplacementFormData = z.infer<typeof assetReplacementSchema>;

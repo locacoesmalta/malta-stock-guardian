@@ -28,6 +28,7 @@ export type Database = {
           equipment_observations: string | null
           exploded_drawing_attachment: string | null
           id: string
+          inspection_start_date: string | null
           is_new_equipment: boolean | null
           location_type: string
           maintenance_arrival_date: string | null
@@ -69,6 +70,7 @@ export type Database = {
           equipment_observations?: string | null
           exploded_drawing_attachment?: string | null
           id?: string
+          inspection_start_date?: string | null
           is_new_equipment?: boolean | null
           location_type: string
           maintenance_arrival_date?: string | null
@@ -110,6 +112,7 @@ export type Database = {
           equipment_observations?: string | null
           exploded_drawing_attachment?: string | null
           id?: string
+          inspection_start_date?: string | null
           is_new_equipment?: boolean | null
           location_type?: string
           maintenance_arrival_date?: string | null

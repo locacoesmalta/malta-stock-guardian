@@ -50,6 +50,14 @@ export default function AssetMovement() {
     enabled: !!id,
   });
 
+  // Bloquear movimentação se equipamento estiver em laudo
+  useEffect(() => {
+    if (asset && asset.location_type === "aguardando_laudo") {
+      toast.error("Equipamento em laudo deve passar pela Decisão Pós-Laudo");
+      navigate(`/assets/post-inspection/${id}`);
+    }
+  }, [asset, id, navigate]);
+
   const getSchema = () => {
     switch (movementType) {
       case "deposito_malta": return movementDepositoSchema;
@@ -75,6 +83,11 @@ export default function AssetMovement() {
         location_type: movementType,
         ...data,
       };
+
+      // Se for para aguardando laudo, setar inspection_start_date
+      if (movementType === "aguardando_laudo") {
+        updateData.inspection_start_date = new Date().toISOString();
+      }
 
       // Limpar campos de outros tipos de movimento
       if (movementType === "deposito_malta") {

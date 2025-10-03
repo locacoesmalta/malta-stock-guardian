@@ -225,9 +225,9 @@ export default function AssetsList() {
                 </div>
               )}
 
-              {asset.location_type === "aguardando_laudo" && (
+              {asset.location_type === "aguardando_laudo" && asset.inspection_start_date && (
                 <div className="text-sm">
-                  <DeadlineStatusBadge createdAt={asset.created_at} />
+                  <DeadlineStatusBadge inspectionStartDate={asset.inspection_start_date} />
                 </div>
               )}
             </Card>
