@@ -717,7 +717,7 @@ export default function AssetForm() {
 
           <div className="flex gap-2 pt-4">
             <Button type="submit" disabled={loading} className="flex-1">
-              {loading ? "Salvando..." : "Atualizar"}
+              {loading ? "Salvando..." : "Salvar"}
             </Button>
             <Button
               type="button"
