@@ -239,8 +239,135 @@ export const assetSchema = z.object({
   }
 );
 
+// Asset Edit Schema - apenas campos cadastrais/técnicos
+export const assetEditSchema = z.object({
+  manufacturer: z.string()
+    .trim()
+    .min(1, "Marca/Fabricante é obrigatório")
+    .max(200, "Marca deve ter no máximo 200 caracteres"),
+  model: z.string()
+    .trim()
+    .max(200, "Modelo deve ter no máximo 200 caracteres")
+    .optional(),
+  serial_number: z.string()
+    .trim()
+    .max(100, "Número de série deve ter no máximo 100 caracteres")
+    .optional(),
+  voltage_combustion: z.enum(["110V", "220V", "GASOLINA", "DIESEL", "GÁS"]).optional(),
+  supplier: z.string()
+    .trim()
+    .max(200, "Fornecedor deve ter no máximo 200 caracteres")
+    .optional(),
+  purchase_date: z.string().optional(),
+  unit_value: z.number()
+    .min(0, "Valor deve ser positivo")
+    .optional(),
+  equipment_condition: z.enum(["NOVO", "USADO"]).optional(),
+  manual_attachment: z.string().optional(),
+  exploded_drawing_attachment: z.string().optional(),
+  comments: z.string()
+    .trim()
+    .max(1000, "Comentários devem ter no máximo 1000 caracteres")
+    .optional(),
+});
+
+// Movement Depósito Schema
+export const movementDepositoSchema = z.object({
+  deposito_description: z.string()
+    .trim()
+    .max(500, "Descrição deve ter no máximo 500 caracteres")
+    .optional(),
+  equipment_observations: z.string()
+    .trim()
+    .max(1000, "Observação deve ter no máximo 1000 caracteres")
+    .optional(),
+  malta_collaborator: z.string()
+    .trim()
+    .max(200, "Nome do colaborador deve ter no máximo 200 caracteres")
+    .optional(),
+});
+
+// Movement Manutenção Schema
+export const movementManutencaoSchema = z.object({
+  maintenance_company: z.string()
+    .trim()
+    .min(1, "Empresa de manutenção é obrigatória")
+    .max(200, "Empresa deve ter no máximo 200 caracteres"),
+  maintenance_work_site: z.string()
+    .trim()
+    .min(1, "Obra é obrigatória")
+    .max(200, "Obra deve ter no máximo 200 caracteres"),
+  maintenance_description: z.string()
+    .trim()
+    .min(1, "Descrição é obrigatória")
+    .max(1000, "Descrição deve ter no máximo 1000 caracteres"),
+  maintenance_arrival_date: z.string()
+    .min(1, "Data de chegada é obrigatória"),
+  maintenance_departure_date: z.string().optional(),
+  maintenance_delay_observations: z.string()
+    .trim()
+    .max(1000, "Observações devem ter no máximo 1000 caracteres")
+    .optional(),
+  returns_to_work_site: z.boolean().optional(),
+  destination_after_maintenance: z.string().optional(),
+  was_replaced: z.boolean().optional(),
+  replacement_reason: z.string()
+    .trim()
+    .max(500, "Motivo deve ter no máximo 500 caracteres")
+    .optional(),
+  is_new_equipment: z.boolean().optional(),
+  equipment_observations: z.string()
+    .trim()
+    .max(1000, "Observação deve ter no máximo 1000 caracteres")
+    .optional(),
+  malta_collaborator: z.string()
+    .trim()
+    .max(200, "Nome do colaborador deve ter no máximo 200 caracteres")
+    .optional(),
+});
+
+// Movement Locação Schema
+export const movementLocacaoSchema = z.object({
+  rental_company: z.string()
+    .trim()
+    .min(1, "Empresa é obrigatória")
+    .max(200, "Empresa deve ter no máximo 200 caracteres"),
+  rental_work_site: z.string()
+    .trim()
+    .min(1, "Obra é obrigatória")
+    .max(200, "Obra deve ter no máximo 200 caracteres"),
+  rental_start_date: z.string()
+    .min(1, "Data inicial é obrigatória"),
+  rental_end_date: z.string().optional(),
+  equipment_observations: z.string()
+    .trim()
+    .max(1000, "Observação deve ter no máximo 1000 caracteres")
+    .optional(),
+  malta_collaborator: z.string()
+    .trim()
+    .max(200, "Nome do colaborador deve ter no máximo 200 caracteres")
+    .optional(),
+});
+
+// Movement Aguardando Laudo Schema
+export const movementAguardandoLaudoSchema = z.object({
+  equipment_observations: z.string()
+    .trim()
+    .max(1000, "Observação deve ter no máximo 1000 caracteres")
+    .optional(),
+  malta_collaborator: z.string()
+    .trim()
+    .max(200, "Nome do colaborador deve ter no máximo 200 caracteres")
+    .optional(),
+});
+
 export type ProductFormData = z.infer<typeof productSchema>;
 export type ReportFormData = z.infer<typeof reportSchema>;
 export type WithdrawalFormData = z.infer<typeof withdrawalSchema>;
 export type AuthFormData = z.infer<typeof authSchema>;
 export type AssetFormData = z.infer<typeof assetSchema>;
+export type AssetEditFormData = z.infer<typeof assetEditSchema>;
+export type MovementDepositoFormData = z.infer<typeof movementDepositoSchema>;
+export type MovementManutencaoFormData = z.infer<typeof movementManutencaoSchema>;
+export type MovementLocacaoFormData = z.infer<typeof movementLocacaoSchema>;
+export type MovementAguardandoLaudoFormData = z.infer<typeof movementAguardandoLaudoSchema>;

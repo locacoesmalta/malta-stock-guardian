@@ -22,7 +22,9 @@ const StatusReports = lazy(() => import("./pages/reports/StatusReports"));
 const MaterialWithdrawal = lazy(() => import("./pages/inventory/MaterialWithdrawal"));
 const WithdrawalHistory = lazy(() => import("./pages/inventory/WithdrawalHistory"));
 const AssetsList = lazy(() => import("./pages/assets/AssetsList"));
-const AssetForm = lazy(() => import("./pages/assets/AssetForm"));
+const AssetView = lazy(() => import("./pages/assets/AssetView"));
+const AssetEdit = lazy(() => import("./pages/assets/AssetEdit"));
+const AssetMovement = lazy(() => import("./pages/assets/AssetMovement"));
 const AssetRegister = lazy(() => import("./pages/assets/AssetRegister"));
 const AssetScanner = lazy(() => import("./pages/assets/AssetScanner"));
 const AssetTraceability = lazy(() => import("./pages/assets/AssetTraceability"));
@@ -224,11 +226,11 @@ const App = () => (
                 } 
               />
               <Route 
-                path="/assets/new" 
+                path="/assets/view/:id" 
                 element={
                   <ProtectedLayout>
-                    <PermissionRoute permission="can_create_assets">
-                      <AssetForm />
+                    <PermissionRoute permission="can_access_assets">
+                      <AssetView />
                     </PermissionRoute>
                   </ProtectedLayout>
                 } 
@@ -238,7 +240,17 @@ const App = () => (
                 element={
                   <ProtectedLayout>
                     <PermissionRoute permission="can_edit_assets">
-                      <AssetForm />
+                      <AssetEdit />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/assets/movement/:id" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_edit_assets">
+                      <AssetMovement />
                     </PermissionRoute>
                   </ProtectedLayout>
                 } 

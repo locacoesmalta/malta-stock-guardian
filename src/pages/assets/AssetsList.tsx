@@ -101,23 +101,13 @@ export default function AssetsList() {
               Scanner
             </Button>
             {isAdmin && (
-              <>
-                <Button
-                  onClick={() => navigate("/assets/register")}
-                  className="flex-1 sm:flex-none"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Cadastro de Equipamento
-                </Button>
-                <Button
-                  onClick={() => navigate("/assets/new")}
-                  variant="outline"
-                  className="flex-1 sm:flex-none"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Cadastrar
-                </Button>
-              </>
+              <Button
+                onClick={() => navigate("/assets/register")}
+                className="flex-1 sm:flex-none"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Cadastro de Equipamento
+              </Button>
             )}
           </div>
         </div>
@@ -143,7 +133,7 @@ export default function AssetsList() {
             <Card
               key={asset.id}
               className="p-4 cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => isAdmin && navigate(`/assets/edit/${asset.id}`)}
+              onClick={() => navigate(`/assets/view/${asset.id}`)}
             >
               <div className="flex justify-between items-start mb-3">
                 <div className="flex-1">
