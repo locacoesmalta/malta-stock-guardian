@@ -204,6 +204,10 @@ export const assetSchema = z.object({
     .optional(),
   rental_start_date: z.string().optional(),
   rental_end_date: z.string().optional(),
+  rental_contract_number: z.string()
+    .trim()
+    .max(200, "Número do contrato deve ter no máximo 200 caracteres")
+    .optional(),
   qr_code_data: z.string()
     .max(500, "Dados do QR Code devem ter no máximo 500 caracteres")
     .optional(),
@@ -229,13 +233,13 @@ export const assetSchema = z.object({
 ).refine(
   (data) => {
     if (data.location_type === "locacao") {
-      return !!data.rental_company && !!data.rental_work_site && !!data.rental_start_date;
+      return !!data.rental_company && !!data.rental_work_site && !!data.rental_start_date && !!data.rental_contract_number;
     }
     return true;
   },
   {
-    message: "Empresa, obra e data inicial são obrigatórios para locação",
-    path: ["rental_company"],
+    message: "Empresa, obra, data inicial e número do contrato são obrigatórios para locação",
+    path: ["rental_contract_number"],
   }
 );
 
@@ -339,6 +343,10 @@ export const movementLocacaoSchema = z.object({
   rental_start_date: z.string()
     .min(1, "Data inicial é obrigatória"),
   rental_end_date: z.string().optional(),
+  rental_contract_number: z.string()
+    .trim()
+    .min(1, "Número do contrato é obrigatório")
+    .max(200, "Número do contrato deve ter no máximo 200 caracteres"),
   equipment_observations: z.string()
     .trim()
     .max(1000, "Observação deve ter no máximo 1000 caracteres")

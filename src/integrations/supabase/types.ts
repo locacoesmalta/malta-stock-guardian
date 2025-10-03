@@ -44,6 +44,7 @@ export type Database = {
           purchase_date: string | null
           qr_code_data: string | null
           rental_company: string | null
+          rental_contract_number: string | null
           rental_end_date: string | null
           rental_start_date: string | null
           rental_work_site: string | null
@@ -86,6 +87,7 @@ export type Database = {
           purchase_date?: string | null
           qr_code_data?: string | null
           rental_company?: string | null
+          rental_contract_number?: string | null
           rental_end_date?: string | null
           rental_start_date?: string | null
           rental_work_site?: string | null
@@ -128,6 +130,7 @@ export type Database = {
           purchase_date?: string | null
           qr_code_data?: string | null
           rental_company?: string | null
+          rental_contract_number?: string | null
           rental_end_date?: string | null
           rental_start_date?: string | null
           rental_work_site?: string | null

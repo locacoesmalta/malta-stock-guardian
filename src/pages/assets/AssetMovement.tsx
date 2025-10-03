@@ -79,6 +79,9 @@ export default function AssetMovement() {
     if (!asset || !user) return;
 
     try {
+      console.log("Form data received:", data);
+      console.log("Movement type:", movementType);
+      
       const updateData: any = {
         location_type: movementType,
         ...data,
@@ -95,6 +98,7 @@ export default function AssetMovement() {
         updateData.rental_work_site = null;
         updateData.rental_start_date = null;
         updateData.rental_end_date = null;
+        updateData.rental_contract_number = null;
         updateData.maintenance_company = null;
         updateData.maintenance_work_site = null;
         updateData.maintenance_description = null;
@@ -111,6 +115,7 @@ export default function AssetMovement() {
         updateData.rental_work_site = null;
         updateData.rental_start_date = null;
         updateData.rental_end_date = null;
+        updateData.rental_contract_number = null;
         updateData.deposito_description = null;
       } else if (movementType === "locacao") {
         updateData.deposito_description = null;
@@ -125,12 +130,14 @@ export default function AssetMovement() {
         updateData.was_replaced = null;
         updateData.replacement_reason = null;
         updateData.is_new_equipment = null;
+        // Mantém rental_contract_number
       } else if (movementType === "aguardando_laudo") {
         updateData.deposito_description = null;
         updateData.rental_company = null;
         updateData.rental_work_site = null;
         updateData.rental_start_date = null;
         updateData.rental_end_date = null;
+        updateData.rental_contract_number = null;
         updateData.maintenance_company = null;
         updateData.maintenance_work_site = null;
         updateData.maintenance_description = null;
@@ -144,12 +151,17 @@ export default function AssetMovement() {
         updateData.is_new_equipment = null;
       }
 
+      console.log("Update data to be sent:", updateData);
+      
       const { error: updateError } = await supabase
         .from("assets")
         .update(updateData)
         .eq("id", id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Supabase update error:", updateError);
+        throw updateError;
+      }
 
       const locationLabels: Record<MovementType, string> = {
         deposito_malta: "Depósito Malta",
@@ -378,6 +390,17 @@ export default function AssetMovement() {
                       type="date"
                       {...form.register("rental_end_date")}
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="rental_contract_number">Número do Contrato *</Label>
+                    <Input
+                      id="rental_contract_number"
+                      {...form.register("rental_contract_number")}
+                      placeholder="Número do contrato de locação"
+                    />
+                    {form.formState.errors.rental_contract_number && (
+                      <p className="text-sm text-destructive">{form.formState.errors.rental_contract_number.message as string}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="malta_collaborator">Responsável Malta</Label>
