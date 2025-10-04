@@ -2,44 +2,68 @@ name: Deploy Lovable via FTP na Hostinger
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    steps:
-      - name: Clonar o repositório
-        uses: actions/checkout@v3
 
-      - name: Configurar Node.js 18
-        uses: actions/setup-node@v3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 18 + cache
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'npm'
 
       - name: Instalar dependências
-        run: npm install
+        run: npm ci
 
       - name: Build do projeto
+        env:
+          CI: "true"
         run: npm run build
 
-      - name: Mostrar arquivos gerados
-        run: ls -al dist/
+      - name: Verificar pasta de saída
+        run: |
+          if [ ! -d "dist" ] && [ ! -d "build" ]; then
+            echo "Nenhuma pasta de build encontrada (dist/ ou build/)."
+            exit 1
+          fi
+          echo "Conteúdo gerado:"
+          ls -al dist || true
+          ls -al build || true
 
-      - name: Deploy FTP para Hostinger
+      - name: Upload artefato (debug)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: |
+            dist/**
+            build/**
+          if-no-files-found: ignore
+
+      - name: Deploy para Hostinger (FTPS)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_HOST }}
-          port: 21
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
+          port: 21
+          protocol: ftps
+          # Se seu build gerar "build/" troque para build/
           local-dir: dist/
-          server-dir: /
-          dangerous-clean-slate: true
+          # Pasta pública do subdomínio na Hostinger:
+          server-dir: /domains/malta.ndossantosdias.com.br/public_html/
+          dangerous-clean-slate: false
           dry-run: false
           log-level: verbose
-
-
-FTP_HOST	exemplo: ftp.seudominio.com
-FTP_USER	seu usuário FTP
-FTP_PASS	sua senha FTP
+          exclude: |
+            **/.git*
+            **/.github/**
+            **/node_modules/**
+            **/src/**
+            **/README.md
