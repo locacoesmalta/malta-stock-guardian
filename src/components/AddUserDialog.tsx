@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ interface AddUserDialogProps {
   onUserAdded: () => void;
 }
 
-export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
+export const AddUserDialog = React.memo(({ onUserAdded }: AddUserDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -80,7 +80,7 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
         throw new Error(response.error.message || "Erro ao criar usuário");
       }
 
-      const { error: dataError, data } = response;
+      const { error: dataError } = response;
       if (dataError) throw dataError;
 
       toast.success("Usuário criado com sucesso!");
@@ -402,4 +402,4 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
       </DialogContent>
     </Dialog>
   );
-}
+});

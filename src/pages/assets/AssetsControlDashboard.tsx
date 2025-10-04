@@ -7,7 +7,9 @@ import { parseISO } from "date-fns";
 
 export default function AssetsControlDashboard() {
   const { data: stats, isLoading } = useAssetsStats();
-  const { data: assets = [] } = useAssetsQuery();
+  const { data: assetsResponse } = useAssetsQuery();
+  
+  const assets = assetsResponse?.data || [];
   
   // Filtrar equipamentos em manutenção
   const assetsInMaintenance = assets.filter(
