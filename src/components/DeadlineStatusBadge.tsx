@@ -1,4 +1,3 @@
-import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { differenceInDays, parseISO } from "date-fns";
 import { Clock, AlertCircle } from "lucide-react";
@@ -7,7 +6,7 @@ interface DeadlineStatusBadgeProps {
   inspectionStartDate: string;
 }
 
-export const DeadlineStatusBadge = React.memo(({ inspectionStartDate }: DeadlineStatusBadgeProps) => {
+export function DeadlineStatusBadge({ inspectionStartDate }: DeadlineStatusBadgeProps) {
   const inspectionStart = parseISO(inspectionStartDate);
   const today = new Date();
   const daysSinceInspection = differenceInDays(today, inspectionStart);
@@ -37,4 +36,4 @@ export const DeadlineStatusBadge = React.memo(({ inspectionStartDate }: Deadline
       </span>
     </div>
   );
-});
+}

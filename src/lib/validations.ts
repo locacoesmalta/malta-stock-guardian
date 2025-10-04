@@ -85,22 +85,18 @@ export const reportSchema = z.object({
 });
 
 // Material withdrawal validation
-// SUPABASE INTEGRATION NOTE: This schema validates material withdrawal data before database insertion
-// The equipment_code field is automatically formatted to 6 digits with leading zeros
 export const withdrawalSchema = z.object({
-  product_id: z.string().min(1, "Produto é obrigatório"),
-  quantity: z.number().min(1, "Quantidade deve ser maior que zero"),
-  withdrawal_date: z.string().min(1, "Data é obrigatória"),
-  withdrawal_reason: z.string().min(1, "Motivo é obrigatório"),
-  equipment_code: z.string()
-    .min(1, "PAT do equipamento é obrigatório")
-    .transform((val) => val.trim())
-    .refine((val) => /^\d{1,6}$/.test(val), {
-      message: "PAT deve conter apenas números (máximo 6 dígitos)"
-    })
-    .transform((val) => formatPAT(val)), // Automatically format with leading zeros for database storage
-  work_site: z.string().min(1, "Obra é obrigatória"),
-  company: z.string().min(1, "Empresa é obrigatória"),
+  product_id: z.string()
+    .uuid("Produto inválido"),
+  quantity: z.number()
+    .int("Quantidade deve ser um número inteiro")
+    .min(1, "Quantidade deve ser no mínimo 1"),
+  withdrawal_date: z.string()
+    .min(1, "Data é obrigatória"),
+  withdrawal_reason: z.string()
+    .trim()
+    .max(1000, "Motivo deve ter no máximo 1000 caracteres")
+    .optional(),
 });
 
 // Auth validation

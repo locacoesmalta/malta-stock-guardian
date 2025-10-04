@@ -9,11 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Minus, Plus, Trash2 } from "lucide-react";
-import { ProductSearchSelector } from "@/components/ProductSearchSelector";
+import { ProductSelector } from "@/components/ProductSelector";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useProducts } from "@/hooks/useProducts";
 import { withdrawalSchema } from "@/lib/validations";
-import { formatPAT, validatePAT } from "@/lib/patUtils";
 
 
 interface WithdrawalItem {
@@ -33,7 +32,6 @@ const MaterialWithdrawal = () => {
   const [withdrawalDate, setWithdrawalDate] = useState(new Date().toISOString().split('T')[0]);
   const [withdrawalReason, setWithdrawalReason] = useState("");
   const [equipmentCode, setEquipmentCode] = useState("");
-  const [equipmentCodeError, setEquipmentCodeError] = useState("");
   const [workSite, setWorkSite] = useState("");
   const [company, setCompany] = useState("");
   const [items, setItems] = useState<WithdrawalItem[]>([]);
@@ -68,40 +66,6 @@ const MaterialWithdrawal = () => {
     setItems(newItems);
   };
 
-  // Handle equipment code changes with validation
-  // SUPABASE INTEGRATION NOTE: This validation ensures PAT numbers are always 6 digits
-  // The equipment_code field in material_withdrawals table is TEXT type and can store the formatted PAT
-  const handleEquipmentCodeChange = (value: string) => {
-    // Remove caracteres não numéricos
-    const numericValue = value.replace(/\D/g, '');
-    
-    // Limita a 6 dígitos
-    const limitedValue = numericValue.slice(0, 6);
-    
-    // Valida o PAT
-    const validation = validatePAT(limitedValue);
-    
-    if (!validation.valid && limitedValue.length > 0) {
-      setEquipmentCodeError(validation.error || "");
-    } else {
-      setEquipmentCodeError("");
-    }
-    
-    setEquipmentCode(limitedValue);
-  };
-
-  // Handle equipment code blur to format with leading zeros
-  // SUPABASE INTEGRATION NOTE: The formatted PAT (6 digits with leading zeros) will be stored in the database
-  const handleEquipmentCodeBlur = () => {
-    if (equipmentCode) {
-      const formattedPAT = formatPAT(equipmentCode);
-      if (formattedPAT) {
-        setEquipmentCode(formattedPAT);
-        setEquipmentCodeError("");
-      }
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -133,9 +97,6 @@ const MaterialWithdrawal = () => {
         quantity: item.quantity,
         withdrawal_date: withdrawalDate,
         withdrawal_reason: withdrawalReason,
-        equipment_code: equipmentCode,
-        work_site: workSite,
-        company: company,
       });
       
       if (!validation.success) {
@@ -203,19 +164,11 @@ const MaterialWithdrawal = () => {
                   id="equipment"
                   type="text"
                   value={equipmentCode}
-                  onChange={(e) => handleEquipmentCodeChange(e.target.value)}
-                  onBlur={handleEquipmentCodeBlur}
-                  placeholder="Digite o PAT do equipamento (ex: 123 → 000123)"
+                  onChange={(e) => setEquipmentCode(e.target.value)}
+                  placeholder="Digite o PAT do equipamento"
                   required
-                  maxLength={6}
-                  className={`text-sm ${equipmentCodeError ? 'border-red-500' : ''}`}
+                  className="text-sm"
                 />
-                {equipmentCodeError && (
-                  <p className="text-xs text-red-500">{equipmentCodeError}</p>
-                )}
-                {equipmentCode && !equipmentCodeError && (
-                  <p className="text-xs text-green-600">PAT formatado: {equipmentCode}</p>
-                )}
               </div>
 
               <div className="space-y-2">
@@ -302,13 +255,12 @@ const MaterialWithdrawal = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-xs sm:text-sm">Produto *</Label>
-                      <ProductSearchSelector
+                      <ProductSelector
                         products={products}
                         value={item.product_id}
                         onValueChange={(value) => updateItem(index, "product_id", value)}
                         showStock={true}
                         required={true}
-                        placeholder="Busque por nome ou código do produto..."
                       />
                     </div>
 

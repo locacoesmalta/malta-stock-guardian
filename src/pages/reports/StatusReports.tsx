@@ -20,11 +20,8 @@ type FilterType = "deposito_malta" | "em_manutencao" | "locacao" | "aguardando_l
 
 export default function StatusReports() {
   const [activeFilter, setActiveFilter] = useState<FilterType>(null);
-  const { data: assetsResponse, isLoading } = useAssetsQuery();
+  const { data: assets, isLoading } = useAssetsQuery();
   const { toast } = useToast();
-
-  // Extrair o array de assets da resposta
-  const assets = assetsResponse?.data || [];
 
   const filterButtons = [
     {
@@ -53,8 +50,8 @@ export default function StatusReports() {
     },
   ];
 
-  const filteredAssets = activeFilter && assets
-    ? assets.filter((asset) => asset.location_type === activeFilter)
+  const filteredAssets = activeFilter
+    ? assets?.filter((asset) => asset.location_type === activeFilter)
     : [];
 
   const handlePrint = () => {
@@ -97,15 +94,10 @@ export default function StatusReports() {
   };
 
   const calculateDaysInMaintenance = (asset: any) => {
-    try {
-      const startDate = asset.maintenance_arrival_date 
-        ? parseISO(asset.maintenance_arrival_date)
-        : parseISO(asset.created_at);
-      return differenceInDays(new Date(), startDate);
-    } catch (error) {
-      console.error('Erro ao calcular dias em manutenção:', error);
-      return 0;
-    }
+    const startDate = asset.maintenance_arrival_date 
+      ? parseISO(asset.maintenance_arrival_date)
+      : parseISO(asset.created_at);
+    return differenceInDays(new Date(), startDate);
   };
 
   return (
@@ -226,7 +218,7 @@ export default function StatusReports() {
                             : "-"}
                         </TableCell>
                         <TableCell>
-                          {asset.created_at ? new Date(asset.created_at).toLocaleDateString("pt-BR") : "-"}
+                          {new Date(asset.created_at).toLocaleDateString("pt-BR")}
                         </TableCell>
                         {activeFilter === "em_manutencao" && (
                           <TableCell>

@@ -8,13 +8,11 @@ import { useProductsQuery } from "@/hooks/useProductsQuery";
 
 const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const { data: productsResponse, isLoading, error } = useProductsQuery();
+  const { data: products = [], isLoading, error } = useProductsQuery();
 
   if (error) {
     toast.error("Erro ao carregar produtos");
   }
-
-  const products = productsResponse?.data || [];
 
   const filteredProducts = products.filter(
     (product) =>

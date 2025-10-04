@@ -70,29 +70,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
-      
-      // Handle token refresh errors gracefully
-      if (event === 'TOKEN_REFRESHED' && !session) {
-        console.warn('Token refresh failed, user will need to re-authenticate');
-        setSession(null);
-        setUser(null);
-        setIsAdmin(false);
-        setIsActive(false);
-        setPermissions(null);
-        return;
-      }
       
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        try {
-          await checkAdminStatus(session.user.id);
-        } catch (error) {
-          console.error('Error checking admin status:', error);
-        }
+        setTimeout(() => {
+          checkAdminStatus(session.user.id);
+        }, 0);
       } else {
         setIsAdmin(false);
         setIsActive(false);
@@ -126,25 +113,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Fetch all permissions
       const { data: permData, error: permError } = await supabase
         .from("user_permissions")
-        .select(`
-          is_active,
-          can_access_main_menu,
-          can_access_admin,
-          can_view_products,
-          can_create_reports,
-          can_view_reports,
-          can_create_withdrawals,
-          can_view_withdrawal_history,
-          can_edit_products,
-          can_delete_products,
-          can_edit_reports,
-          can_delete_reports,
-          can_access_assets,
-          can_create_assets,
-          can_edit_assets,
-          can_delete_assets,
-          can_scan_assets
-        `)
+        .select("*")
         .eq("user_id", userId)
         .single();
 

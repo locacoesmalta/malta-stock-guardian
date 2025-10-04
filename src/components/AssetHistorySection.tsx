@@ -1,4 +1,3 @@
-import React from "react";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -28,7 +27,7 @@ const formatLocationLabel = (value: string) => {
   return labels[value] || value;
 };
 
-export const AssetHistorySection = React.memo(({ assetId }: AssetHistorySectionProps) => {
+export const AssetHistorySection = ({ assetId }: AssetHistorySectionProps) => {
   const { data: historico, isLoading } = usePatrimonioHistorico(assetId);
 
   if (isLoading) {
@@ -118,4 +117,4 @@ export const AssetHistorySection = React.memo(({ assetId }: AssetHistorySectionP
       </div>
     </Card>
   );
-});
+};

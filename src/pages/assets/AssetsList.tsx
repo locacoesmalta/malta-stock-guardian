@@ -17,9 +17,7 @@ export default function AssetsList() {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
-  const { data: assetsResponse, isLoading, error } = useAssetsQuery();
-  
-  const assets = assetsResponse?.data || [];
+  const { data: assets = [], isLoading, error } = useAssetsQuery();
 
   if (error) {
     toast.error("Erro ao carregar patrimônios");

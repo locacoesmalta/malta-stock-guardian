@@ -58,9 +58,7 @@ export default function AssetTraceability() {
   });
 
   const { data: historico, isLoading } = usePatrimonioHistoricoFiltered(searchFilters);
-  const { data: assetsResponse } = useAssetsQuery();
-  
-  const assets = assetsResponse?.data || [];
+  const { data: assets = [] } = useAssetsQuery();
   
   // Filtrar equipamentos em manutenção
   const assetsInMaintenance = assets.filter(

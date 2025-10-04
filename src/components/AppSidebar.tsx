@@ -1,4 +1,3 @@
-import React from "react";
 import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3, ClipboardList } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
@@ -24,7 +23,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export const AppSidebar = React.memo(() => {
+export function AppSidebar() {
   const { isAdmin, signOut, user, permissions } = useAuth();
   const { open, isMobile } = useSidebar();
 
@@ -332,4 +331,4 @@ export const AppSidebar = React.memo(() => {
     </Sidebar>
     </TooltipProvider>
   );
-});
+}

@@ -25,49 +25,9 @@ export default function AssetView() {
   const { data: asset, isLoading, error } = useQuery({
     queryKey: ["asset", id],
     queryFn: async () => {
-      if (!id) throw new Error("ID do patrimônio não fornecido");
-      
       const { data, error } = await supabase
         .from("assets")
-        .select(`
-          id,
-          asset_code,
-          equipment_name,
-          manufacturer,
-          model,
-          serial_number,
-          voltage_combustion,
-          supplier,
-          purchase_date,
-          unit_value,
-          equipment_condition,
-          manual_attachment,
-          exploded_drawing_attachment,
-          comments,
-          location_type,
-          rental_company,
-          rental_work_site,
-          rental_start_date,
-          rental_end_date,
-          deposito_description,
-          available_for_rental,
-          maintenance_company,
-          maintenance_work_site,
-          maintenance_description,
-          maintenance_arrival_date,
-          maintenance_departure_date,
-          maintenance_delay_observations,
-          returns_to_work_site,
-          was_replaced,
-          replaced_by_asset_id,
-          replacement_reason,
-          is_new_equipment,
-          destination_after_maintenance,
-          equipment_observations,
-          malta_collaborator,
-          inspection_start_date,
-          created_at
-        `)
+        .select("*")
         .eq("id", id)
         .single();
       if (error) throw error;
@@ -84,11 +44,6 @@ export default function AssetView() {
   }, [error, navigate]);
 
   const handleDelete = async () => {
-    if (!id) {
-      toast.error("ID do patrimônio não encontrado");
-      return;
-    }
-
     const confirmed = await confirm({
       title: "Confirmar exclusão",
       description: "Tem certeza que deseja excluir este patrimônio? Esta ação não pode ser desfeita.",
