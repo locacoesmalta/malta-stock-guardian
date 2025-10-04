@@ -30,7 +30,8 @@ interface PhotoData {
 const NewReport = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: products = [], isLoading: productsLoading } = useProductsQuery();
+  const { data: productsResponse, isLoading: productsLoading } = useProductsQuery();
+  const products = productsResponse?.data || [];
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     equipment_code: "",

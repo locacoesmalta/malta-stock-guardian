@@ -2,12 +2,12 @@ import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { PermissionRoute } from "@/components/PermissionRoute";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 // Lazy load routes for better performance
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -33,8 +33,6 @@ const PostInspection = lazy(() => import("./pages/assets/PostInspection"));
 const AssetReplacement = lazy(() => import("./pages/assets/AssetReplacement"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Welcome = lazy(() => import("./pages/Welcome"));
-
-const queryClient = new QueryClient();
 
 const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -106,7 +104,7 @@ const LoadingFallback = () => (
 );
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <ErrorBoundary>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -287,7 +285,7 @@ const App = () => (
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
-  </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

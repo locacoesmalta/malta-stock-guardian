@@ -1,3 +1,4 @@
+import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ReactNode } from "react";
@@ -7,7 +8,7 @@ interface PermissionRouteProps {
   permission: keyof NonNullable<ReturnType<typeof useAuth>["permissions"]>;
 }
 
-export const PermissionRoute = ({ children, permission }: PermissionRouteProps) => {
+export const PermissionRoute = React.memo(({ children, permission }: PermissionRouteProps) => {
   const { isAdmin, permissions, loading } = useAuth();
 
   if (loading) {
@@ -41,4 +42,4 @@ export const PermissionRoute = ({ children, permission }: PermissionRouteProps) 
   }
 
   return <>{children}</>;
-};
+});

@@ -1,3 +1,4 @@
+import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Product {
@@ -16,7 +17,7 @@ interface ProductSelectorProps {
   required?: boolean;
 }
 
-export const ProductSelector = ({
+export const ProductSelector = React.memo(({
   products,
   value,
   onValueChange,
@@ -39,4 +40,4 @@ export const ProductSelector = ({
       </SelectContent>
     </Select>
   );
-};
+});

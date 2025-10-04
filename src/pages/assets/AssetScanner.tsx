@@ -38,7 +38,7 @@ export default function AssetScanner() {
           searchAsset(decodedText);
         },
         (error) => {
-          console.log("QR Code scan error:", error);
+          // QR Code scan error - silently handled
         }
       );
     }
