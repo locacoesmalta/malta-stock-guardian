@@ -10,7 +10,7 @@ interface AssetVerification {
     asset_code: string;
     equipment_name: string;
     manufacturer: string;
-    model?: string;
+    model?: string | null;
   };
 }
 
@@ -97,7 +97,7 @@ export const useUploadAttachment = () => {
       const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("equipment-attachments")
         .upload(filePath, file, {
           cacheControl: "3600",
@@ -133,14 +133,13 @@ export const useCreateAsset = () => {
 
   return useMutation({
     mutationFn: async (assetData: any) => {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("assets")
         .insert(assetData)
         .select()
         .single();
 
       if (error) throw error;
-      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["assets"] });

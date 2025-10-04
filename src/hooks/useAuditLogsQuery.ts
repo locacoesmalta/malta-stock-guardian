@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface AuditLog {
   id: string;
-  user_id: string;
+  user_id: string | null;
   user_email: string;
   user_name: string | null;
   action: string;

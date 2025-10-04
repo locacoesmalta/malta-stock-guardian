@@ -8,8 +8,6 @@ interface StockBadgeProps {
 }
 
 export const StockBadge = React.memo(({ quantity, minQuantity }: StockBadgeProps) => {
-  const percentage = (quantity / minQuantity) * 100;
-
   if (quantity <= 0) {
     return (
       <Badge variant="destructive" className="gap-1">
