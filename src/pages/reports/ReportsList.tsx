@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Calendar, Printer, Search, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, FileText, Printer, Search, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -151,7 +151,7 @@ const ReportsList = () => {
       return sum + (price * part.quantity_used);
     }, 0);
 
-    const partsTable = report.report_parts.map((part) => {
+    const partsTable = report.report_parts.map((part, idx) => {
       const unitPrice = part.products.purchase_price || 0;
       const lineCost = unitPrice * part.quantity_used;
       return `

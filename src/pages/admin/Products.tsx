@@ -11,6 +11,7 @@ import { Plus, Pencil, Trash2, Search, Download, Upload, Layers } from "lucide-r
 import { toast } from "sonner";
 import { StockBadge } from "@/components/StockBadge";
 import { useAuth } from "@/contexts/AuthContext";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useProducts } from "@/hooks/useProducts";
 import { productSchema } from "@/lib/validations";

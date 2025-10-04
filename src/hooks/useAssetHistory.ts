@@ -34,9 +34,9 @@ export const useAssetHistory = () => {
         p_codigo_pat: codigoPat,
         p_tipo_evento: tipoEvento,
         p_detalhes_evento: detalhesEvento,
-        p_campo_alterado: campoAlterado ?? undefined,
-        p_valor_antigo: valorAntigo ?? undefined,
-        p_valor_novo: valorNovo ?? undefined,
+        p_campo_alterado: campoAlterado || null,
+        p_valor_antigo: valorAntigo || null,
+        p_valor_novo: valorNovo || null,
       });
 
       if (error) {

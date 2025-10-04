@@ -32,12 +32,6 @@ export default function PostInspection() {
   const { registrarEvento } = useAssetHistory();
   const [selectedDecision, setSelectedDecision] = useState<DecisionType>(null);
 
-  // Verificar se ID existe
-  if (!id) {
-    navigate("/assets");
-    return null;
-  }
-
   const { data: asset, isLoading } = useQuery({
     queryKey: ["asset", id],
     queryFn: async () => {

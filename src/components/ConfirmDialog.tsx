@@ -1,4 +1,3 @@
-import React from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +20,7 @@ interface ConfirmDialogProps {
   cancelText?: string;
 }
 
-export const ConfirmDialog = React.memo(({
+export const ConfirmDialog = ({
   open,
   onOpenChange,
   title,
@@ -45,4 +44,4 @@ export const ConfirmDialog = React.memo(({
       </AlertDialogContent>
     </AlertDialog>
   );
-});
+};

@@ -11,6 +11,10 @@ import {
   movementManutencaoSchema,
   movementLocacaoSchema,
   movementAguardandoLaudoSchema,
+  type MovementDepositoFormData,
+  type MovementManutencaoFormData,
+  type MovementLocacaoFormData,
+  type MovementAguardandoLaudoFormData,
 } from "@/lib/validations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 
@@ -31,56 +36,12 @@ export default function AssetMovement() {
   const { registrarEvento } = useAssetHistory();
   const [movementType, setMovementType] = useState<MovementType>("deposito_malta");
 
-  // Verificar se ID existe
-  if (!id) {
-    navigate("/assets");
-    return null;
-  }
-
   const { data: asset, isLoading } = useQuery({
     queryKey: ["asset", id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("assets")
-        .select(`
-          id,
-          asset_code,
-          equipment_name,
-          manufacturer,
-          model,
-          serial_number,
-          voltage_combustion,
-          supplier,
-          purchase_date,
-          unit_value,
-          equipment_condition,
-          manual_attachment,
-          exploded_drawing_attachment,
-          comments,
-          location_type,
-          rental_company,
-          rental_work_site,
-          rental_start_date,
-          rental_end_date,
-          deposito_description,
-          available_for_rental,
-          maintenance_company,
-          maintenance_work_site,
-          maintenance_description,
-          maintenance_arrival_date,
-          maintenance_departure_date,
-          maintenance_delay_observations,
-          returns_to_work_site,
-          was_replaced,
-          replaced_by_asset_id,
-          replacement_reason,
-          is_new_equipment,
-          destination_after_maintenance,
-          equipment_observations,
-          malta_collaborator,
-          inspection_start_date,
-          created_at
-        `)
+        .select("*")
         .eq("id", id)
         .single();
       if (error) throw error;
@@ -118,6 +79,9 @@ export default function AssetMovement() {
     if (!asset || !user) return;
 
     try {
+      console.log("Form data received:", data);
+      console.log("Movement type:", movementType);
+      
       const updateData: any = {
         location_type: movementType,
         ...data,
@@ -187,6 +151,8 @@ export default function AssetMovement() {
         updateData.is_new_equipment = null;
       }
 
+      console.log("Update data to be sent:", updateData);
+      
       const { error: updateError } = await supabase
         .from("assets")
         .update(updateData)

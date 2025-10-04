@@ -1,25 +1,47 @@
 /**
- * SUPABASE INTEGRATION READY: PAT Utility Functions
- * These functions ensure consistent PAT formatting across the application
- * and are ready for cloud database integration when the project returns to Lovable.
+ * Formata o número do PAT para ter exatamente 6 dígitos com zeros à esquerda
+ * @param pat - Número do PAT (string ou number)
+ * @returns String com 6 dígitos ou null se inválido
  */
-
-/**
- * Formats a PAT number to exactly 6 digits with leading zeros
- * @param pat - The PAT number to format
- * @returns The formatted PAT with leading zeros (e.g., "123" → "000123")
- */
-export const formatPAT = (pat: string): string => {
-  return pat.padStart(6, '0');
+export const formatPAT = (pat: string | number): string | null => {
+  // Converter para string e remover caracteres não numéricos
+  const patString = String(pat).replace(/\D/g, '');
+  
+  // Validar se é um número
+  if (!patString || isNaN(Number(patString))) {
+    return null;
+  }
+  
+  // Validar se tem mais de 6 dígitos
+  if (patString.length > 6) {
+    return null;
+  }
+  
+  // Formatar com zeros à esquerda até completar 6 dígitos
+  return patString.padStart(6, '0');
 };
 
 /**
- * Validates if a PAT is valid (numeric and up to 6 digits)
- * @param pat - The PAT to validate
- * @returns True if valid, false otherwise
+ * Valida se o PAT está no formato correto
+ * @param pat - Número do PAT
+ * @returns Objeto com status de validação e mensagem de erro se houver
  */
-export const validatePAT = (pat: string): boolean => {
-  return /^\d{1,6}$/.test(pat);
+export const validatePAT = (pat: string): { valid: boolean; error?: string } => {
+  const patString = String(pat).replace(/\D/g, '');
+  
+  if (!patString) {
+    return { valid: false, error: 'PAT é obrigatório' };
+  }
+  
+  if (isNaN(Number(patString))) {
+    return { valid: false, error: 'PAT deve conter apenas números' };
+  }
+  
+  if (patString.length > 6) {
+    return { valid: false, error: 'PAT não pode ter mais de 6 dígitos' };
+  }
+  
+  return { valid: true };
 };
 
 /**

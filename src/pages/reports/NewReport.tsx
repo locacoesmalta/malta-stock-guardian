@@ -30,8 +30,7 @@ interface PhotoData {
 const NewReport = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: productsResponse } = useProductsQuery();
-  const products = productsResponse?.data || [];
+  const { data: products = [], isLoading: productsLoading } = useProductsQuery();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     equipment_code: "",
@@ -223,11 +222,6 @@ const NewReport = () => {
       return;
     }
 
-    if (!user?.id) {
-      toast.error("Usuário não autenticado");
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -235,7 +229,7 @@ const NewReport = () => {
         .from("reports")
         .insert([{
           ...formData,
-          created_by: user.id,
+          created_by: user?.id,
         }])
         .select()
         .single();

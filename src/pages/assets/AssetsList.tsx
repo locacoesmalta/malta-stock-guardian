@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Plus, Search, QrCode, Building2, MapPin, FileText } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatInTimeZone } from "date-fns-tz";
 import { useAssetsQuery } from "@/hooks/useAssetsQuery";
 import { DeadlineStatusBadge } from "@/components/DeadlineStatusBadge";
 
@@ -16,9 +17,7 @@ export default function AssetsList() {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
-  const { data: assetsResponse, isLoading, error } = useAssetsQuery();
-  
-  const assets = assetsResponse?.data || [];
+  const { data: assets = [], isLoading, error } = useAssetsQuery();
 
   if (error) {
     toast.error("Erro ao carregar patrimônios");

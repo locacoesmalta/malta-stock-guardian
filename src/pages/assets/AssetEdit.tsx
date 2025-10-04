@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,116 +16,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 
-// Tipos para o asset do banco de dados
-interface AssetData {
-  id: string;
-  asset_code: string;
-  equipment_name: string;
-  manufacturer: string | null;
-  model: string | null;
-  serial_number: string | null;
-  voltage_combustion: "110V" | "220V" | "GASOLINA" | "DIESEL" | "GÁS" | null;
-  supplier: string | null;
-  purchase_date: string | null;
-  unit_value: number | null;
-  equipment_condition: "NOVO" | "USADO" | null;
-  manual_attachment: string | null;
-  exploded_drawing_attachment: string | null;
-  comments: string | null;
-  location_type: string;
-  rental_company: string | null;
-  rental_work_site: string | null;
-  rental_start_date: string | null;
-  rental_end_date: string | null;
-  deposito_description: string | null;
-  available_for_rental: boolean | null;
-  maintenance_company: string | null;
-  maintenance_work_site: string | null;
-  maintenance_description: string | null;
-  maintenance_arrival_date: string | null;
-  maintenance_departure_date: string | null;
-  maintenance_delay_observations: string | null;
-  returns_to_work_site: boolean | null;
-  was_replaced: boolean | null;
-  replaced_by_asset_id: string | null;
-  replacement_reason: string | null;
-  is_new_equipment: boolean | null;
-  destination_after_maintenance: string | null;
-  equipment_observations: string | null;
-  malta_collaborator: string | null;
-  inspection_start_date: string | null;
-  created_at: string;
-}
-
 export default function AssetEdit() {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { registrarEvento } = useAssetHistory();
 
-  const { data: asset, isLoading, error } = useQuery({
+  const { data: asset, isLoading } = useQuery({
     queryKey: ["asset", id],
-    queryFn: async (): Promise<AssetData> => {
-      if (!id) throw new Error("ID do asset não fornecido");
-      
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("assets")
-        .select(`
-          id,
-          asset_code,
-          equipment_name,
-          manufacturer,
-          model,
-          serial_number,
-          voltage_combustion,
-          supplier,
-          purchase_date,
-          unit_value,
-          equipment_condition,
-          manual_attachment,
-          exploded_drawing_attachment,
-          comments,
-          location_type,
-          rental_company,
-          rental_work_site,
-          rental_start_date,
-          rental_end_date,
-          deposito_description,
-          available_for_rental,
-          maintenance_company,
-          maintenance_work_site,
-          maintenance_description,
-          maintenance_arrival_date,
-          maintenance_departure_date,
-          maintenance_delay_observations,
-          returns_to_work_site,
-          was_replaced,
-          replaced_by_asset_id,
-          replacement_reason,
-          is_new_equipment,
-          destination_after_maintenance,
-          equipment_observations,
-          malta_collaborator,
-          inspection_start_date,
-          created_at
-        `)
+        .select("*")
         .eq("id", id)
         .single();
-      
-      if (error) {
-        console.error("Erro ao buscar asset:", error);
-        throw new Error(`Erro ao carregar dados do equipamento: ${error.message}`);
-      }
-      
-      if (!data) {
-        throw new Error("Equipamento não encontrado");
-      }
-      
-      return data as AssetData;
+      if (error) throw error;
+      return data;
     },
     enabled: !!id,
-    retry: 1,
   });
 
   const form = useForm<AssetEditFormData>({
@@ -134,75 +43,45 @@ export default function AssetEdit() {
       manufacturer: "",
       model: "",
       serial_number: "",
-      voltage_combustion: undefined,
       supplier: "",
       purchase_date: "",
-      unit_value: undefined,
-      equipment_condition: undefined,
-      manual_attachment: "",
-      exploded_drawing_attachment: "",
       comments: "",
     },
   });
 
-  // Função para resetar o formulário com dados do asset
-  const resetFormWithAssetData = useCallback((assetData: AssetData) => {
-    form.reset({
-      manufacturer: assetData.manufacturer || "",
-      model: assetData.model || "",
-      serial_number: assetData.serial_number || "",
-      voltage_combustion: assetData.voltage_combustion || undefined,
-      supplier: assetData.supplier || "",
-      purchase_date: assetData.purchase_date || "",
-      unit_value: assetData.unit_value || undefined,
-      equipment_condition: assetData.equipment_condition || undefined,
-      manual_attachment: assetData.manual_attachment || "",
-      exploded_drawing_attachment: assetData.exploded_drawing_attachment || "",
-      comments: assetData.comments || "",
-    });
-  }, [form]);
-
   useEffect(() => {
     if (asset) {
-      resetFormWithAssetData(asset);
+      form.reset({
+        manufacturer: asset.manufacturer || "",
+        model: asset.model || "",
+        serial_number: asset.serial_number || "",
+        voltage_combustion: asset.voltage_combustion as any,
+        supplier: asset.supplier || "",
+        purchase_date: asset.purchase_date || "",
+        unit_value: asset.unit_value || undefined,
+        equipment_condition: asset.equipment_condition as any,
+        manual_attachment: asset.manual_attachment || "",
+        exploded_drawing_attachment: asset.exploded_drawing_attachment || "",
+        comments: asset.comments || "",
+      });
     }
-  }, [asset, resetFormWithAssetData]);
-
-  // Função para comparar valores de forma segura
-  const compareValues = (oldValue: any, newValue: any): boolean => {
-    // Tratar valores null/undefined como strings vazias para comparação
-    const normalizeValue = (value: any): string => {
-      if (value === null || value === undefined) return "";
-      return String(value);
-    };
-
-    return normalizeValue(oldValue) !== normalizeValue(newValue);
-  };
+  }, [asset, form]);
 
   const onSubmit = async (data: AssetEditFormData) => {
-    if (!asset || !user || !id) {
-      toast.error("Dados necessários não disponíveis");
-      return;
-    }
+    if (!asset || !user) return;
 
     try {
       const changes: Record<string, { old: any; new: any }> = {};
 
-      // Detectar mudanças de forma mais robusta
-      (Object.keys(data) as Array<keyof AssetEditFormData>).forEach((key) => {
-        const oldValue = asset[key];
-        const newValue = data[key];
+      // Detectar mudanças
+      Object.keys(data).forEach((key) => {
+        const oldValue = asset[key as keyof typeof asset];
+        const newValue = data[key as keyof AssetEditFormData];
         
-        if (compareValues(oldValue, newValue)) {
+        if (oldValue !== newValue) {
           changes[key] = { old: oldValue, new: newValue };
         }
       });
-
-      // Se não há mudanças, não fazer nada
-      if (Object.keys(changes).length === 0) {
-        toast.info("Nenhuma alteração detectada");
-        return;
-      }
 
       // Atualizar asset
       const { error: updateError } = await supabase
@@ -210,97 +89,55 @@ export default function AssetEdit() {
         .update(data)
         .eq("id", id);
 
-      if (updateError) {
-        console.error("Erro ao atualizar asset:", updateError);
-        throw new Error(`Erro ao atualizar equipamento: ${updateError.message}`);
-      }
+      if (updateError) throw updateError;
 
       // Registrar cada alteração no histórico
-      const fieldLabels: Record<string, string> = {
-        manufacturer: "Fabricante",
-        model: "Modelo",
-        serial_number: "Número de Série",
-        voltage_combustion: "Voltagem/Combustível",
-        supplier: "Fornecedor",
-        purchase_date: "Data de Compra",
-        unit_value: "Valor Unitário",
-        equipment_condition: "Condição do Equipamento",
-        manual_attachment: "Manual",
-        exploded_drawing_attachment: "Desenho Explodido",
-        comments: "Comentários",
-      };
-
-      // Registrar eventos de forma sequencial para evitar problemas de concorrência
       for (const [fieldName, { old: oldValue, new: newValue }] of Object.entries(changes)) {
-        try {
-          await registrarEvento({
-            patId: asset.id,
-            codigoPat: asset.asset_code,
-            tipoEvento: "ALTERAÇÃO DE DADO",
-            detalhesEvento: `Campo ${fieldLabels[fieldName] || fieldName} alterado`,
-            campoAlterado: fieldLabels[fieldName] || fieldName,
-            valorAntigo: String(oldValue || ""),
-            valorNovo: String(newValue || ""),
-          });
-        } catch (historyError) {
-          console.error(`Erro ao registrar histórico para campo ${fieldName}:`, historyError);
-          // Continuar mesmo se houver erro no histórico
-        }
+        const fieldLabels: Record<string, string> = {
+          manufacturer: "Fabricante",
+          model: "Modelo",
+          serial_number: "Número de Série",
+          voltage_combustion: "Voltagem/Combustível",
+          supplier: "Fornecedor",
+          purchase_date: "Data de Compra",
+          unit_value: "Valor Unitário",
+          equipment_condition: "Condição do Equipamento",
+          manual_attachment: "Manual",
+          exploded_drawing_attachment: "Desenho Explodido",
+          comments: "Comentários",
+        };
+
+        await registrarEvento({
+          patId: asset.id,
+          codigoPat: asset.asset_code,
+          tipoEvento: "ALTERAÇÃO DE DADO",
+          detalhesEvento: `Campo ${fieldLabels[fieldName] || fieldName} alterado`,
+          campoAlterado: fieldLabels[fieldName] || fieldName,
+          valorAntigo: String(oldValue || ""),
+          valorNovo: String(newValue || ""),
+        });
       }
 
-      // Invalidar queries para atualizar dados
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["asset", id] }),
-        queryClient.invalidateQueries({ queryKey: ["patrimonio-historico", id] }),
-      ]);
+      queryClient.invalidateQueries({ queryKey: ["asset", id] });
+      queryClient.invalidateQueries({ queryKey: ["patrimonio-historico", id] });
       
       toast.success("Cadastro atualizado com sucesso");
       navigate(`/assets/view/${id}`);
     } catch (error) {
       console.error("Erro ao atualizar cadastro:", error);
-      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
-      toast.error(`Erro ao atualizar cadastro: ${errorMessage}`);
+      toast.error("Erro ao atualizar cadastro");
     }
   };
 
-  // Tratamento de estados de loading e erro
   if (isLoading) {
     return (
       <div className="container mx-auto p-4 md:p-6">
-        <div className="flex items-center justify-center min-h-[200px]">
-          <p className="text-lg">Carregando dados do equipamento...</p>
-        </div>
+        <p>Carregando...</p>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="container mx-auto p-4 md:p-6">
-        <div className="flex flex-col items-center justify-center min-h-[200px] space-y-4">
-          <p className="text-lg text-destructive">
-            {error instanceof Error ? error.message : "Erro ao carregar equipamento"}
-          </p>
-          <Button onClick={() => navigate("/assets")} variant="outline">
-            Voltar para Lista de Equipamentos
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!asset) {
-    return (
-      <div className="container mx-auto p-4 md:p-6">
-        <div className="flex flex-col items-center justify-center min-h-[200px] space-y-4">
-          <p className="text-lg">Equipamento não encontrado</p>
-          <Button onClick={() => navigate("/assets")} variant="outline">
-            Voltar para Lista de Equipamentos
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  if (!asset) return null;
 
   return (
     <div className="container mx-auto p-4 md:p-6 max-w-4xl">
@@ -343,9 +180,6 @@ export default function AssetEdit() {
                   {...form.register("model")}
                   placeholder="Ex: GSR 12V-15"
                 />
-                {form.formState.errors.model && (
-                  <p className="text-sm text-destructive">{form.formState.errors.model.message}</p>
-                )}
               </div>
 
               <div className="space-y-2">
@@ -355,28 +189,18 @@ export default function AssetEdit() {
                   {...form.register("serial_number")}
                   placeholder="Ex: 123456789"
                 />
-                {form.formState.errors.serial_number && (
-                  <p className="text-sm text-destructive">{form.formState.errors.serial_number.message}</p>
-                )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="voltage_combustion">Voltagem/Combustível</Label>
                 <Select
                   value={form.watch("voltage_combustion") || ""}
-                  onValueChange={(value) => {
-                    if (value === "") {
-                      form.setValue("voltage_combustion", undefined);
-                    } else {
-                      form.setValue("voltage_combustion", value as "110V" | "220V" | "GASOLINA" | "DIESEL" | "GÁS");
-                    }
-                  }}
+                  onValueChange={(value) => form.setValue("voltage_combustion", value as any)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
                     <SelectItem value="110V">110V</SelectItem>
                     <SelectItem value="220V">220V</SelectItem>
                     <SelectItem value="GASOLINA">Gasolina</SelectItem>
@@ -384,9 +208,6 @@ export default function AssetEdit() {
                     <SelectItem value="GÁS">Gás</SelectItem>
                   </SelectContent>
                 </Select>
-                {form.formState.errors.voltage_combustion && (
-                  <p className="text-sm text-destructive">{form.formState.errors.voltage_combustion.message}</p>
-                )}
               </div>
 
               <div className="space-y-2">
@@ -396,9 +217,6 @@ export default function AssetEdit() {
                   {...form.register("supplier")}
                   placeholder="Ex: Fornecedor ABC"
                 />
-                {form.formState.errors.supplier && (
-                  <p className="text-sm text-destructive">{form.formState.errors.supplier.message}</p>
-                )}
               </div>
 
               <div className="space-y-2">
@@ -408,9 +226,6 @@ export default function AssetEdit() {
                   type="date"
                   {...form.register("purchase_date")}
                 />
-                {form.formState.errors.purchase_date && (
-                  <p className="text-sm text-destructive">{form.formState.errors.purchase_date.message}</p>
-                )}
               </div>
 
               <div className="space-y-2">
@@ -419,42 +234,25 @@ export default function AssetEdit() {
                   id="unit_value"
                   type="number"
                   step="0.01"
-                  min="0"
-                  {...form.register("unit_value", { 
-                    valueAsNumber: true,
-                    setValueAs: (value) => value === "" ? undefined : Number(value)
-                  })}
+                  {...form.register("unit_value", { valueAsNumber: true })}
                   placeholder="0,00"
                 />
-                {form.formState.errors.unit_value && (
-                  <p className="text-sm text-destructive">{form.formState.errors.unit_value.message}</p>
-                )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="equipment_condition">Condição</Label>
                 <Select
                   value={form.watch("equipment_condition") || ""}
-                  onValueChange={(value) => {
-                    if (value === "") {
-                      form.setValue("equipment_condition", undefined);
-                    } else {
-                      form.setValue("equipment_condition", value as "NOVO" | "USADO");
-                    }
-                  }}
+                  onValueChange={(value) => form.setValue("equipment_condition", value as any)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
                     <SelectItem value="NOVO">Novo</SelectItem>
                     <SelectItem value="USADO">Usado</SelectItem>
                   </SelectContent>
                 </Select>
-                {form.formState.errors.equipment_condition && (
-                  <p className="text-sm text-destructive">{form.formState.errors.equipment_condition.message}</p>
-                )}
               </div>
             </div>
 
@@ -466,24 +264,16 @@ export default function AssetEdit() {
                 placeholder="Observações adicionais..."
                 rows={3}
               />
-              {form.formState.errors.comments && (
-                <p className="text-sm text-destructive">{form.formState.errors.comments.message}</p>
-              )}
             </div>
 
             <div className="flex gap-2 pt-4">
-              <Button 
-                type="submit" 
-                disabled={form.formState.isSubmitting}
-                className="min-w-[120px]"
-              >
+              <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Salvando..." : "Salvar Alterações"}
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => navigate(`/assets/view/${id}`)}
-                disabled={form.formState.isSubmitting}
               >
                 Cancelar
               </Button>

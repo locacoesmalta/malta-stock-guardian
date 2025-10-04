@@ -23,12 +23,6 @@ export default function AssetReplacement() {
   const queryClient = useQueryClient();
   const { registrarEvento } = useAssetHistory();
 
-  // Verificar se ID existe
-  if (!id) {
-    navigate("/assets");
-    return null;
-  }
-
   const { data: asset, isLoading: assetLoading } = useQuery({
     queryKey: ["asset", id],
     queryFn: async () => {

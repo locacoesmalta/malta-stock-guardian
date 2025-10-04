@@ -42,12 +42,17 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 
-import { formatPAT, validatePAT, calculateEquipmentAge, formatCurrency } from "@/lib/patUtils";
+import { formatPAT, validatePAT, calculateEquipmentAge, formatCurrency, parseCurrency } from "@/lib/patUtils";
 import { useVerifyPAT, useEquipmentSuggestions, useUploadAttachment, useCreateAsset } from "@/hooks/useAssetRegistration";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Schema para a etapa 1 (verificação do PAT)
+const patVerificationSchema = z.object({
+  pat: z.string().min(1, "Digite o número do PAT"),
+});
 
 // Schema para a etapa 2 (formulário completo)
 const equipmentSchema = z.object({
@@ -96,12 +101,12 @@ export default function AssetRegister() {
   });
 
   const handleVerifyPAT = () => {
-    const isValid = validatePAT(patInput);
+    const validation = validatePAT(patInput);
     
-    if (!isValid) {
+    if (!validation.valid) {
       toast({
         title: "PAT inválido",
-        description: "PAT deve conter apenas números (máximo 6 dígitos)",
+        description: validation.error,
         variant: "destructive",
       });
       return;
@@ -574,9 +579,9 @@ export default function AssetRegister() {
                         onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                       />
                     </FormControl>
-                    {field.value && field.value > 0 && (
+                    {field.value > 0 && (
                       <p className="text-sm text-muted-foreground">
-                        {formatCurrency(field.value ?? 0)}
+                        {formatCurrency(field.value)}
                       </p>
                     )}
                     <FormMessage />
