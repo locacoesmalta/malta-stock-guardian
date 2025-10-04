@@ -27,7 +27,7 @@ interface WithdrawalItem {
 const MaterialWithdrawal = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { products, loading: loadingProducts } = useProducts();
+  const { products } = useProducts();
   const { confirm, ConfirmDialog } = useConfirm();
   const [loading, setLoading] = useState(false);
   const [withdrawalDate, setWithdrawalDate] = useState(new Date().toISOString().split('T')[0]);
@@ -79,10 +79,10 @@ const MaterialWithdrawal = () => {
     const limitedValue = numericValue.slice(0, 6);
     
     // Valida o PAT
-    const validation = validatePAT(limitedValue);
+    const isValid = validatePAT(limitedValue);
     
-    if (!validation.valid && limitedValue.length > 0) {
-      setEquipmentCodeError(validation.error || "");
+    if (!isValid && limitedValue.length > 0) {
+      setEquipmentCodeError("PAT deve conter apenas números (máximo 6 dígitos)");
     } else {
       setEquipmentCodeError("");
     }
@@ -155,12 +155,17 @@ const MaterialWithdrawal = () => {
 
     if (!confirmed) return;
 
+    if (!user?.id) {
+      toast.error("Usuário não autenticado");
+      return;
+    }
+
     setLoading(true);
     try {
       const withdrawals = items.map(item => ({
         product_id: item.product_id,
         quantity: item.quantity,
-        withdrawn_by: user?.id,
+        withdrawn_by: user.id,
         withdrawal_reason: withdrawalReason,
         withdrawal_date: withdrawalDate,
         equipment_code: equipmentCode,

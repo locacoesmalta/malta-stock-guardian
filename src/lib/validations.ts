@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { formatPAT } from "./patUtils";
 
 // Product validation
 export const productSchema = z.object({

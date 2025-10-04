@@ -11,10 +11,6 @@ import {
   movementManutencaoSchema,
   movementLocacaoSchema,
   movementAguardandoLaudoSchema,
-  type MovementDepositoFormData,
-  type MovementManutencaoFormData,
-  type MovementLocacaoFormData,
-  type MovementAguardandoLaudoFormData,
 } from "@/lib/validations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +18,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 
@@ -35,6 +30,12 @@ export default function AssetMovement() {
   const queryClient = useQueryClient();
   const { registrarEvento } = useAssetHistory();
   const [movementType, setMovementType] = useState<MovementType>("deposito_malta");
+
+  // Verificar se ID existe
+  if (!id) {
+    navigate("/assets");
+    return null;
+  }
 
   const { data: asset, isLoading } = useQuery({
     queryKey: ["asset", id],
