@@ -58,7 +58,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          await checkAdminStatus(session.user.id);
+          // Set loading to false immediately to avoid blocking UI
+          if (mounted) setLoading(false);
+          // Fetch roles/permissions without blocking UI
+          checkAdminStatus(session.user.id).catch((err) => {
+            console.error("Error checking admin status:", err);
+          });
+        } else {
+          if (mounted) setLoading(false);
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
