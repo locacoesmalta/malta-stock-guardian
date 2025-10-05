@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,11 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Plus, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
 import { ProductSelector } from "@/components/ProductSelector";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useProducts } from "@/hooks/useProducts";
 import { withdrawalSchema } from "@/lib/validations";
+import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
+import { formatPAT } from "@/lib/patUtils";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 
 interface WithdrawalItem {
@@ -26,7 +29,7 @@ interface WithdrawalItem {
 const MaterialWithdrawal = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { products, loading: loadingProducts } = useProducts();
+  const { products } = useProducts();
   const { confirm, ConfirmDialog } = useConfirm();
   const [loading, setLoading] = useState(false);
   const [withdrawalDate, setWithdrawalDate] = useState(new Date().toISOString().split('T')[0]);
@@ -35,6 +38,26 @@ const MaterialWithdrawal = () => {
   const [workSite, setWorkSite] = useState("");
   const [company, setCompany] = useState("");
   const [items, setItems] = useState<WithdrawalItem[]>([]);
+  const [equipmentName, setEquipmentName] = useState("");
+
+  // Buscar informações do equipamento pelo PAT
+  const { data: equipment, isLoading: loadingEquipment } = useEquipmentByPAT(equipmentCode);
+
+  // Preencher informações automaticamente quando o equipamento for encontrado
+  useEffect(() => {
+    if (equipment) {
+      setEquipmentName(equipment.equipment_name);
+      
+      // Preencher obra e empresa baseado na última localização do equipamento
+      if (equipment.location_type === "LOCAÇÃO" && equipment.rental_company && equipment.rental_work_site) {
+        setCompany(equipment.rental_company);
+        setWorkSite(equipment.rental_work_site);
+      } else if (equipment.location_type === "MANUTENÇÃO" && equipment.maintenance_company && equipment.maintenance_work_site) {
+        setCompany(equipment.maintenance_company);
+        setWorkSite(equipment.maintenance_work_site);
+      }
+    }
+  }, [equipment]);
 
   const addItem = () => {
     setItems([...items, {
@@ -69,8 +92,21 @@ const MaterialWithdrawal = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!equipmentCode || !workSite || !company) {
-      toast.error("Preencha todos os campos obrigatórios: PAT do Equipamento, Obra e Empresa!");
+    // Validar se o PAT é válido
+    const formattedPAT = formatPAT(equipmentCode);
+    if (!formattedPAT) {
+      toast.error("PAT inválido! O PAT deve conter apenas números (máximo 6 dígitos).");
+      return;
+    }
+
+    // Validar se o equipamento existe
+    if (!equipment) {
+      toast.error("Equipamento não encontrado! Verifique o PAT digitado.");
+      return;
+    }
+
+    if (!workSite || !company) {
+      toast.error("Preencha todos os campos obrigatórios: Obra e Empresa!");
       return;
     }
 
@@ -124,7 +160,7 @@ const MaterialWithdrawal = () => {
         withdrawn_by: user?.id,
         withdrawal_reason: withdrawalReason,
         withdrawal_date: withdrawalDate,
-        equipment_code: equipmentCode,
+        equipment_code: formattedPAT,
         work_site: workSite,
         company: company
       }));
@@ -160,15 +196,46 @@ const MaterialWithdrawal = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="equipment" className="text-xs sm:text-sm">PAT do Equipamento *</Label>
-                <Input
-                  id="equipment"
-                  type="text"
-                  value={equipmentCode}
-                  onChange={(e) => setEquipmentCode(e.target.value)}
-                  placeholder="Digite o PAT do equipamento"
-                  required
-                  className="text-sm"
-                />
+                <div className="relative">
+                  <Input
+                    id="equipment"
+                    type="text"
+                    value={equipmentCode}
+                    onChange={(e) => {
+                      setEquipmentCode(e.target.value);
+                      if (!e.target.value) {
+                        setEquipmentName("");
+                        setWorkSite("");
+                        setCompany("");
+                      }
+                    }}
+                    placeholder="Digite o PAT do equipamento"
+                    required
+                    className="text-sm"
+                  />
+                  {loadingEquipment && equipmentCode && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    </div>
+                  )}
+                </div>
+                {equipmentCode && !loadingEquipment && (
+                  equipment ? (
+                    <Alert className="mt-2 border-green-500/50 bg-green-50 dark:bg-green-950/20">
+                      <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      <AlertDescription className="text-xs text-green-700 dark:text-green-300">
+                        Equipamento encontrado: {equipment.equipment_name}
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <Alert className="mt-2 border-red-500/50 bg-red-50 dark:bg-red-950/20">
+                      <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                      <AlertDescription className="text-xs text-red-700 dark:text-red-300">
+                        Equipamento não encontrado. Verifique o PAT.
+                      </AlertDescription>
+                    </Alert>
+                  )
+                )}
               </div>
 
               <div className="space-y-2">

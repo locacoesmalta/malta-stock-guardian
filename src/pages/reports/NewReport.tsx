@@ -9,9 +9,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { Upload, X } from "lucide-react";
+import { Upload, X, CheckCircle2, AlertCircle } from "lucide-react";
 import "@/styles/report-print.css";
 import { useProductsQuery } from "@/hooks/useProductsQuery";
+import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
+import { formatPAT } from "@/lib/patUtils";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ReportPart {
   product_id: string;
@@ -30,7 +33,7 @@ interface PhotoData {
 const NewReport = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: products = [], isLoading: productsLoading } = useProductsQuery();
+  const { data: products = [] } = useProductsQuery();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     equipment_code: "",
@@ -50,6 +53,34 @@ const NewReport = () => {
     Array(6).fill(null).map(() => ({ file: null, preview: "", comment: "" }))
   );
   const [additionalPhotos, setAdditionalPhotos] = useState<PhotoData[]>([]);
+
+  // Buscar informações do equipamento pelo PAT
+  const { data: equipment, isLoading: loadingEquipment } = useEquipmentByPAT(formData.equipment_code);
+
+  // Preencher informações automaticamente quando o equipamento for encontrado
+  useEffect(() => {
+    if (equipment) {
+      setFormData(prev => ({
+        ...prev,
+        equipment_name: equipment.equipment_name,
+      }));
+      
+      // Preencher obra e empresa baseado na última localização do equipamento
+      if (equipment.location_type === "LOCAÇÃO" && equipment.rental_company && equipment.rental_work_site) {
+        setFormData(prev => ({
+          ...prev,
+          company: equipment.rental_company || "",
+          work_site: equipment.rental_work_site || "",
+        }));
+      } else if (equipment.location_type === "MANUTENÇÃO" && equipment.maintenance_company && equipment.maintenance_work_site) {
+        setFormData(prev => ({
+          ...prev,
+          company: equipment.maintenance_company || "",
+          work_site: equipment.maintenance_work_site || "",
+        }));
+      }
+    }
+  }, [equipment]);
 
   // Cleanup preview URLs on unmount
   useEffect(() => {
@@ -187,6 +218,19 @@ const NewReport = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validar se o PAT é válido
+    const formattedPAT = formatPAT(formData.equipment_code);
+    if (!formattedPAT) {
+      toast.error("PAT inválido! O PAT deve conter apenas números (máximo 6 dígitos).");
+      return;
+    }
+
+    // Validar se o equipamento existe
+    if (!equipment) {
+      toast.error("Equipamento não encontrado! Verifique o PAT digitado.");
+      return;
+    }
+
     if (!formData.equipment_code.trim()) {
       toast.error("Código do equipamento (PAT) é obrigatório!");
       return;
@@ -229,6 +273,7 @@ const NewReport = () => {
         .from("reports")
         .insert([{
           ...formData,
+          equipment_code: formatPAT(formData.equipment_code) || formData.equipment_code,
           created_by: user?.id,
         }])
         .select()
@@ -302,6 +347,47 @@ const NewReport = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label htmlFor="equipment_code">Patrimônio (PAT) *</Label>
+                <div className="relative">
+                  <Input
+                    id="equipment_code"
+                    value={formData.equipment_code}
+                    onChange={(e) => {
+                      setFormData({ 
+                        ...formData, 
+                        equipment_code: e.target.value,
+                        equipment_name: e.target.value ? formData.equipment_name : "" 
+                      });
+                    }}
+                    placeholder="Código do patrimônio"
+                    required
+                  />
+                  {loadingEquipment && formData.equipment_code && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    </div>
+                  )}
+                </div>
+                {formData.equipment_code && !loadingEquipment && (
+                  equipment ? (
+                    <Alert className="mt-2 border-green-500/50 bg-green-50 dark:bg-green-950/20">
+                      <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      <AlertDescription className="text-xs text-green-700 dark:text-green-300">
+                        Equipamento encontrado: {equipment.equipment_name}
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <Alert className="mt-2 border-red-500/50 bg-red-50 dark:bg-red-950/20">
+                      <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                      <AlertDescription className="text-xs text-red-700 dark:text-red-300">
+                        Equipamento não encontrado. Verifique o PAT.
+                      </AlertDescription>
+                    </Alert>
+                  )
+                )}
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="equipment_name">Equipamento *</Label>
                 <Input
                   id="equipment_name"
@@ -309,18 +395,14 @@ const NewReport = () => {
                   onChange={(e) => setFormData({ ...formData, equipment_name: e.target.value })}
                   placeholder="Nome do equipamento"
                   required
+                  readOnly={!!equipment}
+                  className={equipment ? "bg-muted cursor-not-allowed" : ""}
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="equipment_code">Patrimônio (PAT) *</Label>
-                <Input
-                  id="equipment_code"
-                  value={formData.equipment_code}
-                  onChange={(e) => setFormData({ ...formData, equipment_code: e.target.value })}
-                  placeholder="Código do patrimônio"
-                  required
-                />
+                {equipment && (
+                  <p className="text-xs text-muted-foreground">
+                    Preenchido automaticamente do cadastro do equipamento
+                  </p>
+                )}
               </div>
             </div>
 
