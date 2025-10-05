@@ -195,23 +195,33 @@ const MaterialWithdrawal = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="equipment" className="text-xs sm:text-sm">PAT do Equipamento *</Label>
+                <Label htmlFor="equipment" className="text-xs sm:text-sm">PAT do Equipamento * (6 dígitos)</Label>
                 <div className="relative">
                   <Input
                     id="equipment"
                     type="text"
                     value={equipmentCode}
                     onChange={(e) => {
-                      setEquipmentCode(e.target.value);
-                      if (!e.target.value) {
+                      const value = e.target.value.replace(/\D/g, ''); // Remove não-números
+                      if (value.length <= 6) {
+                        setEquipmentCode(value);
+                      }
+                      if (!value) {
                         setEquipmentName("");
                         setWorkSite("");
                         setCompany("");
                       }
                     }}
-                    placeholder="Digite o PAT do equipamento"
+                    onBlur={(e) => {
+                      const formatted = formatPAT(e.target.value);
+                      if (formatted) {
+                        setEquipmentCode(formatted);
+                      }
+                    }}
+                    placeholder="000000"
+                    maxLength={6}
                     required
-                    className="text-sm"
+                    className="text-sm font-mono"
                   />
                   {loadingEquipment && equipmentCode && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">

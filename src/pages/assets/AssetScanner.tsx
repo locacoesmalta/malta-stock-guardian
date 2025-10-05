@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { formatPAT } from "@/lib/patUtils";
 
 export default function AssetScanner() {
   const navigate = useNavigate();
@@ -96,14 +97,30 @@ export default function AssetScanner() {
           <h2 className="text-xl font-bold mb-4">Buscar por Código</h2>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="manual-code">Digite o código do patrimônio</Label>
+              <Label htmlFor="manual-code">Digite o código do patrimônio (PAT) - 6 dígitos</Label>
               <div className="flex gap-2">
                 <Input
                   id="manual-code"
+                  type="text"
                   value={manualCode}
-                  onChange={(e) => setManualCode(e.target.value)}
-                  placeholder="Ex: PAT001"
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    if (value.length <= 6) {
+                      setManualCode(value);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (manualCode) {
+                      const formatted = formatPAT(manualCode);
+                      if (formatted) {
+                        setManualCode(formatted);
+                      }
+                    }
+                  }}
+                  placeholder="000000"
+                  maxLength={6}
                   onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
+                  className="font-mono"
                 />
                 <Button onClick={handleManualSearch}>Buscar</Button>
               </div>

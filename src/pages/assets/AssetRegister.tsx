@@ -226,17 +226,19 @@ export default function AssetRegister() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="pat-input">Digite o número do PAT para consultar ou cadastrar</Label>
+              <Label htmlFor="pat-input">Digite o número do PAT (6 dígitos)</Label>
               <div className="flex gap-2">
                 <Input
                   id="pat-input"
                   type="text"
-                  placeholder="Ex: 1234"
+                  placeholder="000000"
                   value={patInput}
                   onChange={(e) => {
                     // Permitir apenas números
                     const value = e.target.value.replace(/\D/g, '');
-                    setPATInput(value);
+                    if (value.length <= 6) {
+                      setPATInput(value);
+                    }
                   }}
                   onBlur={() => {
                     // Formatar ao perder o foco

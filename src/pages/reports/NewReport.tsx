@@ -347,20 +347,32 @@ const NewReport = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="equipment_code">Patrimônio (PAT) *</Label>
+                <Label htmlFor="equipment_code">Patrimônio (PAT) * (6 dígitos)</Label>
                 <div className="relative">
                   <Input
                     id="equipment_code"
+                    type="text"
                     value={formData.equipment_code}
                     onChange={(e) => {
-                      setFormData({ 
-                        ...formData, 
-                        equipment_code: e.target.value,
-                        equipment_name: e.target.value ? formData.equipment_name : "" 
-                      });
+                      const value = e.target.value.replace(/\D/g, ''); // Remove não-números
+                      if (value.length <= 6) {
+                        setFormData({ 
+                          ...formData, 
+                          equipment_code: value,
+                          equipment_name: value ? formData.equipment_name : "" 
+                        });
+                      }
                     }}
-                    placeholder="Código do patrimônio"
+                    onBlur={(e) => {
+                      const formatted = formatPAT(e.target.value);
+                      if (formatted) {
+                        setFormData({ ...formData, equipment_code: formatted });
+                      }
+                    }}
+                    placeholder="000000"
+                    maxLength={6}
                     required
+                    className="font-mono"
                   />
                   {loadingEquipment && formData.equipment_code && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
