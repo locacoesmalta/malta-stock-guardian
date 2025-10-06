@@ -330,7 +330,14 @@ const NewReport = () => {
                   onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                   placeholder="Nome do cliente"
                   required
+                  readOnly={!!equipment}
+                  className={equipment ? "bg-muted cursor-not-allowed" : ""}
                 />
+                {equipment && (
+                  <p className="text-xs text-muted-foreground">
+                    Preenchido automaticamente do cadastro do equipamento
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -341,7 +348,14 @@ const NewReport = () => {
                   onChange={(e) => setFormData({ ...formData, work_site: e.target.value })}
                   placeholder="Local da obra"
                   required
+                  readOnly={!!equipment}
+                  className={equipment ? "bg-muted cursor-not-allowed" : ""}
                 />
+                {equipment && (
+                  <p className="text-xs text-muted-foreground">
+                    Preenchido automaticamente do cadastro do equipamento
+                  </p>
+                )}
               </div>
             </div>
 

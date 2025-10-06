@@ -73,7 +73,30 @@ export default function AssetMovement() {
 
   useEffect(() => {
     form.reset({});
-  }, [movementType, form]);
+    
+    // Auto-preencher dados quando for manutenção
+    if (movementType === "em_manutencao" && asset) {
+      const currentDate = new Date().toISOString().split('T')[0];
+      
+      // Determinar empresa e obra baseado na localização atual
+      let company = "";
+      let workSite = "";
+      
+      if (asset.location_type === "locacao") {
+        company = asset.rental_company || "";
+        workSite = asset.rental_work_site || "";
+      } else if (asset.location_type === "em_manutencao") {
+        company = asset.maintenance_company || "";
+        workSite = asset.maintenance_work_site || "";
+      }
+      
+      form.reset({
+        maintenance_company: company,
+        maintenance_work_site: workSite,
+        maintenance_arrival_date: currentDate,
+      });
+    }
+  }, [movementType, form, asset]);
 
   const onSubmit = async (data: any) => {
     if (!asset || !user) return;
@@ -94,45 +117,24 @@ export default function AssetMovement() {
 
       // Limpar campos de outros tipos de movimento
       if (movementType === "deposito_malta") {
-        updateData.rental_company = null;
-        updateData.rental_work_site = null;
-        updateData.rental_start_date = null;
-        updateData.rental_end_date = null;
-        updateData.rental_contract_number = null;
-        updateData.maintenance_company = null;
-        updateData.maintenance_work_site = null;
-        updateData.maintenance_description = null;
-        updateData.maintenance_arrival_date = null;
-        updateData.maintenance_departure_date = null;
-        updateData.maintenance_delay_observations = null;
-        updateData.returns_to_work_site = null;
-        updateData.destination_after_maintenance = null;
-        updateData.was_replaced = null;
-        updateData.replacement_reason = null;
-        updateData.is_new_equipment = null;
-      } else if (movementType === "em_manutencao") {
-        updateData.rental_company = null;
-        updateData.rental_work_site = null;
-        updateData.rental_start_date = null;
-        updateData.rental_end_date = null;
-        updateData.rental_contract_number = null;
-        updateData.deposito_description = null;
-      } else if (movementType === "locacao") {
-        updateData.deposito_description = null;
-        updateData.maintenance_company = null;
-        updateData.maintenance_work_site = null;
-        updateData.maintenance_description = null;
-        updateData.maintenance_arrival_date = null;
-        updateData.maintenance_departure_date = null;
-        updateData.maintenance_delay_observations = null;
-        updateData.returns_to_work_site = null;
-        updateData.destination_after_maintenance = null;
-        updateData.was_replaced = null;
-        updateData.replacement_reason = null;
-        updateData.is_new_equipment = null;
-        // Mantém rental_contract_number
-      } else if (movementType === "aguardando_laudo") {
-        updateData.deposito_description = null;
+        // Arquivar dados antigos antes de limpar
+        const historicoDetalhes = [];
+        if (asset.rental_company) historicoDetalhes.push(`Empresa Locação: ${asset.rental_company}`);
+        if (asset.rental_work_site) historicoDetalhes.push(`Obra Locação: ${asset.rental_work_site}`);
+        if (asset.rental_start_date) historicoDetalhes.push(`Data Início: ${asset.rental_start_date}`);
+        if (asset.rental_end_date) historicoDetalhes.push(`Data Fim: ${asset.rental_end_date}`);
+        if (asset.maintenance_company) historicoDetalhes.push(`Empresa Manutenção: ${asset.maintenance_company}`);
+        if (asset.maintenance_work_site) historicoDetalhes.push(`Obra Manutenção: ${asset.maintenance_work_site}`);
+        
+        if (historicoDetalhes.length > 0) {
+          await registrarEvento({
+            patId: asset.id,
+            codigoPat: asset.asset_code,
+            tipoEvento: "ARQUIVAMENTO",
+            detalhesEvento: `Dados arquivados antes do retorno ao Depósito Malta: ${historicoDetalhes.join(", ")}`,
+          });
+        }
+        
         updateData.rental_company = null;
         updateData.rental_work_site = null;
         updateData.rental_start_date = null;
@@ -274,12 +276,15 @@ export default function AssetMovement() {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="maintenance_company">Empresa de Manutenção *</Label>
+                    <Label htmlFor="maintenance_company">Empresa *</Label>
                     <Input
                       id="maintenance_company"
                       {...form.register("maintenance_company")}
                       placeholder="Nome da empresa"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Preenchido automaticamente do cadastro do equipamento
+                    </p>
                     {form.formState.errors.maintenance_company && (
                       <p className="text-sm text-destructive">{form.formState.errors.maintenance_company.message as string}</p>
                     )}
@@ -291,6 +296,9 @@ export default function AssetMovement() {
                       {...form.register("maintenance_work_site")}
                       placeholder="Nome da obra"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Preenchido automaticamente do cadastro do equipamento
+                    </p>
                     {form.formState.errors.maintenance_work_site && (
                       <p className="text-sm text-destructive">{form.formState.errors.maintenance_work_site.message as string}</p>
                     )}
@@ -302,6 +310,9 @@ export default function AssetMovement() {
                       type="date"
                       {...form.register("maintenance_arrival_date")}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Data de hoje preenchida automaticamente
+                    </p>
                     {form.formState.errors.maintenance_arrival_date && (
                       <p className="text-sm text-destructive">{form.formState.errors.maintenance_arrival_date.message as string}</p>
                     )}
