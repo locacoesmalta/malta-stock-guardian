@@ -260,7 +260,7 @@ export type Database = {
       }
       patrimonio_historico: {
         Row: {
-          campo_alterado: string
+          campo_alterado: string | null
           codigo_pat: string
           created_at: string
           data_modificacao: string
@@ -274,7 +274,7 @@ export type Database = {
           valor_novo: string | null
         }
         Insert: {
-          campo_alterado: string
+          campo_alterado?: string | null
           codigo_pat: string
           created_at?: string
           data_modificacao?: string
@@ -288,7 +288,7 @@ export type Database = {
           valor_novo?: string | null
         }
         Update: {
-          campo_alterado?: string
+          campo_alterado?: string | null
           codigo_pat?: string
           created_at?: string
           data_modificacao?: string
