@@ -214,6 +214,11 @@ export default function AssetMovement() {
         ...data,
       };
 
+      // Remover parts_replaced dos dados (não é coluna do banco)
+      if (movementType === "retorno_obra") {
+        delete updateData.parts_replaced;
+      }
+
       // Upload de fotos para locação
       if (movementType === "locacao") {
         if (photoFile1) {
