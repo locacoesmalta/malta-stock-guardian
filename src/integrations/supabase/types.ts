@@ -46,6 +46,8 @@ export type Database = {
           rental_company: string | null
           rental_contract_number: string | null
           rental_end_date: string | null
+          rental_photo_1: string | null
+          rental_photo_2: string | null
           rental_start_date: string | null
           rental_work_site: string | null
           replaced_by_asset_id: string | null
@@ -56,7 +58,9 @@ export type Database = {
           unit_value: number | null
           updated_at: string
           voltage_combustion: string | null
+          was_painted: boolean | null
           was_replaced: boolean | null
+          was_washed: boolean | null
         }
         Insert: {
           asset_code: string
@@ -89,6 +93,8 @@ export type Database = {
           rental_company?: string | null
           rental_contract_number?: string | null
           rental_end_date?: string | null
+          rental_photo_1?: string | null
+          rental_photo_2?: string | null
           rental_start_date?: string | null
           rental_work_site?: string | null
           replaced_by_asset_id?: string | null
@@ -99,7 +105,9 @@ export type Database = {
           unit_value?: number | null
           updated_at?: string
           voltage_combustion?: string | null
+          was_painted?: boolean | null
           was_replaced?: boolean | null
+          was_washed?: boolean | null
         }
         Update: {
           asset_code?: string
@@ -132,6 +140,8 @@ export type Database = {
           rental_company?: string | null
           rental_contract_number?: string | null
           rental_end_date?: string | null
+          rental_photo_1?: string | null
+          rental_photo_2?: string | null
           rental_start_date?: string | null
           rental_work_site?: string | null
           replaced_by_asset_id?: string | null
@@ -142,7 +152,9 @@ export type Database = {
           unit_value?: number | null
           updated_at?: string
           voltage_combustion?: string | null
+          was_painted?: boolean | null
           was_replaced?: boolean | null
+          was_washed?: boolean | null
         }
         Relationships: [
           {

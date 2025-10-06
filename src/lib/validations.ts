@@ -297,6 +297,8 @@ export const movementDepositoSchema = z.object({
     .trim()
     .max(200, "Nome do colaborador deve ter no máximo 200 caracteres")
     .optional(),
+  was_washed: z.boolean().optional(),
+  was_painted: z.boolean().optional(),
 });
 
 // Movement Manutenção Schema
@@ -367,6 +369,8 @@ export const movementLocacaoSchema = z.object({
     .trim()
     .max(200, "Nome do colaborador deve ter no máximo 200 caracteres")
     .optional(),
+  rental_photo_1: z.string().optional(),
+  rental_photo_2: z.string().optional(),
 });
 
 // Movement Aguardando Laudo Schema
