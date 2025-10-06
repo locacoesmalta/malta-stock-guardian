@@ -96,13 +96,48 @@ const Products = () => {
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
   }, [filteredProducts, groupByBrand]);
 
+  // Verificar duplicidade quando o usuário sair do campo de código
+  const handleCodeBlur = async () => {
+    const code = formData.code.trim();
+    
+    // Não verificar se estiver vazio ou em modo de edição
+    if (!code || editingProduct) return;
+    
+    try {
+      // Normalizar o código para comparação
+      const normalizedCode = code.replace(/[-\s]/g, '').toLowerCase();
+      
+      // Buscar todos os produtos
+      const { data: allProducts, error } = await supabase
+        .from("products")
+        .select("*");
+
+      if (error) throw error;
+
+      // Verificar se existe um produto com código similar
+      const existingProduct = allProducts?.find(p => {
+        const dbNormalizedCode = p.code.replace(/[-\s]/g, '').toLowerCase();
+        return dbNormalizedCode === normalizedCode;
+      });
+
+      if (existingProduct) {
+        // Produto duplicado encontrado - mostrar dialog
+        setDuplicateDialog({
+          open: true,
+          existingProduct: existingProduct as Product,
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao verificar código:", error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent, forceDuplicate: boolean = false) => {
     e.preventDefault();
-    console.log("🚀 INÍCIO DO SUBMIT - forceDuplicate:", forceDuplicate, "editingProduct:", !!editingProduct);
     setErrors({});
 
     const productData = {
-      code: formData.code.trim(), // Remove espaços extras
+      code: formData.code.trim(),
       name: formData.name,
       manufacturer: formData.manufacturer || null,
       quantity: Number(formData.quantity),
@@ -112,12 +147,9 @@ const Products = () => {
       comments: formData.comments || null,
     };
 
-    console.log("📝 Dados do produto:", productData);
-
     // Validate with Zod
     const validation = productSchema.safeParse(productData);
     if (!validation.success) {
-      console.log("❌ Validação falhou:", validation.error);
       const fieldErrors: Record<string, string> = {};
       validation.error.errors.forEach((err) => {
         if (err.path[0]) {
@@ -129,14 +161,12 @@ const Products = () => {
       return;
     }
 
-    console.log("✅ Validação passou!");
     setSubmitting(true);
 
     try {
       const dataToSave = { ...productData, created_by: user?.id };
       
       if (editingProduct) {
-        console.log("✏️ Modo EDIÇÃO - pulando verificação de duplicidade");
         const { error } = await supabase
           .from("products")
           .update(dataToSave)
@@ -145,52 +175,7 @@ const Products = () => {
         if (error) throw error;
         toast.success("Produto atualizado com sucesso!");
       } else {
-        console.log("➕ Modo CADASTRO - verificando duplicidade");
-        // Verificar se já existe produto com este código (cadastro manual)
-        if (!forceDuplicate) {
-          console.log("🔍 Verificando código:", productData.code);
-          
-          // Normalizar o código para comparação (remover hífens, espaços, etc)
-          const normalizedCode = productData.code.replace(/[-\s]/g, '').toLowerCase();
-          console.log("🔧 Código normalizado:", normalizedCode);
-          
-          // Buscar todos os produtos e verificar manualmente
-          const { data: allProducts, error: fetchError } = await supabase
-            .from("products")
-            .select("*");
-
-          if (fetchError) {
-            console.error("❌ Erro ao buscar produtos:", fetchError);
-            throw fetchError;
-          }
-
-          console.log("📦 Total de produtos no banco:", allProducts?.length);
-
-          // Verificar se existe um produto com código similar
-          const existingProduct = allProducts?.find(p => {
-            const dbNormalizedCode = p.code.replace(/[-\s]/g, '').toLowerCase();
-            const match = dbNormalizedCode === normalizedCode;
-            console.log(`🔎 Comparando: "${dbNormalizedCode}" === "${normalizedCode}" = ${match}`);
-            return match;
-          });
-
-          if (existingProduct) {
-            console.log("⚠️ PRODUTO DUPLICADO ENCONTRADO:", existingProduct);
-            // Produto duplicado encontrado - mostrar dialog
-            setDuplicateDialog({
-              open: true,
-              existingProduct: existingProduct as Product,
-            });
-            setSubmitting(false);
-            return;
-          } else {
-            console.log("✅ Nenhum produto duplicado encontrado. Prosseguindo com o cadastro.");
-          }
-        } else {
-          console.log("⚡ forceDuplicate=true - Cadastrando sem verificação");
-        }
-
-        // Inserir novo produto
+        // Inserir novo produto (a verificação de duplicidade já foi feita no onBlur)
         const { error } = await supabase
           .from("products")
           .insert([dataToSave]);
@@ -204,7 +189,7 @@ const Products = () => {
       resetForm();
       refetch();
     } catch (error: any) {
-      console.error("❌ Erro ao salvar produto:", error);
+      console.error("Erro ao salvar produto:", error);
       toast.error(error.message || "Erro ao salvar produto");
     } finally {
       setSubmitting(false);
@@ -464,6 +449,7 @@ const Products = () => {
                     id="code"
                     value={formData.code}
                     onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                    onBlur={handleCodeBlur}
                     required
                   />
                   {errors.code && (
