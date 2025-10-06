@@ -101,7 +101,7 @@ const Products = () => {
     setErrors({});
 
     const productData = {
-      code: formData.code,
+      code: formData.code.trim(), // Remove espaços extras
       name: formData.name,
       manufacturer: formData.manufacturer || null,
       quantity: Number(formData.quantity),
@@ -141,13 +141,33 @@ const Products = () => {
       } else {
         // Verificar se já existe produto com este código (cadastro manual)
         if (!forceDuplicate) {
-          const { data: existingProduct } = await supabase
+          console.log("🔍 Verificando código:", productData.code);
+          
+          // Normalizar o código para comparação (remover hífens, espaços, etc)
+          const normalizedCode = productData.code.replace(/[-\s]/g, '').toLowerCase();
+          
+          // Buscar todos os produtos e verificar manualmente
+          const { data: allProducts, error: fetchError } = await supabase
             .from("products")
-            .select("*")
-            .eq("code", productData.code)
-            .maybeSingle();
+            .select("*");
+
+          if (fetchError) {
+            console.error("Erro ao buscar produtos:", fetchError);
+            throw fetchError;
+          }
+
+          console.log("📦 Total de produtos no banco:", allProducts?.length);
+
+          // Verificar se existe um produto com código similar
+          const existingProduct = allProducts?.find(p => {
+            const dbNormalizedCode = p.code.replace(/[-\s]/g, '').toLowerCase();
+            const match = dbNormalizedCode === normalizedCode;
+            console.log(`Comparando: "${dbNormalizedCode}" === "${normalizedCode}" = ${match}`);
+            return match;
+          });
 
           if (existingProduct) {
+            console.log("⚠️ Produto duplicado encontrado:", existingProduct);
             // Produto duplicado encontrado - mostrar dialog
             setDuplicateDialog({
               open: true,
@@ -155,6 +175,8 @@ const Products = () => {
             });
             setSubmitting(false);
             return;
+          } else {
+            console.log("✅ Nenhum produto duplicado encontrado. Prosseguindo com o cadastro.");
           }
         }
 
@@ -172,6 +194,7 @@ const Products = () => {
       resetForm();
       refetch();
     } catch (error: any) {
+      console.error("❌ Erro ao salvar produto:", error);
       toast.error(error.message || "Erro ao salvar produto");
     } finally {
       setSubmitting(false);
