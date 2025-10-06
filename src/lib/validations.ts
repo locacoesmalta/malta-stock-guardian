@@ -413,6 +413,33 @@ export const movementRetornoObraSchema = z.object({
   }
 );
 
+// Movement Substituição Schema
+export const movementSubstituicaoSchema = z.object({
+  substitute_asset_code: z.string()
+    .trim()
+    .min(1, "Informe o PAT do equipamento substituto")
+    .max(100, "PAT deve ter no máximo 100 caracteres"),
+  rental_company: z.string()
+    .trim()
+    .min(1, "Empresa é obrigatória para o equipamento substituto")
+    .max(200, "Empresa deve ter no máximo 200 caracteres"),
+  rental_work_site: z.string()
+    .trim()
+    .min(1, "Obra é obrigatória para o equipamento substituto")
+    .max(200, "Obra deve ter no máximo 200 caracteres"),
+  old_asset_destination: z.enum(["aguardando_laudo", "em_manutencao", "deposito_malta"], {
+    required_error: "Selecione o destino do equipamento antigo",
+  }),
+  equipment_observations: z.string()
+    .trim()
+    .max(1000, "Observação deve ter no máximo 1000 caracteres")
+    .optional(),
+  malta_collaborator: z.string()
+    .trim()
+    .max(200, "Nome do colaborador deve ter no máximo 200 caracteres")
+    .optional(),
+});
+
 // Post Inspection Schemas
 export const postInspectionApproveSchema = z.object({
   decision_notes: z.string()
@@ -446,5 +473,6 @@ export type MovementManutencaoFormData = z.infer<typeof movementManutencaoSchema
 export type MovementLocacaoFormData = z.infer<typeof movementLocacaoSchema>;
 export type MovementAguardandoLaudoFormData = z.infer<typeof movementAguardandoLaudoSchema>;
 export type MovementRetornoObraFormData = z.infer<typeof movementRetornoObraSchema>;
+export type MovementSubstituicaoFormData = z.infer<typeof movementSubstituicaoSchema>;
 export type PostInspectionApproveFormData = z.infer<typeof postInspectionApproveSchema>;
 export type AssetReplacementFormData = z.infer<typeof assetReplacementSchema>;

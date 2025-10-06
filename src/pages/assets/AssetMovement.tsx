@@ -12,11 +12,13 @@ import {
   movementLocacaoSchema,
   movementAguardandoLaudoSchema,
   movementRetornoObraSchema,
+  movementSubstituicaoSchema,
   type MovementDepositoFormData,
   type MovementManutencaoFormData,
   type MovementLocacaoFormData,
   type MovementAguardandoLaudoFormData,
   type MovementRetornoObraFormData,
+  type MovementSubstituicaoFormData,
 } from "@/lib/validations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,7 +31,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { ArrowLeft, Upload, X } from "lucide-react";
 
-type MovementType = "deposito_malta" | "em_manutencao" | "locacao" | "aguardando_laudo" | "retorno_obra";
+type MovementType = "deposito_malta" | "em_manutencao" | "locacao" | "aguardando_laudo" | "retorno_obra" | "substituicao";
 
 export default function AssetMovement() {
   const { id } = useParams();
@@ -46,6 +48,10 @@ export default function AssetMovement() {
   const [partsReplaced, setPartsReplaced] = useState<boolean | null>(null);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [loadingWithdrawals, setLoadingWithdrawals] = useState(false);
+  const [substituteAssetCode, setSubstituteAssetCode] = useState("");
+  const [substituteAsset, setSubstituteAsset] = useState<any>(null);
+  const [loadingSubstitute, setLoadingSubstitute] = useState(false);
+  const [substituteNotFound, setSubstituteNotFound] = useState(false);
 
   const { data: asset, isLoading } = useQuery({
     queryKey: ["asset", id],
@@ -76,12 +82,55 @@ export default function AssetMovement() {
       case "locacao": return movementLocacaoSchema;
       case "aguardando_laudo": return movementAguardandoLaudoSchema;
       case "retorno_obra": return movementRetornoObraSchema;
+      case "substituicao": return movementSubstituicaoSchema;
     }
   };
 
   const form = useForm({
     resolver: zodResolver(getSchema()),
   });
+
+  // Buscar equipamento substituto quando digitar PAT
+  const handleSearchSubstitute = async () => {
+    if (!substituteAssetCode.trim()) {
+      toast.error("Digite o PAT do equipamento substituto");
+      return;
+    }
+
+    setLoadingSubstitute(true);
+    setSubstituteNotFound(false);
+    setSubstituteAsset(null);
+
+    try {
+      const { data, error } = await supabase
+        .from("assets")
+        .select("*")
+        .eq("asset_code", substituteAssetCode.trim())
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        setSubstituteNotFound(true);
+        toast.error("Equipamento não encontrado. Cadastre o equipamento antes de continuar.");
+        return;
+      }
+
+      if (data.location_type !== "deposito_malta") {
+        toast.error("O equipamento substituto deve estar no Depósito Malta");
+        setSubstituteNotFound(true);
+        return;
+      }
+
+      setSubstituteAsset(data);
+      toast.success("Equipamento encontrado!");
+    } catch (error) {
+      console.error("Erro ao buscar equipamento:", error);
+      toast.error("Erro ao buscar equipamento");
+    } finally {
+      setLoadingSubstitute(false);
+    }
+  };
 
   // Buscar retiradas de material quando selecionar "Foi trocada peça: Sim"
   useEffect(() => {
@@ -121,6 +170,9 @@ export default function AssetMovement() {
     form.reset({});
     setPartsReplaced(null);
     setWithdrawals([]);
+    setSubstituteAssetCode("");
+    setSubstituteAsset(null);
+    setSubstituteNotFound(false);
     
     // Auto-preencher dados quando for manutenção
     if (movementType === "em_manutencao" && asset) {
@@ -201,6 +253,80 @@ export default function AssetMovement() {
       console.log("Form data received:", data);
       console.log("Movement type:", movementType);
       console.log("partsReplaced state:", partsReplaced);
+
+      // Validação específica para Substituição
+      if (movementType === "substituicao") {
+        if (!substituteAsset) {
+          toast.error("Busque e valide o equipamento substituto antes de continuar");
+          return;
+        }
+
+        // Atualizar equipamento ANTIGO
+        const oldAssetUpdate: any = {
+          location_type: data.old_asset_destination,
+          equipment_observations: data.equipment_observations || null,
+          malta_collaborator: data.malta_collaborator || null,
+        };
+
+        const { error: oldError } = await supabase
+          .from("assets")
+          .update(oldAssetUpdate)
+          .eq("id", id);
+
+        if (oldError) {
+          console.error("Erro ao atualizar equipamento antigo:", oldError);
+          throw oldError;
+        }
+
+        // Atualizar equipamento SUBSTITUTO (vai para locação)
+        const substituteUpdate: any = {
+          location_type: "locacao",
+          rental_company: data.rental_company,
+          rental_work_site: data.rental_work_site,
+          rental_start_date: new Date().toISOString().split('T')[0],
+        };
+
+        const { error: newError } = await supabase
+          .from("assets")
+          .update(substituteUpdate)
+          .eq("id", substituteAsset.id);
+
+        if (newError) {
+          console.error("Erro ao atualizar equipamento substituto:", newError);
+          throw newError;
+        }
+
+        // Registrar eventos no histórico
+        const destLabels: Record<string, string> = {
+          aguardando_laudo: "Aguardando Laudo",
+          em_manutencao: "Manutenção",
+          deposito_malta: "Depósito Malta",
+        };
+
+        await registrarEvento({
+          patId: asset.id,
+          codigoPat: asset.asset_code,
+          tipoEvento: "SUBSTITUIÇÃO",
+          detalhesEvento: `Equipamento substituído por ${substituteAsset.asset_code}. Destino: ${destLabels[data.old_asset_destination]}. Observações: ${data.equipment_observations || "Nenhuma"}`,
+        });
+
+        await registrarEvento({
+          patId: substituteAsset.id,
+          codigoPat: substituteAsset.asset_code,
+          tipoEvento: "SUBSTITUIÇÃO",
+          detalhesEvento: `Equipamento enviado para substituir ${asset.asset_code} na obra ${data.rental_work_site} (${data.rental_company})`,
+        });
+
+        queryClient.invalidateQueries({ queryKey: ["asset", id] });
+        queryClient.invalidateQueries({ queryKey: ["asset", substituteAsset.id] });
+        queryClient.invalidateQueries({ queryKey: ["assets"] });
+        queryClient.invalidateQueries({ queryKey: ["patrimonio-historico", id] });
+        queryClient.invalidateQueries({ queryKey: ["patrimonio-historico", substituteAsset.id] });
+
+        toast.success("Substituição registrada com sucesso");
+        navigate(`/assets/view/${id}`);
+        return;
+      }
 
       // Validar retiradas para Retorno para Obra
       if (movementType === "retorno_obra" && data.parts_replaced === true) {
@@ -310,6 +436,7 @@ export default function AssetMovement() {
         locacao: "Locação",
         aguardando_laudo: "Aguardando Laudo",
         retorno_obra: "Retorno para Obra",
+        substituicao: "Substituição",
       };
 
       // Para Retorno para Obra, registrar evento diferente
@@ -386,6 +513,7 @@ export default function AssetMovement() {
               <SelectItem value="em_manutencao">Envio para Manutenção</SelectItem>
               <SelectItem value="locacao">Saída para Locação</SelectItem>
               <SelectItem value="retorno_obra">Retorno para Obra</SelectItem>
+              <SelectItem value="substituicao">Substituição</SelectItem>
               <SelectItem value="aguardando_laudo">Aguardando Laudo</SelectItem>
             </SelectContent>
           </Select>
@@ -802,6 +930,151 @@ export default function AssetMovement() {
 
                   {partsReplaced !== null && (
                     <>
+                      <div className="space-y-2">
+                        <Label htmlFor="malta_collaborator">Responsável Malta</Label>
+                        <Input
+                          id="malta_collaborator"
+                          {...form.register("malta_collaborator")}
+                          placeholder="Nome do responsável"
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+
+            {movementType === "substituicao" && (
+              <>
+                <div className="space-y-4">
+                  {/* Buscar PAT Substituto */}
+                  <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
+                    <Label className="text-base font-semibold">Equipamento Substituto</Label>
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <Input
+                          placeholder="Digite o PAT do equipamento substituto"
+                          value={substituteAssetCode}
+                          onChange={(e) => setSubstituteAssetCode(e.target.value.toUpperCase())}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleSearchSubstitute();
+                            }
+                          }}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={handleSearchSubstitute}
+                        disabled={loadingSubstitute}
+                      >
+                        {loadingSubstitute ? "Buscando..." : "Buscar"}
+                      </Button>
+                    </div>
+
+                    {substituteNotFound && (
+                      <div className="p-3 border border-destructive bg-destructive/10 rounded-md">
+                        <p className="text-sm text-destructive font-medium">
+                          ⚠️ Equipamento não encontrado ou não está no Depósito Malta
+                        </p>
+                        <Button
+                          type="button"
+                          variant="link"
+                          className="h-auto p-0 mt-2 text-sm"
+                          onClick={() => navigate("/assets/register")}
+                        >
+                          Cadastrar novo equipamento →
+                        </Button>
+                      </div>
+                    )}
+
+                    {substituteAsset && (
+                      <div className="p-4 bg-background border rounded-lg space-y-2">
+                        <p className="font-medium text-green-600">✓ Equipamento encontrado</p>
+                        <div className="space-y-1 text-sm">
+                          <p><span className="font-medium">PAT:</span> {substituteAsset.asset_code}</p>
+                          <p><span className="font-medium">Nome:</span> {substituteAsset.equipment_name}</p>
+                          <p><span className="font-medium">Fabricante:</span> {substituteAsset.manufacturer}</p>
+                          {substituteAsset.model && (
+                            <p><span className="font-medium">Modelo:</span> {substituteAsset.model}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Dados da Obra/Empresa para o equipamento substituto */}
+                  {substituteAsset && (
+                    <>
+                      <div className="space-y-3 p-4 border rounded-lg">
+                        <Label className="text-base font-semibold">Destino do Equipamento Substituto</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="rental_company">Empresa *</Label>
+                            <Input
+                              id="rental_company"
+                              {...form.register("rental_company")}
+                              placeholder="Nome da empresa"
+                            />
+                            {form.formState.errors.rental_company && (
+                              <p className="text-sm text-destructive">
+                                {form.formState.errors.rental_company.message as string}
+                              </p>
+                            )}
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="rental_work_site">Obra *</Label>
+                            <Input
+                              id="rental_work_site"
+                              {...form.register("rental_work_site")}
+                              placeholder="Nome da obra"
+                            />
+                            {form.formState.errors.rental_work_site && (
+                              <p className="text-sm text-destructive">
+                                {form.formState.errors.rental_work_site.message as string}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Destino do PAT Antigo */}
+                      <div className="space-y-3 p-4 border rounded-lg">
+                        <Label className="text-base font-semibold">Destino do Equipamento Antigo (PAT: {asset.asset_code})</Label>
+                        <div className="space-y-2">
+                          <Label htmlFor="old_asset_destination">Selecione o destino *</Label>
+                          <Select
+                            onValueChange={(value) => form.setValue("old_asset_destination", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o destino" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="aguardando_laudo">Aguardando Laudo</SelectItem>
+                              <SelectItem value="em_manutencao">Manutenção</SelectItem>
+                              <SelectItem value="deposito_malta">Depósito Malta</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {form.formState.errors.old_asset_destination && (
+                            <p className="text-sm text-destructive">
+                              {form.formState.errors.old_asset_destination.message as string}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Observações */}
+                      <div className="space-y-2">
+                        <Label htmlFor="equipment_observations">Observações</Label>
+                        <Textarea
+                          id="equipment_observations"
+                          {...form.register("equipment_observations")}
+                          placeholder="Observações sobre a substituição..."
+                          rows={3}
+                        />
+                      </div>
+
                       <div className="space-y-2">
                         <Label htmlFor="malta_collaborator">Responsável Malta</Label>
                         <Input
