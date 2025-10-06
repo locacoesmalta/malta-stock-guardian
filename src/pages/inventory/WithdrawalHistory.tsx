@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Search, FileText } from "lucide-react";
 import { useWithdrawalsQuery } from "@/hooks/useWithdrawalsQuery";
+import { formatPAT } from "@/lib/patUtils";
 
 const WithdrawalHistory = () => {
   const { data: withdrawals = [], isLoading, error } = useWithdrawalsQuery();
@@ -148,9 +149,18 @@ const WithdrawalHistory = () => {
               <Label htmlFor="equipmentCode">PAT do Equipamento</Label>
               <Input
                 id="equipmentCode"
-                placeholder="Filtrar por PAT..."
+                type="text"
+                maxLength={6}
+                placeholder="000000"
                 value={equipmentCodeFilter}
-                onChange={(e) => setEquipmentCodeFilter(e.target.value)}
+                onChange={(e) => setEquipmentCodeFilter(e.target.value.replace(/\D/g, ''))}
+                onBlur={(e) => {
+                  const formatted = formatPAT(e.target.value);
+                  if (formatted) {
+                    setEquipmentCodeFilter(formatted);
+                  }
+                }}
+                className="font-mono"
               />
             </div>
 
