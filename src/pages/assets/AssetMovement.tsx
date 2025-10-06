@@ -116,21 +116,31 @@ export default function AssetMovement() {
 
       if (!data) {
         setSubstituteNotFound(true);
-        toast.error("Equipamento não encontrado. Cadastre o equipamento antes de continuar.");
+        toast.error(`Equipamento ${formattedPAT} não encontrado no sistema. Cadastre o equipamento antes de continuar.`);
         return;
       }
 
+      // Validar se equipamento está no Depósito Malta
+      const statusLabels: Record<string, string> = {
+        locacao: "Locação",
+        em_manutencao: "Manutenção",
+        aguardando_laudo: "Aguardando Laudo",
+        deposito_malta: "Depósito Malta",
+      };
+
       if (data.location_type !== "deposito_malta") {
-        toast.error("O equipamento substituto deve estar no Depósito Malta");
+        const currentStatus = statusLabels[data.location_type] || data.location_type;
         setSubstituteNotFound(true);
+        toast.error(`Equipamento ${formattedPAT} está em "${currentStatus}". Para substituição, o equipamento deve estar no Depósito Malta.`);
         return;
       }
 
       setSubstituteAsset(data);
-      toast.success("Equipamento encontrado!");
+      toast.success(`Equipamento ${formattedPAT} encontrado e disponível!`);
     } catch (error) {
       console.error("Erro ao buscar equipamento:", error);
-      toast.error("Erro ao buscar equipamento");
+      toast.error("Erro ao buscar equipamento no banco de dados");
+      setSubstituteNotFound(true);
     } finally {
       setLoadingSubstitute(false);
     }
@@ -1007,7 +1017,10 @@ export default function AssetMovement() {
                     {substituteNotFound && (
                       <div className="p-3 border border-destructive bg-destructive/10 rounded-md">
                         <p className="text-sm text-destructive font-medium">
-                          ⚠️ Equipamento não encontrado ou não está no Depósito Malta
+                          ⚠️ Equipamento não disponível para substituição
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Verifique o status do equipamento ou cadastre um novo
                         </p>
                         <Button
                           type="button"
