@@ -200,6 +200,25 @@ export default function AssetMovement() {
         maintenance_arrival_date: currentDate,
       });
     }
+
+    // Auto-preencher empresa e obra quando for substituição
+    if (movementType === "substituicao" && asset) {
+      let company = "";
+      let workSite = "";
+      
+      if (asset.location_type === "locacao") {
+        company = asset.rental_company || "";
+        workSite = asset.rental_work_site || "";
+      } else if (asset.location_type === "em_manutencao") {
+        company = asset.maintenance_company || "";
+        workSite = asset.maintenance_work_site || "";
+      }
+      
+      form.reset({
+        rental_company: company,
+        rental_work_site: workSite,
+      });
+    }
   }, [movementType, form, asset]);
 
   const handlePhotoChange = (file: File | null, photoNumber: 1 | 2) => {
@@ -1021,6 +1040,9 @@ export default function AssetMovement() {
                     <>
                       <div className="space-y-3 p-4 border rounded-lg">
                         <Label className="text-base font-semibold">Destino do Equipamento Substituto</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Empresa e Obra preenchidas automaticamente do equipamento atual
+                        </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label htmlFor="rental_company">Empresa *</Label>
