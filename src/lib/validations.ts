@@ -385,6 +385,31 @@ export const movementAguardandoLaudoSchema = z.object({
     .optional(),
 });
 
+// Movement Retorno para Obra Schema
+export const movementRetornoObraSchema = z.object({
+  parts_replaced: z.boolean(),
+  equipment_observations: z.string()
+    .trim()
+    .max(1000, "Observação deve ter no máximo 1000 caracteres")
+    .optional(),
+  malta_collaborator: z.string()
+    .trim()
+    .max(200, "Nome do colaborador deve ter no máximo 200 caracteres")
+    .optional(),
+}).refine(
+  (data) => {
+    // Se não trocou peças, observações são obrigatórias
+    if (data.parts_replaced === false) {
+      return !!data.equipment_observations && data.equipment_observations.trim().length > 0;
+    }
+    return true;
+  },
+  {
+    message: "Observações são obrigatórias quando não foram trocadas peças",
+    path: ["equipment_observations"],
+  }
+);
+
 // Post Inspection Schemas
 export const postInspectionApproveSchema = z.object({
   decision_notes: z.string()
@@ -417,5 +442,6 @@ export type MovementDepositoFormData = z.infer<typeof movementDepositoSchema>;
 export type MovementManutencaoFormData = z.infer<typeof movementManutencaoSchema>;
 export type MovementLocacaoFormData = z.infer<typeof movementLocacaoSchema>;
 export type MovementAguardandoLaudoFormData = z.infer<typeof movementAguardandoLaudoSchema>;
+export type MovementRetornoObraFormData = z.infer<typeof movementRetornoObraSchema>;
 export type PostInspectionApproveFormData = z.infer<typeof postInspectionApproveSchema>;
 export type AssetReplacementFormData = z.infer<typeof assetReplacementSchema>;

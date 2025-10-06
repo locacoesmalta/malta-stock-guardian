@@ -11,10 +11,12 @@ import {
   movementManutencaoSchema,
   movementLocacaoSchema,
   movementAguardandoLaudoSchema,
+  movementRetornoObraSchema,
   type MovementDepositoFormData,
   type MovementManutencaoFormData,
   type MovementLocacaoFormData,
   type MovementAguardandoLaudoFormData,
+  type MovementRetornoObraFormData,
 } from "@/lib/validations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,7 +29,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { ArrowLeft, Upload, X } from "lucide-react";
 
-type MovementType = "deposito_malta" | "em_manutencao" | "locacao" | "aguardando_laudo";
+type MovementType = "deposito_malta" | "em_manutencao" | "locacao" | "aguardando_laudo" | "retorno_obra";
 
 export default function AssetMovement() {
   const { id } = useParams();
@@ -41,6 +43,9 @@ export default function AssetMovement() {
   const [photoPreview1, setPhotoPreview1] = useState<string | null>(null);
   const [photoPreview2, setPhotoPreview2] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [partsReplaced, setPartsReplaced] = useState<boolean | null>(null);
+  const [withdrawals, setWithdrawals] = useState<any[]>([]);
+  const [loadingWithdrawals, setLoadingWithdrawals] = useState(false);
 
   const { data: asset, isLoading } = useQuery({
     queryKey: ["asset", id],
@@ -70,6 +75,7 @@ export default function AssetMovement() {
       case "em_manutencao": return movementManutencaoSchema;
       case "locacao": return movementLocacaoSchema;
       case "aguardando_laudo": return movementAguardandoLaudoSchema;
+      case "retorno_obra": return movementRetornoObraSchema;
     }
   };
 
@@ -77,8 +83,44 @@ export default function AssetMovement() {
     resolver: zodResolver(getSchema()),
   });
 
+  // Buscar retiradas de material quando selecionar "Foi trocada peça: Sim"
+  useEffect(() => {
+    const fetchWithdrawals = async () => {
+      if (partsReplaced === true && asset) {
+        setLoadingWithdrawals(true);
+        try {
+          const { data, error } = await supabase
+            .from("material_withdrawals")
+            .select(`
+              *,
+              products:product_id (
+                name,
+                code
+              )
+            `)
+            .eq("equipment_code", asset.asset_code)
+            .order("created_at", { ascending: false });
+
+          if (error) throw error;
+          setWithdrawals(data || []);
+        } catch (error) {
+          console.error("Erro ao buscar retiradas:", error);
+          toast.error("Erro ao buscar retiradas de material");
+        } finally {
+          setLoadingWithdrawals(false);
+        }
+      } else {
+        setWithdrawals([]);
+      }
+    };
+
+    fetchWithdrawals();
+  }, [partsReplaced, asset]);
+
   useEffect(() => {
     form.reset({});
+    setPartsReplaced(null);
+    setWithdrawals([]);
     
     // Auto-preencher dados quando for manutenção
     if (movementType === "em_manutencao" && asset) {
@@ -157,9 +199,18 @@ export default function AssetMovement() {
       setIsUploading(true);
       console.log("Form data received:", data);
       console.log("Movement type:", movementType);
+
+      // Validar retiradas para Retorno para Obra
+      if (movementType === "retorno_obra" && data.parts_replaced === true) {
+        if (withdrawals.length === 0) {
+          toast.error("Não há retiradas de material cadastradas para este equipamento. Cadastre as peças retiradas antes de continuar.");
+          return;
+        }
+      }
       
       const updateData: any = {
-        location_type: movementType,
+        // Retorno para obra NÃO altera o location_type
+        ...(movementType !== "retorno_obra" && { location_type: movementType }),
         ...data,
       };
 
@@ -246,17 +297,32 @@ export default function AssetMovement() {
         em_manutencao: "Em Manutenção",
         locacao: "Locação",
         aguardando_laudo: "Aguardando Laudo",
+        retorno_obra: "Retorno para Obra",
       };
 
-      await registrarEvento({
-        patId: asset.id,
-        codigoPat: asset.asset_code,
-        tipoEvento: "MOVIMENTAÇÃO",
-        detalhesEvento: `Equipamento movido para ${locationLabels[movementType]}`,
-        campoAlterado: "location_type",
-        valorAntigo: asset.location_type,
-        valorNovo: movementType,
-      });
+      // Para Retorno para Obra, registrar evento diferente
+      if (movementType === "retorno_obra") {
+        const detalhes = data.parts_replaced 
+          ? `Retorno para obra COM troca de peças. Peças retiradas: ${withdrawals.map(w => w.products?.name).join(", ")}`
+          : `Retorno para obra SEM troca de peças. Observações: ${data.equipment_observations || "Nenhuma"}`;
+        
+        await registrarEvento({
+          patId: asset.id,
+          codigoPat: asset.asset_code,
+          tipoEvento: "RETORNO PARA OBRA",
+          detalhesEvento: detalhes,
+        });
+      } else {
+        await registrarEvento({
+          patId: asset.id,
+          codigoPat: asset.asset_code,
+          tipoEvento: "MOVIMENTAÇÃO",
+          detalhesEvento: `Equipamento movido para ${locationLabels[movementType]}`,
+          campoAlterado: "location_type",
+          valorAntigo: asset.location_type,
+          valorNovo: movementType,
+        });
+      }
 
       queryClient.invalidateQueries({ queryKey: ["asset", id] });
       queryClient.invalidateQueries({ queryKey: ["assets"] });
@@ -307,6 +373,7 @@ export default function AssetMovement() {
               <SelectItem value="deposito_malta">Retorno ao Depósito Malta</SelectItem>
               <SelectItem value="em_manutencao">Envio para Manutenção</SelectItem>
               <SelectItem value="locacao">Saída para Locação</SelectItem>
+              <SelectItem value="retorno_obra">Retorno para Obra</SelectItem>
               <SelectItem value="aguardando_laudo">Aguardando Laudo</SelectItem>
             </SelectContent>
           </Select>
@@ -636,6 +703,97 @@ export default function AssetMovement() {
                       )}
                     </div>
                   </div>
+                </div>
+              </>
+            )}
+
+            {movementType === "retorno_obra" && (
+              <>
+                <div className="space-y-4">
+                  <div className="space-y-3">
+                    <Label>Foi trocada peça? *</Label>
+                    <RadioGroup
+                      onValueChange={(value) => {
+                        const boolValue = value === "true";
+                        setPartsReplaced(boolValue);
+                        form.setValue("parts_replaced", boolValue);
+                      }}
+                      value={partsReplaced === null ? undefined : String(partsReplaced)}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="true" id="parts-yes" />
+                        <Label htmlFor="parts-yes" className="font-normal cursor-pointer">Sim</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="false" id="parts-no" />
+                        <Label htmlFor="parts-no" className="font-normal cursor-pointer">Não</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  {partsReplaced === true && (
+                    <div className="space-y-3 p-4 border rounded-lg bg-muted/50">
+                      <Label>Peças Retiradas do Estoque</Label>
+                      {loadingWithdrawals ? (
+                        <p className="text-sm text-muted-foreground">Carregando peças...</p>
+                      ) : withdrawals.length === 0 ? (
+                        <div className="p-3 border border-destructive bg-destructive/10 rounded-md">
+                          <p className="text-sm text-destructive font-medium">
+                            ⚠️ Nenhuma retirada de material encontrada para este equipamento (PAT: {asset.asset_code})
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-2">
+                            É necessário cadastrar as peças retiradas antes de finalizar o retorno para obra.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {withdrawals.map((withdrawal) => (
+                            <div key={withdrawal.id} className="flex justify-between items-center p-2 bg-background rounded border">
+                              <div>
+                                <p className="font-medium">{withdrawal.products?.name || "Produto não encontrado"}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  Código: {withdrawal.products?.code} | Quantidade: {withdrawal.quantity}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  Data: {new Date(withdrawal.withdrawal_date).toLocaleDateString("pt-BR")}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {partsReplaced === false && (
+                    <div className="space-y-2">
+                      <Label htmlFor="equipment_observations">Observações *</Label>
+                      <Textarea
+                        id="equipment_observations"
+                        {...form.register("equipment_observations")}
+                        placeholder="Descreva o motivo de não ter trocado peças..."
+                        rows={3}
+                      />
+                      {form.formState.errors.equipment_observations && (
+                        <p className="text-sm text-destructive">
+                          {form.formState.errors.equipment_observations.message as string}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {partsReplaced !== null && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="malta_collaborator">Responsável Malta</Label>
+                        <Input
+                          id="malta_collaborator"
+                          {...form.register("malta_collaborator")}
+                          placeholder="Nome do responsável"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               </>
             )}
