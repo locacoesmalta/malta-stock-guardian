@@ -97,6 +97,10 @@ export default function AssetMovement() {
       return;
     }
 
+    // Formatar PAT com 6 dígitos (adicionar zeros à esquerda)
+    const formattedPAT = substituteAssetCode.trim().padStart(6, '0');
+    setSubstituteAssetCode(formattedPAT);
+
     setLoadingSubstitute(true);
     setSubstituteNotFound(false);
     setSubstituteAsset(null);
@@ -105,7 +109,7 @@ export default function AssetMovement() {
       const { data, error } = await supabase
         .from("assets")
         .select("*")
-        .eq("asset_code", substituteAssetCode.trim())
+        .eq("asset_code", formattedPAT)
         .maybeSingle();
 
       if (error) throw error;
@@ -953,16 +957,24 @@ export default function AssetMovement() {
                     <div className="flex gap-2">
                       <div className="flex-1">
                         <Input
-                          placeholder="Digite o PAT do equipamento substituto"
+                          placeholder="Digite o PAT (ex: 1812 ou 001812)"
                           value={substituteAssetCode}
-                          onChange={(e) => setSubstituteAssetCode(e.target.value.toUpperCase())}
+                          onChange={(e) => {
+                            // Aceitar apenas números
+                            const value = e.target.value.replace(/\D/g, '');
+                            setSubstituteAssetCode(value);
+                          }}
                           onKeyDown={(e) => {
                             if (e.key === "Enter") {
                               e.preventDefault();
                               handleSearchSubstitute();
                             }
                           }}
+                          maxLength={6}
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          O sistema formatará automaticamente com 6 dígitos
+                        </p>
                       </div>
                       <Button
                         type="button"
