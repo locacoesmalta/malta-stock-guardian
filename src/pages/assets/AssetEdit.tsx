@@ -83,10 +83,16 @@ export default function AssetEdit() {
         }
       });
 
+      // Preparar dados para atualização, convertendo strings vazias em null
+      const updateData: any = { ...data };
+      if (updateData.purchase_date === "") {
+        updateData.purchase_date = null;
+      }
+
       // Atualizar asset
       const { error: updateError } = await supabase
         .from("assets")
-        .update(data)
+        .update(updateData)
         .eq("id", id);
 
       if (updateError) throw updateError;

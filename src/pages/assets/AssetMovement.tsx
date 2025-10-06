@@ -110,6 +110,17 @@ export default function AssetMovement() {
         ...data,
       };
 
+      // Converter strings vazias de datas para null
+      if (updateData.maintenance_departure_date === "") {
+        updateData.maintenance_departure_date = null;
+      }
+      if (updateData.rental_end_date === "") {
+        updateData.rental_end_date = null;
+      }
+      if (updateData.purchase_date === "") {
+        updateData.purchase_date = null;
+      }
+
       // Se for para aguardando laudo, setar inspection_start_date
       if (movementType === "aguardando_laudo") {
         updateData.inspection_start_date = new Date().toISOString();

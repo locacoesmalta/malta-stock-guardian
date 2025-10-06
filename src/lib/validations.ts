@@ -144,7 +144,9 @@ export const assetSchema = z.object({
     .trim()
     .max(200, "Fornecedor deve ter no máximo 200 caracteres")
     .optional(),
-  purchase_date: z.string().optional(),
+  purchase_date: z.string()
+    .transform(val => val === "" ? undefined : val)
+    .optional(),
   unit_value: z.number()
     .min(0, "Valor deve ser positivo")
     .optional(),
@@ -179,7 +181,9 @@ export const assetSchema = z.object({
     .max(1000, "Descrição deve ter no máximo 1000 caracteres")
     .optional(),
   maintenance_arrival_date: z.string().optional(),
-  maintenance_departure_date: z.string().optional(),
+  maintenance_departure_date: z.string()
+    .transform(val => val === "" ? undefined : val)
+    .optional(),
   maintenance_delay_observations: z.string()
     .trim()
     .max(1000, "Observações devem ter no máximo 1000 caracteres")
@@ -203,7 +207,9 @@ export const assetSchema = z.object({
     .max(200, "Obra deve ter no máximo 200 caracteres")
     .optional(),
   rental_start_date: z.string().optional(),
-  rental_end_date: z.string().optional(),
+  rental_end_date: z.string()
+    .transform(val => val === "" ? undefined : val)
+    .optional(),
   rental_contract_number: z.string()
     .trim()
     .max(200, "Número do contrato deve ter no máximo 200 caracteres")
@@ -262,7 +268,9 @@ export const assetEditSchema = z.object({
     .trim()
     .max(200, "Fornecedor deve ter no máximo 200 caracteres")
     .optional(),
-  purchase_date: z.string().optional(),
+  purchase_date: z.string()
+    .transform(val => val === "" ? undefined : val)
+    .optional(),
   unit_value: z.number()
     .min(0, "Valor deve ser positivo")
     .optional(),
@@ -307,7 +315,9 @@ export const movementManutencaoSchema = z.object({
     .max(1000, "Descrição deve ter no máximo 1000 caracteres"),
   maintenance_arrival_date: z.string()
     .min(1, "Data de chegada é obrigatória"),
-  maintenance_departure_date: z.string().optional(),
+  maintenance_departure_date: z.string()
+    .transform(val => val === "" ? undefined : val)
+    .optional(),
   maintenance_delay_observations: z.string()
     .trim()
     .max(1000, "Observações devem ter no máximo 1000 caracteres")
@@ -342,7 +352,9 @@ export const movementLocacaoSchema = z.object({
     .max(200, "Obra deve ter no máximo 200 caracteres"),
   rental_start_date: z.string()
     .min(1, "Data inicial é obrigatória"),
-  rental_end_date: z.string().optional(),
+  rental_end_date: z.string()
+    .transform(val => val === "" ? undefined : val)
+    .optional(),
   rental_contract_number: z.string()
     .trim()
     .min(1, "Número do contrato é obrigatório")

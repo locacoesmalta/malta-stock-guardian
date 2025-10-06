@@ -106,13 +106,19 @@ export default function PostInspection() {
     if (!asset) return;
 
     try {
+      // Converter strings vazias em null
+      const updateData: any = { ...data };
+      if (updateData.maintenance_departure_date === "") {
+        updateData.maintenance_departure_date = null;
+      }
+
       const { error } = await supabase
         .from("assets")
         .update({
           location_type: "em_manutencao",
           available_for_rental: false,
           inspection_start_date: null,
-          ...data,
+          ...updateData,
           // Limpar campos de outros status
           rental_company: null,
           rental_work_site: null,
@@ -147,13 +153,19 @@ export default function PostInspection() {
     if (!asset) return;
 
     try {
+      // Converter strings vazias em null
+      const updateData: any = { ...data };
+      if (updateData.rental_end_date === "") {
+        updateData.rental_end_date = null;
+      }
+
       const { error } = await supabase
         .from("assets")
         .update({
           location_type: "locacao",
           available_for_rental: false,
           inspection_start_date: null,
-          ...data,
+          ...updateData,
           // Limpar campos de outros status
           deposito_description: null,
           maintenance_company: null,
