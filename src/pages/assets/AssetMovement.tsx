@@ -197,15 +197,19 @@ export default function AssetMovement() {
 
     try {
       setIsUploading(true);
+      console.log("=== INICIO DO SUBMIT ===");
       console.log("Form data received:", data);
       console.log("Movement type:", movementType);
+      console.log("partsReplaced state:", partsReplaced);
 
       // Validar retiradas para Retorno para Obra
       if (movementType === "retorno_obra" && data.parts_replaced === true) {
+        console.log("Validando retiradas de material...");
         if (withdrawals.length === 0) {
           toast.error("Não há retiradas de material cadastradas para este equipamento. Cadastre as peças retiradas antes de continuar.");
           return;
         }
+        console.log(`${withdrawals.length} retiradas encontradas`);
       }
       
       const updateData: any = {
@@ -216,8 +220,11 @@ export default function AssetMovement() {
 
       // Remover parts_replaced dos dados (não é coluna do banco)
       if (movementType === "retorno_obra") {
+        console.log("Removendo parts_replaced dos dados de update...");
         delete updateData.parts_replaced;
       }
+
+      console.log("Update data ANTES de enviar para Supabase:", updateData);
 
       // Upload de fotos para locação
       if (movementType === "locacao") {
@@ -722,6 +729,7 @@ export default function AssetMovement() {
                         const boolValue = value === "true";
                         setPartsReplaced(boolValue);
                         form.setValue("parts_replaced", boolValue);
+                        form.clearErrors("parts_replaced");
                       }}
                       value={partsReplaced === null ? undefined : String(partsReplaced)}
                     >
@@ -734,6 +742,11 @@ export default function AssetMovement() {
                         <Label htmlFor="parts-no" className="font-normal cursor-pointer">Não</Label>
                       </div>
                     </RadioGroup>
+                    {form.formState.errors.parts_replaced && (
+                      <p className="text-sm text-destructive">
+                        {form.formState.errors.parts_replaced.message as string}
+                      </p>
+                    )}
                   </div>
 
                   {partsReplaced === true && (

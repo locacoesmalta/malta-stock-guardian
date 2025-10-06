@@ -387,7 +387,10 @@ export const movementAguardandoLaudoSchema = z.object({
 
 // Movement Retorno para Obra Schema
 export const movementRetornoObraSchema = z.object({
-  parts_replaced: z.boolean(),
+  parts_replaced: z.boolean({
+    required_error: "Selecione se foram trocadas peças",
+    invalid_type_error: "Selecione se foram trocadas peças",
+  }),
   equipment_observations: z.string()
     .trim()
     .max(1000, "Observação deve ter no máximo 1000 caracteres")
