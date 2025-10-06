@@ -5,9 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, Download, Upload, Layers } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Download, Upload, Layers, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { StockBadge } from "@/components/StockBadge";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +16,7 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { useProducts } from "@/hooks/useProducts";
 import { productSchema } from "@/lib/validations";
 import * as XLSX from "xlsx";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Product {
   id: string;
@@ -56,6 +57,10 @@ const Products = () => {
     comments: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [duplicateDialog, setDuplicateDialog] = useState<{
+    open: boolean;
+    existingProduct: Product | null;
+  }>({ open: false, existingProduct: null });
 
   // Extrair marcas únicas dos produtos
   const availableBrands = useMemo(() => {
@@ -91,7 +96,7 @@ const Products = () => {
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
   }, [filteredProducts, groupByBrand]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, forceDuplicate: boolean = false) => {
     e.preventDefault();
     setErrors({});
 
@@ -134,6 +139,26 @@ const Products = () => {
         if (error) throw error;
         toast.success("Produto atualizado com sucesso!");
       } else {
+        // Verificar se já existe produto com este código (cadastro manual)
+        if (!forceDuplicate) {
+          const { data: existingProduct } = await supabase
+            .from("products")
+            .select("*")
+            .eq("code", productData.code)
+            .maybeSingle();
+
+          if (existingProduct) {
+            // Produto duplicado encontrado - mostrar dialog
+            setDuplicateDialog({
+              open: true,
+              existingProduct: existingProduct as Product,
+            });
+            setSubmitting(false);
+            return;
+          }
+        }
+
+        // Inserir novo produto
         const { error } = await supabase
           .from("products")
           .insert([dataToSave]);
@@ -151,6 +176,21 @@ const Products = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleEditExisting = () => {
+    if (duplicateDialog.existingProduct) {
+      setDuplicateDialog({ open: false, existingProduct: null });
+      setOpen(false);
+      openEditDialog(duplicateDialog.existingProduct);
+    }
+  };
+
+  const handleForceDuplicate = async () => {
+    setDuplicateDialog({ open: false, existingProduct: null });
+    // Criar um evento sintético para chamar handleSubmit
+    const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+    await handleSubmit(syntheticEvent, true);
   };
 
   const handleDelete = async (id: string, name: string) => {
@@ -726,6 +766,67 @@ const Products = () => {
               OK
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Produto Duplicado */}
+      <Dialog open={duplicateDialog.open} onOpenChange={(open) => {
+        if (!open) {
+          setDuplicateDialog({ open: false, existingProduct: null });
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              <DialogTitle>Produto Já Cadastrado</DialogTitle>
+            </div>
+            <DialogDescription>
+              Já existe um produto cadastrado com o código <strong>{formData.code}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          
+          {duplicateDialog.existingProduct && (
+            <Alert>
+              <AlertDescription className="space-y-2">
+                <div><strong>Nome:</strong> {duplicateDialog.existingProduct.name}</div>
+                <div><strong>Fabricante:</strong> {duplicateDialog.existingProduct.manufacturer || "Não informado"}</div>
+                <div><strong>Quantidade:</strong> {duplicateDialog.existingProduct.quantity}</div>
+                {duplicateDialog.existingProduct.purchase_price && (
+                  <div><strong>Preço:</strong> R$ {duplicateDialog.existingProduct.purchase_price.toFixed(2)}</div>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <DialogDescription className="text-sm">
+            O que você deseja fazer?
+          </DialogDescription>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDuplicateDialog({ open: false, existingProduct: null })}
+              className="w-full sm:w-auto"
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={handleEditExisting}
+              className="w-full sm:w-auto"
+            >
+              <Pencil className="h-4 w-4 mr-2" />
+              Editar Produto Existente
+            </Button>
+            <Button
+              variant="default"
+              onClick={handleForceDuplicate}
+              className="w-full sm:w-auto"
+            >
+              Cadastrar Mesmo Assim
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
