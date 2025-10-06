@@ -59,28 +59,54 @@ const NewReport = () => {
 
   // Preencher informações automaticamente quando o equipamento for encontrado
   useEffect(() => {
+    console.log("🔍 Equipment data in NewReport:", equipment);
+    
     if (equipment) {
       setFormData(prev => ({
         ...prev,
         equipment_name: equipment.equipment_name,
       }));
       
-      // Preencher obra e empresa baseado na última localização do equipamento
-      if (equipment.location_type === "LOCAÇÃO" && equipment.rental_company && equipment.rental_work_site) {
+      // Preencher empresa: prioriza rental_company, senão maintenance_company
+      if (equipment.rental_company) {
+        console.log("✅ Preenchendo empresa de locação:", equipment.rental_company);
         setFormData(prev => ({
           ...prev,
           company: equipment.rental_company || "",
-          work_site: equipment.rental_work_site || "",
         }));
-      } else if (equipment.location_type === "MANUTENÇÃO" && equipment.maintenance_company && equipment.maintenance_work_site) {
+      } else if (equipment.maintenance_company) {
+        console.log("✅ Preenchendo empresa de manutenção:", equipment.maintenance_company);
         setFormData(prev => ({
           ...prev,
           company: equipment.maintenance_company || "",
+        }));
+      }
+      
+      // Preencher obra: prioriza rental_work_site, senão maintenance_work_site
+      if (equipment.rental_work_site) {
+        console.log("✅ Preenchendo obra de locação:", equipment.rental_work_site);
+        setFormData(prev => ({
+          ...prev,
+          work_site: equipment.rental_work_site || "",
+        }));
+      } else if (equipment.maintenance_work_site) {
+        console.log("✅ Preenchendo obra de manutenção:", equipment.maintenance_work_site);
+        setFormData(prev => ({
+          ...prev,
           work_site: equipment.maintenance_work_site || "",
         }));
       }
+    } else if (!formData.equipment_code) {
+      // Limpa os campos se o PAT for apagado
+      console.log("🧹 Limpando campos em NewReport");
+      setFormData(prev => ({
+        ...prev,
+        equipment_name: "",
+        work_site: "",
+        company: "",
+      }));
     }
-  }, [equipment]);
+  }, [equipment, formData.equipment_code]);
 
   // Cleanup preview URLs on unmount
   useEffect(() => {
@@ -323,44 +349,6 @@ const NewReport = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="company">Cliente *</Label>
-                <Input
-                  id="company"
-                  value={formData.company}
-                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                  placeholder="Nome do cliente"
-                  required
-                  readOnly={!!equipment}
-                  className={equipment ? "bg-muted cursor-not-allowed" : ""}
-                />
-                {equipment && (
-                  <p className="text-xs text-muted-foreground">
-                    Preenchido automaticamente do cadastro do equipamento
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="work_site">Obra *</Label>
-                <Input
-                  id="work_site"
-                  value={formData.work_site}
-                  onChange={(e) => setFormData({ ...formData, work_site: e.target.value })}
-                  placeholder="Local da obra"
-                  required
-                  readOnly={!!equipment}
-                  className={equipment ? "bg-muted cursor-not-allowed" : ""}
-                />
-                {equipment && (
-                  <p className="text-xs text-muted-foreground">
-                    Preenchido automaticamente do cadastro do equipamento
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
                 <Label htmlFor="equipment_code">Patrimônio (PAT) * (6 dígitos)</Label>
                 <div className="relative">
                   <Input
@@ -373,7 +361,9 @@ const NewReport = () => {
                         setFormData({ 
                           ...formData, 
                           equipment_code: value,
-                          equipment_name: value ? formData.equipment_name : "" 
+                          equipment_name: value ? formData.equipment_name : "",
+                          company: value ? formData.company : "",
+                          work_site: value ? formData.work_site : "",
                         });
                       }
                     }}
@@ -420,6 +410,44 @@ const NewReport = () => {
                   value={formData.equipment_name}
                   onChange={(e) => setFormData({ ...formData, equipment_name: e.target.value })}
                   placeholder="Nome do equipamento"
+                  required
+                  readOnly={!!equipment}
+                  className={equipment ? "bg-muted cursor-not-allowed" : ""}
+                />
+                {equipment && (
+                  <p className="text-xs text-muted-foreground">
+                    Preenchido automaticamente do cadastro do equipamento
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="company">Cliente *</Label>
+                <Input
+                  id="company"
+                  value={formData.company}
+                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                  placeholder="Nome do cliente"
+                  required
+                  readOnly={!!equipment}
+                  className={equipment ? "bg-muted cursor-not-allowed" : ""}
+                />
+                {equipment && (
+                  <p className="text-xs text-muted-foreground">
+                    Preenchido automaticamente do cadastro do equipamento
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="work_site">Obra *</Label>
+                <Input
+                  id="work_site"
+                  value={formData.work_site}
+                  onChange={(e) => setFormData({ ...formData, work_site: e.target.value })}
+                  placeholder="Local da obra"
                   required
                   readOnly={!!equipment}
                   className={equipment ? "bg-muted cursor-not-allowed" : ""}
