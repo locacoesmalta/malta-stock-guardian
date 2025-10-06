@@ -48,16 +48,30 @@ const MaterialWithdrawal = () => {
     if (equipment) {
       setEquipmentName(equipment.equipment_name);
       
-      // Preencher obra e empresa baseado na última localização do equipamento
-      if (equipment.location_type === "LOCAÇÃO" && equipment.rental_company && equipment.rental_work_site) {
-        setCompany(equipment.rental_company);
-        setWorkSite(equipment.rental_work_site);
-      } else if (equipment.location_type === "MANUTENÇÃO" && equipment.maintenance_company && equipment.maintenance_work_site) {
-        setCompany(equipment.maintenance_company);
-        setWorkSite(equipment.maintenance_work_site);
+      // Priorizar LOCAÇÃO primeiro, depois MANUTENÇÃO
+      if (equipment.location_type === "LOCAÇÃO") {
+        if (equipment.rental_company) {
+          setCompany(equipment.rental_company);
+        }
+        if (equipment.rental_work_site) {
+          setWorkSite(equipment.rental_work_site);
+        }
+      } else if (equipment.location_type === "MANUTENÇÃO") {
+        if (equipment.maintenance_company) {
+          setCompany(equipment.maintenance_company);
+        }
+        if (equipment.maintenance_work_site) {
+          setWorkSite(equipment.maintenance_work_site);
+        }
       }
+      // Se não tiver locação ou manutenção ativas, deixa os campos vazios para preenchimento manual
+    } else if (!equipmentCode) {
+      // Limpa os campos se o PAT for apagado
+      setEquipmentName("");
+      setWorkSite("");
+      setCompany("");
     }
-  }, [equipment]);
+  }, [equipment, equipmentCode]);
 
   const addItem = () => {
     setItems([...items, {
