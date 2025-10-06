@@ -45,28 +45,30 @@ const MaterialWithdrawal = () => {
 
   // Preencher informações automaticamente quando o equipamento for encontrado
   useEffect(() => {
+    console.log("🔍 Equipment data:", equipment);
+    
     if (equipment) {
       setEquipmentName(equipment.equipment_name);
       
-      // Priorizar LOCAÇÃO primeiro, depois MANUTENÇÃO
-      if (equipment.location_type === "LOCAÇÃO") {
-        if (equipment.rental_company) {
-          setCompany(equipment.rental_company);
-        }
-        if (equipment.rental_work_site) {
-          setWorkSite(equipment.rental_work_site);
-        }
-      } else if (equipment.location_type === "MANUTENÇÃO") {
-        if (equipment.maintenance_company) {
-          setCompany(equipment.maintenance_company);
-        }
-        if (equipment.maintenance_work_site) {
-          setWorkSite(equipment.maintenance_work_site);
-        }
+      // Priorizar dados de LOCAÇÃO primeiro
+      if (equipment.rental_company) {
+        console.log("✅ Preenchendo empresa de locação:", equipment.rental_company);
+        setCompany(equipment.rental_company);
+      } else if (equipment.maintenance_company) {
+        console.log("✅ Preenchendo empresa de manutenção:", equipment.maintenance_company);
+        setCompany(equipment.maintenance_company);
       }
-      // Se não tiver locação ou manutenção ativas, deixa os campos vazios para preenchimento manual
+      
+      if (equipment.rental_work_site) {
+        console.log("✅ Preenchendo obra de locação:", equipment.rental_work_site);
+        setWorkSite(equipment.rental_work_site);
+      } else if (equipment.maintenance_work_site) {
+        console.log("✅ Preenchendo obra de manutenção:", equipment.maintenance_work_site);
+        setWorkSite(equipment.maintenance_work_site);
+      }
     } else if (!equipmentCode) {
       // Limpa os campos se o PAT for apagado
+      console.log("🧹 Limpando campos");
       setEquipmentName("");
       setWorkSite("");
       setCompany("");
