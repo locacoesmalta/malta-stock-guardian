@@ -136,6 +136,7 @@ export default function AssetMovement() {
       }
 
       setSubstituteAsset(data);
+      form.setValue("substitute_asset_code", formattedPAT);
       toast.success(`Equipamento ${formattedPAT} encontrado e disponível!`);
     } catch (error) {
       console.error("Erro ao buscar equipamento:", error);
@@ -289,17 +290,29 @@ export default function AssetMovement() {
 
       // Validação específica para Substituição
       if (movementType === "substituicao") {
+        console.log("=== PROCESSANDO SUBSTITUIÇÃO ===");
+        console.log("Substitute Asset:", substituteAsset);
+        console.log("Form data:", data);
+        
         if (!substituteAsset) {
           toast.error("Busque e valide o equipamento substituto antes de continuar");
           return;
         }
 
+        if (!data.old_asset_destination) {
+          toast.error("Selecione o destino do equipamento antigo");
+          return;
+        }
+
+        console.log("Iniciando atualização do equipamento ANTIGO...");
         // Atualizar equipamento ANTIGO
         const oldAssetUpdate: any = {
           location_type: data.old_asset_destination,
           equipment_observations: data.equipment_observations || null,
           malta_collaborator: data.malta_collaborator || null,
         };
+
+        console.log("Dados para equipamento antigo:", oldAssetUpdate);
 
         const { error: oldError } = await supabase
           .from("assets")
@@ -311,6 +324,9 @@ export default function AssetMovement() {
           throw oldError;
         }
 
+        console.log("Equipamento antigo atualizado com sucesso!");
+        console.log("Iniciando atualização do equipamento SUBSTITUTO...");
+
         // Atualizar equipamento SUBSTITUTO (vai para locação)
         const substituteUpdate: any = {
           location_type: "locacao",
@@ -318,6 +334,8 @@ export default function AssetMovement() {
           rental_work_site: data.rental_work_site,
           rental_start_date: new Date().toISOString().split('T')[0],
         };
+
+        console.log("Dados para equipamento substituto:", substituteUpdate);
 
         const { error: newError } = await supabase
           .from("assets")
@@ -328,6 +346,9 @@ export default function AssetMovement() {
           console.error("Erro ao atualizar equipamento substituto:", newError);
           throw newError;
         }
+
+        console.log("Equipamento substituto atualizado com sucesso!");
+        console.log("Registrando eventos no histórico...");
 
         // Registrar eventos no histórico
         const destLabels: Record<string, string> = {
@@ -350,12 +371,16 @@ export default function AssetMovement() {
           detalhesEvento: `Equipamento enviado para substituir ${asset.asset_code} na obra ${data.rental_work_site} (${data.rental_company})`,
         });
 
+        console.log("Eventos registrados com sucesso!");
+        console.log("Invalidando caches...");
+
         queryClient.invalidateQueries({ queryKey: ["asset", id] });
         queryClient.invalidateQueries({ queryKey: ["asset", substituteAsset.id] });
         queryClient.invalidateQueries({ queryKey: ["assets"] });
         queryClient.invalidateQueries({ queryKey: ["patrimonio-historico", id] });
         queryClient.invalidateQueries({ queryKey: ["patrimonio-historico", substituteAsset.id] });
 
+        console.log("=== SUBSTITUIÇÃO CONCLUÍDA COM SUCESSO ===");
         toast.success("Substituição registrada com sucesso");
         navigate(`/assets/view/${id}`);
         return;
