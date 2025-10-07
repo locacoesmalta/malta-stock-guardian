@@ -204,14 +204,14 @@ export default function AssetEdit() {
               <div className="space-y-2">
                 <Label htmlFor="voltage_combustion">Voltagem/Combustível</Label>
                 <Select
-                  value={form.watch("voltage_combustion") || ""}
-                  onValueChange={(value) => form.setValue("voltage_combustion", value === "" ? "" : value as any)}
+                  value={form.watch("voltage_combustion") || "_NONE_"}
+                  onValueChange={(value) => form.setValue("voltage_combustion", value === "_NONE_" ? undefined : value as any)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
+                    <SelectItem value="_NONE_">Nenhum</SelectItem>
                     <SelectItem value="110V">110V</SelectItem>
                     <SelectItem value="220V">220V</SelectItem>
                     <SelectItem value="GASOLINA">Gasolina</SelectItem>
@@ -255,14 +255,14 @@ export default function AssetEdit() {
               <div className="space-y-2">
                 <Label htmlFor="equipment_condition">Condição</Label>
                 <Select
-                  value={form.watch("equipment_condition") || ""}
-                  onValueChange={(value) => form.setValue("equipment_condition", value === "" ? "" : value as any)}
+                  value={form.watch("equipment_condition") || "_NONE_"}
+                  onValueChange={(value) => form.setValue("equipment_condition", value === "_NONE_" ? undefined : value as any)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
+                    <SelectItem value="_NONE_">Nenhum</SelectItem>
                     <SelectItem value="NOVO">Novo</SelectItem>
                     <SelectItem value="USADO">Usado</SelectItem>
                   </SelectContent>

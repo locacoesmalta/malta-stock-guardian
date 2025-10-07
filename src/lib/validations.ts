@@ -265,9 +265,7 @@ export const assetEditSchema = z.object({
     .max(100, "Número de série deve ter no máximo 100 caracteres")
     .optional()
     .or(z.literal("")),
-  voltage_combustion: z.enum(["110V", "220V", "GASOLINA", "DIESEL", "GÁS"])
-    .optional()
-    .or(z.literal("")),
+  voltage_combustion: z.enum(["110V", "220V", "GASOLINA", "DIESEL", "GÁS"]).optional(),
   supplier: z.string()
     .trim()
     .max(200, "Fornecedor deve ter no máximo 200 caracteres")
@@ -280,9 +278,7 @@ export const assetEditSchema = z.object({
   unit_value: z.number()
     .min(0, "Valor deve ser positivo")
     .optional(),
-  equipment_condition: z.enum(["NOVO", "USADO"])
-    .optional()
-    .or(z.literal("")),
+  equipment_condition: z.enum(["NOVO", "USADO"]).optional(),
   manual_attachment: z.string().optional().or(z.literal("")),
   exploded_drawing_attachment: z.string().optional().or(z.literal("")),
   comments: z.string()
