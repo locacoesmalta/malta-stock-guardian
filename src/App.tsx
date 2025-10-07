@@ -60,7 +60,7 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
       <AppHeader />
       <div className="min-h-screen flex w-full">
         <AppSidebar />
-        <main className="flex-1 pt-14 p-3 sm:p-4 md:p-6 lg:p-8 overflow-auto">
+        <main className="flex-1 pt-14 md:pt-16 lg:pt-20 p-3 sm:p-4 md:p-6 lg:p-8 overflow-auto">
           {children}
         </main>
       </div>
