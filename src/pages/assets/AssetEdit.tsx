@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAssetHistory } from "@/hooks/useAssetHistory";
 import { assetEditSchema, type AssetEditFormData } from "@/lib/validations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +20,6 @@ export default function AssetEdit() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { registrarEvento } = useAssetHistory();
 
   const { data: asset, isLoading } = useQuery({
     queryKey: ["asset", id],
@@ -71,18 +69,6 @@ export default function AssetEdit() {
     if (!asset || !user) return;
 
     try {
-      const changes: Record<string, { old: any; new: any }> = {};
-
-      // Detectar mudanças
-      Object.keys(data).forEach((key) => {
-        const oldValue = asset[key as keyof typeof asset];
-        const newValue = data[key as keyof AssetEditFormData];
-        
-        if (oldValue !== newValue) {
-          changes[key] = { old: oldValue, new: newValue };
-        }
-      });
-
       // Preparar dados para atualização, convertendo strings vazias em null
       const updateData: any = { ...data };
       
@@ -101,33 +87,8 @@ export default function AssetEdit() {
 
       if (updateError) throw updateError;
 
-      // Registrar cada alteração no histórico
-      for (const [fieldName, { old: oldValue, new: newValue }] of Object.entries(changes)) {
-        const fieldLabels: Record<string, string> = {
-          manufacturer: "Fabricante",
-          model: "Modelo",
-          serial_number: "Número de Série",
-          voltage_combustion: "Voltagem/Combustível",
-          supplier: "Fornecedor",
-          purchase_date: "Data de Compra",
-          unit_value: "Valor Unitário",
-          equipment_condition: "Condição do Equipamento",
-          manual_attachment: "Manual",
-          exploded_drawing_attachment: "Desenho Explodido",
-          comments: "Comentários",
-        };
-
-        await registrarEvento({
-          patId: asset.id,
-          codigoPat: asset.asset_code,
-          tipoEvento: "ALTERAÇÃO DE DADO",
-          detalhesEvento: `Campo ${fieldLabels[fieldName] || fieldName} alterado`,
-          campoAlterado: fieldLabels[fieldName] || fieldName,
-          valorAntigo: String(oldValue || ""),
-          valorNovo: String(newValue || ""),
-        });
-      }
-
+      // O histórico é registrado automaticamente pelo trigger log_asset_changes
+      
       queryClient.invalidateQueries({ queryKey: ["asset", id] });
       queryClient.invalidateQueries({ queryKey: ["patrimonio-historico", id] });
       
