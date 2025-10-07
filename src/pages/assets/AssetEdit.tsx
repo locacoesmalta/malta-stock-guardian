@@ -68,11 +68,6 @@ export default function AssetEdit() {
   }, [asset, form]);
 
   const onSubmit = async (data: AssetEditFormData) => {
-    console.log("=== FORM SUBMIT DEBUG ===");
-    console.log("Form data:", data);
-    console.log("Form errors:", form.formState.errors);
-    console.log("Is valid:", form.formState.isValid);
-    
     if (!asset || !user) return;
 
     try {
@@ -90,9 +85,13 @@ export default function AssetEdit() {
 
       // Preparar dados para atualização, convertendo strings vazias em null
       const updateData: any = { ...data };
-      if (updateData.purchase_date === "") {
-        updateData.purchase_date = null;
-      }
+      
+      // Converter strings vazias em null
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === "" || updateData[key] === undefined) {
+          updateData[key] = null;
+        }
+      });
 
       // Atualizar asset
       const { error: updateError } = await supabase
@@ -170,11 +169,7 @@ export default function AssetEdit() {
           </p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
-            console.log("=== VALIDATION ERRORS ===");
-            console.log("Errors:", errors);
-            console.log("Form values:", form.getValues());
-          })} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="manufacturer">Fabricante *</Label>
@@ -210,12 +205,13 @@ export default function AssetEdit() {
                 <Label htmlFor="voltage_combustion">Voltagem/Combustível</Label>
                 <Select
                   value={form.watch("voltage_combustion") || ""}
-                  onValueChange={(value) => form.setValue("voltage_combustion", value as any)}
+                  onValueChange={(value) => form.setValue("voltage_combustion", value === "" ? "" : value as any)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="">Nenhum</SelectItem>
                     <SelectItem value="110V">110V</SelectItem>
                     <SelectItem value="220V">220V</SelectItem>
                     <SelectItem value="GASOLINA">Gasolina</SelectItem>
@@ -260,12 +256,13 @@ export default function AssetEdit() {
                 <Label htmlFor="equipment_condition">Condição</Label>
                 <Select
                   value={form.watch("equipment_condition") || ""}
-                  onValueChange={(value) => form.setValue("equipment_condition", value as any)}
+                  onValueChange={(value) => form.setValue("equipment_condition", value === "" ? "" : value as any)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="">Nenhum</SelectItem>
                     <SelectItem value="NOVO">Novo</SelectItem>
                     <SelectItem value="USADO">Usado</SelectItem>
                   </SelectContent>
