@@ -68,6 +68,11 @@ export default function AssetEdit() {
   }, [asset, form]);
 
   const onSubmit = async (data: AssetEditFormData) => {
+    console.log("=== FORM SUBMIT DEBUG ===");
+    console.log("Form data:", data);
+    console.log("Form errors:", form.formState.errors);
+    console.log("Is valid:", form.formState.isValid);
+    
     if (!asset || !user) return;
 
     try {
@@ -165,7 +170,11 @@ export default function AssetEdit() {
           </p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+            console.log("=== VALIDATION ERRORS ===");
+            console.log("Errors:", errors);
+            console.log("Form values:", form.getValues());
+          })} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="manufacturer">Fabricante *</Label>
