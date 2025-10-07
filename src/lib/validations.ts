@@ -252,40 +252,17 @@ export const assetSchema = z.object({
 // Asset Edit Schema - apenas campos cadastrais/técnicos
 export const assetEditSchema = z.object({
   manufacturer: z.string()
-    .trim()
-    .min(1, "Marca/Fabricante é obrigatório")
-    .max(200, "Marca deve ter no máximo 200 caracteres"),
-  model: z.string()
-    .trim()
-    .max(200, "Modelo deve ter no máximo 200 caracteres")
-    .optional()
-    .or(z.literal("")),
-  serial_number: z.string()
-    .trim()
-    .max(100, "Número de série deve ter no máximo 100 caracteres")
-    .optional()
-    .or(z.literal("")),
+    .min(1, "Fabricante é obrigatório"),
+  model: z.string().optional(),
+  serial_number: z.string().optional(),
   voltage_combustion: z.enum(["110V", "220V", "GASOLINA", "DIESEL", "GÁS"]).optional(),
-  supplier: z.string()
-    .trim()
-    .max(200, "Fornecedor deve ter no máximo 200 caracteres")
-    .optional()
-    .or(z.literal("")),
-  purchase_date: z.string()
-    .optional()
-    .or(z.literal(""))
-    .transform(val => val === "" ? undefined : val),
-  unit_value: z.number()
-    .min(0, "Valor deve ser positivo")
-    .optional(),
+  supplier: z.string().optional(),
+  purchase_date: z.string().optional(),
+  unit_value: z.number().optional(),
   equipment_condition: z.enum(["NOVO", "USADO"]).optional(),
-  manual_attachment: z.string().optional().or(z.literal("")),
-  exploded_drawing_attachment: z.string().optional().or(z.literal("")),
-  comments: z.string()
-    .trim()
-    .max(1000, "Comentários devem ter no máximo 1000 caracteres")
-    .optional()
-    .or(z.literal("")),
+  manual_attachment: z.string().optional(),
+  exploded_drawing_attachment: z.string().optional(),
+  comments: z.string().optional(),
 });
 
 // Movement Depósito Schema
