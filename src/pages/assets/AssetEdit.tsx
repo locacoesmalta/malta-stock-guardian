@@ -240,7 +240,9 @@ export default function AssetEdit() {
                   id="unit_value"
                   type="number"
                   step="0.01"
-                  {...form.register("unit_value", { valueAsNumber: true })}
+                  {...form.register("unit_value", { 
+                    setValueAs: (v) => v === "" || isNaN(v) ? undefined : parseFloat(v)
+                  })}
                   placeholder="0,00"
                 />
               </div>
