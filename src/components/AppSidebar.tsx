@@ -25,10 +25,16 @@ import {
 
 export function AppSidebar() {
   const { isAdmin, signOut, user, permissions } = useAuth();
-  const { open, isMobile } = useSidebar();
+  const { open, isMobile, setOpenMobile } = useSidebar();
 
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "";
+
+  const handleNavClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   // Se não tem permissões carregadas, não mostrar menu
   if (!permissions) {
@@ -140,7 +146,7 @@ export function AppSidebar() {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <SidebarMenuButton asChild>
-                          <NavLink to={item.path} className={getNavCls}>
+                          <NavLink to={item.path} className={getNavCls} onClick={handleNavClick}>
                             <item.icon className="h-4 w-4" />
                             <span>{item.label}</span>
                           </NavLink>
@@ -169,7 +175,7 @@ export function AppSidebar() {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <SidebarMenuButton asChild>
-                          <NavLink to={item.path} className={getNavCls}>
+                          <NavLink to={item.path} className={getNavCls} onClick={handleNavClick}>
                             <item.icon className="h-4 w-4" />
                             <span>{item.label}</span>
                           </NavLink>
@@ -198,7 +204,7 @@ export function AppSidebar() {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <SidebarMenuButton asChild>
-                          <NavLink to={item.path} className={getNavCls}>
+                          <NavLink to={item.path} className={getNavCls} onClick={handleNavClick}>
                             <item.icon className="h-4 w-4" />
                             <span>{item.label}</span>
                           </NavLink>
@@ -226,7 +232,7 @@ export function AppSidebar() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <SidebarMenuButton asChild>
-                        <NavLink to="/admin/products" className={getNavCls}>
+                        <NavLink to="/admin/products" className={getNavCls} onClick={handleNavClick}>
                           <Package className="h-4 w-4" />
                           <span>Produtos</span>
                         </NavLink>
@@ -244,7 +250,7 @@ export function AppSidebar() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <SidebarMenuButton asChild>
-                        <NavLink to="/admin/users" className={getNavCls}>
+                        <NavLink to="/admin/users" className={getNavCls} onClick={handleNavClick}>
                           <Users className="h-4 w-4" />
                           <span>Usuários</span>
                         </NavLink>
@@ -262,7 +268,7 @@ export function AppSidebar() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <SidebarMenuButton asChild>
-                        <NavLink to="/admin/logs" className={getNavCls}>
+                        <NavLink to="/admin/logs" className={getNavCls} onClick={handleNavClick}>
                           <Shield className="h-4 w-4" />
                           <span>Logs de Auditoria</span>
                         </NavLink>
@@ -280,7 +286,7 @@ export function AppSidebar() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <SidebarMenuButton asChild>
-                        <NavLink to="/admin/settings" className={getNavCls}>
+                        <NavLink to="/admin/settings" className={getNavCls} onClick={handleNavClick}>
                           <Settings className="h-4 w-4" />
                           <span>Configurações</span>
                         </NavLink>
