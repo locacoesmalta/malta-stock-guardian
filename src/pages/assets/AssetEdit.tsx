@@ -68,7 +68,13 @@ export default function AssetEdit() {
   }, [asset, form]);
 
   const onSubmit = async (data: AssetEditFormData) => {
-    if (!asset || !user) return;
+    console.log("🔄 Iniciando salvamento...", data);
+    
+    if (!asset || !user) {
+      console.error("❌ Asset ou user não encontrado", { asset, user });
+      toast.error("Erro: dados não carregados");
+      return;
+    }
 
     try {
       const changes: Record<string, { old: any; new: any }> = {};
@@ -83,6 +89,8 @@ export default function AssetEdit() {
         }
       });
 
+      console.log("📝 Mudanças detectadas:", changes);
+
       // Preparar dados para atualização, convertendo strings vazias em null
       const updateData: any = { ...data };
       
@@ -93,13 +101,20 @@ export default function AssetEdit() {
         }
       });
 
+      console.log("💾 Atualizando no banco...", updateData);
+
       // Atualizar asset
       const { error: updateError } = await supabase
         .from("assets")
         .update(updateData)
         .eq("id", id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("❌ Erro ao atualizar:", updateError);
+        throw updateError;
+      }
+
+      console.log("✅ Atualização bem-sucedida");
 
       // Registrar cada alteração no histórico
       for (const [fieldName, { old: oldValue, new: newValue }] of Object.entries(changes)) {
@@ -131,11 +146,12 @@ export default function AssetEdit() {
       queryClient.invalidateQueries({ queryKey: ["asset", id] });
       queryClient.invalidateQueries({ queryKey: ["patrimonio-historico", id] });
       
+      console.log("🎉 Salvamento concluído com sucesso");
       toast.success("Cadastro atualizado com sucesso");
       navigate(`/assets/view/${id}`);
-    } catch (error) {
-      console.error("Erro ao atualizar cadastro:", error);
-      toast.error("Erro ao atualizar cadastro");
+    } catch (error: any) {
+      console.error("❌ Erro ao atualizar cadastro:", error);
+      toast.error(`Erro ao atualizar: ${error?.message || "Erro desconhecido"}`);
     }
   };
 
