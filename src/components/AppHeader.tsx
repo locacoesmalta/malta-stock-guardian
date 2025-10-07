@@ -7,7 +7,7 @@ export function AppHeader() {
   const { user, signOut } = useAuth();
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 h-14 md:h-16 lg:h-20 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="group fixed top-0 left-0 right-0 z-50 h-14 md:h-16 lg:h-20 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-full items-center justify-between px-3 sm:px-4 md:px-6">
         {/* Left: Menu toggle - sempre visível */}
         <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
@@ -23,8 +23,8 @@ export function AppHeader() {
           </span>
         </div>
 
-        {/* Right: User info + Logout */}
-        <div className="flex items-center gap-2 md:gap-3">
+        {/* Right: User info + Logout - visível sempre no mobile/tablet, só no hover no desktop */}
+        <div className="flex items-center gap-2 md:gap-3 md:opacity-0 md:group-hover:opacity-100 md:transition-opacity md:duration-300">
           <span className="hidden md:inline-block text-xs md:text-sm lg:text-base text-muted-foreground truncate max-w-[200px] lg:max-w-[300px]">
             {user?.email}
           </span>
