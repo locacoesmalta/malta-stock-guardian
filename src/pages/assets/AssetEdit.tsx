@@ -68,13 +68,7 @@ export default function AssetEdit() {
   }, [asset, form]);
 
   const onSubmit = async (data: AssetEditFormData) => {
-    console.log("🔄 Iniciando salvamento...", data);
-    
-    if (!asset || !user) {
-      console.error("❌ Asset ou user não encontrado", { asset, user });
-      toast.error("Erro: dados não carregados");
-      return;
-    }
+    if (!asset || !user) return;
 
     try {
       const changes: Record<string, { old: any; new: any }> = {};
@@ -89,8 +83,6 @@ export default function AssetEdit() {
         }
       });
 
-      console.log("📝 Mudanças detectadas:", changes);
-
       // Preparar dados para atualização, convertendo strings vazias em null
       const updateData: any = { ...data };
       
@@ -101,20 +93,13 @@ export default function AssetEdit() {
         }
       });
 
-      console.log("💾 Atualizando no banco...", updateData);
-
       // Atualizar asset
       const { error: updateError } = await supabase
         .from("assets")
         .update(updateData)
         .eq("id", id);
 
-      if (updateError) {
-        console.error("❌ Erro ao atualizar:", updateError);
-        throw updateError;
-      }
-
-      console.log("✅ Atualização bem-sucedida");
+      if (updateError) throw updateError;
 
       // Registrar cada alteração no histórico
       for (const [fieldName, { old: oldValue, new: newValue }] of Object.entries(changes)) {
@@ -146,12 +131,11 @@ export default function AssetEdit() {
       queryClient.invalidateQueries({ queryKey: ["asset", id] });
       queryClient.invalidateQueries({ queryKey: ["patrimonio-historico", id] });
       
-      console.log("🎉 Salvamento concluído com sucesso");
       toast.success("Cadastro atualizado com sucesso");
       navigate(`/assets/view/${id}`);
-    } catch (error: any) {
-      console.error("❌ Erro ao atualizar cadastro:", error);
-      toast.error(`Erro ao atualizar: ${error?.message || "Erro desconhecido"}`);
+    } catch (error) {
+      console.error("Erro ao atualizar cadastro:", error);
+      toast.error("Erro ao atualizar cadastro");
     }
   };
 
@@ -297,15 +281,7 @@ export default function AssetEdit() {
             </div>
 
             <div className="flex gap-2 pt-4">
-              <Button 
-                type="submit" 
-                disabled={form.formState.isSubmitting}
-                onClick={() => {
-                  console.log("🖱️ Botão clicado");
-                  console.log("📋 Valores do form:", form.getValues());
-                  console.log("❌ Erros do form:", form.formState.errors);
-                }}
-              >
+              <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Salvando..." : "Salvar Alterações"}
               </Button>
               <Button

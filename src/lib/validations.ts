@@ -255,11 +255,15 @@ export const assetEditSchema = z.object({
     .min(1, "Fabricante é obrigatório"),
   model: z.string().optional(),
   serial_number: z.string().optional(),
-  voltage_combustion: z.enum(["110V", "220V", "GASOLINA", "DIESEL", "GÁS"]).optional(),
+  voltage_combustion: z.string()
+    .transform(val => val === "" ? undefined : val)
+    .pipe(z.enum(["110V", "220V", "GASOLINA", "DIESEL", "GÁS"]).optional()),
   supplier: z.string().optional(),
   purchase_date: z.string().optional(),
   unit_value: z.number().optional(),
-  equipment_condition: z.enum(["NOVO", "USADO"]).optional(),
+  equipment_condition: z.string()
+    .transform(val => val === "" ? undefined : val)
+    .pipe(z.enum(["NOVO", "USADO"]).optional()),
   manual_attachment: z.string().optional(),
   exploded_drawing_attachment: z.string().optional(),
   comments: z.string().optional(),
