@@ -297,7 +297,15 @@ export default function AssetEdit() {
             </div>
 
             <div className="flex gap-2 pt-4">
-              <Button type="submit" disabled={form.formState.isSubmitting}>
+              <Button 
+                type="submit" 
+                disabled={form.formState.isSubmitting}
+                onClick={() => {
+                  console.log("🖱️ Botão clicado");
+                  console.log("📋 Valores do form:", form.getValues());
+                  console.log("❌ Erros do form:", form.formState.errors);
+                }}
+              >
                 {form.formState.isSubmitting ? "Salvando..." : "Salvar Alterações"}
               </Button>
               <Button
