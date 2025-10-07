@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { AppHeader } from "@/components/AppHeader";
 import { PermissionRoute } from "@/components/PermissionRoute";
 
 // Lazy load routes for better performance
@@ -56,9 +57,10 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <SidebarProvider defaultOpen={false}>
+      <AppHeader />
       <div className="min-h-screen flex w-full">
         <AppSidebar />
-        <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-auto">
+        <main className="flex-1 pt-14 p-3 sm:p-4 md:p-6 lg:p-8 overflow-auto">
           {children}
         </main>
       </div>

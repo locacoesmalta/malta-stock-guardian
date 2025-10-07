@@ -113,22 +113,19 @@ export function AppSidebar() {
         collapsible="icon"
       >
       <SidebarHeader className="border-b p-3 sm:p-4 md:px-6 md:py-4">
-        <div className="flex items-center justify-between gap-2 sm:gap-3">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <img 
-              src="/malta-logo.webp" 
-              alt="Malta Locações" 
-              className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 object-contain flex-shrink-0"
-              fetchPriority="high"
-            />
-            {open && (
-              <div className="min-w-0">
-                <h2 className="font-semibold text-sidebar-foreground text-sm sm:text-base truncate">Malta Locações</h2>
-                <p className="text-xs text-sidebar-foreground/70 truncate">Controle de Estoque</p>
-              </div>
-            )}
-          </div>
-          {isMobile && <SidebarTrigger className="flex-shrink-0" />}
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <img 
+            src="/malta-logo.webp" 
+            alt="Malta Locações" 
+            className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 object-contain flex-shrink-0"
+            fetchPriority="high"
+          />
+          {open && (
+            <div className="min-w-0">
+              <h2 className="font-semibold text-sidebar-foreground text-sm sm:text-base truncate">Malta Locações</h2>
+              <p className="text-xs text-sidebar-foreground/70 truncate">Controle de Estoque</p>
+            </div>
+          )}
         </div>
       </SidebarHeader>
 
