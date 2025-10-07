@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Html5QrcodeScanner } from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Camera, Search, History, ScanLine, Zap } from "lucide-react";
+import { ArrowLeft, Camera, Search, History, ScanLine, Zap, AlertCircle, CheckCircle2, Loader2, FlashlightIcon, SwitchCamera } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPAT } from "@/lib/patUtils";
@@ -17,13 +17,33 @@ interface ScanHistory {
   assetName?: string;
 }
 
+type PermissionState = "prompt" | "granted" | "denied" | "checking";
+type ScannerState = "idle" | "initializing" | "active" | "error";
+
 export default function AssetScanner() {
   const navigate = useNavigate();
   const [manualCode, setManualCode] = useState("");
   const [scannedCode, setScannedCode] = useState("");
-  const [scannerActive, setScannerActive] = useState(false);
+  const [scannerState, setScannerState] = useState<ScannerState>("idle");
+  const [permissionState, setPermissionState] = useState<PermissionState>("prompt");
   const [scanHistory, setScanHistory] = useState<ScanHistory[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
+  const [torchEnabled, setTorchEnabled] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Detectar se é mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Carregar histórico do localStorage ao montar
   useEffect(() => {
@@ -48,45 +68,159 @@ export default function AssetScanner() {
     }
   }, [scanHistory]);
 
+  // Cleanup ao desmontar
   useEffect(() => {
-    let scanner: Html5QrcodeScanner | null = null;
-
-    if (scannerActive) {
-      scanner = new Html5QrcodeScanner(
-        "qr-reader",
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0,
-          showTorchButtonIfSupported: true,
-        },
-        false
-      );
-
-      scanner.render(
-        (decodedText) => {
-          setScannedCode(decodedText);
-          toast.success("QR Code detectado com sucesso!", {
-            icon: <ScanLine className="h-4 w-4" />
-          });
-          scanner?.clear();
-          setScannerActive(false);
-          searchAsset(decodedText);
-        },
-        (error) => {
-          // Ignorar erros de scanning contínuo
-        }
-      );
-    }
-
     return () => {
-      if (scanner) {
-        scanner.clear().catch(console.error);
+      if (html5QrCodeRef.current) {
+        stopScanner();
+      }
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [scannerActive]);
+  }, []);
 
-  const addToHistory = (code: string, assetName?: string) => {
+  const requestCameraPermission = async (): Promise<boolean> => {
+    setPermissionState("checking");
+    
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode } 
+      });
+      
+      // Fechar o stream imediatamente - só queremos verificar permissões
+      stream.getTracks().forEach(track => track.stop());
+      
+      setPermissionState("granted");
+      return true;
+    } catch (error: any) {
+      console.error("Erro ao solicitar permissão da câmera:", error);
+      
+      if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+        setPermissionState("denied");
+        toast.error("Permissão da câmera negada. Por favor, habilite nas configurações do navegador.", {
+          duration: 5000
+        });
+      } else if (error.name === "NotFoundError") {
+        toast.error("Nenhuma câmera encontrada no dispositivo.");
+        setPermissionState("denied");
+      } else {
+        toast.error("Erro ao acessar a câmera: " + error.message);
+        setPermissionState("denied");
+      }
+      
+      return false;
+    }
+  };
+
+  const startScanner = async () => {
+    if (scannerState !== "idle") return;
+    
+    setScannerState("initializing");
+    
+    // Solicitar permissão explicitamente
+    const hasPermission = await requestCameraPermission();
+    if (!hasPermission) {
+      setScannerState("idle");
+      return;
+    }
+
+    try {
+      const html5QrCode = new Html5Qrcode("qr-reader");
+      html5QrCodeRef.current = html5QrCode;
+
+      const config = {
+        fps: isMobile ? 10 : 15,
+        qrbox: isMobile 
+          ? { width: Math.min(250, window.innerWidth - 80), height: Math.min(250, window.innerWidth - 80) }
+          : { width: 300, height: 300 },
+        aspectRatio: 1.0,
+        disableFlip: false,
+      };
+
+      await html5QrCode.start(
+        { facingMode },
+        config,
+        (decodedText) => {
+          setScannedCode(decodedText);
+          toast.success("QR Code detectado!", {
+            icon: <CheckCircle2 className="h-4 w-4" />,
+            description: "Buscando patrimônio..."
+          });
+          
+          // Vibração se disponível
+          if (navigator.vibrate) {
+            navigator.vibrate(200);
+          }
+          
+          stopScanner();
+          searchAsset(decodedText);
+        },
+        undefined
+      );
+
+      setScannerState("active");
+      toast.success("Câmera ativada! Aponte para o QR Code", {
+        icon: <Camera className="h-4 w-4" />
+      });
+      
+    } catch (error: any) {
+      console.error("Erro ao iniciar scanner:", error);
+      setScannerState("error");
+      toast.error("Erro ao iniciar scanner: " + error.message);
+    }
+  };
+
+  const stopScanner = async () => {
+    if (html5QrCodeRef.current) {
+      try {
+        const state = html5QrCodeRef.current.getState();
+        if (state === Html5QrcodeScannerState.SCANNING || state === Html5QrcodeScannerState.PAUSED) {
+          await html5QrCodeRef.current.stop();
+        }
+        html5QrCodeRef.current.clear();
+      } catch (error) {
+        console.error("Erro ao parar scanner:", error);
+      }
+      html5QrCodeRef.current = null;
+    }
+    setScannerState("idle");
+    setTorchEnabled(false);
+  };
+
+  const toggleCamera = async () => {
+    const newFacingMode = facingMode === "environment" ? "user" : "environment";
+    setFacingMode(newFacingMode);
+    
+    if (scannerState === "active") {
+      await stopScanner();
+      // Pequeno delay para garantir limpeza
+      setTimeout(() => startScanner(), 100);
+    }
+  };
+
+  const toggleTorch = async () => {
+    if (html5QrCodeRef.current && scannerState === "active") {
+      try {
+        const track = await html5QrCodeRef.current.getRunningTrackCameraCapabilities();
+        // Verificar se torch está disponível (type assertion segura)
+        if ((track as any).torch) {
+          await html5QrCodeRef.current.applyVideoConstraints({
+            advanced: [{ torch: !torchEnabled } as any]
+          } as any);
+          setTorchEnabled(!torchEnabled);
+          toast.success(torchEnabled ? "Lanterna desligada" : "Lanterna ligada");
+        } else {
+          toast.info("Lanterna não disponível neste dispositivo");
+        }
+      } catch (error) {
+        console.error("Erro ao alternar lanterna:", error);
+        toast.info("Lanterna não disponível neste dispositivo");
+      }
+    }
+  };
+
+  const addToHistory = useCallback((code: string, assetName?: string) => {
     const newEntry: ScanHistory = {
       code,
       timestamp: new Date(),
@@ -95,54 +229,129 @@ export default function AssetScanner() {
     
     setScanHistory(prev => {
       const filtered = prev.filter(item => item.code !== code);
-      return [newEntry, ...filtered].slice(0, 5); // Manter apenas os 5 mais recentes
+      return [newEntry, ...filtered].slice(0, 10); // Aumentado para 10 itens
     });
-  };
+  }, []);
 
-  const searchAsset = async (code: string) => {
-    setIsSearching(true);
-    try {
-      const formattedCode = formatPAT(code) || code;
-      
-      const { data, error } = await supabase
-        .from("assets")
-        .select("id, asset_code, equipment_name")
-        .eq("asset_code", formattedCode)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (data) {
-        addToHistory(formattedCode, data.equipment_name);
-        toast.success(`Patrimônio encontrado: ${data.equipment_name}`, {
-          icon: <Zap className="h-4 w-4" />
-        });
-        navigate(`/assets/view/${data.id}`);
-      } else {
-        addToHistory(formattedCode);
-        toast.info("Patrimônio não encontrado. Deseja cadastrá-lo?");
-        navigate(`/assets/new?code=${formattedCode}`);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar patrimônio:", error);
-      toast.error("Erro ao buscar patrimônio");
-    } finally {
-      setIsSearching(false);
+  const searchAsset = useCallback(async (code: string) => {
+    // Debounce para evitar múltiplas buscas
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
-  };
 
-  const handleManualSearch = () => {
+    setIsSearching(true);
+    
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const formattedCode = formatPAT(code) || code;
+        
+        const { data, error } = await supabase
+          .from("assets")
+          .select("id, asset_code, equipment_name")
+          .eq("asset_code", formattedCode)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (data) {
+          addToHistory(formattedCode, data.equipment_name);
+          toast.success(`Patrimônio encontrado: ${data.equipment_name}`, {
+            icon: <Zap className="h-4 w-4" />
+          });
+          navigate(`/assets/view/${data.id}`);
+        } else {
+          addToHistory(formattedCode);
+          toast.info("Patrimônio não encontrado. Deseja cadastrá-lo?");
+          navigate(`/assets/new?code=${formattedCode}`);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar patrimônio:", error);
+        toast.error("Erro ao buscar patrimônio");
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+  }, [navigate]);
+
+  const handleManualSearch = useCallback(() => {
     if (!manualCode.trim()) {
       toast.error("Digite um código válido");
       return;
     }
     searchAsset(manualCode);
-  };
+  }, [manualCode, searchAsset]);
 
-  const clearHistory = () => {
+  const clearHistory = useCallback(() => {
     setScanHistory([]);
     localStorage.removeItem("scan_history");
     toast.success("Histórico limpo");
+  }, []);
+
+  const getScannerStatusBadge = () => {
+    switch (scannerState) {
+      case "initializing":
+        return (
+          <Badge variant="outline" className="gap-2 bg-yellow-500/10 border-yellow-500/20">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            Inicializando...
+          </Badge>
+        );
+      case "active":
+        return (
+          <Badge variant="outline" className="gap-2 bg-green-500/10 border-green-500/20 animate-pulse">
+            <CheckCircle2 className="h-3 w-3 text-green-500" />
+            Câmera Ativa
+          </Badge>
+        );
+      case "error":
+        return (
+          <Badge variant="outline" className="gap-2 bg-red-500/10 border-red-500/20">
+            <AlertCircle className="h-3 w-3 text-red-500" />
+            Erro
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="outline" className="gap-2">
+            <ScanLine className="h-3 w-3" />
+            Pronto
+          </Badge>
+        );
+    }
+  };
+
+  const getPermissionMessage = () => {
+    switch (permissionState) {
+      case "checking":
+        return (
+          <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-500">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Solicitando permissão da câmera...</span>
+          </div>
+        );
+      case "denied":
+        return (
+          <div className="space-y-3">
+            <div className="flex items-start gap-2 text-red-600 dark:text-red-500">
+              <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold">Permissão da câmera negada</p>
+                <p className="text-sm mt-1">Para usar o scanner, permita o acesso à câmera nas configurações do navegador.</p>
+              </div>
+            </div>
+            <div className="bg-muted p-3 rounded-lg text-sm space-y-2">
+              <p className="font-semibold">Como habilitar:</p>
+              <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                <li>Clique no ícone de cadeado/câmera na barra de endereço</li>
+                <li>Selecione "Permitir" para câmera</li>
+                <li>Recarregue a página</li>
+              </ol>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
   };
 
   return (
@@ -157,10 +366,7 @@ export default function AssetScanner() {
         </Button>
         
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="gap-2">
-            <ScanLine className="h-3 w-3" />
-            Scanner Ativo
-          </Badge>
+          {getScannerStatusBadge()}
         </div>
       </div>
 
@@ -234,43 +440,135 @@ export default function AssetScanner() {
               <div className="p-2 bg-primary/10 rounded-lg">
                 <Camera className="h-5 w-5 text-primary" />
               </div>
-              <div>
+              <div className="flex-1">
                 <h2 className="text-xl font-bold">Scanner QR Code</h2>
                 <p className="text-sm text-muted-foreground">
-                  {scannerActive ? "Aponte para o QR Code" : "Escaneie códigos rapidamente"}
+                  {scannerState === "active" ? "Alinhe o QR Code no centro" : "Escaneie códigos rapidamente"}
                 </p>
               </div>
             </div>
             
-            {!scannerActive ? (
-              <Button
-                onClick={() => setScannerActive(true)}
-                className="w-full h-14"
-                size="lg"
-              >
-                <Camera className="h-5 w-5 mr-2" />
-                Ativar Câmera
-              </Button>
-            ) : (
+            {permissionState === "denied" && (
+              <div className="mb-4">
+                {getPermissionMessage()}
+              </div>
+            )}
+            
+            {scannerState === "idle" ? (
+              <div className="space-y-3">
+                <Button
+                  onClick={startScanner}
+                  className="w-full h-14"
+                  size="lg"
+                  disabled={permissionState === "checking"}
+                >
+                  {permissionState === "checking" ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      Solicitando Permissão...
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="h-5 w-5 mr-2" />
+                      Ativar Câmera
+                    </>
+                  )}
+                </Button>
+                
+                {isMobile && (
+                  <p className="text-xs text-center text-muted-foreground">
+                    💡 Dica: Posicione o QR Code a cerca de 15cm da câmera
+                  </p>
+                )}
+              </div>
+            ) : scannerState === "initializing" ? (
+              <div className="space-y-4">
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+                  <p className="text-lg font-semibold">Inicializando câmera...</p>
+                  <p className="text-sm text-muted-foreground mt-2">Aguarde um momento</p>
+                </div>
+              </div>
+            ) : scannerState === "active" ? (
               <div className="space-y-4">
                 <div className="relative">
                   <div
                     id="qr-reader"
-                    className="w-full rounded-lg overflow-hidden border-4 border-primary/30"
+                    className="w-full rounded-lg overflow-hidden border-4 border-primary/30 shadow-lg"
                   />
-                  <div className="absolute top-2 right-2">
-                    <Badge className="bg-green-500 animate-pulse">
-                      Escaneando...
+                  
+                  {/* Overlay de guia visual */}
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div className="relative w-full h-full flex items-center justify-center">
+                      {/* Cantos do quadrado guia */}
+                      <div className="absolute top-[20%] left-[20%] w-8 h-8 border-t-4 border-l-4 border-primary/80 rounded-tl-lg" />
+                      <div className="absolute top-[20%] right-[20%] w-8 h-8 border-t-4 border-r-4 border-primary/80 rounded-tr-lg" />
+                      <div className="absolute bottom-[20%] left-[20%] w-8 h-8 border-b-4 border-l-4 border-primary/80 rounded-bl-lg" />
+                      <div className="absolute bottom-[20%] right-[20%] w-8 h-8 border-b-4 border-r-4 border-primary/80 rounded-br-lg" />
+                    </div>
+                  </div>
+                  
+                  <div className="absolute top-2 left-2 right-2 flex items-center justify-between gap-2">
+                    <Badge className="bg-green-500/90 backdrop-blur-sm shadow-lg">
+                      <ScanLine className="h-3 w-3 mr-1 animate-pulse" />
+                      Escaneando
                     </Badge>
+                    
+                    <div className="flex gap-2">
+                      {isMobile && (
+                        <Button
+                          size="icon"
+                          variant="secondary"
+                          className="h-8 w-8 bg-background/80 backdrop-blur-sm shadow-lg"
+                          onClick={toggleCamera}
+                        >
+                          <SwitchCamera className="h-4 w-4" />
+                        </Button>
+                      )}
+                      
+                      <Button
+                        size="icon"
+                        variant="secondary"
+                        className="h-8 w-8 bg-background/80 backdrop-blur-sm shadow-lg"
+                        onClick={toggleTorch}
+                      >
+                        <FlashlightIcon className={`h-4 w-4 ${torchEnabled ? "text-yellow-500" : ""}`} />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="absolute bottom-2 left-2 right-2">
+                    <div className="bg-background/80 backdrop-blur-sm rounded-lg p-2 text-center shadow-lg">
+                      <p className="text-xs font-medium">Alinhe o QR Code dentro do quadrado</p>
+                    </div>
                   </div>
                 </div>
+                
                 <Button
-                  onClick={() => setScannerActive(false)}
+                  onClick={stopScanner}
                   variant="outline"
                   className="w-full"
                   size="lg"
                 >
                   Cancelar Scanner
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+                  <p className="text-lg font-semibold">Erro ao iniciar scanner</p>
+                  <p className="text-sm text-muted-foreground mt-2">Verifique as permissões da câmera</p>
+                </div>
+                <Button
+                  onClick={() => {
+                    setScannerState("idle");
+                    setPermissionState("prompt");
+                  }}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Tentar Novamente
                 </Button>
               </div>
             )}
