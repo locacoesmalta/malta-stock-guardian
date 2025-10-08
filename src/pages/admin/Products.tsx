@@ -58,6 +58,7 @@ const Products = () => {
     purchase_date: "",
     payment_type: "",
     comments: "",
+    profit_margin: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [duplicateDialog, setDuplicateDialog] = useState<{
@@ -387,6 +388,7 @@ const Products = () => {
       purchase_date: "",
       payment_type: "",
       comments: "",
+      profit_margin: "",
     });
     setErrors({});
   };
@@ -404,6 +406,7 @@ const Products = () => {
       purchase_date: "",
       payment_type: "",
       comments: product.comments || "",
+      profit_margin: "",
     });
     setOpen(true);
   };
@@ -668,32 +671,84 @@ const Products = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="purchase_price">Preço de Compra (R$)</Label>
-                  <Input
-                    id="purchase_price"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.purchase_price}
-                    onChange={(e) => setFormData({ ...formData, purchase_price: e.target.value })}
-                    disabled={!!editingProduct}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sale_price">Preço de Venda (R$)</Label>
-                  <Input
-                    id="sale_price"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.sale_price}
-                    onChange={(e) => setFormData({ ...formData, sale_price: e.target.value })}
-                    disabled={!!editingProduct}
-                  />
-                </div>
-              </div>
+              {!editingProduct && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="purchase_price">Preço de Compra (R$)</Label>
+                    <Input
+                      id="purchase_price"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.purchase_price}
+                      onChange={(e) => {
+                        setFormData({ ...formData, purchase_price: e.target.value });
+                        
+                        // Recalcular preço de venda se há margem definida
+                        if (formData.profit_margin && e.target.value) {
+                          const purchasePrice = parseFloat(e.target.value);
+                          const margin = parseFloat(formData.profit_margin);
+                          const salePrice = (purchasePrice * (1 + margin / 100)).toFixed(2);
+                          setFormData({ ...formData, purchase_price: e.target.value, sale_price: salePrice });
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="profit_margin">Margem de Lucro (%) - Opcional</Label>
+                    <Select
+                      value={formData.profit_margin}
+                      onValueChange={(value) => {
+                        setFormData({ ...formData, profit_margin: value });
+                        
+                        // Calcular preço de venda automaticamente
+                        if (value && formData.purchase_price) {
+                          const purchasePrice = parseFloat(formData.purchase_price);
+                          const margin = parseFloat(value);
+                          const salePrice = (purchasePrice * (1 + margin / 100)).toFixed(2);
+                          setFormData({ ...formData, profit_margin: value, sale_price: salePrice });
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a margem" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 30 }, (_, i) => (i + 1) * 10).map((percent) => (
+                          <SelectItem key={percent} value={percent.toString()}>
+                            {percent}%
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="sale_price">Preço de Venda (R$)</Label>
+                    <Input
+                      id="sale_price"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.sale_price}
+                      onChange={(e) => {
+                        setFormData({ ...formData, sale_price: e.target.value });
+                        
+                        // Limpar margem se o usuário editar manualmente
+                        if (formData.profit_margin) {
+                          setFormData({ ...formData, sale_price: e.target.value, profit_margin: "" });
+                        }
+                      }}
+                    />
+                    {formData.purchase_price && formData.sale_price && (
+                      <p className="text-xs text-muted-foreground">
+                        Margem calculada: {((parseFloat(formData.sale_price) / parseFloat(formData.purchase_price) - 1) * 100).toFixed(0)}%
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
 
               {!editingProduct && (
                 <>
