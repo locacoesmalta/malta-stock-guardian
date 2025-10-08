@@ -107,19 +107,25 @@ export default function FinancialForecast() {
       </div>
 
       {/* Print-only Header */}
-      <div className="hidden print:block text-center mb-4">
-        <h1 className="text-3xl font-bold">RELATÓRIO FINANCEIRO MALTA LOCAÇÕES</h1>
-        <p className="text-xs text-muted-foreground mt-1">
-          Gerado em: {new Date().toLocaleString('pt-BR')}
+      <div className="hidden print:block text-center mb-6">
+        <div className="flex items-center justify-center gap-4 mb-2">
+          <img src="/malta-logo.webp" alt="Malta Locações" className="h-12" />
+          <div>
+            <h1 className="text-xl font-bold">RELATÓRIO FINANCEIRO</h1>
+            <p className="text-sm font-semibold">MALTA LOCAÇÕES DE MÁQUINAS E EQUIPAMENTOS</p>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Gerado em: {format(new Date(), "dd/MM/yyyy, HH:mm:ss", { locale: ptBR })}
         </p>
       </div>
 
       {/* SEÇÃO 1: PEÇAS E BENS DE CONSUMO */}
       <div className="space-y-4 page-break-inside-avoid">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold flex items-center gap-2">
+        <div className="flex items-center justify-between print:mb-3">
+          <h2 className="text-2xl font-semibold flex items-center gap-2 print:text-lg">
             <Package className="h-6 w-6 print:hidden" />
-            Peças e Bens de Consumo
+            Peças Malta Locações e Bens de Consumo
           </h2>
           <Select value={selectedProductManufacturer} onValueChange={setSelectedProductManufacturer}>
             <SelectTrigger className="w-[250px] print:hidden">
@@ -262,10 +268,10 @@ export default function FinancialForecast() {
 
       {/* SEÇÃO 2: PATRIMÔNIO (EQUIPAMENTOS) */}
       <div className="space-y-4 page-break-before page-break-inside-avoid">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold flex items-center gap-2">
+        <div className="flex items-center justify-between print:mb-3">
+          <h2 className="text-2xl font-semibold flex items-center gap-2 print:text-lg">
             <Wrench className="h-6 w-6 print:hidden" />
-            Patrimônio (Equipamentos)
+            Malta Locações - Patrimônio (Equipamentos)
           </h2>
           <Select value={selectedAssetManufacturer} onValueChange={setSelectedAssetManufacturer}>
             <SelectTrigger className="w-[250px] print:hidden">
@@ -394,13 +400,14 @@ export default function FinancialForecast() {
       </div>
 
       {/* SEÇÃO 3: CUSTOS DE MANUTENÇÃO INTERNA */}
-      <div className="space-y-4 page-break-before page-break-inside-avoid">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold flex items-center gap-2">
-            <Settings className="h-6 w-6 print:hidden" />
-            Custos de Manutenção Interna
-          </h2>
-        </div>
+      {maintenanceData.length > 0 && (
+        <div className="space-y-4 page-break-before page-break-inside-avoid">
+          <div className="flex items-center justify-between print:mb-3">
+            <h2 className="text-2xl font-semibold flex items-center gap-2 print:text-lg">
+              <Settings className="h-6 w-6 print:hidden" />
+              Malta Locações - Custos de Manutenção Interna
+            </h2>
+          </div>
 
         {/* Cards de Resumo - Manutenção */}
         <div className="grid gap-4 md:grid-cols-3 page-break-inside-avoid">
@@ -563,7 +570,8 @@ export default function FinancialForecast() {
             )}
           </CardContent>
         </Card>
-      </div>
+        </div>
+      )}
 
       {/* SEÇÃO 4: ANÁLISE VISUAL COMPARATIVA */}
       <div className="space-y-4 print:hidden">
