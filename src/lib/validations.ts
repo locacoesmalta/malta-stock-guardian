@@ -30,11 +30,6 @@ export const productSchema = z.object({
     .min(0, "Preço de venda não pode ser negativo")
     .nullable()
     .optional(),
-  purchase_date: z.string()
-    .min(1, "Data da compra é obrigatória"),
-  payment_type: z.enum(["Faturado", "Caixa", "Nivaldo", "Sabrina"], {
-    required_error: "Tipo de pagamento é obrigatório"
-  }),
   comments: z.string()
     .trim()
     .max(1000, "Comentários devem ter no máximo 1000 caracteres")
