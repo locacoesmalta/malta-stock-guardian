@@ -165,8 +165,6 @@ const Products = () => {
       min_quantity: Number(formData.min_quantity),
       purchase_price: formData.purchase_price ? Number(formData.purchase_price) : null,
       sale_price: formData.sale_price ? Number(formData.sale_price) : null,
-      purchase_date: formData.purchase_date || undefined,
-      payment_type: formData.payment_type || undefined,
       comments: formData.comments || null,
     };
 
