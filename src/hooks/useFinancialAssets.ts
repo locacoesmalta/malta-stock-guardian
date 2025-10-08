@@ -24,7 +24,6 @@ export const useFinancialAssets = (selectedManufacturer?: string) => {
       const { data: assets, error } = await supabase
         .from("assets")
         .select("manufacturer, unit_value")
-        .gt("unit_value", 10) // Filtrar valores simbólicos
         .order("manufacturer");
 
       if (error) throw error;

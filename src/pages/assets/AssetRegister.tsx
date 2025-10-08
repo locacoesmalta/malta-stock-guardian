@@ -95,7 +95,7 @@ export default function AssetRegister() {
       model: "",
       serial_number: "",
       supplier: "",
-      unit_value: 0,
+      unit_value: undefined,
       comments: "",
     },
   });
@@ -570,7 +570,7 @@ export default function AssetRegister() {
                 name="unit_value"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Valor Unitário</FormLabel>
+                    <FormLabel>Valor Unitário (R$)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
