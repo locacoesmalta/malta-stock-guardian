@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { useFinancialProducts } from "@/hooks/useFinancialProducts";
 import { useFinancialAssets } from "@/hooks/useFinancialAssets";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
-import { TrendingUp, Package, Wrench, DollarSign, AlertCircle } from "lucide-react";
+import { TrendingUp, Package, Wrench, DollarSign, AlertCircle, Printer } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import "@/styles/financial-print.css";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B9D'];
 
@@ -64,27 +66,40 @@ export default function FinancialForecast() {
     };
   });
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <TrendingUp className="h-8 w-8" />
-          Previsão Financeira
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Análise de valores em estoque, venda e patrimônio de equipamentos
-        </p>
+      <div className="flex justify-between items-start print:block">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <TrendingUp className="h-8 w-8 print:hidden" />
+            Previsão Financeira
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Análise de valores em estoque, venda e patrimônio de equipamentos
+          </p>
+          <p className="text-xs text-muted-foreground mt-1 print:block hidden">
+            Gerado em: {new Date().toLocaleString('pt-BR')}
+          </p>
+        </div>
+        <Button onClick={handlePrint} variant="outline" className="print:hidden">
+          <Printer className="mr-2 h-4 w-4" />
+          Imprimir Relatório
+        </Button>
       </div>
 
       {/* SEÇÃO 1: PEÇAS E BENS DE CONSUMO */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold flex items-center gap-2">
-            <Package className="h-6 w-6" />
+      <div className="space-y-4 page-break-before">
+        <div className="flex items-center justify-between print:block">
+          <h2 className="text-2xl font-semibold flex items-center gap-2 print:text-xl">
+            <Package className="h-6 w-6 print:hidden" />
             Peças e Bens de Consumo
           </h2>
           <Select value={selectedProductManufacturer} onValueChange={setSelectedProductManufacturer}>
-            <SelectTrigger className="w-[250px]">
+            <SelectTrigger className="w-[250px] print:hidden">
               <SelectValue placeholder="Selecione o fabricante" />
             </SelectTrigger>
             <SelectContent>
@@ -156,7 +171,7 @@ export default function FinancialForecast() {
         </div>
 
         {/* Gráfico de Barras - Produtos */}
-        <Card>
+        <Card className="print:hidden">
           <CardHeader>
             <CardTitle>Comparação: Estoque vs Venda Potencial</CardTitle>
           </CardHeader>
@@ -187,9 +202,9 @@ export default function FinancialForecast() {
         </Card>
 
         {/* Tabela Detalhada - Produtos */}
-        <Card>
+        <Card className="page-break-inside-avoid">
           <CardHeader>
-            <CardTitle>Detalhamento por Fabricante</CardTitle>
+            <CardTitle className="print:text-lg">Detalhamento por Fabricante</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -223,14 +238,14 @@ export default function FinancialForecast() {
       </div>
 
       {/* SEÇÃO 2: PATRIMÔNIO (EQUIPAMENTOS) */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold flex items-center gap-2">
-            <Wrench className="h-6 w-6" />
+      <div className="space-y-4 page-break-before">
+        <div className="flex items-center justify-between print:block">
+          <h2 className="text-2xl font-semibold flex items-center gap-2 print:text-xl">
+            <Wrench className="h-6 w-6 print:hidden" />
             Patrimônio (Equipamentos)
           </h2>
           <Select value={selectedAssetManufacturer} onValueChange={setSelectedAssetManufacturer}>
-            <SelectTrigger className="w-[250px]">
+            <SelectTrigger className="w-[250px] print:hidden">
               <SelectValue placeholder="Selecione o fabricante" />
             </SelectTrigger>
             <SelectContent>
@@ -293,7 +308,7 @@ export default function FinancialForecast() {
         </div>
 
         {/* Gráfico de Pizza - Equipamentos */}
-        <Card>
+        <Card className="print:hidden">
           <CardHeader>
             <CardTitle>Distribuição do Valor Patrimonial</CardTitle>
           </CardHeader>
@@ -324,9 +339,9 @@ export default function FinancialForecast() {
         </Card>
 
         {/* Tabela Detalhada - Equipamentos */}
-        <Card>
+        <Card className="page-break-inside-avoid">
           <CardHeader>
-            <CardTitle>Detalhamento por Fabricante</CardTitle>
+            <CardTitle className="print:text-lg">Detalhamento por Fabricante</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -356,7 +371,7 @@ export default function FinancialForecast() {
       </div>
 
       {/* SEÇÃO 3: ANÁLISE VISUAL COMPARATIVA */}
-      <div className="space-y-4">
+      <div className="space-y-4 print:hidden">
         <h2 className="text-2xl font-semibold flex items-center gap-2">
           <TrendingUp className="h-6 w-6" />
           Análise Visual Comparativa
