@@ -9,6 +9,7 @@ import { ptBR } from "date-fns/locale";
 import { Search, FileText } from "lucide-react";
 import { useWithdrawalsQuery } from "@/hooks/useWithdrawalsQuery";
 import { formatPAT } from "@/lib/patUtils";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const WithdrawalHistory = () => {
   const { data: withdrawals = [], isLoading, error } = useWithdrawalsQuery();
@@ -18,6 +19,7 @@ const WithdrawalHistory = () => {
   const [workSiteFilter, setWorkSiteFilter] = useState("");
   const [companyFilter, setCompanyFilter] = useState("");
   const [equipmentCodeFilter, setEquipmentCodeFilter] = useState("");
+  const [showOnlyMaintenance, setShowOnlyMaintenance] = useState(false);
 
   if (error) {
     toast.error("Erro ao carregar histórico");
@@ -61,23 +63,33 @@ const WithdrawalHistory = () => {
       );
     }
 
+    if (showOnlyMaintenance) {
+      filtered = filtered.filter((w) => w.company === "Manutenção Interna");
+    }
+
     return filtered;
-  }, [withdrawals, startDate, endDate, searchTerm, workSiteFilter, companyFilter, equipmentCodeFilter]);
+  }, [withdrawals, startDate, endDate, searchTerm, workSiteFilter, companyFilter, equipmentCodeFilter, showOnlyMaintenance]);
 
   const handleExport = () => {
     const csvContent = [
-      ["Data", "Produto", "Código", "Quantidade", "Motivo", "Responsável", "PAT", "Obra", "Empresa"],
-      ...filteredWithdrawals.map((w) => [
-        format(new Date(w.withdrawal_date), "dd/MM/yyyy", { locale: ptBR }),
-        w.products?.name || "Sem permissão",
-        w.products?.code || "-",
-        w.quantity.toString(),
-        w.withdrawal_reason || "-",
-        w.profiles?.full_name || w.profiles?.email || "-",
-        w.equipment_code,
-        w.work_site,
-        w.company,
-      ]),
+      ["Data", "Produto", "Código", "Quantidade", "Custo Unit.", "Custo Total", "Motivo", "Responsável", "PAT", "Obra", "Empresa"],
+      ...filteredWithdrawals.map((w) => {
+        const unitCost = (w.products as any)?.purchase_price || 0;
+        const totalCost = unitCost * w.quantity;
+        return [
+          format(new Date(w.withdrawal_date), "dd/MM/yyyy", { locale: ptBR }),
+          w.products?.name || "Sem permissão",
+          w.products?.code || "-",
+          w.quantity.toString(),
+          unitCost.toFixed(2),
+          totalCost.toFixed(2),
+          w.withdrawal_reason || "-",
+          w.profiles?.full_name || w.profiles?.email || "-",
+          w.equipment_code,
+          w.work_site,
+          w.company,
+        ];
+      }),
     ]
       .map((row) => row.join(","))
       .join("\n");
@@ -184,6 +196,20 @@ const WithdrawalHistory = () => {
               />
             </div>
           </div>
+
+          <div className="flex items-center space-x-2 pt-2">
+            <Checkbox
+              id="maintenanceOnly"
+              checked={showOnlyMaintenance}
+              onCheckedChange={(checked) => setShowOnlyMaintenance(checked as boolean)}
+            />
+            <Label
+              htmlFor="maintenanceOnly"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Mostrar apenas Manutenção Interna
+            </Label>
+          </div>
         </CardContent>
       </Card>
 
@@ -204,43 +230,64 @@ const WithdrawalHistory = () => {
             </div>
           ) : (
             <div className="space-y-2">
-              {filteredWithdrawals.map((withdrawal) => (
-                <div
-                  key={withdrawal.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex-1 space-y-1">
-                    <div className="font-medium">
-                      {withdrawal.products?.name || "Produto (sem permissão para visualizar)"}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Código: {withdrawal.products?.code || "-"}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      PAT: {withdrawal.equipment_code} | Obra: {withdrawal.work_site} | Empresa: {withdrawal.company}
-                    </div>
-                    {withdrawal.withdrawal_reason && (
-                      <div className="text-sm text-muted-foreground">
-                        Motivo: {withdrawal.withdrawal_reason}
+              {filteredWithdrawals.map((withdrawal) => {
+                const unitCost = (withdrawal.products as any)?.purchase_price || 0;
+                const totalCost = unitCost * withdrawal.quantity;
+                const isMaintenance = withdrawal.company === "Manutenção Interna";
+                
+                return (
+                  <div
+                    key={withdrawal.id}
+                    className={`flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors ${
+                      isMaintenance ? 'border-blue-500/50 bg-blue-50/50 dark:bg-blue-950/20' : ''
+                    }`}
+                  >
+                    <div className="flex-1 space-y-1">
+                      <div className="font-medium">
+                        {withdrawal.products?.name || "Produto (sem permissão para visualizar)"}
+                        {isMaintenance && (
+                          <span className="ml-2 text-xs px-2 py-1 rounded bg-blue-500 text-white">
+                            Manutenção Interna
+                          </span>
+                        )}
                       </div>
-                    )}
-                  </div>
+                      <div className="text-sm text-muted-foreground">
+                        Código: {withdrawal.products?.code || "-"}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        PAT: {withdrawal.equipment_code} | Obra: {withdrawal.work_site} | Empresa: {withdrawal.company}
+                      </div>
+                      {withdrawal.withdrawal_reason && (
+                        <div className="text-sm text-muted-foreground">
+                          Motivo: {withdrawal.withdrawal_reason}
+                        </div>
+                      )}
+                      {unitCost > 0 && (
+                        <div className="text-sm font-medium text-primary">
+                          Custo Total: {new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                          }).format(totalCost)}
+                        </div>
+                      )}
+                    </div>
 
-                  <div className="text-right space-y-1">
-                    <div className="font-semibold">
-                      Qtd: {withdrawal.quantity}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {format(new Date(withdrawal.withdrawal_date), "dd/MM/yyyy", {
-                        locale: ptBR,
-                      })}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {withdrawal.profiles?.full_name || withdrawal.profiles?.email || "-"}
+                    <div className="text-right space-y-1">
+                      <div className="font-semibold">
+                        Qtd: {withdrawal.quantity}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {format(new Date(withdrawal.withdrawal_date), "dd/MM/yyyy", {
+                          locale: ptBR,
+                        })}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {withdrawal.profiles?.full_name || withdrawal.profiles?.email || "-"}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

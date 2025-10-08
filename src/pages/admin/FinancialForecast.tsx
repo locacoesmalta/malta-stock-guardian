@@ -3,11 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useFinancialProducts } from "@/hooks/useFinancialProducts";
 import { useFinancialAssets } from "@/hooks/useFinancialAssets";
+import { useMaintenanceWithdrawals } from "@/hooks/useMaintenanceWithdrawals";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
-import { TrendingUp, Package, Wrench, DollarSign, AlertCircle, Printer } from "lucide-react";
+import { TrendingUp, Package, Wrench, DollarSign, AlertCircle, Printer, Settings } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import "@/styles/financial-print.css";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B9D'];
@@ -22,6 +27,9 @@ const formatCurrency = (value: number) => {
 export default function FinancialForecast() {
   const [selectedProductManufacturer, setSelectedProductManufacturer] = useState<string>("all");
   const [selectedAssetManufacturer, setSelectedAssetManufacturer] = useState<string>("all");
+  const [maintenanceEquipmentFilter, setMaintenanceEquipmentFilter] = useState<string>("");
+  const [maintenanceStartDate, setMaintenanceStartDate] = useState<string>("");
+  const [maintenanceEndDate, setMaintenanceEndDate] = useState<string>("");
 
   const { 
     data: productsData, 
@@ -33,7 +41,16 @@ export default function FinancialForecast() {
     isLoading: assetsLoading 
   } = useFinancialAssets(selectedAssetManufacturer);
 
-  if (productsLoading || assetsLoading) {
+  const {
+    data: maintenanceData = [],
+    isLoading: maintenanceLoading
+  } = useMaintenanceWithdrawals(
+    maintenanceEquipmentFilter || undefined,
+    maintenanceStartDate || undefined,
+    maintenanceEndDate || undefined
+  );
+
+  if (productsLoading || assetsLoading || maintenanceLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
@@ -376,7 +393,179 @@ export default function FinancialForecast() {
         </Card>
       </div>
 
-      {/* SEÇÃO 3: ANÁLISE VISUAL COMPARATIVA */}
+      {/* SEÇÃO 3: CUSTOS DE MANUTENÇÃO INTERNA */}
+      <div className="space-y-4 page-break-before page-break-inside-avoid">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold flex items-center gap-2">
+            <Settings className="h-6 w-6 print:hidden" />
+            Custos de Manutenção Interna
+          </h2>
+        </div>
+
+        {/* Cards de Resumo - Manutenção */}
+        <div className="grid gap-4 md:grid-cols-3 page-break-inside-avoid">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Gasto em Manutenções</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground print:hidden" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-primary">
+                {formatCurrency(maintenanceData.reduce((sum, item) => sum + item.total_cost, 0))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Soma de todos os custos de manutenção
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Equipamentos em Manutenção</CardTitle>
+              <Wrench className="h-4 w-4 text-muted-foreground print:hidden" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {maintenanceData.length}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Equipamentos com custos registrados
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Custo Médio por Manutenção</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground print:hidden" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">
+                {formatCurrency(
+                  maintenanceData.length > 0
+                    ? maintenanceData.reduce((sum, item) => sum + item.total_cost, 0) / maintenanceData.length
+                    : 0
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Média por equipamento
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filtros de Manutenção */}
+        <Card className="print:hidden">
+          <CardHeader>
+            <CardTitle>Filtros</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="maintenancePAT">PAT do Equipamento</Label>
+                <Input
+                  id="maintenancePAT"
+                  type="text"
+                  maxLength={6}
+                  placeholder="000000"
+                  value={maintenanceEquipmentFilter}
+                  onChange={(e) => setMaintenanceEquipmentFilter(e.target.value.replace(/\D/g, ''))}
+                  className="font-mono"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="maintenanceStartDate">Data Inicial</Label>
+                <Input
+                  id="maintenanceStartDate"
+                  type="date"
+                  value={maintenanceStartDate}
+                  onChange={(e) => setMaintenanceStartDate(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="maintenanceEndDate">Data Final</Label>
+                <Input
+                  id="maintenanceEndDate"
+                  type="date"
+                  value={maintenanceEndDate}
+                  onChange={(e) => setMaintenanceEndDate(e.target.value)}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Gráfico de Barras - Top 10 Equipamentos por Custo */}
+        <Card className="print:hidden">
+          <CardHeader>
+            <CardTitle>Top 10 Equipamentos por Custo de Manutenção</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={maintenanceData.slice(0, 10)}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="equipment_code" 
+                  angle={-45} 
+                  textAnchor="end" 
+                  height={100}
+                  tick={{ fontSize: 12 }}
+                />
+                <YAxis 
+                  tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+                />
+                <Tooltip 
+                  formatter={(value: number) => formatCurrency(value)}
+                  labelStyle={{ color: '#000' }}
+                />
+                <Legend />
+                <Bar dataKey="total_cost" fill="#FF8042" name="Custo Total de Manutenção" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Tabela Detalhada - Manutenção */}
+        <Card className="page-break-inside-avoid">
+          <CardHeader>
+            <CardTitle>Detalhamento por Equipamento</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {maintenanceData.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Nenhuma manutenção interna encontrada
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>PAT</TableHead>
+                    <TableHead>Equipamento</TableHead>
+                    <TableHead className="text-right">Qtd Retiradas</TableHead>
+                    <TableHead className="text-right">Custo Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {maintenanceData.map((item) => (
+                    <TableRow key={item.equipment_code}>
+                      <TableCell className="font-mono">{item.equipment_code}</TableCell>
+                      <TableCell>{item.equipment_name}</TableCell>
+                      <TableCell className="text-right">{item.withdrawal_count}</TableCell>
+                      <TableCell className="text-right font-medium text-primary">
+                        {formatCurrency(item.total_cost)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* SEÇÃO 4: ANÁLISE VISUAL COMPARATIVA */}
       <div className="space-y-4 print:hidden">
         <h2 className="text-2xl font-semibold flex items-center gap-2">
           <TrendingUp className="h-6 w-6" />

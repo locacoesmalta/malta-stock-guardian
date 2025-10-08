@@ -15,6 +15,8 @@ interface Withdrawal {
   products: {
     code: string;
     name: string;
+    purchase_price: number | null;
+    sale_price: number | null;
   };
   profiles: {
     full_name: string | null;
@@ -23,12 +25,12 @@ interface Withdrawal {
 }
 
 const fetchWithdrawals = async (): Promise<Withdrawal[]> => {
-  // First fetch all withdrawals with products
+  // First fetch all withdrawals with products (including prices)
   const { data: withdrawalsData, error: withdrawalsError } = await supabase
     .from("material_withdrawals")
     .select(`
       *,
-      products(code, name)
+      products(code, name, purchase_price, sale_price)
     `)
     .order("withdrawal_date", { ascending: false });
 

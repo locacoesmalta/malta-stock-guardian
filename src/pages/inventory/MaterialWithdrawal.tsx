@@ -16,6 +16,7 @@ import { withdrawalSchema } from "@/lib/validations";
 import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
 import { formatPAT } from "@/lib/patUtils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 interface WithdrawalItem {
@@ -50,21 +51,28 @@ const MaterialWithdrawal = () => {
     if (equipment) {
       setEquipmentName(equipment.equipment_name);
       
-      // Priorizar dados de LOCAÇÃO primeiro
-      if (equipment.rental_company) {
-        console.log("✅ Preenchendo empresa de locação:", equipment.rental_company);
-        setCompany(equipment.rental_company);
-      } else if (equipment.maintenance_company) {
-        console.log("✅ Preenchendo empresa de manutenção:", equipment.maintenance_company);
-        setCompany(equipment.maintenance_company);
-      }
-      
-      if (equipment.rental_work_site) {
-        console.log("✅ Preenchendo obra de locação:", equipment.rental_work_site);
-        setWorkSite(equipment.rental_work_site);
-      } else if (equipment.maintenance_work_site) {
-        console.log("✅ Preenchendo obra de manutenção:", equipment.maintenance_work_site);
-        setWorkSite(equipment.maintenance_work_site);
+      // Se o equipamento está em Depósito Malta, sugerir Manutenção Interna
+      if (equipment.location_type === "Depósito Malta") {
+        console.log("🔧 Equipamento em Depósito Malta - Sugerindo Manutenção Interna");
+        setCompany("Manutenção Interna");
+        setWorkSite("Depósito Malta");
+      } else {
+        // Priorizar dados de LOCAÇÃO primeiro para outros casos
+        if (equipment.rental_company) {
+          console.log("✅ Preenchendo empresa de locação:", equipment.rental_company);
+          setCompany(equipment.rental_company);
+        } else if (equipment.maintenance_company) {
+          console.log("✅ Preenchendo empresa de manutenção:", equipment.maintenance_company);
+          setCompany(equipment.maintenance_company);
+        }
+        
+        if (equipment.rental_work_site) {
+          console.log("✅ Preenchendo obra de locação:", equipment.rental_work_site);
+          setWorkSite(equipment.rental_work_site);
+        } else if (equipment.maintenance_work_site) {
+          console.log("✅ Preenchendo obra de manutenção:", equipment.maintenance_work_site);
+          setWorkSite(equipment.maintenance_work_site);
+        }
       }
     } else if (!equipmentCode) {
       // Limpa os campos se o PAT for apagado
@@ -247,12 +255,22 @@ const MaterialWithdrawal = () => {
                 </div>
                 {equipmentCode && !loadingEquipment && (
                   equipment ? (
-                    <Alert className="mt-2 border-green-500/50 bg-green-50 dark:bg-green-950/20">
-                      <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                      <AlertDescription className="text-xs text-green-700 dark:text-green-300">
-                        Equipamento encontrado: {equipment.equipment_name}
-                      </AlertDescription>
-                    </Alert>
+                    <>
+                      <Alert className="mt-2 border-green-500/50 bg-green-50 dark:bg-green-950/20">
+                        <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        <AlertDescription className="text-xs text-green-700 dark:text-green-300">
+                          Equipamento encontrado: {equipment.equipment_name}
+                        </AlertDescription>
+                      </Alert>
+                      {equipment.location_type === "Depósito Malta" && (
+                        <Alert className="mt-2 border-blue-500/50 bg-blue-50 dark:bg-blue-950/20">
+                          <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          <AlertDescription className="text-xs text-blue-700 dark:text-blue-300">
+                            <strong>Manutenção Interna:</strong> Este equipamento está no Depósito Malta. Os custos serão registrados como manutenção interna.
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    </>
                   ) : (
                     <Alert className="mt-2 border-red-500/50 bg-red-50 dark:bg-red-950/20">
                       <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
@@ -279,15 +297,16 @@ const MaterialWithdrawal = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="company" className="text-xs sm:text-sm">Empresa *</Label>
-                <Input
-                  id="company"
-                  type="text"
-                  value={company}
-                  onChange={(e) => setCompany(e.target.value)}
-                  placeholder="Digite a empresa"
-                  required
-                  className="text-sm"
-                />
+                <Select value={company} onValueChange={setCompany}>
+                  <SelectTrigger id="company" className="text-sm">
+                    <SelectValue placeholder="Selecione a empresa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Manutenção Interna">Manutenção Interna</SelectItem>
+                    <SelectItem value="Locação Externa">Locação Externa</SelectItem>
+                    <SelectItem value="Obra">Obra</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
