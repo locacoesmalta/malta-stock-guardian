@@ -7,14 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, Download, Upload, Layers, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Download, Upload, Layers, AlertTriangle, History } from "lucide-react";
 import { toast } from "sonner";
 import { StockBadge } from "@/components/StockBadge";
 import { useAuth } from "@/contexts/AuthContext";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useProducts } from "@/hooks/useProducts";
-import { productSchema } from "@/lib/validations";
+import { productSchema, addStockSchema } from "@/lib/validations";
+import { ProductPurchaseHistory } from "@/components/ProductPurchaseHistory";
 import * as XLSX from "xlsx";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -54,6 +55,8 @@ const Products = () => {
     min_quantity: 0,
     purchase_price: "",
     sale_price: "",
+    purchase_date: "",
+    payment_type: "",
     comments: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -61,6 +64,22 @@ const Products = () => {
     open: boolean;
     existingProduct: Product | null;
   }>({ open: false, existingProduct: null });
+  const [addStockDialog, setAddStockDialog] = useState<{
+    open: boolean;
+    product: Product | null;
+  }>({ open: false, product: null });
+  const [addStockData, setAddStockData] = useState({
+    purchase_date: "",
+    quantity: 0,
+    purchase_price: "",
+    sale_price: "",
+    payment_type: "",
+    notes: "",
+  });
+  const [historyDialog, setHistoryDialog] = useState<{
+    open: boolean;
+    product: Product | null;
+  }>({ open: false, product: null });
 
   // Extrair marcas únicas dos produtos
   const availableBrands = useMemo(() => {
@@ -144,21 +163,25 @@ const Products = () => {
       min_quantity: Number(formData.min_quantity),
       purchase_price: formData.purchase_price ? Number(formData.purchase_price) : null,
       sale_price: formData.sale_price ? Number(formData.sale_price) : null,
+      purchase_date: formData.purchase_date || undefined,
+      payment_type: formData.payment_type || undefined,
       comments: formData.comments || null,
     };
 
-    // Validate with Zod
-    const validation = productSchema.safeParse(productData);
-    if (!validation.success) {
-      const fieldErrors: Record<string, string> = {};
-      validation.error.errors.forEach((err) => {
-        if (err.path[0]) {
-          fieldErrors[err.path[0] as string] = err.message;
-        }
-      });
-      setErrors(fieldErrors);
-      toast.error("Por favor, corrija os erros no formulário");
-      return;
+    // Para novos produtos, validar com schema completo
+    if (!editingProduct) {
+      const validation = productSchema.safeParse(productData);
+      if (!validation.success) {
+        const fieldErrors: Record<string, string> = {};
+        validation.error.errors.forEach((err) => {
+          if (err.path[0]) {
+            fieldErrors[err.path[0] as string] = err.message;
+          }
+        });
+        setErrors(fieldErrors);
+        toast.error("Por favor, corrija os erros no formulário");
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -175,12 +198,36 @@ const Products = () => {
         if (error) throw error;
         toast.success("Produto atualizado com sucesso!");
       } else {
-        // Inserir novo produto (a verificação de duplicidade já foi feita no onBlur)
-        const { error } = await supabase
-          .from("products")
-          .insert([dataToSave]);
+        // Buscar profile do usuário para nome completo
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", user?.id)
+          .single();
 
-        if (error) throw error;
+        // Inserir novo produto
+        const { data: newProduct, error: insertError } = await supabase
+          .from("products")
+          .insert([dataToSave])
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+
+        // Registrar primeira compra no histórico
+        if (newProduct && formData.purchase_date && formData.payment_type) {
+          await supabase.from("product_purchases").insert([{
+            product_id: newProduct.id,
+            purchase_date: formData.purchase_date,
+            quantity: Number(formData.quantity),
+            purchase_price: formData.purchase_price ? Number(formData.purchase_price) : null,
+            sale_price: formData.sale_price ? Number(formData.sale_price) : null,
+            payment_type: formData.payment_type,
+            operator_id: user?.id,
+            operator_name: profile?.full_name || user?.email,
+          }]);
+        }
+
         toast.success("Produto cadastrado com sucesso!");
       }
 
@@ -209,6 +256,98 @@ const Products = () => {
     // Criar um evento sintético para chamar handleSubmit
     const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
     await handleSubmit(syntheticEvent, true);
+  };
+
+  const handleAddStock = async () => {
+    if (!addStockDialog.product) return;
+
+    const validation = addStockSchema.safeParse({
+      purchase_date: addStockData.purchase_date,
+      quantity: Number(addStockData.quantity),
+      purchase_price: addStockData.purchase_price ? Number(addStockData.purchase_price) : null,
+      sale_price: addStockData.sale_price ? Number(addStockData.sale_price) : null,
+      payment_type: addStockData.payment_type,
+      notes: addStockData.notes || null,
+    });
+
+    if (!validation.success) {
+      const fieldErrors: Record<string, string> = {};
+      validation.error.errors.forEach((err) => {
+        if (err.path[0]) {
+          fieldErrors[err.path[0] as string] = err.message;
+        }
+      });
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+
+    try {
+      // Buscar profile do usuário
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user?.id)
+        .single();
+
+      // 1. Inserir compra no histórico
+      const { error: purchaseError } = await supabase
+        .from("product_purchases")
+        .insert([{
+          product_id: addStockDialog.product.id,
+          purchase_date: addStockData.purchase_date,
+          quantity: Number(addStockData.quantity),
+          purchase_price: addStockData.purchase_price ? Number(addStockData.purchase_price) : null,
+          sale_price: addStockData.sale_price ? Number(addStockData.sale_price) : null,
+          payment_type: addStockData.payment_type,
+          operator_id: user?.id,
+          operator_name: profile?.full_name || user?.email,
+          notes: addStockData.notes || null,
+        }]);
+
+      if (purchaseError) throw purchaseError;
+
+      // 2. Atualizar quantidade no produto
+      const newQuantity = addStockDialog.product.quantity + Number(addStockData.quantity);
+      
+      // 3. Decidir sobre preço (se fornecido)
+      const updatedData: any = {
+        quantity: newQuantity,
+      };
+
+      if (addStockData.purchase_price && addStockData.sale_price) {
+        const useNewPrice = await confirm({
+          title: "Atualizar Preços?",
+          description: `Deseja usar os novos preços (Compra: R$ ${addStockData.purchase_price}, Venda: R$ ${addStockData.sale_price}) ou manter os preços atuais?`,
+        });
+
+        if (useNewPrice) {
+          updatedData.purchase_price = Number(addStockData.purchase_price);
+          updatedData.sale_price = Number(addStockData.sale_price);
+        }
+      }
+
+      const { error: updateError } = await supabase
+        .from("products")
+        .update(updatedData)
+        .eq("id", addStockDialog.product.id);
+
+      if (updateError) throw updateError;
+
+      toast.success(`Estoque adicionado! Nova quantidade: ${newQuantity}`);
+      setAddStockDialog({ open: false, product: null });
+      setAddStockData({
+        purchase_date: "",
+        quantity: 0,
+        purchase_price: "",
+        sale_price: "",
+        payment_type: "",
+        notes: "",
+      });
+      refetch();
+    } catch (error) {
+      toast.error("Erro ao adicionar estoque");
+      console.error(error);
+    }
   };
 
   const handleDelete = async (id: string, name: string) => {
@@ -242,6 +381,8 @@ const Products = () => {
       min_quantity: 0,
       purchase_price: "",
       sale_price: "",
+      purchase_date: "",
+      payment_type: "",
       comments: "",
     });
     setErrors({});
@@ -257,6 +398,8 @@ const Products = () => {
       min_quantity: product.min_quantity,
       purchase_price: product.purchase_price?.toString() || "",
       sale_price: product.sale_price?.toString() || "",
+      purchase_date: "",
+      payment_type: "",
       comments: product.comments || "",
     });
     setOpen(true);
@@ -272,6 +415,8 @@ const Products = () => {
       quantidade_minima: "",
       preco_compra: "",
       preco_venda: "",
+      data_compra: "", // Formato: DD/MM/AAAA
+      tipo_pagamento: "", // Faturado, Caixa, Nivaldo ou Sabrina
       comentarios: ""
     }];
 
@@ -287,6 +432,8 @@ const Products = () => {
       { wch: 18 }, // quantidade_minima
       { wch: 15 }, // preco_compra
       { wch: 15 }, // preco_venda
+      { wch: 15 }, // data_compra
+      { wch: 15 }, // tipo_pagamento
       { wch: 40 }, // comentarios
     ];
     ws['!cols'] = colWidths;
@@ -324,6 +471,8 @@ const Products = () => {
           min_quantity: Number(row.quantidade_minima) || 0,
           purchase_price: row.preco_compra ? Number(row.preco_compra) : null,
           sale_price: row.preco_venda ? Number(row.preco_venda) : null,
+          purchase_date: row.data_compra || null,
+          payment_type: row.tipo_pagamento || null,
           comments: row.comentarios?.toString() || null,
           created_by: user?.id,
         };
@@ -530,9 +679,43 @@ const Products = () => {
                 </div>
               </div>
 
-              {editingProduct && (
-                <div className="space-y-2">
-                  <Label htmlFor="comments">Comentários / Especificações</Label>
+              {!editingProduct && (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="purchase_date">Data da Compra *</Label>
+                      <Input
+                        id="purchase_date"
+                        type="date"
+                        value={formData.purchase_date}
+                        onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="payment_type">Tipo de Pagamento *</Label>
+                      <Select
+                        value={formData.payment_type}
+                        onValueChange={(value) => setFormData({ ...formData, payment_type: value })}
+                        required
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Faturado">Faturado</SelectItem>
+                          <SelectItem value="Caixa">Caixa</SelectItem>
+                          <SelectItem value="Nivaldo">Nivaldo</SelectItem>
+                          <SelectItem value="Sabrina">Sabrina</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="comments">Comentários / Especificações</Label>
                   <Textarea
                     id="comments"
                     value={formData.comments}
@@ -659,26 +842,42 @@ const Products = () => {
                               Mín: {product.min_quantity}
                             </div>
                           </div>
-                          <StockBadge
-                            quantity={product.quantity}
-                            minQuantity={product.min_quantity}
-                          />
-                          <div className="flex gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openEditDialog(product)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDelete(product.id, product.name)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
+                    <StockBadge
+                      quantity={product.quantity}
+                      minQuantity={product.min_quantity}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setAddStockDialog({ open: true, product })}
+                        title="Adicionar Estoque"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setHistoryDialog({ open: true, product })}
+                        title="Ver Histórico"
+                      >
+                        <History className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openEditDialog(product)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(product.id, product.name)}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
                         </div>
                       </div>
                     ))}
@@ -848,6 +1047,109 @@ const Products = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog Adicionar Estoque */}
+      <Dialog open={addStockDialog.open} onOpenChange={(open) => {
+        if (!open) {
+          setAddStockDialog({ open: false, product: null });
+          setAddStockData({ purchase_date: "", quantity: 0, purchase_price: "", sale_price: "", payment_type: "", notes: "" });
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Adicionar Estoque - {addStockDialog.product?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="add_purchase_date">Data da Compra *</Label>
+              <Input
+                id="add_purchase_date"
+                type="date"
+                value={addStockData.purchase_date}
+                onChange={(e) => setAddStockData({ ...addStockData, purchase_date: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="add_quantity">Quantidade *</Label>
+              <Input
+                id="add_quantity"
+                type="number"
+                min="1"
+                value={addStockData.quantity}
+                onChange={(e) => setAddStockData({ ...addStockData, quantity: Number(e.target.value) })}
+                required
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="add_purchase_price">Preço Compra (R$)</Label>
+                <Input
+                  id="add_purchase_price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={addStockData.purchase_price}
+                  onChange={(e) => setAddStockData({ ...addStockData, purchase_price: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="add_sale_price">Preço Venda (R$)</Label>
+                <Input
+                  id="add_sale_price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={addStockData.sale_price}
+                  onChange={(e) => setAddStockData({ ...addStockData, sale_price: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="add_payment_type">Tipo de Pagamento *</Label>
+              <Select
+                value={addStockData.payment_type}
+                onValueChange={(value) => setAddStockData({ ...addStockData, payment_type: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Faturado">Faturado</SelectItem>
+                  <SelectItem value="Caixa">Caixa</SelectItem>
+                  <SelectItem value="Nivaldo">Nivaldo</SelectItem>
+                  <SelectItem value="Sabrina">Sabrina</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="add_notes">Observações</Label>
+              <Textarea
+                id="add_notes"
+                value={addStockData.notes}
+                onChange={(e) => setAddStockData({ ...addStockData, notes: e.target.value })}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddStockDialog({ open: false, product: null })}>
+              Cancelar
+            </Button>
+            <Button onClick={handleAddStock}>Adicionar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Histórico */}
+      {historyDialog.product && (
+        <ProductPurchaseHistory
+          open={historyDialog.open}
+          onOpenChange={(open) => setHistoryDialog({ open, product: open ? historyDialog.product : null })}
+          productId={historyDialog.product.id}
+          productName={historyDialog.product.name}
+        />
+      )}
     </div>
   );
 };

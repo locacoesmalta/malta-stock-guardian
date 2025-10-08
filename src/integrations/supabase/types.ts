@@ -311,6 +311,59 @@ export type Database = {
           },
         ]
       }
+      product_purchases: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          operator_id: string | null
+          operator_name: string | null
+          payment_type: string
+          product_id: string
+          purchase_date: string
+          purchase_price: number | null
+          quantity: number
+          sale_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          operator_id?: string | null
+          operator_name?: string | null
+          payment_type: string
+          product_id: string
+          purchase_date: string
+          purchase_price?: number | null
+          quantity: number
+          sale_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          operator_id?: string | null
+          operator_name?: string | null
+          payment_type?: string
+          product_id?: string
+          purchase_date?: string
+          purchase_price?: number | null
+          quantity?: number
+          sale_price?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_purchases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           code: string
@@ -318,9 +371,11 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          last_purchase_date: string | null
           manufacturer: string | null
           min_quantity: number
           name: string
+          payment_type: string | null
           purchase_price: number | null
           quantity: number
           sale_price: number | null
@@ -332,9 +387,11 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          last_purchase_date?: string | null
           manufacturer?: string | null
           min_quantity?: number
           name: string
+          payment_type?: string | null
           purchase_price?: number | null
           quantity?: number
           sale_price?: number | null
@@ -346,9 +403,11 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          last_purchase_date?: string | null
           manufacturer?: string | null
           min_quantity?: number
           name?: string
+          payment_type?: string | null
           purchase_price?: number | null
           quantity?: number
           sale_price?: number | null

@@ -18,7 +18,7 @@ export const productSchema = z.object({
     .or(z.literal("")),
   quantity: z.number()
     .int("Quantidade deve ser um número inteiro")
-    .min(0, "Quantidade não pode ser negativa"),
+    .min(1, "Quantidade deve ser maior que 0"),
   min_quantity: z.number()
     .int("Quantidade mínima deve ser um número inteiro")
     .min(0, "Quantidade mínima não pode ser negativa"),
@@ -30,12 +30,42 @@ export const productSchema = z.object({
     .min(0, "Preço de venda não pode ser negativo")
     .nullable()
     .optional(),
+  purchase_date: z.string()
+    .min(1, "Data da compra é obrigatória"),
+  payment_type: z.enum(["Faturado", "Caixa", "Nivaldo", "Sabrina"], {
+    required_error: "Tipo de pagamento é obrigatório"
+  }),
   comments: z.string()
     .trim()
     .max(1000, "Comentários devem ter no máximo 1000 caracteres")
     .nullable()
     .optional()
     .or(z.literal("")),
+});
+
+// Add Stock validation (para compras adicionais)
+export const addStockSchema = z.object({
+  purchase_date: z.string()
+    .min(1, "Data da compra é obrigatória"),
+  quantity: z.number()
+    .int("Quantidade deve ser um número inteiro")
+    .min(1, "Quantidade deve ser maior que 0"),
+  purchase_price: z.number()
+    .min(0, "Preço de compra não pode ser negativo")
+    .nullable()
+    .optional(),
+  sale_price: z.number()
+    .min(0, "Preço de venda não pode ser negativo")
+    .nullable()
+    .optional(),
+  payment_type: z.enum(["Faturado", "Caixa", "Nivaldo", "Sabrina"], {
+    required_error: "Tipo de pagamento é obrigatório"
+  }),
+  notes: z.string()
+    .trim()
+    .max(500, "Notas devem ter no máximo 500 caracteres")
+    .nullable()
+    .optional(),
 });
 
 // Report validation
@@ -449,6 +479,7 @@ export const assetReplacementSchema = z.object({
 });
 
 export type ProductFormData = z.infer<typeof productSchema>;
+export type AddStockFormData = z.infer<typeof addStockSchema>;
 export type ReportFormData = z.infer<typeof reportSchema>;
 export type WithdrawalFormData = z.infer<typeof withdrawalSchema>;
 export type AuthFormData = z.infer<typeof authSchema>;
