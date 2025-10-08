@@ -72,29 +72,35 @@ export default function FinancialForecast() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-start print:block">
+      {/* Screen Header */}
+      <div className="flex justify-between items-start print:hidden">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
-            <TrendingUp className="h-8 w-8 print:hidden" />
+            <TrendingUp className="h-8 w-8" />
             Previsão Financeira
           </h1>
           <p className="text-muted-foreground mt-1">
             Análise de valores em estoque, venda e patrimônio de equipamentos
           </p>
-          <p className="text-xs text-muted-foreground mt-1 print:block hidden">
-            Gerado em: {new Date().toLocaleString('pt-BR')}
-          </p>
         </div>
-        <Button onClick={handlePrint} variant="outline" className="print:hidden">
+        <Button onClick={handlePrint} variant="outline">
           <Printer className="mr-2 h-4 w-4" />
           Imprimir Relatório
         </Button>
       </div>
 
+      {/* Print-only Header */}
+      <div className="hidden print:block text-center mb-4">
+        <h1 className="text-3xl font-bold">RELATÓRIO FINANCEIRO MALTA LOCAÇÕES</h1>
+        <p className="text-xs text-muted-foreground mt-1">
+          Gerado em: {new Date().toLocaleString('pt-BR')}
+        </p>
+      </div>
+
       {/* SEÇÃO 1: PEÇAS E BENS DE CONSUMO */}
-      <div className="space-y-4 page-break-before">
-        <div className="flex items-center justify-between print:block">
-          <h2 className="text-2xl font-semibold flex items-center gap-2 print:text-xl">
+      <div className="space-y-4 page-break-inside-avoid">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold flex items-center gap-2">
             <Package className="h-6 w-6 print:hidden" />
             Peças e Bens de Consumo
           </h2>
@@ -114,7 +120,7 @@ export default function FinancialForecast() {
         </div>
 
         {!hasProductSalePrices && (
-          <Alert>
+          <Alert className="print:hidden">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               Nenhum produto possui preço de venda cadastrado. Os valores de venda potencial não podem ser calculados.
@@ -123,11 +129,11 @@ export default function FinancialForecast() {
         )}
 
         {/* Cards de Resumo - Produtos */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-3 page-break-inside-avoid">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Valores em Estoque</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <DollarSign className="h-4 w-4 text-muted-foreground print:hidden" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-primary">
@@ -142,7 +148,7 @@ export default function FinancialForecast() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Valores de Venda Potencial</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <DollarSign className="h-4 w-4 text-muted-foreground print:hidden" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
@@ -157,7 +163,7 @@ export default function FinancialForecast() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Margem Potencial</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <TrendingUp className="h-4 w-4 text-muted-foreground print:hidden" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">
@@ -204,7 +210,7 @@ export default function FinancialForecast() {
         {/* Tabela Detalhada - Produtos */}
         <Card className="page-break-inside-avoid">
           <CardHeader>
-            <CardTitle className="print:text-lg">Detalhamento por Fabricante</CardTitle>
+            <CardTitle>Detalhamento por Fabricante</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -238,9 +244,9 @@ export default function FinancialForecast() {
       </div>
 
       {/* SEÇÃO 2: PATRIMÔNIO (EQUIPAMENTOS) */}
-      <div className="space-y-4 page-break-before">
-        <div className="flex items-center justify-between print:block">
-          <h2 className="text-2xl font-semibold flex items-center gap-2 print:text-xl">
+      <div className="space-y-4 page-break-before page-break-inside-avoid">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold flex items-center gap-2">
             <Wrench className="h-6 w-6 print:hidden" />
             Patrimônio (Equipamentos)
           </h2>
@@ -260,11 +266,11 @@ export default function FinancialForecast() {
         </div>
 
         {/* Cards de Resumo - Equipamentos */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-3 page-break-inside-avoid">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Valor Total em Equipamentos</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <DollarSign className="h-4 w-4 text-muted-foreground print:hidden" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-primary">
@@ -279,7 +285,7 @@ export default function FinancialForecast() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total de Equipamentos</CardTitle>
-              <Wrench className="h-4 w-4 text-muted-foreground" />
+              <Wrench className="h-4 w-4 text-muted-foreground print:hidden" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -294,7 +300,7 @@ export default function FinancialForecast() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Valor Médio</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <TrendingUp className="h-4 w-4 text-muted-foreground print:hidden" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">
@@ -341,7 +347,7 @@ export default function FinancialForecast() {
         {/* Tabela Detalhada - Equipamentos */}
         <Card className="page-break-inside-avoid">
           <CardHeader>
-            <CardTitle className="print:text-lg">Detalhamento por Fabricante</CardTitle>
+            <CardTitle>Detalhamento por Fabricante</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>

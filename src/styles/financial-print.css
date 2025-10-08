@@ -6,14 +6,28 @@
     margin: 1.5cm 1cm;
   }
 
-  /* Ocultar elementos não necessários */
+  /* Ocultar elementos não necessários - SEM OCUPAR ESPAÇO */
   .print\\:hidden {
     display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
   }
 
   /* Mostrar elementos específicos da impressão */
   .print\\:block {
     display: block !important;
+  }
+
+  /* Ocultar sidebar, header, e outros elementos de navegação */
+  header,
+  nav,
+  aside,
+  [role="navigation"],
+  [data-sidebar] {
+    display: none !important;
+    height: 0 !important;
   }
 
   /* Ajustes gerais */
@@ -30,28 +44,33 @@
 
   /* Títulos */
   h1 {
-    font-size: 20pt !important;
-    margin-bottom: 0.3cm !important;
+    font-size: 18pt !important;
+    margin-bottom: 0.2cm !important;
+    margin-top: 0 !important;
+    text-align: center !important;
+    font-weight: bold !important;
   }
 
   h2 {
-    font-size: 16pt !important;
-    margin-top: 0.5cm !important;
-    margin-bottom: 0.3cm !important;
+    font-size: 14pt !important;
+    margin-top: 0.3cm !important;
+    margin-bottom: 0.2cm !important;
+    font-weight: bold !important;
   }
 
   /* Cards */
   .card {
     border: 1px solid #ddd !important;
     box-shadow: none !important;
-    margin-bottom: 0.4cm !important;
+    margin-bottom: 0.3cm !important;
     background: white !important;
+    padding: 0.3cm !important;
   }
 
   /* Cards de resumo em linha */
   .grid {
     display: grid !important;
-    gap: 0.3cm !important;
+    gap: 0.2cm !important;
   }
 
   /* Tabelas */
@@ -87,22 +106,33 @@
   }
 
   /* Espaçamentos reduzidos */
-  .space-y-8 > * + * {
-    margin-top: 0.4cm !important;
+  .space-y-8 > * + *,
+  .space-y-6 > * + *,
+  .space-y-4 > * + * {
+    margin-top: 0.2cm !important;
   }
 
-  .space-y-4 > * + * {
-    margin-top: 0.3cm !important;
+  /* Container mais compacto */
+  .container {
+    padding-top: 0 !important;
+  }
+
+  /* Remover margens desnecessárias */
+  .mb-6,
+  .mt-6 {
+    margin: 0 !important;
   }
 
   /* Cards de valor */
   .card p {
-    font-size: 9pt !important;
+    font-size: 8pt !important;
+    margin: 0 !important;
   }
 
   .card .text-3xl,
   .card .text-2xl {
-    font-size: 14pt !important;
+    font-size: 12pt !important;
+    margin-top: 0.1cm !important;
   }
 
   /* Ajustes de texto */
@@ -111,12 +141,11 @@
   }
 
   .text-xs {
-    font-size: 8pt !important;
+    font-size: 7pt !important;
   }
 
-  /* Garantir que a primeira seção comece na primeira página */
-  .page-break-before:first-of-type {
-    page-break-before: avoid !important;
+  .text-sm {
+    font-size: 8pt !important;
   }
 
   /* Rodapé com numeração (opcional, depende do navegador) */
