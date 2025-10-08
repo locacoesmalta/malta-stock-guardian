@@ -16,7 +16,6 @@ import { withdrawalSchema } from "@/lib/validations";
 import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
 import { formatPAT } from "@/lib/patUtils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 interface WithdrawalItem {
@@ -52,7 +51,7 @@ const MaterialWithdrawal = () => {
       setEquipmentName(equipment.equipment_name);
       
       // Se o equipamento está em Depósito Malta, sugerir Manutenção Interna
-      if (equipment.location_type === "Depósito Malta") {
+      if (equipment.location_type === "deposito_malta") {
         console.log("🔧 Equipamento em Depósito Malta - Sugerindo Manutenção Interna");
         setCompany("Manutenção Interna");
         setWorkSite("Depósito Malta");
@@ -262,7 +261,7 @@ const MaterialWithdrawal = () => {
                           Equipamento encontrado: {equipment.equipment_name}
                         </AlertDescription>
                       </Alert>
-                      {equipment.location_type === "Depósito Malta" && (
+                      {equipment.location_type === "deposito_malta" && (
                         <Alert className="mt-2 border-blue-500/50 bg-blue-50 dark:bg-blue-950/20">
                           <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                           <AlertDescription className="text-xs text-blue-700 dark:text-blue-300">
@@ -297,16 +296,15 @@ const MaterialWithdrawal = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="company" className="text-xs sm:text-sm">Empresa *</Label>
-                <Select value={company} onValueChange={setCompany}>
-                  <SelectTrigger id="company" className="text-sm">
-                    <SelectValue placeholder="Selecione a empresa" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Manutenção Interna">Manutenção Interna</SelectItem>
-                    <SelectItem value="Locação Externa">Locação Externa</SelectItem>
-                    <SelectItem value="Obra">Obra</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Input
+                  id="company"
+                  type="text"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  placeholder="Digite a empresa"
+                  required
+                  className="text-sm"
+                />
               </div>
 
               <div className="space-y-2">
