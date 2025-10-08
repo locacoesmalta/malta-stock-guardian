@@ -716,15 +716,14 @@ const Products = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="comments">Comentários / Especificações</Label>
-                  <Textarea
-                    id="comments"
-                    value={formData.comments}
-                    onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
-                    placeholder="Adicione observações específicas sobre este produto..."
-                    rows={4}
-                  />
-                </div>
-              )}
+                <Textarea
+                  id="comments"
+                  value={formData.comments}
+                  onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
+                  placeholder="Adicione observações específicas sobre este produto..."
+                  rows={4}
+                />
+              </div>
 
               <div className="flex flex-col-reverse sm:flex-row gap-2 justify-end">
                 <Button
