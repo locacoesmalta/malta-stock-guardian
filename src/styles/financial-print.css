@@ -27,6 +27,8 @@
   button,
   select,
   input,
+  svg.lucide,
+  .lucide,
   [role="navigation"],
   [data-sidebar],
   .print\\:hidden {
@@ -40,28 +42,34 @@
   body {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
+    margin: 0 !important;
   }
 
   /* Container principal */
   .container {
     max-width: 100% !important;
     padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Espaçamento geral */
+  .space-y-6 > *:not(:first-child),
+  .space-y-4 > *:not(:first-child) {
+    margin-top: 0.3cm !important;
   }
 
   /* Títulos */
   h1 {
-    font-size: 14pt !important;
-    margin-bottom: 0.3cm !important;
-    margin-top: 0 !important;
-    text-align: center !important;
+    font-size: 12pt !important;
+    margin: 0 !important;
     font-weight: bold !important;
     line-height: 1.2 !important;
   }
 
   h2 {
-    font-size: 12pt !important;
-    margin-top: 0.4cm !important;
-    margin-bottom: 0.3cm !important;
+    font-size: 11pt !important;
+    margin-top: 0 !important;
+    margin-bottom: 0.2cm !important;
     font-weight: bold !important;
     page-break-after: avoid !important;
   }
@@ -70,37 +78,41 @@
   .card {
     border: 1px solid #ddd !important;
     box-shadow: none !important;
-    margin-bottom: 0.4cm !important;
+    margin-bottom: 0.3cm !important;
     background: white !important;
-    padding: 0.3cm !important;
+    padding: 0.25cm !important;
     page-break-inside: avoid !important;
   }
 
   /* Cards de resumo em linha */
   .grid {
     display: grid !important;
-    gap: 0.3cm !important;
+    gap: 0.25cm !important;
     page-break-inside: avoid !important;
+    margin-bottom: 0.3cm !important;
   }
 
   /* Tabelas */
   table {
     width: 100% !important;
     border-collapse: collapse !important;
-    font-size: 8pt !important;
+    font-size: 7.5pt !important;
     page-break-inside: auto !important;
+    margin-bottom: 0 !important;
   }
 
   table th,
   table td {
-    padding: 0.15cm 0.1cm !important;
+    padding: 0.12cm 0.08cm !important;
     border: 1px solid #ddd !important;
+    line-height: 1.3 !important;
   }
 
   table th {
     background-color: #f5f5f5 !important;
     font-weight: bold !important;
     page-break-after: avoid !important;
+    font-size: 8pt !important;
   }
 
   thead {
@@ -132,34 +144,101 @@
     height: auto !important;
   }
 
-  /* Espaçamentos reduzidos */
-  .space-y-8 > * + *,
-  .space-y-6 > * + *,
-  .space-y-4 > * + * {
-    margin-top: 0.2cm !important;
+  /* Logo específico do header */
+  .print\\:h-\\[50px\\] {
+    height: 50px !important;
+    width: auto !important;
   }
 
-  /* Container mais compacto */
-  .container {
-    padding-top: 0 !important;
+  /* Classes de print customizadas */
+  .print\\:flex {
+    display: flex !important;
   }
 
-  /* Remover margens desnecessárias */
-  .mb-6,
-  .mt-6 {
-    margin: 0 !important;
+  .print\\:items-center {
+    align-items: center !important;
+  }
+
+  .print\\:justify-between {
+    justify-content: space-between !important;
+  }
+
+  .print\\:mb-4 {
+    margin-bottom: 0.4cm !important;
+  }
+
+  .print\\:pb-3 {
+    padding-bottom: 0.3cm !important;
+  }
+
+  .print\\:border-b-2 {
+    border-bottom: 2px solid #ddd !important;
+  }
+
+  .print\\:text-xl {
+    font-size: 12pt !important;
+  }
+
+  .print\\:text-base {
+    font-size: 11pt !important;
+  }
+
+  .print\\:text-sm {
+    font-size: 9pt !important;
+  }
+
+  .print\\:text-xs {
+    font-size: 7pt !important;
+  }
+
+  .print\\:font-bold {
+    font-weight: bold !important;
+  }
+
+  .print\\:font-semibold {
+    font-weight: 600 !important;
+  }
+
+  .print\\:mb-1 {
+    margin-bottom: 0.1cm !important;
+  }
+
+  .print\\:mt-1 {
+    margin-top: 0.1cm !important;
+  }
+
+  .print\\:mb-2 {
+    margin-bottom: 0.2cm !important;
+  }
+
+  .print\\:pb-2 {
+    padding-bottom: 0.2cm !important;
+  }
+
+  .print\\:border-b {
+    border-bottom: 1px solid #ddd !important;
+  }
+
+  .print\\:text-center {
+    text-align: center !important;
+  }
+
+  .print\\:flex-1 {
+    flex: 1 !important;
   }
 
   /* Cards de valor */
   .card p {
-    font-size: 8pt !important;
+    font-size: 7.5pt !important;
     margin: 0 !important;
+    line-height: 1.3 !important;
   }
 
   .card .text-3xl,
   .card .text-2xl {
-    font-size: 12pt !important;
-    margin-top: 0.1cm !important;
+    font-size: 11pt !important;
+    margin-top: 0.08cm !important;
+    font-weight: bold !important;
   }
 
   /* Ajustes de texto */
@@ -175,24 +254,22 @@
     font-size: 8pt !important;
   }
 
-  /* Footer com logo e informações */
+  /* Configuração da página com footer */
   @page {
+    margin: 1.2cm 1cm 1.5cm 1cm;
+    
     @bottom-center {
       content: "MALTA LOCAÇÕES DE MÁQUINAS E EQUIPAMENTOS";
-      font-size: 8pt;
+      font-size: 7pt;
       color: #666;
-      font-weight: bold;
+      font-weight: 600;
     }
+    
     @bottom-right {
       content: "Página " counter(page);
-      font-size: 8pt;
+      font-size: 7pt;
       color: #666;
     }
-  }
-
-  /* Espaçamento para footer */
-  body {
-    margin-bottom: 1cm;
   }
 }
 

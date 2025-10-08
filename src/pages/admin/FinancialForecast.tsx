@@ -107,25 +107,23 @@ export default function FinancialForecast() {
       </div>
 
       {/* Print-only Header */}
-      <div className="hidden print:block text-center mb-6">
-        <div className="flex items-center justify-center gap-4 mb-2">
-          <img src="/malta-logo.webp" alt="Malta Locações" className="h-12" />
-          <div>
-            <h1 className="text-xl font-bold">RELATÓRIO FINANCEIRO</h1>
-            <p className="text-sm font-semibold">MALTA LOCAÇÕES DE MÁQUINAS E EQUIPAMENTOS</p>
-          </div>
+      <div className="hidden print:flex print:items-center print:justify-between print:mb-4 print:pb-3 print:border-b-2 print:border-border">
+        <img src="/malta-logo.webp" alt="Malta Locações" className="print:h-[50px]" />
+        <div className="print:text-center print:flex-1">
+          <h1 className="print:text-xl print:font-bold print:mb-1">RELATÓRIO FINANCEIRO</h1>
+          <p className="print:text-sm print:font-semibold">MALTA LOCAÇÕES DE MÁQUINAS E EQUIPAMENTOS</p>
+          <p className="print:text-xs text-muted-foreground print:mt-1">
+            Gerado em: {format(new Date(), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
+          </p>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Gerado em: {format(new Date(), "dd/MM/yyyy, HH:mm:ss", { locale: ptBR })}
-        </p>
       </div>
 
       {/* SEÇÃO 1: PEÇAS E BENS DE CONSUMO */}
       <div className="space-y-4 page-break-inside-avoid">
-        <div className="flex items-center justify-between print:mb-3">
-          <h2 className="text-2xl font-semibold flex items-center gap-2 print:text-lg">
+        <div className="flex items-center justify-between print:mb-2 print:pb-2 print:border-b print:border-border">
+          <h2 className="text-2xl font-semibold flex items-center gap-2 print:text-base print:font-bold">
             <Package className="h-6 w-6 print:hidden" />
-            Peças Malta Locações e Bens de Consumo
+            Peças e Bens de Consumo
           </h2>
           <Select value={selectedProductManufacturer} onValueChange={setSelectedProductManufacturer}>
             <SelectTrigger className="w-[250px] print:hidden">
@@ -268,10 +266,10 @@ export default function FinancialForecast() {
 
       {/* SEÇÃO 2: PATRIMÔNIO (EQUIPAMENTOS) */}
       <div className="space-y-4 page-break-before page-break-inside-avoid">
-        <div className="flex items-center justify-between print:mb-3">
-          <h2 className="text-2xl font-semibold flex items-center gap-2 print:text-lg">
+        <div className="flex items-center justify-between print:mb-2 print:pb-2 print:border-b print:border-border">
+          <h2 className="text-2xl font-semibold flex items-center gap-2 print:text-base print:font-bold">
             <Wrench className="h-6 w-6 print:hidden" />
-            Malta Locações - Patrimônio (Equipamentos)
+            Patrimônio (Equipamentos)
           </h2>
           <Select value={selectedAssetManufacturer} onValueChange={setSelectedAssetManufacturer}>
             <SelectTrigger className="w-[250px] print:hidden">
@@ -402,10 +400,10 @@ export default function FinancialForecast() {
       {/* SEÇÃO 3: CUSTOS DE MANUTENÇÃO INTERNA */}
       {maintenanceData.length > 0 && (
         <div className="space-y-4 page-break-before page-break-inside-avoid">
-          <div className="flex items-center justify-between print:mb-3">
-            <h2 className="text-2xl font-semibold flex items-center gap-2 print:text-lg">
+          <div className="flex items-center justify-between print:mb-2 print:pb-2 print:border-b print:border-border">
+            <h2 className="text-2xl font-semibold flex items-center gap-2 print:text-base print:font-bold">
               <Settings className="h-6 w-6 print:hidden" />
-              Malta Locações - Custos de Manutenção Interna
+              Custos de Manutenção Interna
             </h2>
           </div>
 
