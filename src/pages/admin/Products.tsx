@@ -596,7 +596,7 @@ const Products = () => {
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-sm text-blue-800">
                   <p className="font-medium">ℹ️ Modo de Edição</p>
                   <p className="text-xs mt-1">
-                    Para alterar quantidade ou preços, use o botão "Adicionar Estoque" na lista de produtos.
+                    Para alterar quantidade ou preços, clique no botão <strong>➕ (Adicionar Estoque)</strong> ao lado do produto na lista.
                     O histórico de compras será mantido automaticamente.
                   </p>
                 </div>
@@ -946,6 +946,22 @@ const Products = () => {
                       minQuantity={product.min_quantity}
                     />
                     <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setAddStockDialog({ open: true, product })}
+                        title="Adicionar Estoque"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setHistoryDialog({ open: true, product })}
+                        title="Ver Histórico"
+                      >
+                        <History className="h-4 w-4" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
