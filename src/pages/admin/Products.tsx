@@ -75,6 +75,7 @@ const Products = () => {
     sale_price: "",
     payment_type: "",
     notes: "",
+    profit_margin: "",
   });
   const [historyDialog, setHistoryDialog] = useState<{
     open: boolean;
@@ -289,15 +290,27 @@ const Products = () => {
         .eq("id", user?.id)
         .single();
 
+      const currentProduct = addStockDialog.product;
+      const newPurchasePrice = addStockData.purchase_price ? Number(addStockData.purchase_price) : null;
+      const newSalePrice = addStockData.sale_price ? Number(addStockData.sale_price) : null;
+
+      // Determinar preço de compra: usar novo se for maior que o antigo
+      let finalPurchasePrice = currentProduct.purchase_price;
+      if (newPurchasePrice !== null) {
+        if (currentProduct.purchase_price === null || newPurchasePrice > currentProduct.purchase_price) {
+          finalPurchasePrice = newPurchasePrice;
+        }
+      }
+
       // 1. Inserir compra no histórico
       const { error: purchaseError } = await supabase
         .from("product_purchases")
         .insert([{
-          product_id: addStockDialog.product.id,
+          product_id: currentProduct.id,
           purchase_date: addStockData.purchase_date,
           quantity: Number(addStockData.quantity),
-          purchase_price: addStockData.purchase_price ? Number(addStockData.purchase_price) : null,
-          sale_price: addStockData.sale_price ? Number(addStockData.sale_price) : null,
+          purchase_price: newPurchasePrice,
+          sale_price: newSalePrice,
           payment_type: addStockData.payment_type,
           operator_id: user?.id,
           operator_name: profile?.full_name || user?.email,
@@ -306,30 +319,19 @@ const Products = () => {
 
       if (purchaseError) throw purchaseError;
 
-      // 2. Atualizar quantidade no produto
-      const newQuantity = addStockDialog.product.quantity + Number(addStockData.quantity);
+      // 2. Atualizar produto com nova quantidade e preços
+      const newQuantity = currentProduct.quantity + Number(addStockData.quantity);
       
-      // 3. Decidir sobre preço (se fornecido)
       const updatedData: any = {
         quantity: newQuantity,
+        purchase_price: finalPurchasePrice,
+        sale_price: newSalePrice || currentProduct.sale_price,
       };
-
-      if (addStockData.purchase_price && addStockData.sale_price) {
-        const useNewPrice = await confirm({
-          title: "Atualizar Preços?",
-          description: `Deseja usar os novos preços (Compra: R$ ${addStockData.purchase_price}, Venda: R$ ${addStockData.sale_price}) ou manter os preços atuais?`,
-        });
-
-        if (useNewPrice) {
-          updatedData.purchase_price = Number(addStockData.purchase_price);
-          updatedData.sale_price = Number(addStockData.sale_price);
-        }
-      }
 
       const { error: updateError } = await supabase
         .from("products")
         .update(updatedData)
-        .eq("id", addStockDialog.product.id);
+        .eq("id", currentProduct.id);
 
       if (updateError) throw updateError;
 
@@ -342,6 +344,7 @@ const Products = () => {
         sale_price: "",
         payment_type: "",
         notes: "",
+        profit_margin: "",
       });
       refetch();
     } catch (error) {
@@ -1080,7 +1083,7 @@ const Products = () => {
       <Dialog open={addStockDialog.open} onOpenChange={(open) => {
         if (!open) {
           setAddStockDialog({ open: false, product: null });
-          setAddStockData({ purchase_date: "", quantity: 0, purchase_price: "", sale_price: "", payment_type: "", notes: "" });
+          setAddStockData({ purchase_date: "", quantity: 0, purchase_price: "", sale_price: "", payment_type: "", notes: "", profit_margin: "" });
         }
       }}>
         <DialogContent className="max-w-md">
@@ -1088,6 +1091,25 @@ const Products = () => {
             <DialogTitle>Adicionar Estoque - {addStockDialog.product?.name}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {/* Preços Atuais */}
+            <div className="bg-muted p-3 rounded-lg space-y-2">
+              <p className="text-sm font-medium">Preços Atuais:</p>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Compra: </span>
+                  <span className="font-semibold">
+                    R$ {addStockDialog.product?.purchase_price?.toFixed(2) || "0,00"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Venda: </span>
+                  <span className="font-semibold">
+                    R$ {addStockDialog.product?.sale_price?.toFixed(2) || "0,00"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="add_purchase_date">Data da Compra *</Label>
               <Input
@@ -1098,6 +1120,7 @@ const Products = () => {
                 required
               />
             </div>
+            
             <div className="space-y-2">
               <Label htmlFor="add_quantity">Quantidade *</Label>
               <Input
@@ -1109,30 +1132,79 @@ const Products = () => {
                 required
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="add_purchase_price">Preço Compra (R$)</Label>
-                <Input
-                  id="add_purchase_price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={addStockData.purchase_price}
-                  onChange={(e) => setAddStockData({ ...addStockData, purchase_price: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="add_sale_price">Preço Venda (R$)</Label>
-                <Input
-                  id="add_sale_price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={addStockData.sale_price}
-                  onChange={(e) => setAddStockData({ ...addStockData, sale_price: e.target.value })}
-                />
-              </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="add_purchase_price">Novo Preço de Compra (R$)</Label>
+              <Input
+                id="add_purchase_price"
+                type="number"
+                step="0.01"
+                min="0"
+                value={addStockData.purchase_price}
+                onChange={(e) => {
+                  const newPurchasePrice = e.target.value;
+                  setAddStockData({ ...addStockData, purchase_price: newPurchasePrice });
+                  
+                  // Recalcular preço de venda se houver margem
+                  if (addStockData.profit_margin && newPurchasePrice) {
+                    const margin = Number(addStockData.profit_margin);
+                    const calculatedSalePrice = (Number(newPurchasePrice) * (1 + margin / 100)).toFixed(2);
+                    setAddStockData(prev => ({ ...prev, purchase_price: newPurchasePrice, sale_price: calculatedSalePrice }));
+                  }
+                }}
+                placeholder="Deixe vazio para manter o atual"
+              />
+              <p className="text-xs text-muted-foreground">
+                Será usado apenas se for maior que o preço atual
+              </p>
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="profit_margin">Margem de Lucro (%) - Opcional</Label>
+              <Select
+                value={addStockData.profit_margin}
+                onValueChange={(value) => {
+                  setAddStockData({ ...addStockData, profit_margin: value });
+                  
+                  // Calcular preço de venda automaticamente
+                  if (addStockData.purchase_price && value) {
+                    const margin = Number(value);
+                    const calculatedSalePrice = (Number(addStockData.purchase_price) * (1 + margin / 100)).toFixed(2);
+                    setAddStockData(prev => ({ ...prev, profit_margin: value, sale_price: calculatedSalePrice }));
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a margem..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 30 }, (_, i) => (i + 1) * 10).map((percent) => (
+                    <SelectItem key={percent} value={percent.toString()}>
+                      {percent}%
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="add_sale_price">Preço de Venda (R$)</Label>
+              <Input
+                id="add_sale_price"
+                type="number"
+                step="0.01"
+                min="0"
+                value={addStockData.sale_price}
+                onChange={(e) => setAddStockData({ ...addStockData, sale_price: e.target.value, profit_margin: "" })}
+                placeholder="Calculado pela margem ou edite manualmente"
+              />
+              {addStockData.purchase_price && addStockData.sale_price && (
+                <p className="text-xs text-muted-foreground">
+                  Margem: {(((Number(addStockData.sale_price) - Number(addStockData.purchase_price)) / Number(addStockData.purchase_price)) * 100).toFixed(1)}%
+                </p>
+              )}
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="add_payment_type">Tipo de Pagamento *</Label>
               <Select
@@ -1150,6 +1222,7 @@ const Products = () => {
                 </SelectContent>
               </Select>
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="add_notes">Observações</Label>
               <Textarea
