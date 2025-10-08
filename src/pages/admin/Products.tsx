@@ -592,6 +592,15 @@ const Products = () => {
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Campos do formulário de produto */}
+              {editingProduct && (
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-sm text-blue-800">
+                  <p className="font-medium">ℹ️ Modo de Edição</p>
+                  <p className="text-xs mt-1">
+                    Para alterar quantidade ou preços, use o botão "Adicionar Estoque" na lista de produtos.
+                    O histórico de compras será mantido automaticamente.
+                  </p>
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="code">Código do Produto *</Label>
@@ -639,7 +648,8 @@ const Products = () => {
                     min="0"
                     value={formData.quantity}
                     onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
-                    required
+                    disabled={!!editingProduct}
+                    required={!editingProduct}
                   />
                 </div>
                 <div className="space-y-2">
@@ -665,6 +675,7 @@ const Products = () => {
                     min="0"
                     value={formData.purchase_price}
                     onChange={(e) => setFormData({ ...formData, purchase_price: e.target.value })}
+                    disabled={!!editingProduct}
                   />
                 </div>
                 <div className="space-y-2">
@@ -676,6 +687,7 @@ const Products = () => {
                     min="0"
                     value={formData.sale_price}
                     onChange={(e) => setFormData({ ...formData, sale_price: e.target.value })}
+                    disabled={!!editingProduct}
                   />
                 </div>
               </div>
