@@ -13,7 +13,6 @@ import { TrendingUp, Package, Wrench, DollarSign, AlertCircle, Printer, Settings
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CashBoxManager } from "@/components/CashBoxManager";
 import "@/styles/financial-print.css";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B9D'];
@@ -117,11 +116,6 @@ export default function FinancialForecast() {
             Gerado em: {format(new Date(), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
           </p>
         </div>
-      </div>
-
-      {/* CAIXA DA MALTA */}
-      <div className="space-y-4 mb-8 print:hidden">
-        <CashBoxManager />
       </div>
 
       {/* SEÇÃO 1: PEÇAS E BENS DE CONSUMO */}

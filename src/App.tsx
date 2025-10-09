@@ -33,6 +33,7 @@ const AssetsControlDashboard = lazy(() => import("./pages/assets/AssetsControlDa
 const PostInspection = lazy(() => import("./pages/assets/PostInspection"));
 const AssetReplacement = lazy(() => import("./pages/assets/AssetReplacement"));
 const FinancialForecast = lazy(() => import("./pages/admin/FinancialForecast"));
+const CashBox = lazy(() => import("./pages/admin/CashBox"));
 const RentalCompaniesList = lazy(() => import("./pages/rental/RentalCompaniesList"));
 const RentalCompanyForm = lazy(() => import("./pages/rental/RentalCompanyForm"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -313,6 +314,7 @@ const App = () => (
                 } 
               />
               <Route path="/admin/financial-forecast" element={<ProtectedLayout><AdminRoute><FinancialForecast /></AdminRoute></ProtectedLayout>} />
+              <Route path="/admin/cash-box" element={<ProtectedLayout><AdminRoute><CashBox /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/products" element={<ProtectedLayout><AdminRoute><Products /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/users" element={<ProtectedLayout><AdminRoute><Users /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/logs" element={<ProtectedLayout><AdminRoute><AuditLogs /></AdminRoute></ProtectedLayout>} />
