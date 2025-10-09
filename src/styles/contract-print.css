@@ -1,0 +1,103 @@
+@media print {
+  /* Ocultar elementos de navegação e interface */
+  header,
+  nav,
+  .sidebar,
+  button,
+  .print\:hidden,
+  [data-sidebar],
+  [role="navigation"] {
+    display: none !important;
+  }
+
+  /* Configuração da página */
+  @page {
+    size: A4;
+    margin: 2cm;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: white;
+    color: black;
+  }
+
+  /* Container principal */
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Cabeçalho do contrato */
+  .contract-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #000;
+    padding-bottom: 1rem;
+  }
+
+  /* Cards e seções */
+  .card {
+    border: 1px solid #000;
+    page-break-inside: avoid;
+    margin-bottom: 1rem;
+    padding: 1rem;
+  }
+
+  /* Títulos */
+  h1, h2, h3 {
+    color: black;
+  }
+
+  h1 {
+    font-size: 24pt;
+    margin-bottom: 0.5rem;
+  }
+
+  h2 {
+    font-size: 18pt;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Tabelas e campos */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+  }
+
+  table th,
+  table td {
+    border: 1px solid #000;
+    padding: 0.5rem;
+    text-align: left;
+  }
+
+  /* Evitar quebras de página dentro de elementos importantes */
+  .no-break {
+    page-break-inside: avoid;
+  }
+
+  /* Assinatura */
+  .signature-area {
+    margin-top: 3rem;
+    display: flex;
+    justify-content: space-between;
+    page-break-inside: avoid;
+  }
+
+  .signature-line {
+    border-top: 1px solid #000;
+    width: 40%;
+    padding-top: 0.5rem;
+    text-align: center;
+  }
+
+  /* Ocultar upload de arquivos na impressão */
+  input[type="file"],
+  .upload-area {
+    display: none !important;
+  }
+}

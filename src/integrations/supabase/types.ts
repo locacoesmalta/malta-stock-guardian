@@ -447,6 +447,75 @@ export type Database = {
         }
         Relationships: []
       }
+      rental_companies: {
+        Row: {
+          address: string | null
+          cnpj: string
+          company_name: string
+          contact_email: string | null
+          contact_phone: string | null
+          contract_end_date: string
+          contract_number: string
+          contract_start_date: string
+          contract_type: string
+          created_at: string
+          created_by: string | null
+          daily_rental_price: number | null
+          documents: Json | null
+          equipment_description: string | null
+          id: string
+          is_renewed: boolean | null
+          notes: string | null
+          rental_end_date: string | null
+          rental_start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          cnpj: string
+          company_name: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          contract_end_date: string
+          contract_number: string
+          contract_start_date: string
+          contract_type: string
+          created_at?: string
+          created_by?: string | null
+          daily_rental_price?: number | null
+          documents?: Json | null
+          equipment_description?: string | null
+          id?: string
+          is_renewed?: boolean | null
+          notes?: string | null
+          rental_end_date?: string | null
+          rental_start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          cnpj?: string
+          company_name?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          contract_end_date?: string
+          contract_number?: string
+          contract_start_date?: string
+          contract_type?: string
+          created_at?: string
+          created_by?: string | null
+          daily_rental_price?: number | null
+          documents?: Json | null
+          equipment_description?: string | null
+          id?: string
+          is_renewed?: boolean | null
+          notes?: string | null
+          rental_end_date?: string | null
+          rental_start_date?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       report_parts: {
         Row: {
           created_at: string

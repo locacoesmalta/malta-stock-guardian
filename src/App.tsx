@@ -33,6 +33,8 @@ const AssetsControlDashboard = lazy(() => import("./pages/assets/AssetsControlDa
 const PostInspection = lazy(() => import("./pages/assets/PostInspection"));
 const AssetReplacement = lazy(() => import("./pages/assets/AssetReplacement"));
 const FinancialForecast = lazy(() => import("./pages/admin/FinancialForecast"));
+const RentalCompaniesList = lazy(() => import("./pages/rental/RentalCompaniesList"));
+const RentalCompanyForm = lazy(() => import("./pages/rental/RentalCompanyForm"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Welcome = lazy(() => import("./pages/Welcome"));
 
@@ -276,6 +278,36 @@ const App = () => (
                   <ProtectedLayout>
                     <PermissionRoute permission="can_edit_assets">
                       <AssetReplacement />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/rental-companies" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_access_assets">
+                      <RentalCompaniesList />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/rental-companies/new" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_create_assets">
+                      <RentalCompanyForm />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/rental-companies/:id/edit" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_edit_assets">
+                      <RentalCompanyForm />
                     </PermissionRoute>
                   </ProtectedLayout>
                 } 

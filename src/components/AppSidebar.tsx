@@ -1,4 +1,4 @@
-import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3, ClipboardList, TrendingUp } from "lucide-react";
+import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3, ClipboardList, TrendingUp, Building2 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -75,6 +75,12 @@ export function AppSidebar() {
       path: "/assets",
       icon: QrCode,
       label: "Gestão de Patrimônio",
+      show: permissions.can_access_assets || isAdmin,
+    },
+    {
+      path: "/rental-companies",
+      icon: Building2,
+      label: "Empresas de Locação",
       show: permissions.can_access_assets || isAdmin,
     },
   ];
