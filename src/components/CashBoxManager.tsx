@@ -110,6 +110,13 @@ export const CashBoxManager = () => {
     return format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: ptBR });
   };
 
+  const isLowBalance = () => {
+    if (!openCashBox) return false;
+    const currentBalance = calculateBalance();
+    const threshold = openCashBox.initial_value * 0.1;
+    return currentBalance <= threshold;
+  };
+
   if (isLoadingCashBox) {
     return <div>Carregando...</div>;
   }
@@ -175,19 +182,51 @@ export const CashBoxManager = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
-                <div>
-                  <p className="text-sm text-muted-foreground">Aberto em</p>
-                  <p className="font-medium">{formatDate(openCashBox.opened_at)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Valor Inicial</p>
-                  <p className="font-medium">{formatCurrency(openCashBox.initial_value)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Saldo Atual</p>
-                  <p className="font-bold text-lg">{formatCurrency(calculateBalance())}</p>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground mb-2">Aberto em</p>
+                      <p className="font-medium">{formatDate(openCashBox.opened_at)}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground mb-2">Valor Inicial</p>
+                      <p className="font-bold text-xl">{formatCurrency(openCashBox.initial_value)}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground mb-2">Total em Transações</p>
+                      <p className="font-medium text-lg">{transactions.length}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className={isLowBalance() ? "border-red-500 bg-red-50 dark:bg-red-950/20" : ""}>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Saldo Atual
+                        {isLowBalance() && (
+                          <span className="ml-2 text-xs text-red-600 dark:text-red-400 font-semibold">
+                            (⚠️ BAIXO)
+                          </span>
+                        )}
+                      </p>
+                      <p className={`font-bold text-2xl ${isLowBalance() ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>
+                        {formatCurrency(calculateBalance())}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
               <div className="flex gap-2">
@@ -269,70 +308,86 @@ export const CashBoxManager = () => {
                 </Button>
               </div>
 
-              <div className="space-y-2">
-                <h3 className="font-semibold">Transações</h3>
-                {transactions.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Nenhuma transação registrada</p>
-                ) : (
-                  <div className="space-y-2">
-                    {transactions.map((transaction) => (
-                      <div
-                        key={transaction.id}
-                        className="flex justify-between items-center p-3 border rounded-lg"
-                      >
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`text-sm font-medium ${
-                                transaction.type === "entrada"
-                                  ? "text-green-600"
-                                  : transaction.type === "saida"
-                                  ? "text-red-600"
-                                  : "text-orange-600"
-                              }`}
-                            >
-                              {transaction.type === "entrada"
-                                ? "ENTRADA"
-                                : transaction.type === "saida"
-                                ? "SAÍDA"
-                                : "DEVOLUÇÃO"}
-                            </span>
-                            {transaction.attachment_url && (
-                              <a
-                                href={transaction.attachment_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-800"
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Histórico de Transações</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {transactions.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">
+                      Nenhuma transação registrada
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {transactions.map((transaction) => (
+                        <div
+                          key={transaction.id}
+                          className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span
+                                className={`text-xs sm:text-sm font-semibold px-2 py-1 rounded ${
+                                  transaction.type === "entrada"
+                                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                    : transaction.type === "saida"
+                                    ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                    : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                                }`}
                               >
-                                <Paperclip className="h-4 w-4" />
-                              </a>
+                                {transaction.type === "entrada"
+                                  ? "ENTRADA"
+                                  : transaction.type === "saida"
+                                  ? "SAÍDA"
+                                  : "DEVOLUÇÃO"}
+                              </span>
+                              {transaction.attachment_url && (
+                                <a
+                                  href={transaction.attachment_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                  title="Ver anexo"
+                                >
+                                  <Paperclip className="h-4 w-4" />
+                                </a>
+                              )}
+                            </div>
+                            <p className="text-sm font-medium mt-1 truncate">
+                              {transaction.description || "Sem descrição"}
+                            </p>
+                            {transaction.observations && (
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                {transaction.observations}
+                              </p>
                             )}
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {formatDate(transaction.created_at)}
+                            </p>
                           </div>
-                          <p className="text-sm">{transaction.description || "Sem descrição"}</p>
-                          {transaction.observations && (
-                            <p className="text-xs text-muted-foreground mt-1">{transaction.observations}</p>
-                          )}
-                          <p className="text-xs text-muted-foreground">{formatDate(transaction.created_at)}</p>
+                          <div className="flex items-center gap-3 sm:flex-col sm:items-end">
+                            <span className="font-bold text-lg whitespace-nowrap">
+                              {formatCurrency(transaction.value)}
+                            </span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setEditingTransaction(transaction);
+                                setEditObservations(transaction.observations || "");
+                                setShowEditDialog(true);
+                              }}
+                              title="Editar observações"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold">{formatCurrency(transaction.value)}</span>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setEditingTransaction(transaction);
-                              setEditObservations(transaction.observations || "");
-                              setShowEditDialog(true);
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           )}
         </CardContent>
