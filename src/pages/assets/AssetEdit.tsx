@@ -164,22 +164,12 @@ export default function AssetEdit() {
 
               <div className="space-y-2">
                 <Label htmlFor="voltage_combustion">Voltagem/Combustível</Label>
-                <Select
-                  value={form.watch("voltage_combustion") || "_NONE_"}
-                  onValueChange={(value) => form.setValue("voltage_combustion", value === "_NONE_" ? undefined : value as any)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_NONE_">Nenhum</SelectItem>
-                    <SelectItem value="110V">110V</SelectItem>
-                    <SelectItem value="220V">220V</SelectItem>
-                    <SelectItem value="GASOLINA">Gasolina</SelectItem>
-                    <SelectItem value="DIESEL">Diesel</SelectItem>
-                    <SelectItem value="GÁS">Gás</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Input
+                  id="voltage_combustion"
+                  placeholder="Ex: 110V, 220V, Gasolina, Diesel, Gás"
+                  value={form.watch("voltage_combustion") || ""}
+                  onChange={(e) => form.setValue("voltage_combustion", e.target.value || undefined)}
+                />
               </div>
 
               <div className="space-y-2">

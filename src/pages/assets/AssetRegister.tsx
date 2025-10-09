@@ -61,7 +61,7 @@ const equipmentSchema = z.object({
   manufacturer: z.string().min(1, "Marca/Fabricante é obrigatório"),
   model: z.string().optional(),
   serial_number: z.string().optional(),
-  voltage_combustion: z.enum(["110V", "220V", "GASOLINA", "DIESEL", "GÁS"]).optional(),
+  voltage_combustion: z.string().trim().max(100, "Voltagem/Combustão deve ter no máximo 100 caracteres").optional(),
   supplier: z.string().optional(),
   purchase_date: z.date().optional(),
   unit_value: z.number().nonnegative("Valor deve ser positivo").optional(),
@@ -480,20 +480,12 @@ export default function AssetRegister() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Voltagem / Combustão</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="110V">110V</SelectItem>
-                        <SelectItem value="220V">220V</SelectItem>
-                        <SelectItem value="GASOLINA">Gasolina</SelectItem>
-                        <SelectItem value="DIESEL">Diesel</SelectItem>
-                        <SelectItem value="GÁS">Gás</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Ex: 110V, 220V, Gasolina, Diesel, Gás"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
