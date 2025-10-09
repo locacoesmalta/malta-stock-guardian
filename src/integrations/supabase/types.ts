@@ -171,7 +171,9 @@ export type Database = {
           action: string
           created_at: string
           id: string
+          inserted_by_trigger: string | null
           ip_address: string | null
+          log_hash: string | null
           new_data: Json | null
           old_data: Json | null
           record_id: string | null
@@ -185,7 +187,9 @@ export type Database = {
           action: string
           created_at?: string
           id?: string
+          inserted_by_trigger?: string | null
           ip_address?: string | null
+          log_hash?: string | null
           new_data?: Json | null
           old_data?: Json | null
           record_id?: string | null
@@ -199,7 +203,9 @@ export type Database = {
           action?: string
           created_at?: string
           id?: string
+          inserted_by_trigger?: string | null
           ip_address?: string | null
+          log_hash?: string | null
           new_data?: Json | null
           old_data?: Json | null
           record_id?: string | null
@@ -894,6 +900,26 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      check_audit_logs_health: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          integrity_issues: number
+          logs_without_hash: number
+          logs_without_trigger_info: number
+          recent_logs_count: number
+          total_logs: number
+        }[]
+      }
+      generate_audit_log_hash: {
+        Args: {
+          p_action: string
+          p_record_id: string
+          p_table_name: string
+          p_timestamp: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       is_admin: {
         Args: { _user_id: string }
         Returns: boolean
@@ -913,6 +939,10 @@ export type Database = {
           p_valor_novo?: string
         }
         Returns: string
+      }
+      verify_audit_log_integrity: {
+        Args: { p_log_id: string }
+        Returns: boolean
       }
     }
     Enums: {
