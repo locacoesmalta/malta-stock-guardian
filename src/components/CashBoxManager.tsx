@@ -9,8 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useCashBox } from "@/hooks/useCashBox";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { toZonedTime } from "date-fns-tz";
-import { DollarSign, Plus, X, Edit, Paperclip, FileText } from "lucide-react";
+import { DollarSign, Plus, X, Edit, Paperclip } from "lucide-react";
 import { useConfirm } from "@/hooks/useConfirm";
 
 export const CashBoxManager = () => {
@@ -108,9 +107,7 @@ export const CashBoxManager = () => {
   };
 
   const formatDate = (dateString: string) => {
-    const belemTz = "America/Belem";
-    const zonedDate = toZonedTime(new Date(dateString), belemTz);
-    return format(zonedDate, "dd/MM/yyyy HH:mm", { locale: ptBR });
+    return format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: ptBR });
   };
 
   if (isLoadingCashBox) {
