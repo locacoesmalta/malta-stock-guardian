@@ -211,6 +211,86 @@ export type Database = {
         }
         Relationships: []
       }
+      cash_box_transactions: {
+        Row: {
+          attachment_url: string | null
+          cash_box_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          observations: string | null
+          type: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          attachment_url?: string | null
+          cash_box_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          observations?: string | null
+          type: string
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          attachment_url?: string | null
+          cash_box_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          observations?: string | null
+          type?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_box_transactions_cash_box_id_fkey"
+            columns: ["cash_box_id"]
+            isOneToOne: false
+            referencedRelation: "cash_boxes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cash_boxes: {
+        Row: {
+          closed_at: string | null
+          created_at: string
+          id: string
+          initial_value: number
+          opened_at: string
+          opened_by: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          initial_value: number
+          opened_at: string
+          opened_by: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          initial_value?: number
+          opened_at?: string
+          opened_by?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       material_withdrawals: {
         Row: {
           company: string
