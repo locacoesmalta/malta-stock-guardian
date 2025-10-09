@@ -9,8 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useCashBox } from "@/hooks/useCashBox";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { DollarSign, Plus, X, Edit, Paperclip } from "lucide-react";
+import { DollarSign, Plus, X, Edit, Paperclip, Printer } from "lucide-react";
 import { useConfirm } from "@/hooks/useConfirm";
+import "@/styles/cash-box-print.css";
 
 export const CashBoxManager = () => {
   const {
@@ -39,6 +40,7 @@ export const CashBoxManager = () => {
   const [transactionFile, setTransactionFile] = useState<File | null>(null);
   
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
+  const [editDescription, setEditDescription] = useState("");
   const [editObservations, setEditObservations] = useState("");
 
   const handleOpenCashBox = async () => {
@@ -89,14 +91,27 @@ export const CashBoxManager = () => {
   const handleEditTransaction = async () => {
     if (!editingTransaction) return;
     
+    const confirmed = await confirm({
+      title: "Confirmar Edição",
+      description: "Tem certeza que deseja salvar as alterações nesta transação?",
+    });
+    
+    if (!confirmed) return;
+    
     await updateTransactionMutation.mutateAsync({
       id: editingTransaction.id,
+      description: editDescription,
       observations: editObservations,
     });
     
     setShowEditDialog(false);
     setEditingTransaction(null);
+    setEditDescription("");
     setEditObservations("");
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   const formatCurrency = (value: number) => {
@@ -306,6 +321,70 @@ export const CashBoxManager = () => {
                   <X className="h-4 w-4 mr-2" />
                   Finalizar Caixa
                 </Button>
+                
+                <Button variant="outline" onClick={handlePrint}>
+                  <Printer className="h-4 w-4 mr-2" />
+                  Imprimir Caixa
+                </Button>
+              </div>
+
+              {/* Área de impressão */}
+              <div id="cash-box-print-area" className="hidden print:block">
+                <div className="cash-box-print-header">
+                  <h1>CAIXA DA MALTA</h1>
+                  <p>Gestão do caixa diário da empresa</p>
+                  <p>Impresso em: {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                </div>
+
+                <div className="cash-box-cards">
+                  <div className="cash-box-card">
+                    <div className="cash-box-card-label">Aberto em</div>
+                    <div className="cash-box-card-value">{formatDate(openCashBox.opened_at)}</div>
+                  </div>
+                  <div className="cash-box-card">
+                    <div className="cash-box-card-label">Valor Inicial</div>
+                    <div className="cash-box-card-value">{formatCurrency(openCashBox.initial_value)}</div>
+                  </div>
+                  <div className="cash-box-card">
+                    <div className="cash-box-card-label">Total em Transações</div>
+                    <div className="cash-box-card-value">{transactions.length}</div>
+                  </div>
+                  <div className={`cash-box-card ${isLowBalance() ? "low-balance" : ""}`}>
+                    <div className="cash-box-card-label">
+                      Saldo Atual {isLowBalance() && "(⚠️ BAIXO)"}
+                    </div>
+                    <div className="cash-box-card-value">{formatCurrency(calculateBalance())}</div>
+                  </div>
+                </div>
+
+                <div className="cash-box-transactions">
+                  <h2>Histórico de Transações</h2>
+                  {transactions.map((transaction) => (
+                    <div key={transaction.id} className="transaction-item">
+                      <div className={`transaction-type ${transaction.type}`}>
+                        {transaction.type === "entrada"
+                          ? "ENTRADA"
+                          : transaction.type === "saida"
+                          ? "SAÍDA"
+                          : "DEVOLUÇÃO"}
+                      </div>
+                      <div className="transaction-details">
+                        <p className="transaction-description">
+                          {transaction.description || "Sem descrição"}
+                        </p>
+                        {transaction.observations && (
+                          <p className="transaction-observations">{transaction.observations}</p>
+                        )}
+                        <p className="transaction-date">{formatDate(transaction.created_at)}</p>
+                      </div>
+                      <div className="transaction-value">{formatCurrency(transaction.value)}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="cash-box-print-footer">
+                  <p>Malta Locações de Máquinas e Equipamentos</p>
+                </div>
               </div>
 
               <Card>
@@ -374,10 +453,11 @@ export const CashBoxManager = () => {
                               variant="ghost"
                               onClick={() => {
                                 setEditingTransaction(transaction);
+                                setEditDescription(transaction.description || "");
                                 setEditObservations(transaction.observations || "");
                                 setShowEditDialog(true);
                               }}
-                              title="Editar observações"
+                              title="Editar transação"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -396,15 +476,40 @@ export const CashBoxManager = () => {
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Editar Observações</DialogTitle>
+            <DialogTitle>Editar Transação</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <div>
+              <Label htmlFor="editValue">Valor (R$) *</Label>
+              <Input
+                id="editValue"
+                type="number"
+                step="0.01"
+                value={editingTransaction?.value || ""}
+                disabled
+                className="bg-muted cursor-not-allowed"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                O valor não pode ser editado
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="editDescription">Descrição</Label>
+              <Input
+                id="editDescription"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="Descrição da transação"
+              />
+            </div>
             <div>
               <Label htmlFor="editObservations">Observações</Label>
               <Textarea
                 id="editObservations"
                 value={editObservations}
                 onChange={(e) => setEditObservations(e.target.value)}
+                placeholder="Observações adicionais"
+                className="print-observations"
               />
             </div>
             <Button
@@ -412,7 +517,7 @@ export const CashBoxManager = () => {
               disabled={updateTransactionMutation.isPending}
               className="w-full"
             >
-              Salvar
+              {updateTransactionMutation.isPending ? "Salvando..." : "Salvar Alterações"}
             </Button>
           </div>
         </DialogContent>

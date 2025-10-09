@@ -1,0 +1,195 @@
+/* Estilos de impressão para o Caixa da Malta */
+@media print {
+  /* Ocultar todos os elementos da página */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Mostrar apenas o conteúdo do caixa */
+  #cash-box-print-area,
+  #cash-box-print-area * {
+    visibility: visible;
+  }
+
+  #cash-box-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  /* Ocultar elementos de UI que não devem ser impressos */
+  .print\\:hidden,
+  button,
+  .lucide,
+  input[type="file"],
+  select,
+  textarea:not(.print-observations) {
+    display: none !important;
+  }
+
+  /* Configurações gerais de impressão */
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+
+  /* Header do caixa */
+  .cash-box-print-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #000;
+  }
+
+  .cash-box-print-header h1 {
+    font-size: 24pt;
+    font-weight: bold;
+    margin: 0 0 8px 0;
+    color: #000;
+  }
+
+  .cash-box-print-header p {
+    font-size: 11pt;
+    color: #333;
+    margin: 0;
+  }
+
+  /* Cards de informação */
+  .cash-box-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+    page-break-inside: avoid;
+  }
+
+  .cash-box-card {
+    border: 1px solid #ddd;
+    padding: 12px;
+    border-radius: 6px;
+    text-align: center;
+    background: #f9f9f9;
+  }
+
+  .cash-box-card-label {
+    font-size: 9pt;
+    color: #666;
+    margin-bottom: 6px;
+  }
+
+  .cash-box-card-value {
+    font-size: 13pt;
+    font-weight: bold;
+    color: #000;
+  }
+
+  .cash-box-card.low-balance {
+    border-color: #ef4444;
+    background: #fee;
+  }
+
+  .cash-box-card.low-balance .cash-box-card-value {
+    color: #dc2626;
+  }
+
+  /* Tabela de transações */
+  .cash-box-transactions {
+    margin-top: 25px;
+  }
+
+  .cash-box-transactions h2 {
+    font-size: 14pt;
+    font-weight: bold;
+    margin: 0 0 15px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #ddd;
+    color: #000;
+  }
+
+  .transaction-item {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    page-break-inside: avoid;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: start;
+  }
+
+  .transaction-type {
+    font-size: 9pt;
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  .transaction-type.entrada {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #166534;
+  }
+
+  .transaction-type.saida {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #991b1b;
+  }
+
+  .transaction-type.devolucao {
+    background: #fed7aa;
+    color: #9a3412;
+    border: 1px solid #9a3412;
+  }
+
+  .transaction-details {
+    flex: 1;
+  }
+
+  .transaction-description {
+    font-size: 10pt;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    color: #000;
+  }
+
+  .transaction-observations {
+    font-size: 9pt;
+    color: #555;
+    margin: 4px 0;
+    line-height: 1.3;
+  }
+
+  .transaction-date {
+    font-size: 8pt;
+    color: #666;
+    margin: 4px 0 0 0;
+  }
+
+  .transaction-value {
+    font-size: 12pt;
+    font-weight: bold;
+    color: #000;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  /* Footer */
+  .cash-box-print-footer {
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 1px solid #ddd;
+    text-align: center;
+    font-size: 8pt;
+    color: #666;
+  }
+
+  /* Garantir cores em impressão */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

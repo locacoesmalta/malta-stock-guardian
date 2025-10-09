@@ -188,14 +188,21 @@ export const useCashBox = () => {
   const updateTransactionMutation = useMutation({
     mutationFn: async ({
       id,
+      description,
       observations,
     }: {
       id: string;
+      description?: string;
       observations: string;
     }) => {
+      const updateData: any = { observations };
+      if (description !== undefined) {
+        updateData.description = description;
+      }
+      
       const { data, error } = await supabase
         .from("cash_box_transactions")
-        .update({ observations })
+        .update(updateData)
         .eq("id", id)
         .select()
         .single();
