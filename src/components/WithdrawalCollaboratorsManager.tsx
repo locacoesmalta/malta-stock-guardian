@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Label } from "./ui/label";
 import { X, Plus } from "lucide-react";
 import { Badge } from "./ui/badge";
 
@@ -16,22 +15,22 @@ export const WithdrawalCollaboratorsManager = ({
 }: WithdrawalCollaboratorsManagerProps) => {
   const [newCollaborator, setNewCollaborator] = useState("");
 
-  const addCollaborator = () => {
-    const trimmedName = newCollaborator.trim();
-    if (trimmedName && !collaborators.includes(trimmedName)) {
-      onCollaboratorsChange([...collaborators, trimmedName]);
+  const handleAddCollaborator = () => {
+    const trimmed = newCollaborator.trim();
+    if (trimmed && !collaborators.includes(trimmed)) {
+      onCollaboratorsChange([...collaborators, trimmed]);
       setNewCollaborator("");
     }
   };
 
-  const removeCollaborator = (index: number) => {
-    onCollaboratorsChange(collaborators.filter((_, i) => i !== index));
+  const handleRemoveCollaborator = (name: string) => {
+    onCollaboratorsChange(collaborators.filter((c) => c !== name));
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      addCollaborator();
+      handleAddCollaborator();
     }
   };
 
@@ -50,10 +49,10 @@ export const WithdrawalCollaboratorsManager = ({
         </div>
         <Button
           type="button"
-          onClick={addCollaborator}
-          disabled={!newCollaborator.trim()}
-          size="sm"
+          onClick={handleAddCollaborator}
           variant="outline"
+          size="sm"
+          disabled={!newCollaborator.trim() || collaborators.includes(newCollaborator.trim())}
         >
           <Plus className="h-4 w-4" />
         </Button>
@@ -61,20 +60,18 @@ export const WithdrawalCollaboratorsManager = ({
 
       {collaborators.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {collaborators.map((collaborator, index) => (
-            <Badge
-              key={index}
-              variant="secondary"
-              className="flex items-center gap-1 px-3 py-1"
-            >
-              <span className="text-sm">{collaborator}</span>
-              <button
+          {collaborators.map((name) => (
+            <Badge key={name} variant="secondary" className="gap-1 pr-1">
+              <span className="text-xs">{name}</span>
+              <Button
                 type="button"
-                onClick={() => removeCollaborator(index)}
-                className="ml-1 hover:text-destructive"
+                variant="ghost"
+                size="sm"
+                className="h-4 w-4 p-0 hover:bg-transparent"
+                onClick={() => handleRemoveCollaborator(name)}
               >
                 <X className="h-3 w-3" />
-              </button>
+              </Button>
             </Badge>
           ))}
         </div>

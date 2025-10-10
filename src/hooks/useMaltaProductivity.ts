@@ -64,16 +64,29 @@ export const useAllCollaborators = () => {
   return useQuery({
     queryKey: ["all-collaborators"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Buscar colaboradores de manutenção externa
+      const { data: assetCollabs, error: assetError } = await supabase
         .from("asset_collaborators")
         .select("collaborator_name")
         .order("collaborator_name");
 
-      if (error) throw error;
+      if (assetError) throw assetError;
 
-      const uniqueNames = Array.from(
-        new Set(data.map((item) => item.collaborator_name))
-      ).sort();
+      // Buscar colaboradores de manutenção interna (retiradas)
+      const { data: withdrawalCollabs, error: withdrawalError } = await supabase
+        .from("material_withdrawal_collaborators")
+        .select("collaborator_name")
+        .order("collaborator_name");
+
+      if (withdrawalError) throw withdrawalError;
+
+      // Combinar e remover duplicatas
+      const allNames = [
+        ...assetCollabs.map((item) => item.collaborator_name),
+        ...withdrawalCollabs.map((item) => item.collaborator_name),
+      ];
+
+      const uniqueNames = Array.from(new Set(allNames)).sort();
 
       return uniqueNames;
     },

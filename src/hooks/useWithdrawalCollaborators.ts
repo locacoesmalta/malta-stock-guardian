@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface WithdrawalCollaborator {
+export interface WithdrawalCollaborator {
   id: string;
   withdrawal_id: string;
   collaborator_name: string;
@@ -19,11 +19,10 @@ export const useWithdrawalCollaborators = (withdrawalId: string | undefined) => 
         .from("material_withdrawal_collaborators")
         .select("*")
         .eq("withdrawal_id", withdrawalId)
-        .order("is_principal", { ascending: false })
-        .order("collaborator_name");
+        .order("is_principal", { ascending: false });
 
       if (error) throw error;
-      return (data || []) as WithdrawalCollaborator[];
+      return data as WithdrawalCollaborator[];
     },
     enabled: !!withdrawalId,
   });
