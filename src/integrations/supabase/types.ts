@@ -14,6 +14,117 @@ export type Database = {
   }
   public: {
     Tables: {
+      asset_mobilization_parts: {
+        Row: {
+          asset_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          product_id: string
+          purchase_date: string
+          quantity: number
+          registered_at: string
+          registered_by: string
+          total_cost: number | null
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          asset_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          product_id: string
+          purchase_date: string
+          quantity: number
+          registered_at?: string
+          registered_by: string
+          total_cost?: number | null
+          unit_cost: number
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          product_id?: string
+          purchase_date?: string
+          quantity?: number
+          registered_at?: string
+          registered_by?: string
+          total_cost?: number | null
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_mobilization_parts_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_mobilization_parts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_spare_parts: {
+        Row: {
+          asset_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          product_id: string
+          quantity: number
+          registered_at: string
+          registered_by: string
+          updated_at: string
+        }
+        Insert: {
+          asset_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          product_id: string
+          quantity: number
+          registered_at?: string
+          registered_by: string
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          product_id?: string
+          quantity?: number
+          registered_at?: string
+          registered_by?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_spare_parts_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_spare_parts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assets: {
         Row: {
           asset_code: string
