@@ -39,9 +39,32 @@ export const AssetMobilizationPartsSection = ({ assetId, assetCode }: AssetMobil
   const [selectedProductId, setSelectedProductId] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [unitCost, setUnitCost] = useState("");
-  const [purchaseDate, setPurchaseDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [purchaseDate, setPurchaseDate] = useState("");
+  const [paymentType, setPaymentType] = useState("");
   const [notes, setNotes] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  // Quando seleciona um produto, preenche automaticamente os dados do cadastro
+  const handleProductChange = (productId: string) => {
+    setSelectedProductId(productId);
+    
+    const selectedProduct = allProducts.find(p => p.id === productId);
+    if (selectedProduct) {
+      // Preenche o custo unitário (usa purchase_price se disponível)
+      const cost = selectedProduct.purchase_price || selectedProduct.sale_price || 0;
+      setUnitCost(cost.toString());
+      
+      // Preenche a data de compra (última data cadastrada)
+      if (selectedProduct.last_purchase_date) {
+        setPurchaseDate(selectedProduct.last_purchase_date);
+      } else {
+        setPurchaseDate(format(new Date(), "yyyy-MM-dd"));
+      }
+      
+      // Preenche o tipo de pagamento
+      setPaymentType(selectedProduct.payment_type || "");
+    }
+  };
 
   const calculatedTotal = quantity && unitCost 
     ? (parseInt(quantity) * parseFloat(unitCost)).toFixed(2)
@@ -50,7 +73,7 @@ export const AssetMobilizationPartsSection = ({ assetId, assetCode }: AssetMobil
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedProductId || !unitCost) {
+    if (!selectedProductId || !unitCost || !purchaseDate) {
       return;
     }
 
@@ -58,11 +81,6 @@ export const AssetMobilizationPartsSection = ({ assetId, assetCode }: AssetMobil
     const unitCostNum = parseFloat(unitCost);
     
     if (quantityNum <= 0 || unitCostNum <= 0) {
-      return;
-    }
-
-    const purchaseDateObj = new Date(purchaseDate);
-    if (purchaseDateObj > new Date()) {
       return;
     }
 
@@ -78,7 +96,8 @@ export const AssetMobilizationPartsSection = ({ assetId, assetCode }: AssetMobil
     setSelectedProductId("");
     setQuantity("1");
     setUnitCost("");
-    setPurchaseDate(format(new Date(), "yyyy-MM-dd"));
+    setPurchaseDate("");
+    setPaymentType("");
     setNotes("");
   };
 
@@ -114,8 +133,8 @@ export const AssetMobilizationPartsSection = ({ assetId, assetCode }: AssetMobil
                   <ProductSelector
                     products={allProducts}
                     value={selectedProductId}
-                    onValueChange={setSelectedProductId}
-                    placeholder="Buscar produto..."
+                    onValueChange={handleProductChange}
+                    placeholder="Buscar por código ou nome..."
                     required
                   />
                 </div>
@@ -140,10 +159,12 @@ export const AssetMobilizationPartsSection = ({ assetId, assetCode }: AssetMobil
                     step="0.01"
                     min="0.01"
                     value={unitCost}
-                    onChange={(e) => setUnitCost(e.target.value)}
                     placeholder="0.00"
+                    disabled
+                    className="bg-muted"
                     required
                   />
+                  <p className="text-xs text-muted-foreground">Preenchido automaticamente do cadastro</p>
                 </div>
 
                 <div className="space-y-2">
@@ -152,10 +173,24 @@ export const AssetMobilizationPartsSection = ({ assetId, assetCode }: AssetMobil
                     id="purchaseDate"
                     type="date"
                     value={purchaseDate}
-                    onChange={(e) => setPurchaseDate(e.target.value)}
-                    max={format(new Date(), "yyyy-MM-dd")}
+                    disabled
+                    className="bg-muted"
                     required
                   />
+                  <p className="text-xs text-muted-foreground">Última data do cadastro</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="paymentType">Tipo de Pagamento</Label>
+                  <Input
+                    id="paymentType"
+                    type="text"
+                    value={paymentType}
+                    disabled
+                    className="bg-muted"
+                    placeholder="Não informado"
+                  />
+                  <p className="text-xs text-muted-foreground">Do cadastro do produto</p>
                 </div>
               </div>
 
@@ -178,7 +213,7 @@ export const AssetMobilizationPartsSection = ({ assetId, assetCode }: AssetMobil
                 />
               </div>
 
-              <Button type="submit" disabled={isAdding || !selectedProductId || !unitCost}>
+              <Button type="submit" disabled={isAdding || !selectedProductId || !unitCost || !purchaseDate}>
                 {isAdding ? "Adicionando..." : "Adicionar Peça"}
               </Button>
             </form>
