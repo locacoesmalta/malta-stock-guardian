@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export interface WithdrawalCollaborator {
+interface WithdrawalCollaborator {
   id: string;
   withdrawal_id: string;
   collaborator_name: string;
