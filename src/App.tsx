@@ -20,6 +20,7 @@ const AuditLogs = lazy(() => import("./pages/admin/AuditLogs"));
 const NewReport = lazy(() => import("./pages/reports/NewReport"));
 const ReportsList = lazy(() => import("./pages/reports/ReportsList"));
 const StatusReports = lazy(() => import("./pages/reports/StatusReports"));
+const MaltaProductivity = lazy(() => import("./pages/reports/MaltaProductivity"));
 const MaterialWithdrawal = lazy(() => import("./pages/inventory/MaterialWithdrawal"));
 const WithdrawalHistory = lazy(() => import("./pages/inventory/WithdrawalHistory"));
 const AssetsList = lazy(() => import("./pages/assets/AssetsList"));
@@ -159,6 +160,16 @@ const App = () => (
                   <ProtectedLayout>
                     <PermissionRoute permission="can_access_assets">
                       <StatusReports />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/reports/malta-productivity" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_access_assets">
+                      <MaltaProductivity />
                     </PermissionRoute>
                   </ProtectedLayout>
                 } 

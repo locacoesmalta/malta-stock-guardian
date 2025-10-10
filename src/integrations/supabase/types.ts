@@ -1066,6 +1066,32 @@ export type Database = {
         }
         Returns: string
       }
+      get_collaborator_details: {
+        Args: {
+          p_collaborator_name: string
+          p_end_date?: string
+          p_start_date?: string
+        }
+        Returns: {
+          all_collaborators: string[]
+          asset_code: string
+          days_in_maintenance: number
+          equipment_name: string
+          id: string
+          maintenance_arrival_date: string
+          maintenance_company: string
+          maintenance_delay_observations: string
+          maintenance_departure_date: string
+          maintenance_work_site: string
+        }[]
+      }
+      get_monthly_productivity: {
+        Args: { p_month: number; p_year: number }
+        Returns: {
+          collaborator_name: string
+          equipment_count: number
+        }[]
+      }
       is_admin: {
         Args: { _user_id: string }
         Returns: boolean

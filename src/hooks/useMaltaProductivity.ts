@@ -23,7 +23,7 @@ export const useMonthlyProductivity = (year: number, month: number) => {
   return useQuery({
     queryKey: ["malta-productivity", year, month],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_monthly_productivity", {
+      const { data, error } = await (supabase.rpc as any)("get_monthly_productivity", {
         p_year: year,
         p_month: month,
       });
@@ -44,7 +44,7 @@ export const useCollaboratorDetails = (
     queryFn: async () => {
       if (!collaboratorName) return [];
 
-      const { data, error } = await supabase.rpc("get_collaborator_details", {
+      const { data, error } = await (supabase.rpc as any)("get_collaborator_details", {
         p_collaborator_name: collaboratorName,
         p_start_date: startDate || null,
         p_end_date: endDate || null,

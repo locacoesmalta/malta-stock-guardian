@@ -30,6 +30,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { ArrowLeft, Upload, X } from "lucide-react";
+import { AssetCollaboratorsManager } from "@/components/AssetCollaboratorsManager";
 
 type MovementType = "deposito_malta" | "em_manutencao" | "locacao" | "aguardando_laudo" | "retorno_obra" | "substituicao";
 
@@ -632,13 +633,15 @@ export default function AssetMovement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="malta_collaborator">Responsável Malta</Label>
+                  <Label htmlFor="malta_collaborator">Responsável Malta (Principal)</Label>
                   <Input
                     id="malta_collaborator"
                     {...form.register("malta_collaborator")}
-                    placeholder="Nome do responsável"
+                    placeholder="Nome do responsável principal"
+                    required
                   />
                 </div>
+                <AssetCollaboratorsManager assetId={id} />
                 <div className="space-y-2">
                   <Label htmlFor="equipment_observations">Observações</Label>
                   <Textarea
@@ -705,13 +708,15 @@ export default function AssetMovement() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="malta_collaborator">Responsável Malta</Label>
+                    <Label htmlFor="malta_collaborator">Responsável Malta (Principal)</Label>
                     <Input
                       id="malta_collaborator"
                       {...form.register("malta_collaborator")}
-                      placeholder="Nome do responsável"
+                      placeholder="Nome do responsável principal"
+                      required
                     />
                   </div>
+                  <AssetCollaboratorsManager assetId={id} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="maintenance_description">Descrição *</Label>
@@ -793,13 +798,15 @@ export default function AssetMovement() {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="malta_collaborator">Responsável Malta</Label>
+                    <Label htmlFor="malta_collaborator">Responsável Malta (Principal)</Label>
                     <Input
                       id="malta_collaborator"
                       {...form.register("malta_collaborator")}
-                      placeholder="Nome do responsável"
+                      placeholder="Nome do responsável principal"
+                      required
                     />
                   </div>
+                  <AssetCollaboratorsManager assetId={id} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="equipment_observations">Observações</Label>
@@ -989,13 +996,15 @@ export default function AssetMovement() {
                   {partsReplaced !== null && (
                     <>
                       <div className="space-y-2">
-                        <Label htmlFor="malta_collaborator">Responsável Malta</Label>
+                        <Label htmlFor="malta_collaborator">Responsável Malta (Principal)</Label>
                         <Input
                           id="malta_collaborator"
                           {...form.register("malta_collaborator")}
-                          placeholder="Nome do responsável"
+                          placeholder="Nome do responsável principal"
+                          required
                         />
                       </div>
+                      <AssetCollaboratorsManager assetId={id} />
                     </>
                   )}
                 </div>
@@ -1148,13 +1157,15 @@ export default function AssetMovement() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="malta_collaborator">Responsável Malta</Label>
+                        <Label htmlFor="malta_collaborator">Responsável Malta (Principal)</Label>
                         <Input
                           id="malta_collaborator"
                           {...form.register("malta_collaborator")}
-                          placeholder="Nome do responsável"
+                          placeholder="Nome do responsável principal"
+                          required
                         />
                       </div>
+                      <AssetCollaboratorsManager assetId={id} />
                     </>
                   )}
                 </div>
@@ -1164,13 +1175,15 @@ export default function AssetMovement() {
             {movementType === "aguardando_laudo" && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="malta_collaborator">Responsável Malta</Label>
+                  <Label htmlFor="malta_collaborator">Responsável Malta (Principal)</Label>
                   <Input
                     id="malta_collaborator"
                     {...form.register("malta_collaborator")}
-                    placeholder="Nome do responsável"
+                    placeholder="Nome do responsável principal"
+                    required
                   />
                 </div>
+                <AssetCollaboratorsManager assetId={id} />
                 <div className="space-y-2">
                   <Label htmlFor="equipment_observations">Observações</Label>
                   <Textarea

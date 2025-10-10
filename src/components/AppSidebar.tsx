@@ -105,6 +105,12 @@ export function AppSidebar() {
       label: "Relatórios de Status",
       show: permissions.can_access_assets || isAdmin,
     },
+    {
+      path: "/reports/malta-productivity",
+      icon: TrendingUp,
+      label: "Produtividade Malta",
+      show: permissions.can_access_assets || isAdmin,
+    },
   ];
 
   // Filtrar itens visíveis
