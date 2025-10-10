@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      asset_collaborators: {
+        Row: {
+          asset_id: string
+          assignment_date: string
+          collaborator_name: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          asset_id: string
+          assignment_date?: string
+          collaborator_name: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          asset_id?: string
+          assignment_date?: string
+          collaborator_name?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_collaborators_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asset_mobilization_parts: {
         Row: {
           asset_id: string
