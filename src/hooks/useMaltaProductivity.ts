@@ -17,6 +17,7 @@ export interface CollaboratorDetails {
   maintenance_delay_observations: string | null;
   days_in_maintenance: number;
   all_collaborators: string[];
+  service_type: 'manutencao_externa' | 'manutencao_interna';
 }
 
 export const useMonthlyProductivity = (year: number, month: number) => {

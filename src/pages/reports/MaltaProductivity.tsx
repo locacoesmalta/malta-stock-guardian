@@ -258,6 +258,7 @@ export default function MaltaProductivity() {
                   <TableRow>
                     <TableHead>PAT</TableHead>
                     <TableHead>Equipamento</TableHead>
+                    <TableHead>Tipo</TableHead>
                     <TableHead>Empresa</TableHead>
                     <TableHead>Obra</TableHead>
                     <TableHead>Data Entrada</TableHead>
@@ -279,6 +280,15 @@ export default function MaltaProductivity() {
                         </Link>
                       </TableCell>
                       <TableCell>{detail.equipment_name}</TableCell>
+                      <TableCell>
+                        <span className={
+                          detail.service_type === 'manutencao_interna' 
+                            ? 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                            : 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+                        }>
+                          {detail.service_type === 'manutencao_interna' ? 'Manutenção Interna' : 'Manutenção Externa'}
+                        </span>
+                      </TableCell>
                       <TableCell>{detail.maintenance_company || "-"}</TableCell>
                       <TableCell>{detail.maintenance_work_site || "-"}</TableCell>
                       <TableCell>

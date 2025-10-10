@@ -16,6 +16,7 @@ import { withdrawalSchema } from "@/lib/validations";
 import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
 import { formatPAT } from "@/lib/patUtils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { WithdrawalCollaboratorsManager } from "@/components/WithdrawalCollaboratorsManager";
 
 
 interface WithdrawalItem {
@@ -39,6 +40,9 @@ const MaterialWithdrawal = () => {
   const [company, setCompany] = useState("");
   const [items, setItems] = useState<WithdrawalItem[]>([]);
   const [equipmentName, setEquipmentName] = useState("");
+  const [principalCollaborator, setPrincipalCollaborator] = useState("");
+  const [additionalCollaborators, setAdditionalCollaborators] = useState<string[]>([]);
+  const [showCollaborators, setShowCollaborators] = useState(false);
 
   // Buscar informações do equipamento pelo PAT
   const { data: equipment, isLoading: loadingEquipment } = useEquipmentByPAT(equipmentCode);
@@ -55,7 +59,12 @@ const MaterialWithdrawal = () => {
         console.log("🔧 Equipamento em Depósito Malta - Sugerindo Manutenção Interna");
         setCompany("Manutenção Interna");
         setWorkSite("Depósito Malta");
+        setShowCollaborators(true);
       } else {
+        setShowCollaborators(false);
+        setPrincipalCollaborator("");
+        setAdditionalCollaborators([]);
+        
         // Priorizar dados de LOCAÇÃO primeiro para outros casos
         if (equipment.rental_company) {
           console.log("✅ Preenchendo empresa de locação:", equipment.rental_company);
@@ -79,6 +88,9 @@ const MaterialWithdrawal = () => {
       setEquipmentName("");
       setWorkSite("");
       setCompany("");
+      setShowCollaborators(false);
+      setPrincipalCollaborator("");
+      setAdditionalCollaborators([]);
     }
   }, [equipment, equipmentCode]);
 
@@ -130,6 +142,12 @@ const MaterialWithdrawal = () => {
 
     if (!workSite || !company) {
       toast.error("Preencha todos os campos obrigatórios: Obra e Empresa!");
+      return;
+    }
+
+    // Validar colaborador principal se for Manutenção Interna
+    if (showCollaborators && !principalCollaborator.trim()) {
+      toast.error("Responsável Malta (Principal) é obrigatório para Manutenção Interna!");
       return;
     }
 
@@ -188,11 +206,44 @@ const MaterialWithdrawal = () => {
         company: company
       }));
 
-      const { error } = await supabase
+      const { data: insertedWithdrawals, error } = await supabase
         .from("material_withdrawals")
-        .insert(withdrawals);
+        .insert(withdrawals)
+        .select("id");
 
       if (error) throw error;
+
+      // Se for Manutenção Interna, salvar colaboradores
+      if (showCollaborators && principalCollaborator && insertedWithdrawals) {
+        const collaboratorsToInsert = [];
+        
+        for (const withdrawal of insertedWithdrawals) {
+          // Colaborador principal
+          collaboratorsToInsert.push({
+            withdrawal_id: withdrawal.id,
+            collaborator_name: principalCollaborator.trim(),
+            is_principal: true
+          });
+          
+          // Colaboradores adicionais
+          additionalCollaborators.forEach(name => {
+            collaboratorsToInsert.push({
+              withdrawal_id: withdrawal.id,
+              collaborator_name: name.trim(),
+              is_principal: false
+            });
+          });
+        }
+        
+        const { error: collabError } = await supabase
+          .from("material_withdrawal_collaborators")
+          .insert(collaboratorsToInsert);
+
+        if (collabError) {
+          console.error("Erro ao salvar colaboradores:", collabError);
+          toast.error("Retirada registrada, mas houve erro ao salvar colaboradores.");
+        }
+      }
 
       toast.success("Retirada de material registrada com sucesso!");
       navigate("/inventory/history");
@@ -318,6 +369,35 @@ const MaterialWithdrawal = () => {
                   className="text-sm"
                 />
               </div>
+
+              {showCollaborators && (
+                <>
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="principal" className="text-xs sm:text-sm">
+                      Responsável Malta (Principal) *
+                    </Label>
+                    <Input
+                      id="principal"
+                      type="text"
+                      value={principalCollaborator}
+                      onChange={(e) => setPrincipalCollaborator(e.target.value)}
+                      placeholder="Nome do responsável principal"
+                      required
+                      className="text-sm"
+                    />
+                  </div>
+
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label className="text-xs sm:text-sm">
+                      Colaboradores Adicionais Malta (Opcional)
+                    </Label>
+                    <WithdrawalCollaboratorsManager
+                      collaborators={additionalCollaborators}
+                      onCollaboratorsChange={setAdditionalCollaborators}
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="space-y-2">

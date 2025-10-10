@@ -443,6 +443,38 @@ export type Database = {
         }
         Relationships: []
       }
+      material_withdrawal_collaborators: {
+        Row: {
+          collaborator_name: string
+          created_at: string
+          id: string
+          is_principal: boolean
+          withdrawal_id: string
+        }
+        Insert: {
+          collaborator_name: string
+          created_at?: string
+          id?: string
+          is_principal?: boolean
+          withdrawal_id: string
+        }
+        Update: {
+          collaborator_name?: string
+          created_at?: string
+          id?: string
+          is_principal?: boolean
+          withdrawal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_withdrawal_collaborators_withdrawal_id_fkey"
+            columns: ["withdrawal_id"]
+            isOneToOne: false
+            referencedRelation: "material_withdrawals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       material_withdrawals: {
         Row: {
           company: string
@@ -1083,6 +1115,7 @@ export type Database = {
           maintenance_delay_observations: string
           maintenance_departure_date: string
           maintenance_work_site: string
+          service_type: string
         }[]
       }
       get_monthly_productivity: {
