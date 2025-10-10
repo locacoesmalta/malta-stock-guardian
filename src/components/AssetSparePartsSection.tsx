@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ProductSelector } from "@/components/ProductSelector";
+import { ProductSearchCombobox } from "@/components/ProductSearchCombobox";
 import { useProducts } from "@/hooks/useProducts";
 import { useAssetSpareParts } from "@/hooks/useAssetSpareParts";
 import { Trash2, Package } from "lucide-react";
@@ -86,12 +86,11 @@ export const AssetSparePartsSection = ({ assetId, assetCode }: AssetSparePartsSe
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="product">Produto *</Label>
-                <ProductSelector
+                <ProductSearchCombobox
                   products={allProducts}
                   value={selectedProductId}
                   onValueChange={setSelectedProductId}
-                  placeholder="Buscar produto..."
-                  required
+                  placeholder="Buscar por código ou nome..."
                 />
               </div>
 
