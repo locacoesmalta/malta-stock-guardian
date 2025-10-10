@@ -352,7 +352,12 @@ export default function AssetView() {
         </TabsContent>
 
         <TabsContent value="mobilization">
-          <AssetMobilizationPartsSection assetId={id!} assetCode={asset.asset_code} />
+          <AssetMobilizationPartsSection 
+            assetId={id!} 
+            assetCode={asset.asset_code}
+            assetUnitValue={asset.unit_value || undefined}
+            assetPurchaseDate={asset.purchase_date || undefined}
+          />
         </TabsContent>
       </Tabs>
     </div>

@@ -19,8 +19,9 @@ export type Database = {
           asset_id: string
           created_at: string
           id: string
+          mobilization_asset_id: string | null
           notes: string | null
-          product_id: string
+          product_id: string | null
           purchase_date: string
           quantity: number
           registered_at: string
@@ -33,8 +34,9 @@ export type Database = {
           asset_id: string
           created_at?: string
           id?: string
+          mobilization_asset_id?: string | null
           notes?: string | null
-          product_id: string
+          product_id?: string | null
           purchase_date: string
           quantity: number
           registered_at?: string
@@ -47,8 +49,9 @@ export type Database = {
           asset_id?: string
           created_at?: string
           id?: string
+          mobilization_asset_id?: string | null
           notes?: string | null
-          product_id?: string
+          product_id?: string | null
           purchase_date?: string
           quantity?: number
           registered_at?: string
@@ -66,10 +69,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "asset_mobilization_parts_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: "asset_mobilization_parts_mobilization_asset_id_fkey"
+            columns: ["mobilization_asset_id"]
             isOneToOne: false
-            referencedRelation: "products"
+            referencedRelation: "assets"
             referencedColumns: ["id"]
           },
         ]

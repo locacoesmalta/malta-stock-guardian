@@ -5,7 +5,8 @@ import { toast } from "sonner";
 interface MobilizationPart {
   id: string;
   asset_id: string;
-  product_id: string;
+  product_id: string | null;
+  mobilization_asset_id: string | null;
   quantity: number;
   unit_cost: number;
   total_cost: number;
@@ -13,11 +14,18 @@ interface MobilizationPart {
   notes: string | null;
   registered_by: string;
   registered_at: string;
-  products: {
+  products?: {
     id: string;
     code: string;
     name: string;
-  };
+  } | null;
+  mobilization_asset?: {
+    id: string;
+    asset_code: string;
+    equipment_name: string;
+    unit_value: number | null;
+    purchase_date: string | null;
+  } | null;
   profiles: {
     full_name: string | null;
   };
@@ -25,7 +33,8 @@ interface MobilizationPart {
 
 interface AddMobilizationPartData {
   asset_id: string;
-  product_id: string;
+  product_id?: string;
+  mobilization_asset_id?: string;
   quantity: number;
   unit_cost: number;
   purchase_date: string;
@@ -40,16 +49,27 @@ export const useAssetMobilizationParts = (assetId: string) => {
     queryFn: async (): Promise<MobilizationPart[]> => {
       const { data, error } = await supabase
         .from("asset_mobilization_parts")
-        .select(`
-          *,
-          products!inner (id, code, name)
-        `)
+        .select(`*`)
         .eq("asset_id", assetId)
         .order("registered_at", { ascending: false });
 
       if (error) throw error;
       
       if (!data) return [];
+
+      // Buscar products para os items que têm product_id
+      const productIds = data.filter(item => item.product_id).map(item => item.product_id);
+      const { data: products } = await supabase
+        .from("products")
+        .select("id, code, name")
+        .in("id", productIds);
+
+      // Buscar assets para os items que têm mobilization_asset_id
+      const assetIds = data.filter(item => item.mobilization_asset_id).map(item => item.mobilization_asset_id);
+      const { data: assets } = await supabase
+        .from("assets")
+        .select("id, asset_code, equipment_name, unit_value, purchase_date")
+        .in("id", assetIds);
 
       // Buscar profiles separadamente
       const userIds = [...new Set(data.map(item => item.registered_by))];
@@ -58,10 +78,14 @@ export const useAssetMobilizationParts = (assetId: string) => {
         .select("id, full_name")
         .in("id", userIds);
 
+      const productMap = new Map(products?.map(p => [p.id, p]) || []);
+      const assetMap = new Map(assets?.map(a => [a.id, a]) || []);
       const profileMap = new Map(profiles?.map(p => [p.id, p.full_name]) || []);
 
       return data.map(item => ({
         ...item,
+        products: item.product_id ? productMap.get(item.product_id) || null : null,
+        mobilization_asset: item.mobilization_asset_id ? assetMap.get(item.mobilization_asset_id) || null : null,
         profiles: {
           full_name: profileMap.get(item.registered_by) || null
         }
@@ -80,7 +104,8 @@ export const useAssetMobilizationParts = (assetId: string) => {
         .from("asset_mobilization_parts")
         .insert({
           asset_id: data.asset_id,
-          product_id: data.product_id,
+          product_id: data.product_id || null,
+          mobilization_asset_id: data.mobilization_asset_id || null,
           quantity: data.quantity,
           unit_cost: data.unit_cost,
           purchase_date: data.purchase_date,
@@ -95,10 +120,10 @@ export const useAssetMobilizationParts = (assetId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["asset-mobilization-parts", assetId] });
-      toast.success("Peça de mobilização adicionada com sucesso");
+      toast.success("Item de mobilização adicionado com sucesso");
     },
     onError: (error: Error) => {
-      toast.error("Erro ao adicionar peça de mobilização");
+      toast.error("Erro ao adicionar item de mobilização");
       console.error(error);
     },
   });
