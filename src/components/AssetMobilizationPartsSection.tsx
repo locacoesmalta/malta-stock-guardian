@@ -242,6 +242,22 @@ export const AssetMobilizationPartsSection = ({
   // Separar itens de produtos e equipamentos
   const productParts = mobilizationParts.filter(part => part.product_id);
   const assetParts = mobilizationParts.filter(part => part.mobilization_asset_id);
+  
+  // Separar despesas por tipo
+  const travelExpenses = mobilizationExpenses.filter(e => e.expense_type === 'travel');
+  const shipmentExpenses = mobilizationExpenses.filter(e => e.expense_type === 'shipment');
+  const totalTravelCost = travelExpenses.reduce((sum, e) => sum + Number(e.value), 0);
+  const totalShipmentCost = shipmentExpenses.reduce((sum, e) => sum + Number(e.value), 0);
+  
+  // Função para formatar valores em Real Brasileiro
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString('pt-BR', { 
+      style: 'currency', 
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
 
   return (
     <>
@@ -257,7 +273,7 @@ export const AssetMobilizationPartsSection = ({
                     <p className="text-sm text-muted-foreground">Custo base do equipamento</p>
                   </div>
                   <span className="text-2xl font-bold text-primary">
-                    R$ {assetUnitValue.toFixed(2)}
+                    {formatCurrency(assetUnitValue)}
                   </span>
                 </div>
                 {assetPurchaseDate && (
@@ -571,7 +587,7 @@ export const AssetMobilizationPartsSection = ({
               {itemType !== "expense" && quantity && unitCost && (
                 <div className="p-4 bg-muted rounded-lg">
                   <p className="text-sm font-medium">
-                    Custo Total Calculado: <span className="text-lg">R$ {calculatedTotal}</span>
+                    Custo Total Calculado: <span className="text-lg">{formatCurrency(parseFloat(calculatedTotal))}</span>
                   </p>
                 </div>
               )}
@@ -640,10 +656,10 @@ export const AssetMobilizationPartsSection = ({
                               <TableCell>{part.products?.name}</TableCell>
                               <TableCell className="text-center">{part.quantity}</TableCell>
                               <TableCell className="text-right">
-                                {Number(part.unit_cost).toFixed(2)}
+                                {formatCurrency(Number(part.unit_cost))}
                               </TableCell>
                               <TableCell className="text-right font-medium">
-                                {Number(part.total_cost).toFixed(2)}
+                                {formatCurrency(Number(part.total_cost))}
                               </TableCell>
                               <TableCell>
                                 {format(new Date(part.purchase_date), "dd/MM/yyyy", { locale: ptBR })}
@@ -696,10 +712,10 @@ export const AssetMobilizationPartsSection = ({
                               <TableCell>{part.mobilization_asset?.equipment_name}</TableCell>
                               <TableCell className="text-center">{part.quantity}</TableCell>
                               <TableCell className="text-right">
-                                {Number(part.unit_cost).toFixed(2)}
+                                {formatCurrency(Number(part.unit_cost))}
                               </TableCell>
                               <TableCell className="text-right font-medium">
-                                {Number(part.total_cost).toFixed(2)}
+                                {formatCurrency(Number(part.total_cost))}
                               </TableCell>
                               <TableCell>
                                 {format(new Date(part.purchase_date), "dd/MM/yyyy", { locale: ptBR })}
@@ -779,7 +795,7 @@ export const AssetMobilizationPartsSection = ({
                                 )}
                               </TableCell>
                               <TableCell className="text-right font-medium">
-                                {Number(expense.value).toFixed(2)}
+                                {formatCurrency(Number(expense.value))}
                               </TableCell>
                               <TableCell>
                                 {expense.expense_type === 'travel' 
@@ -816,16 +832,31 @@ export const AssetMobilizationPartsSection = ({
                   <div className="flex items-center justify-between pb-3 border-b">
                     <span className="text-sm font-medium">Subtotal (Peças e Equipamentos)</span>
                     <span className="text-lg font-semibold">
-                      R$ {totalMobilizationCost.toFixed(2)}
+                      {formatCurrency(totalMobilizationCost)}
                     </span>
                   </div>
                 )}
                 
-                {mobilizationExpenses.length > 0 && (
+                {travelExpenses.length > 0 && (
                   <div className="flex items-center justify-between pb-3 border-b">
-                    <span className="text-sm font-medium">Subtotal (Despesas)</span>
+                    <div className="flex items-center gap-2">
+                      <Plane className="h-4 w-4" />
+                      <span className="text-sm font-medium">Despesas de Viagem</span>
+                    </div>
                     <span className="text-lg font-semibold">
-                      R$ {totalExpensesCost.toFixed(2)}
+                      {formatCurrency(totalTravelCost)}
+                    </span>
+                  </div>
+                )}
+                
+                {shipmentExpenses.length > 0 && (
+                  <div className="flex items-center justify-between pb-3 border-b">
+                    <div className="flex items-center gap-2">
+                      <Truck className="h-4 w-4" />
+                      <span className="text-sm font-medium">Envio de Equipamento</span>
+                    </div>
+                    <span className="text-lg font-semibold">
+                      {formatCurrency(totalShipmentCost)}
                     </span>
                   </div>
                 )}
@@ -834,7 +865,7 @@ export const AssetMobilizationPartsSection = ({
                   <div className="flex items-center justify-between pb-3 border-b">
                     <span className="text-sm font-medium">Equipamento Principal</span>
                     <span className="text-lg font-semibold">
-                      R$ {assetUnitValue.toFixed(2)}
+                      {formatCurrency(assetUnitValue)}
                     </span>
                   </div>
                 )}
@@ -845,7 +876,7 @@ export const AssetMobilizationPartsSection = ({
                     <span className="text-lg font-semibold">Custo Total Completo</span>
                   </div>
                   <span className="text-2xl font-bold text-primary">
-                    R$ {totalWithMainAsset.toFixed(2)}
+                    {formatCurrency(totalWithMainAsset)}
                   </span>
                 </div>
               </div>
