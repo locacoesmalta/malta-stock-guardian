@@ -29,16 +29,20 @@ export interface RentalEquipmentInput {
 }
 
 /**
- * Calcula os dias de locação baseado na data de início do contrato
+ * Calcula os dias de locação baseado na data de RETIRADA do equipamento
+ * Limite máximo: 30 dias (ou conforme tipo de contrato)
  */
 export const calculateDaysRented = (
-  contractStartDate: string,
-  returnDate: string | null
+  pickupDate: string,
+  returnDate: string | null,
+  maxDays: number = 30
 ): number => {
-  const startDate = new Date(contractStartDate);
+  const startDate = new Date(pickupDate);
   const endDate = returnDate ? new Date(returnDate) : new Date();
-  const days = differenceInDays(endDate, startDate);
-  return Math.max(0, days + 1); // +1 para incluir o dia inicial
+  const days = differenceInDays(endDate, startDate) + 1; // +1 para incluir o dia inicial
+  
+  // Limitar ao máximo de dias do contrato
+  return Math.min(Math.max(0, days), maxDays);
 };
 
 /**

@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { addDays, differenceInDays, format } from "date-fns";
-import { ArrowLeft, Upload, X, FileText, Printer, Search, Loader2, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Upload, X, FileText, Printer, Search, Loader2, Plus, Trash2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -29,6 +29,7 @@ import {
   calculateDaysRented,
   type RentalEquipmentInput 
 } from "@/hooks/useRentalEquipment";
+import { ReturnEquipmentDialog } from "@/components/ReturnEquipmentDialog";
 import "@/styles/contract-print.css";
 
 const formSchema = z.object({
@@ -69,6 +70,10 @@ export default function RentalCompanyForm() {
   const [returnDate, setReturnDate] = useState("");
   const [dailyRate, setDailyRate] = useState("");
   const [workSite, setWorkSite] = useState("");
+  
+  // Return equipment dialog state
+  const [returnDialogOpen, setReturnDialogOpen] = useState(false);
+  const [equipmentToReturn, setEquipmentToReturn] = useState<any>(null);
   
   const { data: equipmentByPAT } = useEquipmentByPAT(equipmentPAT);
 
@@ -222,6 +227,28 @@ export default function RentalCompanyForm() {
       return;
     }
 
+    // Validações de data
+    const contractStart = form.watch("contract_start_date");
+    const contractEnd = form.watch("contract_end_date");
+    
+    if (contractStart && pickupDate < contractStart) {
+      toast({
+        title: "Data inválida",
+        description: "Data de retirada não pode ser anterior ao início do contrato.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (contractEnd && pickupDate > contractEnd) {
+      toast({
+        title: "Data inválida",
+        description: "Data de retirada não pode ser posterior ao fim do contrato.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const equipmentData: RentalEquipmentInput = {
       rental_company_id: id,
       asset_id: selectedAssetId || undefined,
@@ -252,14 +279,18 @@ export default function RentalCompanyForm() {
   };
 
   const calculateEquipmentTotals = () => {
-    const contractStart = form.watch("contract_start_date");
-    if (!contractStart) return { totalEquipment: 0, totalDays: 0, totalValue: 0 };
-
+    const contractType = parseInt(form.watch("contract_type") || "30");
+    
     let totalDays = 0;
     let totalValue = 0;
 
     rentalEquipment.forEach((equipment) => {
-      const days = calculateDaysRented(contractStart, equipment.return_date);
+      // Calcular dias a partir da data de RETIRADA (não do início do contrato)
+      const days = calculateDaysRented(
+        equipment.pickup_date, 
+        equipment.return_date,
+        contractType
+      );
       totalDays += days;
       
       if (equipment.daily_rate) {
@@ -324,6 +355,10 @@ export default function RentalCompanyForm() {
     : "";
 
   const equipmentTotals = calculateEquipmentTotals();
+  
+  // Verificar se todos equipamentos foram devolvidos
+  const allEquipmentReturned = rentalEquipment.length > 0 && 
+    rentalEquipment.every(eq => eq.return_date !== null);
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -553,7 +588,10 @@ export default function RentalCompanyForm() {
                     <span className="font-medium">Data de Término:</span>
                     <span>{format(new Date(form.watch("contract_end_date")), "dd/MM/yyyy")}</span>
                   </div>
-                  <ContractExpirationBadge contractEndDate={form.watch("contract_end_date")} />
+                  <ContractExpirationBadge 
+                    contractEndDate={form.watch("contract_end_date")} 
+                    allEquipmentReturned={allEquipmentReturned}
+                  />
                 </div>
               )}
 
@@ -713,12 +751,17 @@ export default function RentalCompanyForm() {
                           </TableHeader>
                           <TableBody>
                             {rentalEquipment.map((equipment) => {
-                              const contractStart = form.watch("contract_start_date");
-                              const days = contractStart ? calculateDaysRented(contractStart, equipment.return_date) : 0;
+                              const contractType = parseInt(form.watch("contract_type") || "30");
+                              const days = calculateDaysRented(
+                                equipment.pickup_date, 
+                                equipment.return_date,
+                                contractType
+                              );
                               const total = equipment.daily_rate ? days * equipment.daily_rate : 0;
+                              const isOverdue = days >= contractType && !equipment.return_date;
 
                               return (
-                                <TableRow key={equipment.id}>
+                                <TableRow key={equipment.id} className={isOverdue ? "bg-destructive/10" : ""}>
                                   <TableCell className="font-mono">{equipment.asset_code}</TableCell>
                                   <TableCell>{equipment.equipment_name}</TableCell>
                                   <TableCell>{equipment.work_site || "-"}</TableCell>
@@ -727,10 +770,15 @@ export default function RentalCompanyForm() {
                                     {equipment.return_date ? (
                                       format(new Date(equipment.return_date), "dd/MM/yyyy")
                                     ) : (
-                                      <Badge variant="secondary">Em Locação</Badge>
+                                      <Badge variant={isOverdue ? "destructive" : "secondary"}>
+                                        {isOverdue ? "Locação Excedida" : "Em Locação"}
+                                      </Badge>
                                     )}
                                   </TableCell>
-                                  <TableCell className="text-right font-semibold">{days}</TableCell>
+                                  <TableCell className="text-right font-semibold">
+                                    {days}
+                                    {isOverdue && <span className="text-destructive ml-1">⚠</span>}
+                                  </TableCell>
                                   <TableCell className="text-right">
                                     {equipment.daily_rate ? `R$ ${equipment.daily_rate.toFixed(2)}` : "-"}
                                   </TableCell>
@@ -738,15 +786,31 @@ export default function RentalCompanyForm() {
                                     {total > 0 ? `R$ ${total.toFixed(2)}` : "-"}
                                   </TableCell>
                                   <TableCell>
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => handleDeleteEquipment(equipment.id)}
-                                      disabled={deleteEquipmentMutation.isPending}
-                                    >
-                                      <Trash2 className="h-4 w-4 text-destructive" />
-                                    </Button>
+                                    <div className="flex items-center gap-1">
+                                      {!equipment.return_date && (
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => {
+                                            setEquipmentToReturn(equipment);
+                                            setReturnDialogOpen(true);
+                                          }}
+                                        >
+                                          <Package className="h-4 w-4 mr-1" />
+                                          Devolver
+                                        </Button>
+                                      )}
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleDeleteEquipment(equipment.id)}
+                                        disabled={deleteEquipmentMutation.isPending}
+                                      >
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                      </Button>
+                                    </div>
                                   </TableCell>
                                 </TableRow>
                               );
@@ -804,6 +868,14 @@ export default function RentalCompanyForm() {
           </div>
         </form>
       </Form>
+
+      {equipmentToReturn && (
+        <ReturnEquipmentDialog
+          equipment={equipmentToReturn}
+          open={returnDialogOpen}
+          onOpenChange={setReturnDialogOpen}
+        />
+      )}
     </div>
   );
 }
