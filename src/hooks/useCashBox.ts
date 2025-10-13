@@ -200,7 +200,10 @@ export const useCashBox = () => {
           observations,
           attachment_url: attachmentUrl,
           invoice_date: invoiceDate 
-            ? format(new Date(invoiceDate + 'T12:00:00'), "yyyy-MM-dd")
+            ? (() => {
+                const [year, month, day] = invoiceDate.split('-').map(Number);
+                return format(new Date(year, month - 1, day), "yyyy-MM-dd");
+              })()
             : null,
           created_by: user.id,
         })
@@ -237,9 +240,12 @@ export const useCashBox = () => {
         updateData.description = description;
       }
       if (invoiceDate !== undefined) {
-        // Aplicar mesma lógica de timezone usada ao adicionar transações
+        // Parsear data como componentes locais para evitar problemas de timezone
         updateData.invoice_date = invoiceDate 
-          ? format(new Date(invoiceDate + 'T12:00:00'), "yyyy-MM-dd")
+          ? (() => {
+              const [year, month, day] = invoiceDate.split('-').map(Number);
+              return format(new Date(year, month - 1, day), "yyyy-MM-dd");
+            })()
           : null;
       }
       
