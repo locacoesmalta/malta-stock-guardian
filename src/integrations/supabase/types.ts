@@ -46,6 +46,62 @@ export type Database = {
           },
         ]
       }
+      asset_mobilization_expenses: {
+        Row: {
+          asset_id: string
+          collaborator_name: string | null
+          created_at: string
+          expense_type: string
+          id: string
+          received_by: string | null
+          registered_by: string
+          return_date: string | null
+          sent_by: string | null
+          shipment_date: string | null
+          travel_date: string | null
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          asset_id: string
+          collaborator_name?: string | null
+          created_at?: string
+          expense_type: string
+          id?: string
+          received_by?: string | null
+          registered_by: string
+          return_date?: string | null
+          sent_by?: string | null
+          shipment_date?: string | null
+          travel_date?: string | null
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          asset_id?: string
+          collaborator_name?: string | null
+          created_at?: string
+          expense_type?: string
+          id?: string
+          received_by?: string | null
+          registered_by?: string
+          return_date?: string | null
+          sent_by?: string | null
+          shipment_date?: string | null
+          travel_date?: string | null
+          updated_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_mobilization_expenses_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asset_mobilization_parts: {
         Row: {
           asset_id: string
