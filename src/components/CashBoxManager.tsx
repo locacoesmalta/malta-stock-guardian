@@ -10,6 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useCashBox } from "@/hooks/useCashBox";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toZonedTime } from "date-fns-tz";
 import { DollarSign, Plus, X, Edit, Paperclip, Printer, Trash2, ChevronDown, ChevronUp, History } from "lucide-react";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useAuth } from "@/contexts/AuthContext";
@@ -137,7 +138,9 @@ export const CashBoxManager = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: ptBR });
+    const utcDate = new Date(dateString);
+    const localDate = toZonedTime(utcDate, 'America/Sao_Paulo');
+    return format(localDate, "dd/MM/yyyy HH:mm", { locale: ptBR });
   };
 
   const handleDeleteTransaction = async (transactionId: string) => {

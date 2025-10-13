@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 export interface CashBox {
   id: string;
@@ -103,7 +104,7 @@ export const useCashBox = () => {
         .from("cash_boxes")
         .insert({
           opened_by: user.id,
-          opened_at: openedAt,
+          opened_at: format(new Date(openedAt), "yyyy-MM-dd'T'HH:mm:ssXXX"),
           initial_value: initialValue,
           status: "open",
         })
@@ -198,7 +199,9 @@ export const useCashBox = () => {
           description,
           observations,
           attachment_url: attachmentUrl,
-          invoice_date: invoiceDate,
+          invoice_date: invoiceDate 
+            ? format(new Date(invoiceDate + 'T12:00:00'), "yyyy-MM-dd")
+            : null,
           created_by: user.id,
         })
         .select()
