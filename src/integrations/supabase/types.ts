@@ -848,6 +848,7 @@ export type Database = {
           rental_company_id: string
           return_date: string | null
           updated_at: string
+          work_site: string | null
         }
         Insert: {
           asset_code: string
@@ -860,6 +861,7 @@ export type Database = {
           rental_company_id: string
           return_date?: string | null
           updated_at?: string
+          work_site?: string | null
         }
         Update: {
           asset_code?: string
@@ -872,6 +874,7 @@ export type Database = {
           rental_company_id?: string
           return_date?: string | null
           updated_at?: string
+          work_site?: string | null
         }
         Relationships: [
           {

@@ -68,6 +68,7 @@ export default function RentalCompanyForm() {
   const [pickupDate, setPickupDate] = useState("");
   const [returnDate, setReturnDate] = useState("");
   const [dailyRate, setDailyRate] = useState("");
+  const [workSite, setWorkSite] = useState("");
   
   const { data: equipmentByPAT } = useEquipmentByPAT(equipmentPAT);
 
@@ -229,6 +230,7 @@ export default function RentalCompanyForm() {
       pickup_date: pickupDate,
       return_date: returnDate || undefined,
       daily_rate: dailyRate ? parseFloat(dailyRate) : undefined,
+      work_site: workSite || undefined,
     };
 
     addEquipmentMutation.mutate(equipmentData, {
@@ -238,6 +240,7 @@ export default function RentalCompanyForm() {
         setPickupDate("");
         setReturnDate("");
         setDailyRate("");
+        setWorkSite("");
         setSelectedAssetId("");
       },
     });
@@ -638,7 +641,7 @@ export default function RentalCompanyForm() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Data de Retirada *</label>
                         <Input
@@ -654,6 +657,17 @@ export default function RentalCompanyForm() {
                           type="date"
                           value={returnDate}
                           onChange={(e) => setReturnDate(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Obra</label>
+                        <Input
+                          placeholder="Nome da obra"
+                          value={workSite}
+                          onChange={(e) => setWorkSite(e.target.value)}
                         />
                       </div>
 
@@ -688,6 +702,7 @@ export default function RentalCompanyForm() {
                             <TableRow>
                               <TableHead>PAT</TableHead>
                               <TableHead>Equipamento</TableHead>
+                              <TableHead>Obra</TableHead>
                               <TableHead>Retirada</TableHead>
                               <TableHead>Devolução</TableHead>
                               <TableHead className="text-right">Dias</TableHead>
@@ -706,6 +721,7 @@ export default function RentalCompanyForm() {
                                 <TableRow key={equipment.id}>
                                   <TableCell className="font-mono">{equipment.asset_code}</TableCell>
                                   <TableCell>{equipment.equipment_name}</TableCell>
+                                  <TableCell>{equipment.work_site || "-"}</TableCell>
                                   <TableCell>{format(new Date(equipment.pickup_date), "dd/MM/yyyy")}</TableCell>
                                   <TableCell>
                                     {equipment.return_date ? (

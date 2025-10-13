@@ -12,6 +12,7 @@ export interface RentalEquipment {
   pickup_date: string;
   return_date: string | null;
   daily_rate: number | null;
+  work_site: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -24,6 +25,7 @@ export interface RentalEquipmentInput {
   pickup_date: string;
   return_date?: string;
   daily_rate?: number;
+  work_site?: string;
 }
 
 /**
