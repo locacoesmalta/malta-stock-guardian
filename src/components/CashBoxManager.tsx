@@ -476,7 +476,10 @@ export const CashBoxManager = () => {
                           {String(index + 1).padStart(2, '0')} - {transaction.description || "Sem descrição"}
                           {transaction.invoice_date && (
                             <span className="text-xs ml-2">
-                              (Nota: {format(new Date(transaction.invoice_date), "dd/MM/yyyy", { locale: ptBR })})
+                              (Nota: {(() => {
+                                const [year, month, day] = transaction.invoice_date.split('-');
+                                return `${day}/${month}/${year}`;
+                              })()})
                             </span>
                           )}
                         </div>
@@ -557,7 +560,10 @@ export const CashBoxManager = () => {
                             </p>
                             {transaction.invoice_date && (
                               <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                                📄 Data da Nota: {format(new Date(transaction.invoice_date), "dd/MM/yyyy", { locale: ptBR })}
+                                📄 Data da Nota: {(() => {
+                                  const [year, month, day] = transaction.invoice_date.split('-');
+                                  return `${day}/${month}/${year}`;
+                                })()}
                               </p>
                             )}
                             {transaction.observations && (
