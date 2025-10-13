@@ -20,6 +20,7 @@ const WithdrawalHistory = () => {
   const [companyFilter, setCompanyFilter] = useState("");
   const [equipmentCodeFilter, setEquipmentCodeFilter] = useState("");
   const [showOnlyMaintenance, setShowOnlyMaintenance] = useState(false);
+  const [showOnlySales, setShowOnlySales] = useState(false);
 
   if (error) {
     toast.error("Erro ao carregar histórico");
@@ -67,17 +68,27 @@ const WithdrawalHistory = () => {
       filtered = filtered.filter((w) => w.company === "Manutenção Interna");
     }
 
+    if (showOnlySales) {
+      filtered = filtered.filter((w) => 
+        w.equipment_code === "VENDA" || 
+        w.withdrawal_reason === "VENDA" ||
+        w.company.toLowerCase().includes("venda")
+      );
+    }
+
     return filtered;
   }, [withdrawals, startDate, endDate, searchTerm, workSiteFilter, companyFilter, equipmentCodeFilter, showOnlyMaintenance]);
 
   const handleExport = () => {
     const csvContent = [
-      ["Data", "Produto", "Código", "Quantidade", "Custo Unit.", "Custo Total", "Motivo", "Responsável", "PAT", "Obra", "Empresa"],
+      ["Data", "Tipo", "Produto", "Código", "Quantidade", "Custo Unit.", "Custo Total", "Motivo", "Responsável", "PAT/Venda", "Obra", "Empresa"],
       ...filteredWithdrawals.map((w) => {
+        const isSale = w.equipment_code === "VENDA" || w.withdrawal_reason === "VENDA";
         const unitCost = (w.products as any)?.purchase_price || 0;
         const totalCost = unitCost * w.quantity;
         return [
           format(new Date(w.withdrawal_date), "dd/MM/yyyy", { locale: ptBR }),
+          isSale ? "VENDA" : "RETIRADA",
           w.products?.name || "Sem permissão",
           w.products?.code || "-",
           w.quantity.toString(),
@@ -85,7 +96,7 @@ const WithdrawalHistory = () => {
           totalCost.toFixed(2),
           w.withdrawal_reason || "-",
           w.profiles?.full_name || w.profiles?.email || "-",
-          w.equipment_code,
+          isSale ? "VENDA" : w.equipment_code,
           w.work_site,
           w.company,
         ];
@@ -197,18 +208,33 @@ const WithdrawalHistory = () => {
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 pt-2">
-            <Checkbox
-              id="maintenanceOnly"
-              checked={showOnlyMaintenance}
-              onCheckedChange={(checked) => setShowOnlyMaintenance(checked as boolean)}
-            />
-            <Label
-              htmlFor="maintenanceOnly"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Mostrar apenas Manutenção Interna
-            </Label>
+          <div className="flex flex-col gap-2 pt-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="maintenanceOnly"
+                checked={showOnlyMaintenance}
+                onCheckedChange={(checked) => setShowOnlyMaintenance(checked as boolean)}
+              />
+              <Label
+                htmlFor="maintenanceOnly"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Mostrar apenas Manutenção Interna
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="salesOnly"
+                checked={showOnlySales}
+                onCheckedChange={(checked) => setShowOnlySales(checked as boolean)}
+              />
+              <Label
+                htmlFor="salesOnly"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Mostrar apenas Vendas de Material
+              </Label>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -234,12 +260,15 @@ const WithdrawalHistory = () => {
                 const unitCost = (withdrawal.products as any)?.purchase_price || 0;
                 const totalCost = unitCost * withdrawal.quantity;
                 const isMaintenance = withdrawal.company === "Manutenção Interna";
+                const isSale = withdrawal.equipment_code === "VENDA" || withdrawal.withdrawal_reason === "VENDA";
                 
                 return (
                   <div
                     key={withdrawal.id}
                     className={`flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors ${
                       isMaintenance ? 'border-blue-500/50 bg-blue-50/50 dark:bg-blue-950/20' : ''
+                    } ${
+                      isSale ? 'border-green-500/50 bg-green-50/50 dark:bg-green-950/20' : ''
                     }`}
                   >
                     <div className="flex-1 space-y-1">
@@ -250,12 +279,20 @@ const WithdrawalHistory = () => {
                             Manutenção Interna
                           </span>
                         )}
+                        {isSale && (
+                          <span className="ml-2 text-xs px-2 py-1 rounded bg-green-500 text-white">
+                            Venda de Material
+                          </span>
+                        )}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         Código: {withdrawal.products?.code || "-"}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        PAT: {withdrawal.equipment_code} | Obra: {withdrawal.work_site} | Empresa: {withdrawal.company}
+                        {isSale 
+                          ? `Tipo: Venda de Material (sem PAT associado) | Obra: ${withdrawal.work_site} | Empresa: ${withdrawal.company}`
+                          : `PAT: ${withdrawal.equipment_code} | Obra: ${withdrawal.work_site} | Empresa: ${withdrawal.company}`
+                        }
                       </div>
                       {withdrawal.withdrawal_reason && (
                         <div className="text-sm text-muted-foreground">
