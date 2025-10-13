@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { addDays, differenceInDays, format } from "date-fns";
+import { addDays, differenceInDays, format, parseISO } from "date-fns";
 import { ArrowLeft, Upload, X, FileText, Printer, Search, Loader2, Plus, Trash2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -306,15 +306,17 @@ export default function RentalCompanyForm() {
   };
 
   const onSubmit = async (data: FormData) => {
-    const contractStartDate = new Date(data.contract_start_date);
-    
-    // Se contract_end_date for fornecida, usa ela; senão calcula baseado no tipo
-    let contractEndDate: Date;
+    // Se contract_end_date for fornecida, usa ela diretamente; senão calcula baseado no tipo
+    let contractEndDate: string;
     if (data.contract_end_date) {
-      contractEndDate = new Date(data.contract_end_date);
+      // Usa a data exata fornecida pelo usuário sem conversão de timezone
+      contractEndDate = data.contract_end_date;
     } else {
+      // Calcula data final apenas se não foi fornecida
+      const contractStartDate = parseISO(data.contract_start_date);
       const contractDays = parseInt(data.contract_type);
-      contractEndDate = addDays(contractStartDate, contractDays);
+      const endDate = addDays(contractStartDate, contractDays);
+      contractEndDate = format(endDate, "yyyy-MM-dd");
     }
 
     const submissionData: any = {
@@ -326,7 +328,7 @@ export default function RentalCompanyForm() {
       contract_number: data.contract_number,
       contract_type: data.contract_type,
       contract_start_date: data.contract_start_date,
-      contract_end_date: format(contractEndDate, "yyyy-MM-dd"),
+      contract_end_date: contractEndDate,
       notes: data.notes || undefined,
       documents: uploadedFiles,
       is_renewed: false,
@@ -349,7 +351,7 @@ export default function RentalCompanyForm() {
 
   const suggestedEndDate = form.watch("contract_start_date")
     ? format(
-        addDays(new Date(form.watch("contract_start_date")), parseInt(form.watch("contract_type"))),
+        addDays(parseISO(form.watch("contract_start_date")), parseInt(form.watch("contract_type"))),
         "yyyy-MM-dd"
       )
     : "";
@@ -515,11 +517,11 @@ export default function RentalCompanyForm() {
                           field.onChange(value);
                           // Auto-sugerir data final ao mudar tipo
                           if (form.watch("contract_start_date") && !form.watch("contract_end_date")) {
-                            const startDate = new Date(form.watch("contract_start_date"));
+                            const startDate = parseISO(form.watch("contract_start_date"));
                             const endDate = addDays(startDate, parseInt(value));
                             form.setValue("contract_end_date", format(endDate, "yyyy-MM-dd"));
                           }
-                        }} 
+                        }}
                         value={field.value}
                       >
                         <FormControl>
@@ -551,7 +553,7 @@ export default function RentalCompanyForm() {
                             field.onChange(e);
                             // Auto-sugerir data final ao mudar data início
                             if (!form.watch("contract_end_date")) {
-                              const startDate = new Date(e.target.value);
+                              const startDate = parseISO(e.target.value);
                               const contractDays = parseInt(form.watch("contract_type"));
                               const endDate = addDays(startDate, contractDays);
                               form.setValue("contract_end_date", format(endDate, "yyyy-MM-dd"));
@@ -586,7 +588,7 @@ export default function RentalCompanyForm() {
                 <div className="p-4 bg-muted rounded-lg space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="font-medium">Data de Término:</span>
-                    <span>{format(new Date(form.watch("contract_end_date")), "dd/MM/yyyy")}</span>
+                    <span>{format(parseISO(form.watch("contract_end_date")), "dd/MM/yyyy")}</span>
                   </div>
                   <ContractExpirationBadge 
                     contractEndDate={form.watch("contract_end_date")} 
