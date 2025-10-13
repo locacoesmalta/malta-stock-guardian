@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { addDays, differenceInDays, format } from "date-fns";
-import { ArrowLeft, Upload, X, FileText, Printer } from "lucide-react";
+import { ArrowLeft, Upload, X, FileText, Printer, Search, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -15,6 +15,7 @@ import { useRentalCompany, useCreateRentalCompany, useUpdateRentalCompany } from
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { ContractExpirationBadge } from "@/components/ContractExpirationBadge";
+import { useCnpjLookup, formatCnpj, validateCnpj } from "@/hooks/useCnpjLookup";
 import "@/styles/contract-print.css";
 
 const formSchema = z.object({
@@ -45,6 +46,7 @@ export default function RentalCompanyForm() {
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [rentalDays, setRentalDays] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
+  const cnpjLookupMutation = useCnpjLookup();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -159,6 +161,33 @@ export default function RentalCompanyForm() {
     }
   };
 
+  const handleCnpjLookup = async () => {
+    const cnpj = form.getValues("cnpj");
+    
+    if (!validateCnpj(cnpj)) {
+      toast({
+        title: "CNPJ inválido",
+        description: "Digite um CNPJ válido com 14 dígitos.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    cnpjLookupMutation.mutate(cnpj, {
+      onSuccess: (data) => {
+        form.setValue("company_name", data.company_name);
+        form.setValue("address", data.address);
+        form.setValue("contact_phone", data.contact_phone);
+        form.setValue("contact_email", data.contact_email);
+      },
+    });
+  };
+
+  const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCnpj(e.target.value);
+    form.setValue("cnpj", formatted);
+  };
+
   const onSubmit = async (data: FormData) => {
     const contractStartDate = new Date(data.contract_start_date);
     const contractDays = parseInt(data.contract_type);
@@ -238,6 +267,39 @@ export default function RentalCompanyForm() {
             <CardContent className="space-y-4">
               <FormField
                 control={form.control}
+                name="cnpj"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>CNPJ *</FormLabel>
+                    <div className="flex gap-2">
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="00.000.000/0000-00" 
+                          maxLength={18}
+                          onChange={handleCnpjChange}
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleCnpjLookup}
+                        disabled={!validateCnpj(field.value) || cnpjLookupMutation.isPending}
+                      >
+                        {cnpjLookupMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Search className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="company_name"
                 render={({ field }) => (
                   <FormItem>
@@ -253,20 +315,6 @@ export default function RentalCompanyForm() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="cnpj"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CNPJ *</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="00.000.000/0000-00" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
                   name="contact_phone"
                   render={({ field }) => (
                     <FormItem>
@@ -278,21 +326,21 @@ export default function RentalCompanyForm() {
                     </FormItem>
                   )}
                 />
-              </div>
 
-              <FormField
-                control={form.control}
-                name="contact_email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>E-mail</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="email" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="contact_email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>E-mail</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="email" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <FormField
                 control={form.control}
