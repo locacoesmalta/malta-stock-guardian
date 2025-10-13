@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -56,7 +57,16 @@ export const AssetHistorySection = ({ assetId }: AssetHistorySectionProps) => {
   const renderEventDetails = (item: any) => {
     // Se tem detalhes_evento, mostrar ele (eventos novos)
     if (item.detalhes_evento) {
-      return <span className="text-sm">{item.detalhes_evento}</span>;
+      return (
+        <div className="text-sm space-y-1">
+          <span>{item.detalhes_evento}</span>
+          {item.tipo_evento === "RETIRADA DE MATERIAL" && (
+            <Badge variant="outline" className="ml-2 text-xs">
+              Material
+            </Badge>
+          )}
+        </div>
+      );
     }
 
     // Senão, mostrar no formato antigo (campo_alterado com valores)

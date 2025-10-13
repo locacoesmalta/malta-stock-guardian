@@ -245,6 +245,27 @@ const MaterialWithdrawal = () => {
         }
       }
 
+      // Registrar evento no histórico do equipamento se ele existe no sistema
+      if (equipment?.id) {
+        try {
+          const productNames = items.map(item => `${item.productName} (${item.quantity}x)`).join(", ");
+          const detalhesEvento = `Retirada de material: ${productNames}. Empresa: ${company}. Obra: ${workSite}.${withdrawalReason ? ` Motivo: ${withdrawalReason}` : ""}`;
+          
+          await supabase.rpc("registrar_evento_patrimonio", {
+            p_pat_id: equipment.id,
+            p_codigo_pat: formattedPAT,
+            p_tipo_evento: "RETIRADA DE MATERIAL",
+            p_detalhes_evento: detalhesEvento,
+            p_campo_alterado: null,
+            p_valor_antigo: null,
+            p_valor_novo: null,
+          });
+        } catch (historyError) {
+          console.error("Erro ao registrar no histórico do equipamento:", historyError);
+          // Não bloqueamos a operação se o registro no histórico falhar
+        }
+      }
+
       toast.success("Retirada de material registrada com sucesso!");
       navigate("/inventory/history");
     } catch (error: any) {
