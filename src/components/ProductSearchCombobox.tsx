@@ -45,8 +45,8 @@ export const ProductSearchCombobox = ({
 
   const selectedProduct = products.find((product) => product.id === value);
 
-  // Filtrar produtos apenas se tiver 3+ caracteres OU se estiver vazio
-  const filteredProducts = searchValue.length === 0 || searchValue.length >= 3
+  // Filtrar produtos em tempo real conforme o usuário digita
+  const filteredProducts = searchValue.length > 0
     ? products.filter(product => {
         const search = searchValue.toLowerCase();
         return (
@@ -55,8 +55,6 @@ export const ProductSearchCombobox = ({
         );
       })
     : [];
-
-  const showNoResults = searchValue.length > 0 && searchValue.length < 3;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -79,49 +77,50 @@ export const ProductSearchCombobox = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0 z-50 bg-popover" align="start">
-        <Command>
+        <Command shouldFilter={false}>
           <CommandInput 
-            placeholder="Digite pelo menos 3 caracteres..." 
+            placeholder="Digite o código ou nome do produto..." 
             value={searchValue}
             onValueChange={setSearchValue}
           />
           <CommandList>
-            {showNoResults ? (
+            {searchValue.length === 0 ? (
               <CommandEmpty>
-                Digite pelo menos 3 caracteres para buscar...
+                Digite para buscar produtos...
+              </CommandEmpty>
+            ) : filteredProducts.length === 0 ? (
+              <CommandEmpty>
+                Nenhum produto encontrado.
               </CommandEmpty>
             ) : (
-              <>
-                <CommandEmpty>Nenhum produto encontrado.</CommandEmpty>
-                <CommandGroup>
-                  {filteredProducts.map((product) => (
-                    <CommandItem
-                      key={product.id}
-                      value={product.id}
-                      onSelect={() => {
-                        onValueChange(product.id);
-                        setOpen(false);
-                        setSearchValue("");
-                      }}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          value === product.id ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      <div className="flex-1 truncate">
-                        <span className="font-medium">{product.code}</span> - {product.name}
-                        {showStock && (
-                          <span className="text-muted-foreground ml-2">
-                            (Estoque: {product.quantity})
-                          </span>
-                        )}
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </>
+              <CommandGroup>
+                {filteredProducts.map((product) => (
+                  <CommandItem
+                    key={product.id}
+                    value={product.id}
+                    onSelect={() => {
+                      onValueChange(product.id);
+                      setOpen(false);
+                      setSearchValue("");
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === product.id ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    <div className="flex-1 truncate">
+                      <span className="font-medium">{product.code}</span> - {product.name}
+                      {showStock && (
+                        <span className="text-muted-foreground ml-2">
+                          (Estoque: {product.quantity})
+                        </span>
+                      )}
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
             )}
           </CommandList>
         </Command>
