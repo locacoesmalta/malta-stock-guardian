@@ -25,6 +25,12 @@ export interface RentalCompany {
   updated_at: string;
 }
 
+export interface RentalCompanyWithEquipment extends RentalCompany {
+  total_equipment: number;
+  returned_equipment: number;
+  all_equipment_returned: boolean;
+}
+
 export const useRentalCompanies = () => {
   return useQuery({
     queryKey: ["rental-companies"],
@@ -122,6 +128,36 @@ export const useUpdateRentalCompany = () => {
   });
 };
 
+export const useRentalCompaniesWithEquipment = () => {
+  return useQuery({
+    queryKey: ["rental-companies-with-equipment"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("rental_companies")
+        .select(`
+          *,
+          rental_equipment (
+            id,
+            return_date
+          )
+        `)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Processar dados para adicionar contadores
+      return (data || []).map((company: any) => ({
+        ...company,
+        total_equipment: company.rental_equipment?.length || 0,
+        returned_equipment: company.rental_equipment?.filter((eq: any) => eq.return_date !== null).length || 0,
+        all_equipment_returned: company.rental_equipment?.length > 0 
+          ? company.rental_equipment.every((eq: any) => eq.return_date !== null)
+          : false,
+      })) as RentalCompanyWithEquipment[];
+    },
+  });
+};
+
 export const useDeleteRentalCompany = () => {
   const queryClient = useQueryClient();
 
@@ -136,6 +172,7 @@ export const useDeleteRentalCompany = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["rental-companies"] });
+      queryClient.invalidateQueries({ queryKey: ["rental-companies-with-equipment"] });
       toast({
         title: "Sucesso",
         description: "Empresa de locação excluída com sucesso.",

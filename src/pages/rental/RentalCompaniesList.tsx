@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Pencil, Trash2, FileText } from "lucide-react";
+import { Plus, Search, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useRentalCompanies, useDeleteRentalCompany } from "@/hooks/useRentalCompanies";
+import { useRentalCompaniesWithEquipment, useDeleteRentalCompany } from "@/hooks/useRentalCompanies";
 import { ContractExpirationBadge } from "@/components/ContractExpirationBadge";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -14,7 +14,7 @@ import { useConfirm } from "@/hooks/useConfirm";
 export default function RentalCompaniesList() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const { data: companies, isLoading } = useRentalCompanies();
+  const { data: companies, isLoading } = useRentalCompaniesWithEquipment();
   const deleteMutation = useDeleteRentalCompany();
   const { ConfirmDialog, confirm } = useConfirm();
 
@@ -87,7 +87,10 @@ export default function RentalCompaniesList() {
                     <TableCell>{company.contract_number}</TableCell>
                     <TableCell>{company.contract_type} dias</TableCell>
                     <TableCell>
-                      <ContractExpirationBadge contractEndDate={company.contract_end_date} />
+                      <ContractExpirationBadge 
+                        contractEndDate={company.contract_end_date}
+                        allEquipmentReturned={company.all_equipment_returned}
+                      />
                     </TableCell>
                     <TableCell>
                       {format(new Date(company.contract_start_date), "dd/MM/yyyy", { locale: ptBR })}
@@ -100,14 +103,8 @@ export default function RentalCompaniesList() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => navigate(`/rental-companies/${company.id}`)}
-                        >
-                          <FileText className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
                           onClick={() => navigate(`/rental-companies/${company.id}/edit`)}
+                          title="Editar contrato"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -115,6 +112,7 @@ export default function RentalCompaniesList() {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleDelete(company.id, company.company_name)}
+                          title="Excluir contrato"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
