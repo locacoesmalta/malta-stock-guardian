@@ -1,4 +1,4 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ProductSearchCombobox } from "./ProductSearchCombobox";
 
 interface Product {
   id: string;
@@ -25,18 +25,13 @@ export const ProductSelector = ({
   required = false,
 }: ProductSelectorProps) => {
   return (
-    <Select value={value} onValueChange={onValueChange} required={required}>
-      <SelectTrigger>
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent>
-        {products.map((product) => (
-          <SelectItem key={product.id} value={product.id}>
-            {product.code} - {product.name}
-            {showStock && ` (Estoque: ${product.quantity})`}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <ProductSearchCombobox
+      products={products}
+      value={value}
+      onValueChange={onValueChange}
+      placeholder={placeholder}
+      showStock={showStock}
+      required={required}
+    />
   );
 };
