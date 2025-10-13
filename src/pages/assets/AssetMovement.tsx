@@ -7,7 +7,7 @@ import { format, parseISO } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAssetHistory } from "@/hooks/useAssetHistory";
-import { useAddRentalEquipment, type RentalEquipmentInput } from "@/hooks/useRentalEquipment";
+
 import {
   movementDepositoSchema,
   movementManutencaoSchema,
@@ -42,7 +42,7 @@ export default function AssetMovement() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { registrarEvento } = useAssetHistory();
-  const addEquipmentMutation = useAddRentalEquipment();
+  
   const [movementType, setMovementType] = useState<MovementType>("deposito_malta");
   const [photoFile1, setPhotoFile1] = useState<File | null>(null);
   const [photoFile2, setPhotoFile2] = useState<File | null>(null);
@@ -56,7 +56,7 @@ export default function AssetMovement() {
   const [substituteAsset, setSubstituteAsset] = useState<any>(null);
   const [loadingSubstitute, setLoadingSubstitute] = useState(false);
   const [substituteNotFound, setSubstituteNotFound] = useState(false);
-  const [selectedRentalCompany, setSelectedRentalCompany] = useState<any>(null);
+  
 
   const { data: asset, isLoading } = useQuery({
     queryKey: ["asset", id],
@@ -72,22 +72,6 @@ export default function AssetMovement() {
     enabled: !!id,
   });
 
-  // Buscar contratos de locação ativos
-  const { data: rentalCompanies = [] } = useQuery({
-    queryKey: ["rental-companies-active"],
-    queryFn: async () => {
-      const today = new Date().toISOString().split('T')[0];
-      const { data, error } = await supabase
-        .from("rental_companies")
-        .select("*")
-        .gte("contract_end_date", today)
-        .order("company_name");
-      
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: movementType === "locacao",
-  });
 
   // Bloquear movimentação se equipamento estiver em laudo
   useEffect(() => {
@@ -443,26 +427,6 @@ export default function AssetMovement() {
           if (url2) updateData.rental_photo_2 = url2;
         }
 
-        // Registrar equipamento na tabela rental_equipment se empresa foi selecionada
-        if (selectedRentalCompany && asset) {
-          const equipmentData: RentalEquipmentInput = {
-            rental_company_id: selectedRentalCompany.id,
-            asset_id: asset.id,
-            asset_code: asset.asset_code,
-            equipment_name: asset.equipment_name,
-            pickup_date: data.rental_start_date,
-            return_date: data.rental_end_date || undefined,
-            daily_rate: selectedRentalCompany.daily_rental_price || undefined,
-            work_site: data.rental_work_site,
-          };
-
-          try {
-            await addEquipmentMutation.mutateAsync(equipmentData);
-          } catch (error) {
-            console.error("Erro ao registrar equipamento no contrato:", error);
-            toast.error("Equipamento movimentado, mas não foi vinculado ao contrato");
-          }
-        }
       }
 
       // Converter strings vazias de datas para null
@@ -786,49 +750,20 @@ export default function AssetMovement() {
 
             {movementType === "locacao" && (
               <>
-                <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Selecione a Empresa de Locação *</Label>
-                    <Select onValueChange={(value) => {
-                      const company = rentalCompanies.find(c => c.id === value);
-                      setSelectedRentalCompany(company);
-                      if (company) {
-                        form.setValue("rental_company", company.company_name);
-                        form.setValue("rental_contract_number", company.contract_number);
-                      }
-                    }}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma empresa ativa" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {rentalCompanies.map((company: any) => (
-                          <SelectItem key={company.id} value={company.id}>
-                            <div className="flex flex-col">
-                              <span className="font-medium">{company.company_name}</span>
-                              <span className="text-xs text-muted-foreground">
-                                Contrato: {company.contract_number} | 
-                                Vigência: {format(parseISO(company.contract_start_date), "dd/MM/yy")} - {format(parseISO(company.contract_end_date), "dd/MM/yy")}
-                              </span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {rentalCompanies.length === 0 && (
-                      <p className="text-sm text-muted-foreground">Nenhum contrato ativo encontrado</p>
+                    <Label htmlFor="rental_company">Empresa *</Label>
+                    <Input
+                      id="rental_company"
+                      {...form.register("rental_company")}
+                      placeholder="Nome da empresa"
+                    />
+                    {form.formState.errors.rental_company && (
+                      <p className="text-sm text-destructive">
+                        {form.formState.errors.rental_company.message as string}
+                      </p>
                     )}
                   </div>
-
-                  {selectedRentalCompany && (
-                    <div className="p-3 bg-background rounded-lg border">
-                      <p className="text-sm font-medium mb-2">Dados do Contrato:</p>
-                      <div className="space-y-1 text-sm text-muted-foreground">
-                        <p>Empresa: {selectedRentalCompany.company_name}</p>
-                        <p>Contrato: {selectedRentalCompany.contract_number}</p>
-                        <p>CNPJ: {selectedRentalCompany.cnpj}</p>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
