@@ -836,6 +836,60 @@ export type Database = {
         }
         Relationships: []
       }
+      rental_equipment: {
+        Row: {
+          asset_code: string
+          asset_id: string | null
+          created_at: string
+          daily_rate: number | null
+          equipment_name: string
+          id: string
+          pickup_date: string
+          rental_company_id: string
+          return_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          asset_code: string
+          asset_id?: string | null
+          created_at?: string
+          daily_rate?: number | null
+          equipment_name: string
+          id?: string
+          pickup_date: string
+          rental_company_id: string
+          return_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          asset_code?: string
+          asset_id?: string | null
+          created_at?: string
+          daily_rate?: number | null
+          equipment_name?: string
+          id?: string
+          pickup_date?: string
+          rental_company_id?: string
+          return_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rental_equipment_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rental_equipment_rental_company_id_fkey"
+            columns: ["rental_company_id"]
+            isOneToOne: false
+            referencedRelation: "rental_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_parts: {
         Row: {
           created_at: string

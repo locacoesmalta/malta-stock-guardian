@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { addDays, differenceInDays, format } from "date-fns";
-import { ArrowLeft, Upload, X, FileText, Printer, Search, Loader2 } from "lucide-react";
+import { ArrowLeft, Upload, X, FileText, Printer, Search, Loader2, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -16,6 +16,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { ContractExpirationBadge } from "@/components/ContractExpirationBadge";
 import { useCnpjLookup, formatCnpj, validateCnpj } from "@/hooks/useCnpjLookup";
+import { AssetSearchCombobox } from "@/components/AssetSearchCombobox";
+import { useAssetsQuery } from "@/hooks/useAssetsQuery";
+import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
+import { formatPAT } from "@/lib/patUtils";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { 
+  useRentalEquipment, 
+  useAddRentalEquipment, 
+  useDeleteRentalEquipment,
+  calculateDaysRented,
+  type RentalEquipmentInput 
+} from "@/hooks/useRentalEquipment";
 import "@/styles/contract-print.css";
 
 const formSchema = z.object({
@@ -27,10 +40,7 @@ const formSchema = z.object({
   contract_number: z.string().min(1, "Número do contrato é obrigatório"),
   contract_type: z.enum(["15", "30"]),
   contract_start_date: z.string().min(1, "Data de início é obrigatória"),
-  rental_start_date: z.string().optional(),
-  rental_end_date: z.string().optional(),
-  daily_rental_price: z.string().optional(),
-  equipment_description: z.string().optional(),
+  contract_end_date: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -44,9 +54,22 @@ export default function RentalCompanyForm() {
   const createMutation = useCreateRentalCompany();
   const updateMutation = useUpdateRentalCompany();
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
-  const [rentalDays, setRentalDays] = useState(0);
-  const [totalPrice, setTotalPrice] = useState(0);
   const cnpjLookupMutation = useCnpjLookup();
+  
+  // Equipment management
+  const { data: assets } = useAssetsQuery();
+  const { data: rentalEquipment = [] } = useRentalEquipment(id || "");
+  const addEquipmentMutation = useAddRentalEquipment();
+  const deleteEquipmentMutation = useDeleteRentalEquipment();
+  
+  const [selectedAssetId, setSelectedAssetId] = useState<string>("");
+  const [equipmentPAT, setEquipmentPAT] = useState("");
+  const [equipmentName, setEquipmentName] = useState("");
+  const [pickupDate, setPickupDate] = useState("");
+  const [returnDate, setReturnDate] = useState("");
+  const [dailyRate, setDailyRate] = useState("");
+  
+  const { data: equipmentByPAT } = useEquipmentByPAT(equipmentPAT);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -59,10 +82,7 @@ export default function RentalCompanyForm() {
       contract_number: "",
       contract_type: "30",
       contract_start_date: "",
-      rental_start_date: "",
-      rental_end_date: "",
-      daily_rental_price: "",
-      equipment_description: "",
+      contract_end_date: "",
       notes: "",
     },
   });
@@ -78,36 +98,20 @@ export default function RentalCompanyForm() {
         contract_number: company.contract_number,
         contract_type: company.contract_type,
         contract_start_date: company.contract_start_date,
-        rental_start_date: company.rental_start_date || "",
-        rental_end_date: company.rental_end_date || "",
-        daily_rental_price: company.daily_rental_price?.toString() || "",
-        equipment_description: company.equipment_description || "",
+        contract_end_date: company.contract_end_date || "",
         notes: company.notes || "",
       });
       setUploadedFiles(company.documents || []);
     }
   }, [company, form]);
 
-  // Calculate rental days and total price
+  // Auto-fill equipment details when PAT is selected
   useEffect(() => {
-    const rentalStart = form.watch("rental_start_date");
-    const rentalEnd = form.watch("rental_end_date");
-    const dailyPrice = form.watch("daily_rental_price");
-
-    if (rentalStart && rentalEnd) {
-      const days = differenceInDays(new Date(rentalEnd), new Date(rentalStart)) + 1;
-      setRentalDays(days > 0 ? days : 0);
-      
-      if (dailyPrice && days > 0) {
-        setTotalPrice(days * parseFloat(dailyPrice));
-      } else {
-        setTotalPrice(0);
-      }
-    } else {
-      setRentalDays(0);
-      setTotalPrice(0);
+    if (equipmentByPAT) {
+      setEquipmentName(equipmentByPAT.equipment_name);
+      setSelectedAssetId(equipmentByPAT.id);
     }
-  }, [form.watch("rental_start_date"), form.watch("rental_end_date"), form.watch("daily_rental_price")]);
+  }, [equipmentByPAT]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -188,10 +192,96 @@ export default function RentalCompanyForm() {
     form.setValue("cnpj", formatted);
   };
 
+  const handleAddEquipment = () => {
+    if (!id) {
+      toast({
+        title: "Salve o contrato primeiro",
+        description: "Você precisa salvar o contrato antes de adicionar equipamentos.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!equipmentPAT || !equipmentName || !pickupDate) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "PAT, Nome do Equipamento e Data de Retirada são obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const formattedPAT = formatPAT(equipmentPAT);
+    if (!formattedPAT) {
+      toast({
+        title: "PAT inválido",
+        description: "Digite um PAT válido com 6 dígitos.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const equipmentData: RentalEquipmentInput = {
+      rental_company_id: id,
+      asset_id: selectedAssetId || undefined,
+      asset_code: formattedPAT,
+      equipment_name: equipmentName,
+      pickup_date: pickupDate,
+      return_date: returnDate || undefined,
+      daily_rate: dailyRate ? parseFloat(dailyRate) : undefined,
+    };
+
+    addEquipmentMutation.mutate(equipmentData, {
+      onSuccess: () => {
+        setEquipmentPAT("");
+        setEquipmentName("");
+        setPickupDate("");
+        setReturnDate("");
+        setDailyRate("");
+        setSelectedAssetId("");
+      },
+    });
+  };
+
+  const handleDeleteEquipment = (equipmentId: string) => {
+    if (!id) return;
+    deleteEquipmentMutation.mutate({ id: equipmentId, companyId: id });
+  };
+
+  const calculateEquipmentTotals = () => {
+    const contractStart = form.watch("contract_start_date");
+    if (!contractStart) return { totalEquipment: 0, totalDays: 0, totalValue: 0 };
+
+    let totalDays = 0;
+    let totalValue = 0;
+
+    rentalEquipment.forEach((equipment) => {
+      const days = calculateDaysRented(contractStart, equipment.return_date);
+      totalDays += days;
+      
+      if (equipment.daily_rate) {
+        totalValue += days * equipment.daily_rate;
+      }
+    });
+
+    return {
+      totalEquipment: rentalEquipment.length,
+      totalDays,
+      totalValue,
+    };
+  };
+
   const onSubmit = async (data: FormData) => {
     const contractStartDate = new Date(data.contract_start_date);
-    const contractDays = parseInt(data.contract_type);
-    const contractEndDate = addDays(contractStartDate, contractDays);
+    
+    // Se contract_end_date for fornecida, usa ela; senão calcula baseado no tipo
+    let contractEndDate: Date;
+    if (data.contract_end_date) {
+      contractEndDate = new Date(data.contract_end_date);
+    } else {
+      const contractDays = parseInt(data.contract_type);
+      contractEndDate = addDays(contractStartDate, contractDays);
+    }
 
     const submissionData: any = {
       company_name: data.company_name,
@@ -203,10 +293,6 @@ export default function RentalCompanyForm() {
       contract_type: data.contract_type,
       contract_start_date: data.contract_start_date,
       contract_end_date: format(contractEndDate, "yyyy-MM-dd"),
-      rental_start_date: data.rental_start_date || undefined,
-      rental_end_date: data.rental_end_date || undefined,
-      daily_rental_price: data.daily_rental_price ? parseFloat(data.daily_rental_price) : undefined,
-      equipment_description: data.equipment_description || undefined,
       notes: data.notes || undefined,
       documents: uploadedFiles,
       is_renewed: false,
@@ -227,12 +313,14 @@ export default function RentalCompanyForm() {
     window.print();
   };
 
-  const contractEndDate = form.watch("contract_start_date")
+  const suggestedEndDate = form.watch("contract_start_date")
     ? format(
         addDays(new Date(form.watch("contract_start_date")), parseInt(form.watch("contract_type"))),
         "yyyy-MM-dd"
       )
     : "";
+
+  const equipmentTotals = calculateEquipmentTotals();
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -384,7 +472,18 @@ export default function RentalCompanyForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Tipo de Contrato *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select 
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          // Auto-sugerir data final ao mudar tipo
+                          if (form.watch("contract_start_date") && !form.watch("contract_end_date")) {
+                            const startDate = new Date(form.watch("contract_start_date"));
+                            const endDate = addDays(startDate, parseInt(value));
+                            form.setValue("contract_end_date", format(endDate, "yyyy-MM-dd"));
+                          }
+                        }} 
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione" />
@@ -407,7 +506,20 @@ export default function RentalCompanyForm() {
                     <FormItem>
                       <FormLabel>Data de Início *</FormLabel>
                       <FormControl>
-                        <Input {...field} type="date" />
+                        <Input 
+                          {...field} 
+                          type="date"
+                          onChange={(e) => {
+                            field.onChange(e);
+                            // Auto-sugerir data final ao mudar data início
+                            if (!form.watch("contract_end_date")) {
+                              const startDate = new Date(e.target.value);
+                              const contractDays = parseInt(form.watch("contract_type"));
+                              const endDate = addDays(startDate, contractDays);
+                              form.setValue("contract_end_date", format(endDate, "yyyy-MM-dd"));
+                            }
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -415,13 +527,30 @@ export default function RentalCompanyForm() {
                 />
               </div>
 
-              {contractEndDate && (
+              <FormField
+                control={form.control}
+                name="contract_end_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Data Final do Contrato</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="date" />
+                    </FormControl>
+                    <p className="text-sm text-muted-foreground">
+                      Deixe vazio para contratos em andamento ou preencha para contratos prorrogados
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {form.watch("contract_end_date") && (
                 <div className="p-4 bg-muted rounded-lg space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="font-medium">Data de Término:</span>
-                    <span>{format(new Date(contractEndDate), "dd/MM/yyyy")}</span>
+                    <span>{format(new Date(form.watch("contract_end_date")), "dd/MM/yyyy")}</span>
                   </div>
-                  <ContractExpirationBadge contractEndDate={contractEndDate} />
+                  <ContractExpirationBadge contractEndDate={form.watch("contract_end_date")} />
                 </div>
               )}
 
@@ -472,80 +601,165 @@ export default function RentalCompanyForm() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Detalhes da Locação</CardTitle>
+              <CardTitle>Equipamentos Locados</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="equipment_description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descrição dos Equipamentos</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} placeholder="Descreva os equipamentos a serem locados" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="rental_start_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Data Inicial da Locação</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="date" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="rental_end_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Data Final da Locação</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="date" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="daily_rental_price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Preço por Dia (R$)</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="number" step="0.01" placeholder="0.00" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {rentalDays > 0 && (
-                <div className="p-4 bg-primary/10 rounded-lg space-y-2">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Dias de locação:</span>
-                    <span>{rentalDays} dias</span>
-                  </div>
-                  {totalPrice > 0 && (
-                    <div className="flex justify-between text-lg font-bold">
-                      <span>Valor Total:</span>
-                      <span>R$ {totalPrice.toFixed(2)}</span>
-                    </div>
-                  )}
+            <CardContent className="space-y-6">
+              {!isEditMode && (
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    Salve o contrato primeiro para adicionar equipamentos
+                  </p>
                 </div>
+              )}
+
+              {isEditMode && (
+                <>
+                  <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+                    <h3 className="font-semibold">Adicionar Equipamento</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">PAT (6 dígitos) *</label>
+                        <Input
+                          placeholder="000000"
+                          value={equipmentPAT}
+                          onChange={(e) => setEquipmentPAT(e.target.value)}
+                          maxLength={6}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Nome do Equipamento *</label>
+                        <Input
+                          placeholder="Nome do equipamento"
+                          value={equipmentName}
+                          onChange={(e) => setEquipmentName(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Data de Retirada *</label>
+                        <Input
+                          type="date"
+                          value={pickupDate}
+                          onChange={(e) => setPickupDate(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Data de Devolução</label>
+                        <Input
+                          type="date"
+                          value={returnDate}
+                          onChange={(e) => setReturnDate(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Valor Diário (R$)</label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={dailyRate}
+                          onChange={(e) => setDailyRate(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <Button
+                      type="button"
+                      onClick={handleAddEquipment}
+                      disabled={addEquipmentMutation.isPending}
+                      className="w-full"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Adicionar Equipamento
+                    </Button>
+                  </div>
+
+                  {rentalEquipment.length > 0 && (
+                    <>
+                      <div className="border rounded-lg overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>PAT</TableHead>
+                              <TableHead>Equipamento</TableHead>
+                              <TableHead>Retirada</TableHead>
+                              <TableHead>Devolução</TableHead>
+                              <TableHead className="text-right">Dias</TableHead>
+                              <TableHead className="text-right">Valor Diário</TableHead>
+                              <TableHead className="text-right">Total</TableHead>
+                              <TableHead></TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {rentalEquipment.map((equipment) => {
+                              const contractStart = form.watch("contract_start_date");
+                              const days = contractStart ? calculateDaysRented(contractStart, equipment.return_date) : 0;
+                              const total = equipment.daily_rate ? days * equipment.daily_rate : 0;
+
+                              return (
+                                <TableRow key={equipment.id}>
+                                  <TableCell className="font-mono">{equipment.asset_code}</TableCell>
+                                  <TableCell>{equipment.equipment_name}</TableCell>
+                                  <TableCell>{format(new Date(equipment.pickup_date), "dd/MM/yyyy")}</TableCell>
+                                  <TableCell>
+                                    {equipment.return_date ? (
+                                      format(new Date(equipment.return_date), "dd/MM/yyyy")
+                                    ) : (
+                                      <Badge variant="secondary">Em Locação</Badge>
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="text-right font-semibold">{days}</TableCell>
+                                  <TableCell className="text-right">
+                                    {equipment.daily_rate ? `R$ ${equipment.daily_rate.toFixed(2)}` : "-"}
+                                  </TableCell>
+                                  <TableCell className="text-right font-semibold">
+                                    {total > 0 ? `R$ ${total.toFixed(2)}` : "-"}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleDeleteEquipment(equipment.id)}
+                                      disabled={deleteEquipmentMutation.isPending}
+                                    >
+                                      <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
+
+                      <div className="p-4 bg-primary/10 rounded-lg space-y-2">
+                        <div className="flex justify-between">
+                          <span className="font-medium">Total de Equipamentos:</span>
+                          <span className="font-bold">{equipmentTotals.totalEquipment}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Total de Dias Locados:</span>
+                          <span className="font-bold">{equipmentTotals.totalDays} dias</span>
+                        </div>
+                        {equipmentTotals.totalValue > 0 && (
+                          <div className="flex justify-between text-lg pt-2 border-t">
+                            <span className="font-bold">Valor Total da Locação:</span>
+                            <span className="font-bold text-primary">
+                              R$ {equipmentTotals.totalValue.toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </>
               )}
 
               <FormField
@@ -555,7 +769,7 @@ export default function RentalCompanyForm() {
                   <FormItem>
                     <FormLabel>Observações</FormLabel>
                     <FormControl>
-                      <Textarea {...field} placeholder="Observações adicionais" />
+                      <Textarea {...field} placeholder="Observações adicionais sobre o contrato" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
