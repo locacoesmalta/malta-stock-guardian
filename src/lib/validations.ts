@@ -368,14 +368,14 @@ export const movementLocacaoSchema = z.object({
     .min(1, "Obra é obrigatória")
     .max(200, "Obra deve ter no máximo 200 caracteres"),
   rental_start_date: z.string()
-    .min(1, "Data inicial é obrigatória"),
+    .min(1, "Data de locação é obrigatória"),
   rental_end_date: z.string()
     .transform(val => val === "" ? undefined : val)
     .optional(),
   rental_contract_number: z.string()
     .trim()
-    .min(1, "Número do contrato é obrigatório")
-    .max(200, "Número do contrato deve ter no máximo 200 caracteres"),
+    .max(200, "Número do contrato deve ter no máximo 200 caracteres")
+    .optional(),
   equipment_observations: z.string()
     .trim()
     .max(1000, "Observação deve ter no máximo 1000 caracteres")
@@ -384,8 +384,6 @@ export const movementLocacaoSchema = z.object({
     .trim()
     .max(200, "Nome do colaborador deve ter no máximo 200 caracteres")
     .optional(),
-  rental_photo_1: z.string().optional(),
-  rental_photo_2: z.string().optional(),
 });
 
 // Movement Aguardando Laudo Schema

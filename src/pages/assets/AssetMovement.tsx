@@ -779,7 +779,7 @@ export default function AssetMovement() {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="rental_start_date">Data de Retirada *</Label>
+                    <Label htmlFor="rental_start_date">Data de Locação/Retirada *</Label>
                     <Input
                       id="rental_start_date"
                       type="date"
@@ -800,13 +800,31 @@ export default function AssetMovement() {
                   />
                 </div>
 
+                <div className="p-3 bg-muted/50 rounded-lg border border-dashed">
+                  <p className="text-sm text-muted-foreground">
+                    <strong>ℹ️ Sobre contratos:</strong> Contratos formais são opcionais. 
+                    Preencha apenas se houver um contrato cadastrado ou novo contrato a ser vinculado.
+                  </p>
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="malta_collaborator">Responsável Malta (Principal)</Label>
+                  <Label htmlFor="rental_contract_number">Número do Contrato (Opcional)</Label>
+                  <Input
+                    id="rental_contract_number"
+                    {...form.register("rental_contract_number")}
+                    placeholder="Ex: CTR-2025-001"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Preencha apenas se houver contrato formal
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="malta_collaborator">Responsável Malta (Opcional)</Label>
                   <Input
                     id="malta_collaborator"
                     {...form.register("malta_collaborator")}
-                    placeholder="Nome do responsável principal"
-                    required
+                    placeholder="Nome do responsável principal (opcional)"
                   />
                 </div>
                 <AssetCollaboratorsManager assetId={id} />
