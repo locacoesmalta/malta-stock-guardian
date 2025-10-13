@@ -114,9 +114,18 @@
     border-radius: 4px;
     page-break-inside: avoid;
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto auto 1fr auto;
     gap: 12px;
     align-items: start;
+  }
+
+  .transaction-number {
+    font-size: 10pt;
+    font-weight: bold;
+    color: #000;
+    background: #f0f0f0;
+    padding: 4px 8px;
+    border-radius: 3px;
   }
 
   .transaction-type {
@@ -175,6 +184,67 @@
     color: #000;
     text-align: right;
     white-space: nowrap;
+  }
+
+  /* Seção de Anexos */
+  .cash-box-attachments {
+    margin-top: 30px;
+    page-break-before: always;
+  }
+
+  .cash-box-attachments h2 {
+    font-size: 14pt;
+    font-weight: bold;
+    margin: 0 0 15px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #ddd;
+    color: #000;
+  }
+
+  .attachments-grid {
+    display: grid;
+    gap: 20px;
+  }
+
+  .attachment-item {
+    page-break-inside: avoid;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 4px;
+  }
+
+  .attachment-number {
+    font-size: 10pt;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #000;
+    background: #f0f0f0;
+    padding: 6px 10px;
+    border-radius: 3px;
+  }
+
+  .attachment-image {
+    width: 100%;
+    max-width: 600px;
+    height: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-top: 8px;
+  }
+
+  .attachment-file {
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px dashed #999;
+    border-radius: 4px;
+    margin-top: 8px;
+    text-align: center;
+  }
+
+  .attachment-file p {
+    margin: 4px 0;
+    font-size: 9pt;
+    color: #555;
   }
 
   /* Footer */

@@ -33,7 +33,7 @@ export const CashBoxManager = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   
-  const [transactionType, setTransactionType] = useState<"entrada" | "saida" | "devolucao">("entrada");
+  const [transactionType, setTransactionType] = useState<"entrada" | "saida" | "devolucao">("saida");
   const [transactionValue, setTransactionValue] = useState("");
   const [transactionDescription, setTransactionDescription] = useState("");
   const [transactionObservations, setTransactionObservations] = useState("");
@@ -81,7 +81,7 @@ export const CashBoxManager = () => {
     });
     
     setShowAddDialog(false);
-    setTransactionType("entrada");
+    setTransactionType("saida");
     setTransactionValue("");
     setTransactionDescription("");
     setTransactionObservations("");
@@ -252,42 +252,44 @@ export const CashBoxManager = () => {
                       Adicionar Transação
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="max-w-4xl">
                     <DialogHeader>
                       <DialogTitle>Nova Transação</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="type">Tipo *</Label>
-                        <Select value={transactionType} onValueChange={(value: any) => setTransactionType(value)}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="entrada">Entrada</SelectItem>
-                            <SelectItem value="saida">Saída</SelectItem>
-                            <SelectItem value="devolucao">Devolução</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="value">Valor (R$) *</Label>
-                        <Input
-                          id="value"
-                          type="number"
-                          step="0.01"
-                          value={transactionValue}
-                          onChange={(e) => setTransactionValue(e.target.value)}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="description">Descrição</Label>
-                        <Input
-                          id="description"
-                          value={transactionDescription}
-                          onChange={(e) => setTransactionDescription(e.target.value)}
-                        />
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <Label htmlFor="type">Tipo *</Label>
+                          <Select value={transactionType} onValueChange={(value: any) => setTransactionType(value)}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="entrada">Entrada</SelectItem>
+                              <SelectItem value="saida">Saída</SelectItem>
+                              <SelectItem value="devolucao">Devolução</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="value">Valor (R$) *</Label>
+                          <Input
+                            id="value"
+                            type="number"
+                            step="0.01"
+                            value={transactionValue}
+                            onChange={(e) => setTransactionValue(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="description">Descrição</Label>
+                          <Input
+                            id="description"
+                            value={transactionDescription}
+                            onChange={(e) => setTransactionDescription(e.target.value)}
+                          />
+                        </div>
                       </div>
                       <div>
                         <Label htmlFor="observations">Observações</Label>
@@ -359,8 +361,9 @@ export const CashBoxManager = () => {
 
                 <div className="cash-box-transactions">
                   <h2>Histórico de Transações</h2>
-                  {transactions.map((transaction) => (
+                  {transactions.map((transaction, index) => (
                     <div key={transaction.id} className="transaction-item">
+                      <div className="transaction-number">{String(index + 1).padStart(2, '0')}</div>
                       <div className={`transaction-type ${transaction.type}`}>
                         {transaction.type === "entrada"
                           ? "ENTRADA"
@@ -382,6 +385,36 @@ export const CashBoxManager = () => {
                   ))}
                 </div>
 
+                {/* Seção de Fotos/Anexos */}
+                {transactions.some(t => t.attachment_url) && (
+                  <div className="cash-box-attachments">
+                    <h2>Anexos das Transações</h2>
+                    <div className="attachments-grid">
+                      {transactions.map((transaction, index) => 
+                        transaction.attachment_url && (
+                          <div key={transaction.id} className="attachment-item">
+                            <div className="attachment-number">
+                              {String(index + 1).padStart(2, '0')} - {transaction.description || "Sem descrição"}
+                            </div>
+                            {transaction.attachment_url.match(/\.(jpg|jpeg|png)$/i) ? (
+                              <img 
+                                src={transaction.attachment_url} 
+                                alt={`Anexo ${index + 1}`}
+                                className="attachment-image"
+                              />
+                            ) : (
+                              <div className="attachment-file">
+                                <p>Arquivo PDF anexado</p>
+                                <p className="text-xs">{transaction.attachment_url}</p>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="cash-box-print-footer">
                   <p>Malta Locações de Máquinas e Equipamentos</p>
                 </div>
@@ -398,13 +431,16 @@ export const CashBoxManager = () => {
                     </p>
                   ) : (
                     <div className="space-y-2">
-                      {transactions.map((transaction) => (
+                      {transactions.map((transaction, index) => (
                         <div
                           key={transaction.id}
                           className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-xs font-bold px-2 py-1 bg-muted rounded">
+                                #{String(index + 1).padStart(2, '0')}
+                              </span>
                               <span
                                 className={`text-xs sm:text-sm font-semibold px-2 py-1 rounded ${
                                   transaction.type === "entrada"
