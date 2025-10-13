@@ -46,6 +46,22 @@ export const useCashBox = () => {
     },
   });
 
+  // Buscar histórico de caixas fechados
+  const { data: closedCashBoxes = [], isLoading: isLoadingHistory } = useQuery({
+    queryKey: ["closed-cash-boxes"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cash_boxes")
+        .select("*")
+        .eq("status", "closed")
+        .order("closed_at", { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      return data as CashBox[];
+    },
+  });
+
   // Buscar transações do caixa
   const { data: transactions = [], isLoading: isLoadingTransactions } = useQuery({
     queryKey: ["cash-box-transactions", openCashBox?.id],
@@ -63,6 +79,18 @@ export const useCashBox = () => {
     },
     enabled: !!openCashBox?.id,
   });
+
+  // Buscar transações de um caixa específico (para histórico)
+  const getTransactionsForCashBox = async (cashBoxId: string) => {
+    const { data, error } = await supabase
+      .from("cash_box_transactions")
+      .select("*")
+      .eq("cash_box_id", cashBoxId)
+      .order("created_at", { ascending: true });
+
+    if (error) throw error;
+    return data as CashBoxTransaction[];
+  };
 
   // Abrir caixa
   const openCashBoxMutation = useMutation({
@@ -219,13 +247,64 @@ export const useCashBox = () => {
     },
   });
 
+  // Deletar transação (qualquer usuário com permissão)
+  const deleteTransactionMutation = useMutation({
+    mutationFn: async (transactionId: string) => {
+      const { error } = await supabase
+        .from("cash_box_transactions")
+        .delete()
+        .eq("id", transactionId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cash-box-transactions"] });
+      toast.success("Transação excluída com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao excluir transação: " + error.message);
+    },
+  });
+
+  // Deletar caixa (somente admin)
+  const deleteCashBoxMutation = useMutation({
+    mutationFn: async (cashBoxId: string) => {
+      // Primeiro deletar todas as transações do caixa
+      const { error: transError } = await supabase
+        .from("cash_box_transactions")
+        .delete()
+        .eq("cash_box_id", cashBoxId);
+
+      if (transError) throw transError;
+
+      // Depois deletar o caixa
+      const { error } = await supabase
+        .from("cash_boxes")
+        .delete()
+        .eq("id", cashBoxId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["open-cash-box"] });
+      queryClient.invalidateQueries({ queryKey: ["closed-cash-boxes"] });
+      toast.success("Caixa excluído com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao excluir caixa: " + error.message);
+    },
+  });
+
   // Calcular saldo total
-  const calculateBalance = () => {
-    if (!openCashBox) return 0;
+  const calculateBalance = (cashBox?: CashBox, cashBoxTransactions?: CashBoxTransaction[]) => {
+    const box = cashBox || openCashBox;
+    const trans = cashBoxTransactions || transactions;
     
-    let balance = openCashBox.initial_value;
+    if (!box) return 0;
     
-    transactions.forEach((transaction) => {
+    let balance = box.initial_value;
+    
+    trans.forEach((transaction) => {
       if (transaction.type === 'entrada') {
         balance += Number(transaction.value);
       } else if (transaction.type === 'saida') {
@@ -241,12 +320,17 @@ export const useCashBox = () => {
   return {
     openCashBox,
     transactions,
+    closedCashBoxes,
     isLoadingCashBox,
     isLoadingTransactions,
+    isLoadingHistory,
     openCashBoxMutation,
     closeCashBoxMutation,
     addTransactionMutation,
     updateTransactionMutation,
+    deleteTransactionMutation,
+    deleteCashBoxMutation,
     calculateBalance,
+    getTransactionsForCashBox,
   };
 };

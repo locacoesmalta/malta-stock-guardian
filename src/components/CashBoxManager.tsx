@@ -6,26 +6,35 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useCashBox } from "@/hooks/useCashBox";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { DollarSign, Plus, X, Edit, Paperclip, Printer } from "lucide-react";
+import { DollarSign, Plus, X, Edit, Paperclip, Printer, Trash2, ChevronDown, ChevronUp, History } from "lucide-react";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import "@/styles/cash-box-print.css";
 
 export const CashBoxManager = () => {
   const {
     openCashBox,
     transactions,
+    closedCashBoxes,
     isLoadingCashBox,
+    isLoadingHistory,
     openCashBoxMutation,
     closeCashBoxMutation,
     addTransactionMutation,
     updateTransactionMutation,
+    deleteTransactionMutation,
+    deleteCashBoxMutation,
     calculateBalance,
+    getTransactionsForCashBox,
   } = useCashBox();
 
   const { confirm, ConfirmDialog } = useConfirm();
+  const { isAdmin } = useAuth();
   
   const [openDate, setOpenDate] = useState("");
   const [initialValue, setInitialValue] = useState("");
@@ -42,6 +51,9 @@ export const CashBoxManager = () => {
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
   const [editDescription, setEditDescription] = useState("");
   const [editObservations, setEditObservations] = useState("");
+  
+  const [expandedHistoryIds, setExpandedHistoryIds] = useState<Set<string>>(new Set());
+  const [historyTransactions, setHistoryTransactions] = useState<Record<string, any[]>>({});
 
   const handleOpenCashBox = async () => {
     if (!openDate || !initialValue) return;
@@ -123,6 +135,50 @@ export const CashBoxManager = () => {
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: ptBR });
+  };
+
+  const handleDeleteTransaction = async (transactionId: string) => {
+    const confirmed = await confirm({
+      title: "Excluir Transação",
+      description: "Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita.",
+    });
+    
+    if (confirmed) {
+      await deleteTransactionMutation.mutateAsync(transactionId);
+    }
+  };
+
+  const handleDeleteCashBox = async (cashBoxId: string) => {
+    if (!isAdmin) {
+      toast.error("Apenas superusuários podem excluir caixas!");
+      return;
+    }
+
+    const confirmed = await confirm({
+      title: "Excluir Caixa",
+      description: "Tem certeza que deseja excluir este caixa? Todas as transações associadas também serão excluídas. Esta ação não pode ser desfeita.",
+    });
+    
+    if (confirmed) {
+      await deleteCashBoxMutation.mutateAsync(cashBoxId);
+    }
+  };
+
+  const toggleHistoryExpanded = async (cashBoxId: string) => {
+    const newExpanded = new Set(expandedHistoryIds);
+    
+    if (newExpanded.has(cashBoxId)) {
+      newExpanded.delete(cashBoxId);
+    } else {
+      newExpanded.add(cashBoxId);
+      // Buscar transações se ainda não foram carregadas
+      if (!historyTransactions[cashBoxId]) {
+        const trans = await getTransactionsForCashBox(cashBoxId);
+        setHistoryTransactions(prev => ({ ...prev, [cashBoxId]: trans }));
+      }
+    }
+    
+    setExpandedHistoryIds(newExpanded);
   };
 
   const isLowBalance = () => {
@@ -484,22 +540,189 @@ export const CashBoxManager = () => {
                             <span className="font-bold text-lg whitespace-nowrap">
                               {formatCurrency(transaction.value)}
                             </span>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                setEditingTransaction(transaction);
-                                setEditDescription(transaction.description || "");
-                                setEditObservations(transaction.observations || "");
-                                setShowEditDialog(true);
-                              }}
-                              title="Editar transação"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setEditingTransaction(transaction);
+                                  setEditDescription(transaction.description || "");
+                                  setEditObservations(transaction.observations || "");
+                                  setShowEditDialog(true);
+                                }}
+                                title="Editar transação"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDeleteTransaction(transaction.id)}
+                                title="Excluir transação"
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Histórico de Caixas Fechados */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <History className="h-5 w-5" />
+                    Histórico de Caixas Fechados
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingHistory ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Carregando histórico...
+                    </p>
+                  ) : closedCashBoxes.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">
+                      Nenhum caixa fechado no histórico
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {closedCashBoxes.map((cashBox) => {
+                        const isExpanded = expandedHistoryIds.has(cashBox.id);
+                        const cashBoxTrans = historyTransactions[cashBox.id] || [];
+                        const finalBalance = calculateBalance(cashBox, cashBoxTrans);
+
+                        return (
+                          <Collapsible
+                            key={cashBox.id}
+                            open={isExpanded}
+                            onOpenChange={() => toggleHistoryExpanded(cashBox.id)}
+                          >
+                            <Card>
+                              <CardContent className="pt-4">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <CollapsibleTrigger asChild>
+                                        <Button variant="ghost" size="sm">
+                                          {isExpanded ? (
+                                            <ChevronUp className="h-4 w-4" />
+                                          ) : (
+                                            <ChevronDown className="h-4 w-4" />
+                                          )}
+                                        </Button>
+                                      </CollapsibleTrigger>
+                                      <div>
+                                        <p className="font-medium">
+                                          Aberto: {formatDate(cashBox.opened_at)}
+                                        </p>
+                                        <p className="text-sm text-muted-foreground">
+                                          Fechado: {cashBox.closed_at ? formatDate(cashBox.closed_at) : "N/A"}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-4 text-sm">
+                                      <div>
+                                        <span className="text-muted-foreground">Inicial: </span>
+                                        <span className="font-medium">{formatCurrency(cashBox.initial_value)}</span>
+                                      </div>
+                                      <div>
+                                        <span className="text-muted-foreground">Final: </span>
+                                        <span className="font-bold text-green-600 dark:text-green-400">
+                                          {formatCurrency(finalBalance)}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <span className="text-muted-foreground">Transações: </span>
+                                        <span className="font-medium">{cashBoxTrans.length}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  {isAdmin && (
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() => handleDeleteCashBox(cashBox.id)}
+                                      title="Excluir caixa (somente admin)"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </div>
+
+                                <CollapsibleContent className="mt-4">
+                                  {cashBoxTrans.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground text-center py-4">
+                                      Nenhuma transação neste caixa
+                                    </p>
+                                  ) : (
+                                    <div className="space-y-2 border-t pt-4">
+                                      {cashBoxTrans.map((transaction, index) => (
+                                        <div
+                                          key={transaction.id}
+                                          className="flex justify-between items-start p-3 border rounded-lg bg-muted/30"
+                                        >
+                                          <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                              <span className="text-xs font-bold px-2 py-1 bg-background rounded">
+                                                #{String(index + 1).padStart(2, '0')}
+                                              </span>
+                                              <span
+                                                className={`text-xs font-semibold px-2 py-1 rounded ${
+                                                  transaction.type === "entrada"
+                                                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                                    : transaction.type === "saida"
+                                                    ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                                    : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                                                }`}
+                                              >
+                                                {transaction.type === "entrada"
+                                                  ? "ENTRADA"
+                                                  : transaction.type === "saida"
+                                                  ? "SAÍDA"
+                                                  : "DEVOLUÇÃO"}
+                                              </span>
+                                              {transaction.attachment_url && (
+                                                <a
+                                                  href={transaction.attachment_url}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                                                  title="Ver anexo"
+                                                >
+                                                  <Paperclip className="h-3 w-3" />
+                                                </a>
+                                              )}
+                                            </div>
+                                            <p className="text-sm font-medium">
+                                              {transaction.description || "Sem descrição"}
+                                            </p>
+                                            {transaction.observations && (
+                                              <p className="text-xs text-muted-foreground mt-1">
+                                                {transaction.observations}
+                                              </p>
+                                            )}
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                              {formatDate(transaction.created_at)}
+                                            </p>
+                                          </div>
+                                          <span className="font-bold text-lg">
+                                            {formatCurrency(transaction.value)}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </CollapsibleContent>
+                              </CardContent>
+                            </Card>
+                          </Collapsible>
+                        );
+                      })}
                     </div>
                   )}
                 </CardContent>
