@@ -41,8 +41,22 @@ export const ProductSearchCombobox = ({
   required = false,
 }: ProductSearchComboboxProps) => {
   const [open, setOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
 
   const selectedProduct = products.find((product) => product.id === value);
+
+  // Filtrar produtos apenas se tiver 3+ caracteres OU se estiver vazio
+  const filteredProducts = searchValue.length === 0 || searchValue.length >= 3
+    ? products.filter(product => {
+        const search = searchValue.toLowerCase();
+        return (
+          product.code.toLowerCase().includes(search) ||
+          product.name.toLowerCase().includes(search)
+        );
+      })
+    : [];
+
+  const showNoResults = searchValue.length > 0 && searchValue.length < 3;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -66,36 +80,49 @@ export const ProductSearchCombobox = ({
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0 z-50 bg-popover" align="start">
         <Command>
-          <CommandInput placeholder="Digite para buscar..." />
+          <CommandInput 
+            placeholder="Digite pelo menos 3 caracteres..." 
+            value={searchValue}
+            onValueChange={setSearchValue}
+          />
           <CommandList>
-            <CommandEmpty>Nenhum produto encontrado.</CommandEmpty>
-            <CommandGroup>
-              {products.map((product) => (
-                <CommandItem
-                  key={product.id}
-                  value={`${product.code} ${product.name}`.toLowerCase()}
-                  onSelect={() => {
-                    onValueChange(product.id);
-                    setOpen(false);
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value === product.id ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  <div className="flex-1 truncate">
-                    <span className="font-medium">{product.code}</span> - {product.name}
-                    {showStock && (
-                      <span className="text-muted-foreground ml-2">
-                        (Estoque: {product.quantity})
-                      </span>
-                    )}
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
+            {showNoResults ? (
+              <CommandEmpty>
+                Digite pelo menos 3 caracteres para buscar...
+              </CommandEmpty>
+            ) : (
+              <>
+                <CommandEmpty>Nenhum produto encontrado.</CommandEmpty>
+                <CommandGroup>
+                  {filteredProducts.map((product) => (
+                    <CommandItem
+                      key={product.id}
+                      value={product.id}
+                      onSelect={() => {
+                        onValueChange(product.id);
+                        setOpen(false);
+                        setSearchValue("");
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          value === product.id ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      <div className="flex-1 truncate">
+                        <span className="font-medium">{product.code}</span> - {product.name}
+                        {showStock && (
+                          <span className="text-muted-foreground ml-2">
+                            (Estoque: {product.quantity})
+                          </span>
+                        )}
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </>
+            )}
           </CommandList>
         </Command>
       </PopoverContent>

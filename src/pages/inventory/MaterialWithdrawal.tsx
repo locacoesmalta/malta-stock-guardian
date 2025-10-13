@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Minus, Plus, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
@@ -33,6 +34,7 @@ const MaterialWithdrawal = () => {
   const { products } = useProducts();
   const { confirm, ConfirmDialog } = useConfirm();
   const [loading, setLoading] = useState(false);
+  const [isSaleWithdrawal, setIsSaleWithdrawal] = useState(false);
   const [withdrawalDate, setWithdrawalDate] = useState(new Date().toISOString().split('T')[0]);
   const [withdrawalReason, setWithdrawalReason] = useState("");
   const [equipmentCode, setEquipmentCode] = useState("");
@@ -127,17 +129,21 @@ const MaterialWithdrawal = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validar se o PAT é válido
-    const formattedPAT = formatPAT(equipmentCode);
-    if (!formattedPAT) {
-      toast.error("PAT inválido! O PAT deve conter apenas números (máximo 6 dígitos).");
-      return;
-    }
+    let formattedPAT = "";
+    
+    // Validar PAT apenas se NÃO for saída para venda
+    if (!isSaleWithdrawal) {
+      formattedPAT = formatPAT(equipmentCode);
+      if (!formattedPAT) {
+        toast.error("PAT inválido! O PAT deve conter apenas números (máximo 6 dígitos).");
+        return;
+      }
 
-    // Validar se o equipamento existe
-    if (!equipment) {
-      toast.error("Equipamento não encontrado! Verifique o PAT digitado.");
-      return;
+      // Validar se o equipamento existe
+      if (!equipment) {
+        toast.error("Equipamento não encontrado! Verifique o PAT digitado.");
+        return;
+      }
     }
 
     if (!workSite || !company) {
@@ -199,9 +205,9 @@ const MaterialWithdrawal = () => {
         product_id: item.product_id,
         quantity: item.quantity,
         withdrawn_by: user?.id,
-        withdrawal_reason: withdrawalReason,
+        withdrawal_reason: withdrawalReason || (isSaleWithdrawal ? "VENDA" : null),
         withdrawal_date: withdrawalDate,
-        equipment_code: formattedPAT,
+        equipment_code: isSaleWithdrawal ? "VENDA" : formattedPAT,
         work_site: workSite,
         company: company
       }));
@@ -245,15 +251,16 @@ const MaterialWithdrawal = () => {
         }
       }
 
-      // Registrar evento no histórico do equipamento
-      // Buscar o equipamento novamente para garantir que temos o ID correto
-      const { data: assetData, error: assetError } = await supabase
-        .from("assets")
-        .select("id, equipment_name")
-        .eq("asset_code", formattedPAT)
-        .maybeSingle();
+      // Registrar evento no histórico do equipamento APENAS se não for venda
+      if (!isSaleWithdrawal) {
+        // Buscar o equipamento novamente para garantir que temos o ID correto
+        const { data: assetData, error: assetError } = await supabase
+          .from("assets")
+          .select("id, equipment_name")
+          .eq("asset_code", formattedPAT)
+          .maybeSingle();
 
-      if (assetData && !assetError) {
+        if (assetData && !assetError) {
         try {
           const productNames = items.map(item => `${item.productName} (${item.quantity}x)`).join(", ");
           const detalhesEvento = `Retirada de material: ${productNames}. Empresa: ${company}. Obra: ${workSite}.${withdrawalReason ? ` Motivo: ${withdrawalReason}` : ""}`;
@@ -278,9 +285,10 @@ const MaterialWithdrawal = () => {
           console.error("❌ Exceção ao registrar no histórico:", historyError);
           toast.warning("Retirada registrada, mas não foi possível adicionar ao histórico do equipamento.");
         }
-      } else if (!assetData) {
-        console.warn("⚠️ Equipamento não encontrado no sistema:", formattedPAT);
-        toast.warning(`Retirada registrada, mas o PAT ${formattedPAT} não está cadastrado no sistema.`);
+        } else if (!assetData) {
+          console.warn("⚠️ Equipamento não encontrado no sistema:", formattedPAT);
+          toast.warning(`Retirada registrada, mas o PAT ${formattedPAT} não está cadastrado no sistema.`);
+        }
       }
 
       toast.success("Retirada de material registrada com sucesso!");
@@ -305,9 +313,40 @@ const MaterialWithdrawal = () => {
             <CardTitle className="text-base sm:text-lg">Informações da Retirada</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2 mb-4">
+                <Checkbox 
+                  id="saleWithdrawal"
+                  checked={isSaleWithdrawal}
+                  onCheckedChange={(checked) => {
+                    setIsSaleWithdrawal(checked as boolean);
+                    if (checked) {
+                      setEquipmentCode("");
+                      setEquipmentName("");
+                      setShowCollaborators(false);
+                      setPrincipalCollaborator("");
+                      setAdditionalCollaborators([]);
+                    }
+                  }}
+                />
+                <Label htmlFor="saleWithdrawal" className="text-sm font-medium cursor-pointer">
+                  Saída para Venda (não vinculada a equipamento)
+                </Label>
+              </div>
+              {isSaleWithdrawal && (
+                <Alert className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20 mb-4">
+                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                  <AlertDescription className="text-xs">
+                    Esta retirada será registrada como venda e não será associada a nenhum equipamento.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="equipment" className="text-xs sm:text-sm">PAT do Equipamento * (6 dígitos)</Label>
+              {!isSaleWithdrawal && (
+                <div className="space-y-2">
+                  <Label htmlFor="equipment" className="text-xs sm:text-sm">PAT do Equipamento * (6 dígitos)</Label>
                 <div className="relative">
                   <Input
                     id="equipment"
@@ -368,7 +407,8 @@ const MaterialWithdrawal = () => {
                     </Alert>
                   )
                 )}
-              </div>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="workSite" className="text-xs sm:text-sm">Obra *</Label>
