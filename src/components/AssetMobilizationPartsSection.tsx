@@ -13,7 +13,7 @@ import { useAssetsQuery } from "@/hooks/useAssetsQuery";
 import { useAssetMobilizationParts } from "@/hooks/useAssetMobilizationParts";
 import { useAssetMobilizationExpenses } from "@/hooks/useAssetMobilizationExpenses";
 import { Trash2, DollarSign, TrendingUp, Package, Wrench, Plane, Truck } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
@@ -662,7 +662,7 @@ export const AssetMobilizationPartsSection = ({
                                 {formatCurrency(Number(part.total_cost))}
                               </TableCell>
                               <TableCell>
-                                {format(new Date(part.purchase_date), "dd/MM/yyyy", { locale: ptBR })}
+                                {format(parseISO(part.purchase_date), "dd/MM/yyyy", { locale: ptBR })}
                               </TableCell>
                               <TableCell className="max-w-xs truncate">
                                 {part.notes || "-"}
@@ -718,7 +718,7 @@ export const AssetMobilizationPartsSection = ({
                                 {formatCurrency(Number(part.total_cost))}
                               </TableCell>
                               <TableCell>
-                                {format(new Date(part.purchase_date), "dd/MM/yyyy", { locale: ptBR })}
+                                {format(parseISO(part.purchase_date), "dd/MM/yyyy", { locale: ptBR })}
                               </TableCell>
                               <TableCell className="max-w-xs truncate">
                                 {part.notes || "-"}
@@ -782,9 +782,9 @@ export const AssetMobilizationPartsSection = ({
                                     <div><strong>Colaborador:</strong> {expense.collaborator_name}</div>
                                     <div>
                                       <strong>Período:</strong>{' '}
-                                      {expense.travel_date && format(new Date(expense.travel_date), "dd/MM/yyyy", { locale: ptBR })}
+                                      {expense.travel_date && format(parseISO(expense.travel_date), "dd/MM/yyyy", { locale: ptBR })}
                                       {' até '}
-                                      {expense.return_date && format(new Date(expense.return_date), "dd/MM/yyyy", { locale: ptBR })}
+                                      {expense.return_date && format(parseISO(expense.return_date), "dd/MM/yyyy", { locale: ptBR })}
                                     </div>
                                   </div>
                                 ) : (
@@ -799,8 +799,8 @@ export const AssetMobilizationPartsSection = ({
                               </TableCell>
                               <TableCell>
                                 {expense.expense_type === 'travel' 
-                                  ? (expense.travel_date && format(new Date(expense.travel_date), "dd/MM/yyyy", { locale: ptBR }))
-                                  : (expense.shipment_date && format(new Date(expense.shipment_date), "dd/MM/yyyy", { locale: ptBR }))
+                                  ? (expense.travel_date && format(parseISO(expense.travel_date), "dd/MM/yyyy", { locale: ptBR }))
+                                  : (expense.shipment_date && format(parseISO(expense.shipment_date), "dd/MM/yyyy", { locale: ptBR }))
                                 }
                               </TableCell>
                               <TableCell className="text-right">

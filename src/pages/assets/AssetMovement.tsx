@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAssetHistory } from "@/hooks/useAssetHistory";
@@ -807,7 +807,7 @@ export default function AssetMovement() {
                               <span className="font-medium">{company.company_name}</span>
                               <span className="text-xs text-muted-foreground">
                                 Contrato: {company.contract_number} | 
-                                Vigência: {format(new Date(company.contract_start_date), "dd/MM/yy")} - {format(new Date(company.contract_end_date), "dd/MM/yy")}
+                                Vigência: {format(parseISO(company.contract_start_date), "dd/MM/yy")} - {format(parseISO(company.contract_end_date), "dd/MM/yy")}
                               </span>
                             </div>
                           </SelectItem>

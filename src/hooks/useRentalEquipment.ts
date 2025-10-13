@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { differenceInDays } from "date-fns";
+import { differenceInDays, parseISO } from "date-fns";
 
 export interface RentalEquipment {
   id: string;
@@ -37,8 +37,8 @@ export const calculateDaysRented = (
   returnDate: string | null,
   maxDays: number = 30
 ): number => {
-  const startDate = new Date(pickupDate);
-  const endDate = returnDate ? new Date(returnDate) : new Date();
+  const startDate = parseISO(pickupDate);
+  const endDate = returnDate ? parseISO(returnDate) : new Date();
   const days = differenceInDays(endDate, startDate) + 1; // +1 para incluir o dia inicial
   
   // Limitar ao máximo de dias do contrato

@@ -767,10 +767,10 @@ export default function RentalCompanyForm() {
                                   <TableCell className="font-mono">{equipment.asset_code}</TableCell>
                                   <TableCell>{equipment.equipment_name}</TableCell>
                                   <TableCell>{equipment.work_site || "-"}</TableCell>
-                                  <TableCell>{format(new Date(equipment.pickup_date), "dd/MM/yyyy")}</TableCell>
+                                  <TableCell>{format(parseISO(equipment.pickup_date), "dd/MM/yyyy")}</TableCell>
                                   <TableCell>
                                     {equipment.return_date ? (
-                                      format(new Date(equipment.return_date), "dd/MM/yyyy")
+                                      format(parseISO(equipment.return_date), "dd/MM/yyyy")
                                     ) : (
                                       <Badge variant={isOverdue ? "destructive" : "secondary"}>
                                         {isOverdue ? "Locação Excedida" : "Em Locação"}

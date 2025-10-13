@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useUpdateRentalEquipment } from "@/hooks/useRentalEquipment";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 interface ReturnEquipmentDialogProps {
   equipment: {
@@ -49,7 +49,7 @@ export function ReturnEquipmentDialog({ equipment, open, onOpenChange }: ReturnE
             <p className="text-sm text-muted-foreground">PAT: {equipment.asset_code}</p>
             <p className="font-medium">{equipment.equipment_name}</p>
             <p className="text-sm text-muted-foreground">
-              Retirado em: {format(new Date(equipment.pickup_date), "dd/MM/yyyy")}
+              Retirado em: {format(parseISO(equipment.pickup_date), "dd/MM/yyyy")}
             </p>
           </div>
 
