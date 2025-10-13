@@ -53,6 +53,7 @@ export const CashBoxManager = () => {
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
   const [editDescription, setEditDescription] = useState("");
   const [editObservations, setEditObservations] = useState("");
+  const [editInvoiceDate, setEditInvoiceDate] = useState("");
   
   const [expandedHistoryIds, setExpandedHistoryIds] = useState<Set<string>>(new Set());
   const [historyTransactions, setHistoryTransactions] = useState<Record<string, any[]>>({});
@@ -118,12 +119,14 @@ export const CashBoxManager = () => {
       id: editingTransaction.id,
       description: editDescription,
       observations: editObservations,
+      invoiceDate: editInvoiceDate,
     });
     
     setShowEditDialog(false);
     setEditingTransaction(null);
     setEditDescription("");
     setEditObservations("");
+    setEditInvoiceDate("");
   };
 
   const handlePrint = () => {
@@ -578,6 +581,7 @@ export const CashBoxManager = () => {
                                   setEditingTransaction(transaction);
                                   setEditDescription(transaction.description || "");
                                   setEditObservations(transaction.observations || "");
+                                  setEditInvoiceDate(transaction.invoice_date || "");
                                   setShowEditDialog(true);
                                 }}
                                 title="Editar transação"
@@ -790,6 +794,18 @@ export const CashBoxManager = () => {
                 onChange={(e) => setEditDescription(e.target.value)}
                 placeholder="Descrição da transação"
               />
+            </div>
+            <div>
+              <Label htmlFor="editInvoiceDate">Data da Nota</Label>
+              <Input
+                id="editInvoiceDate"
+                type="date"
+                value={editInvoiceDate}
+                onChange={(e) => setEditInvoiceDate(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Deixe vazio para remover a data
+              </p>
             </div>
             <div>
               <Label htmlFor="editObservations">Observações</Label>

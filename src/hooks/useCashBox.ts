@@ -225,14 +225,21 @@ export const useCashBox = () => {
       id,
       description,
       observations,
+      invoiceDate,
     }: {
       id: string;
       description?: string;
       observations: string;
+      invoiceDate?: string;
     }) => {
       const updateData: any = { observations };
       if (description !== undefined) {
         updateData.description = description;
+      }
+      if (invoiceDate !== undefined) {
+        updateData.invoice_date = invoiceDate 
+          ? format(new Date(invoiceDate + 'T12:00:00'), "yyyy-MM-dd")
+          : null;
       }
       
       const { data, error } = await supabase
