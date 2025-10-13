@@ -245,14 +245,21 @@ const MaterialWithdrawal = () => {
         }
       }
 
-      // Registrar evento no histórico do equipamento se ele existe no sistema
-      if (equipment?.id) {
+      // Registrar evento no histórico do equipamento
+      // Buscar o equipamento novamente para garantir que temos o ID correto
+      const { data: assetData, error: assetError } = await supabase
+        .from("assets")
+        .select("id, equipment_name")
+        .eq("asset_code", formattedPAT)
+        .maybeSingle();
+
+      if (assetData && !assetError) {
         try {
           const productNames = items.map(item => `${item.productName} (${item.quantity}x)`).join(", ");
           const detalhesEvento = `Retirada de material: ${productNames}. Empresa: ${company}. Obra: ${workSite}.${withdrawalReason ? ` Motivo: ${withdrawalReason}` : ""}`;
           
-          await supabase.rpc("registrar_evento_patrimonio", {
-            p_pat_id: equipment.id,
+          const { error: historyError } = await supabase.rpc("registrar_evento_patrimonio", {
+            p_pat_id: assetData.id,
             p_codigo_pat: formattedPAT,
             p_tipo_evento: "RETIRADA DE MATERIAL",
             p_detalhes_evento: detalhesEvento,
@@ -260,10 +267,20 @@ const MaterialWithdrawal = () => {
             p_valor_antigo: null,
             p_valor_novo: null,
           });
+
+          if (historyError) {
+            console.error("❌ Erro ao registrar no histórico:", historyError);
+            toast.warning("Retirada registrada, mas não foi possível adicionar ao histórico do equipamento.");
+          } else {
+            console.log("✅ Evento registrado no histórico do PAT:", formattedPAT);
+          }
         } catch (historyError) {
-          console.error("Erro ao registrar no histórico do equipamento:", historyError);
-          // Não bloqueamos a operação se o registro no histórico falhar
+          console.error("❌ Exceção ao registrar no histórico:", historyError);
+          toast.warning("Retirada registrada, mas não foi possível adicionar ao histórico do equipamento.");
         }
+      } else if (!assetData) {
+        console.warn("⚠️ Equipamento não encontrado no sistema:", formattedPAT);
+        toast.warning(`Retirada registrada, mas o PAT ${formattedPAT} não está cadastrado no sistema.`);
       }
 
       toast.success("Retirada de material registrada com sucesso!");

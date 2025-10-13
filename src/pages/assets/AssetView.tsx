@@ -14,6 +14,7 @@ import { ArrowLeft, Edit, Trash2, Move, AlertCircle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AssetHistorySection } from "@/components/AssetHistorySection";
+import { AssetLifeCyclesSection } from "@/components/AssetLifeCyclesSection";
 import { DeadlineStatusBadge } from "@/components/DeadlineStatusBadge";
 import { AssetSparePartsSection } from "@/components/AssetSparePartsSection";
 import { AssetMobilizationPartsSection } from "@/components/AssetMobilizationPartsSection";
@@ -161,10 +162,11 @@ export default function AssetView() {
       </div>
 
       <Tabs defaultValue="technical" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 h-auto">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto">
           <TabsTrigger value="technical" className="text-xs sm:text-sm">Dados Técnicos</TabsTrigger>
           <TabsTrigger value="status" className="text-xs sm:text-sm">Status Atual</TabsTrigger>
           <TabsTrigger value="history" className="text-xs sm:text-sm">Histórico</TabsTrigger>
+          <TabsTrigger value="lifecycle" className="text-xs sm:text-sm">Ciclos de Vida</TabsTrigger>
           <TabsTrigger value="spare-parts" className="text-xs sm:text-sm">Peças Reposição</TabsTrigger>
           <TabsTrigger value="mobilization" className="text-xs sm:text-sm">Mobilização</TabsTrigger>
         </TabsList>
@@ -345,6 +347,10 @@ export default function AssetView() {
 
         <TabsContent value="history">
           <AssetHistorySection assetId={id!} />
+        </TabsContent>
+
+        <TabsContent value="lifecycle">
+          <AssetLifeCyclesSection assetId={id!} />
         </TabsContent>
 
         <TabsContent value="spare-parts">
