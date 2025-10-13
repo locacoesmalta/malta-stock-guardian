@@ -237,9 +237,10 @@ export const useCashBox = () => {
         updateData.description = description;
       }
       if (invoiceDate !== undefined) {
-        // Se invoiceDate for uma string vazia, definir como null
-        // Se for uma data válida, usar diretamente (já vem no formato yyyy-MM-dd do input type="date")
-        updateData.invoice_date = invoiceDate === "" ? null : invoiceDate;
+        // Aplicar mesma lógica de timezone usada ao adicionar transações
+        updateData.invoice_date = invoiceDate 
+          ? format(new Date(invoiceDate + 'T12:00:00'), "yyyy-MM-dd")
+          : null;
       }
       
       const { data, error } = await supabase
