@@ -47,6 +47,7 @@ export const CashBoxManager = () => {
   const [transactionDescription, setTransactionDescription] = useState("");
   const [transactionObservations, setTransactionObservations] = useState("");
   const [transactionFile, setTransactionFile] = useState<File | null>(null);
+  const [transactionInvoiceDate, setTransactionInvoiceDate] = useState("");
   
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
   const [editDescription, setEditDescription] = useState("");
@@ -90,6 +91,7 @@ export const CashBoxManager = () => {
       description: transactionDescription,
       observations: transactionObservations,
       attachmentFile: transactionFile || undefined,
+      invoiceDate: transactionInvoiceDate || undefined,
     });
     
     setShowAddDialog(false);
@@ -98,6 +100,7 @@ export const CashBoxManager = () => {
     setTransactionDescription("");
     setTransactionObservations("");
     setTransactionFile(null);
+    setTransactionInvoiceDate("");
   };
 
   const handleEditTransaction = async () => {
@@ -347,6 +350,20 @@ export const CashBoxManager = () => {
                           />
                         </div>
                       </div>
+                      
+                      <div>
+                        <Label htmlFor="invoiceDate">Data da Nota</Label>
+                        <Input
+                          id="invoiceDate"
+                          type="date"
+                          value={transactionInvoiceDate}
+                          onChange={(e) => setTransactionInvoiceDate(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Pode ser uma data retroativa
+                        </p>
+                      </div>
+
                       <div>
                         <Label htmlFor="observations">Observações</Label>
                         <Textarea
@@ -448,10 +465,15 @@ export const CashBoxManager = () => {
                     <div className="attachments-grid">
                       {transactions.map((transaction, index) => 
                         transaction.attachment_url && (
-                          <div key={transaction.id} className="attachment-item">
-                            <div className="attachment-number">
-                              {String(index + 1).padStart(2, '0')} - {transaction.description || "Sem descrição"}
-                            </div>
+                      <div key={transaction.id} className="attachment-item">
+                        <div className="attachment-number">
+                          {String(index + 1).padStart(2, '0')} - {transaction.description || "Sem descrição"}
+                          {transaction.invoice_date && (
+                            <span className="text-xs ml-2">
+                              (Nota: {format(new Date(transaction.invoice_date), "dd/MM/yyyy", { locale: ptBR })})
+                            </span>
+                          )}
+                        </div>
                             {transaction.attachment_url.match(/\.(jpg|jpeg|png)$/i) ? (
                               <img 
                                 src={transaction.attachment_url} 
@@ -527,6 +549,11 @@ export const CashBoxManager = () => {
                             <p className="text-sm font-medium mt-1 truncate">
                               {transaction.description || "Sem descrição"}
                             </p>
+                            {transaction.invoice_date && (
+                              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                📄 Data da Nota: {format(new Date(transaction.invoice_date), "dd/MM/yyyy", { locale: ptBR })}
+                              </p>
+                            )}
                             {transaction.observations && (
                               <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                                 {transaction.observations}

@@ -21,6 +21,7 @@ export interface CashBoxTransaction {
   description: string | null;
   observations: string | null;
   attachment_url: string | null;
+  invoice_date: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -154,12 +155,14 @@ export const useCashBox = () => {
       description,
       observations,
       attachmentFile,
+      invoiceDate,
     }: {
       type: 'entrada' | 'saida' | 'devolucao';
       value: number;
       description?: string;
       observations?: string;
       attachmentFile?: File;
+      invoiceDate?: string;
     }) => {
       if (!openCashBox) throw new Error("Nenhum caixa aberto");
       
@@ -195,6 +198,7 @@ export const useCashBox = () => {
           description,
           observations,
           attachment_url: attachmentUrl,
+          invoice_date: invoiceDate,
           created_by: user.id,
         })
         .select()

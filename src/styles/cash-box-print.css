@@ -172,6 +172,13 @@
     line-height: 1.3;
   }
 
+  .transaction-invoice-date {
+    font-size: 9pt;
+    color: #2563eb;
+    margin: 4px 0;
+    font-weight: 600;
+  }
+
   .transaction-date {
     font-size: 8pt;
     color: #666;
