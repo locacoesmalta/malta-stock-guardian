@@ -148,6 +148,43 @@ export const useCashBox = () => {
     },
   });
 
+  // Reabrir caixa fechado
+  const reopenCashBoxMutation = useMutation({
+    mutationFn: async (cashBoxId: string) => {
+      // Verificar se já existe um caixa aberto
+      const { data: existingOpen } = await supabase
+        .from("cash_boxes")
+        .select("id")
+        .eq("status", "open")
+        .maybeSingle();
+
+      if (existingOpen) {
+        throw new Error("Já existe um caixa aberto. Feche-o antes de reabrir outro.");
+      }
+
+      const { data, error } = await supabase
+        .from("cash_boxes")
+        .update({
+          closed_at: null,
+          status: "open",
+        })
+        .eq("id", cashBoxId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["open-cash-box"] });
+      queryClient.invalidateQueries({ queryKey: ["closed-cash-boxes"] });
+      toast.success("Caixa reaberto com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao reabrir caixa: " + error.message);
+    },
+  });
+
   // Adicionar transação
   const addTransactionMutation = useMutation({
     mutationFn: async ({
@@ -347,6 +384,7 @@ export const useCashBox = () => {
     isLoadingHistory,
     openCashBoxMutation,
     closeCashBoxMutation,
+    reopenCashBoxMutation,
     addTransactionMutation,
     updateTransactionMutation,
     deleteTransactionMutation,

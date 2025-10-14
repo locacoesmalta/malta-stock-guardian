@@ -26,6 +26,7 @@ export const CashBoxManager = () => {
     isLoadingHistory,
     openCashBoxMutation,
     closeCashBoxMutation,
+    reopenCashBoxMutation,
     addTransactionMutation,
     updateTransactionMutation,
     deleteTransactionMutation,
@@ -681,16 +682,26 @@ export const CashBoxManager = () => {
                                         <span className="font-medium">{cashBoxTrans.length}</span>
                                       </div>
                                     </div>
-                                  </div>
+                                   </div>
                                   {isAdmin && (
-                                    <Button
-                                      size="sm"
-                                      variant="destructive"
-                                      onClick={() => handleDeleteCashBox(cashBox.id)}
-                                      title="Excluir caixa (somente admin)"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => reopenCashBoxMutation.mutate(cashBox.id)}
+                                        title="Reabrir caixa para edição"
+                                      >
+                                        <History className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => handleDeleteCashBox(cashBox.id)}
+                                        title="Excluir caixa (somente admin)"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
                                   )}
                                 </div>
 
