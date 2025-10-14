@@ -11,7 +11,7 @@ import { useCashBox } from "@/hooks/useCashBox";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toZonedTime } from "date-fns-tz";
-import { DollarSign, Plus, X, Edit, Paperclip, Printer, Trash2, ChevronDown, ChevronUp, History } from "lucide-react";
+import { DollarSign, Plus, X, Edit, Paperclip, Printer, Trash2, ChevronDown, ChevronUp, History, AlertTriangle } from "lucide-react";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -58,6 +58,7 @@ export const CashBoxManager = () => {
   
   const [expandedHistoryIds, setExpandedHistoryIds] = useState<Set<string>>(new Set());
   const [historyTransactions, setHistoryTransactions] = useState<Record<string, any[]>>({});
+  const [editingClosedCashBoxId, setEditingClosedCashBoxId] = useState<string | null>(null);
 
   const handleOpenCashBox = async () => {
     if (!openDate || !initialValue) return;
@@ -683,15 +684,48 @@ export const CashBoxManager = () => {
                                       </div>
                                     </div>
                                    </div>
-                                  {isAdmin && (
+                                   {isAdmin && (
                                     <div className="flex gap-2">
                                       <Button
                                         size="sm"
                                         variant="outline"
-                                        onClick={() => reopenCashBoxMutation.mutate(cashBox.id)}
-                                        title="Reabrir caixa para edição"
+                                        onClick={async () => {
+                                          const confirmed = await confirm({
+                                            title: "Reabrir Caixa?",
+                                            description: "Tem certeza que deseja reabrir este caixa? Não será possível se já houver outro caixa aberto.",
+                                          });
+                                          if (confirmed) {
+                                            reopenCashBoxMutation.mutate({ cashBoxId: cashBox.id, force: false });
+                                          }
+                                        }}
+                                        title="Reabrir caixa (apenas se não houver outro aberto)"
                                       >
                                         <History className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="secondary"
+                                        onClick={async () => {
+                                          const confirmed = await confirm({
+                                            title: "⚠️ Reabrir Forçadamente?",
+                                            description: "ATENÇÃO: Isso vai FECHAR automaticamente qualquer outro caixa aberto. Use apenas em emergências. Tem certeza?",
+                                          });
+                                          if (confirmed) {
+                                            reopenCashBoxMutation.mutate({ cashBoxId: cashBox.id, force: true });
+                                          }
+                                        }}
+                                        title="Reabrir FORÇADAMENTE (fecha outros caixas automaticamente)"
+                                      >
+                                        <AlertTriangle className="h-4 w-4" />
+                                        Forçar
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => setEditingClosedCashBoxId(cashBox.id)}
+                                        title="Editar transações deste caixa fechado"
+                                      >
+                                        <Edit className="h-4 w-4" />
                                       </Button>
                                       <Button
                                         size="sm"
@@ -706,6 +740,30 @@ export const CashBoxManager = () => {
                                 </div>
 
                                 <CollapsibleContent className="mt-4">
+                                  {editingClosedCashBoxId === cashBox.id && (
+                                    <div className="mb-4 p-4 border border-orange-500 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
+                                      <div className="flex items-start gap-2">
+                                        <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400 mt-0.5" />
+                                        <div className="flex-1">
+                                          <p className="font-semibold text-orange-900 dark:text-orange-100">
+                                            Modo de Edição Ativo
+                                          </p>
+                                          <p className="text-sm text-orange-800 dark:text-orange-200 mt-1">
+                                            Você está editando um caixa FECHADO. Mudanças serão registradas no histórico de auditoria.
+                                          </p>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="mt-2"
+                                            onClick={() => setEditingClosedCashBoxId(null)}
+                                          >
+                                            Concluir Edição
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                  
                                   {cashBoxTrans.length === 0 ? (
                                     <p className="text-sm text-muted-foreground text-center py-4">
                                       Nenhuma transação neste caixa
@@ -761,9 +819,39 @@ export const CashBoxManager = () => {
                                               {formatDate(transaction.created_at)}
                                             </p>
                                           </div>
-                                          <span className="font-bold text-lg">
-                                            {formatCurrency(transaction.value)}
-                                          </span>
+                                          <div className="flex items-center gap-2">
+                                            <span className="font-bold text-lg">
+                                              {formatCurrency(transaction.value)}
+                                            </span>
+                                            
+                                            {editingClosedCashBoxId === cashBox.id && (
+                                              <div className="flex gap-1">
+                                                <Button
+                                                  size="sm"
+                                                  variant="ghost"
+                                                  onClick={() => {
+                                                    setEditingTransaction(transaction);
+                                                    setEditDescription(transaction.description || "");
+                                                    setEditObservations(transaction.observations || "");
+                                                    setEditInvoiceDate(transaction.invoice_date || "");
+                                                    setShowEditDialog(true);
+                                                  }}
+                                                  title="Editar transação"
+                                                >
+                                                  <Edit className="h-3 w-3" />
+                                                </Button>
+                                                <Button
+                                                  size="sm"
+                                                  variant="ghost"
+                                                  onClick={() => handleDeleteTransaction(transaction.id)}
+                                                  title="Excluir transação"
+                                                  className="text-destructive hover:text-destructive"
+                                                >
+                                                  <Trash2 className="h-3 w-3" />
+                                                </Button>
+                                              </div>
+                                            )}
+                                          </div>
                                         </div>
                                       ))}
                                     </div>

@@ -148,25 +148,48 @@ export const useCashBox = () => {
     },
   });
 
-  // Reabrir caixa fechado
+  // Reabrir caixa fechado (com opção de forçar)
   const reopenCashBoxMutation = useMutation({
-    mutationFn: async (cashBoxId: string) => {
-      // Verificar se já existe um caixa aberto
-      const { data: existingOpen } = await supabase
-        .from("cash_boxes")
-        .select("id")
-        .eq("status", "open")
-        .maybeSingle();
+    mutationFn: async ({ cashBoxId, force = false }: { cashBoxId: string; force?: boolean }) => {
+      // Se force=false, verificar se já existe caixa aberto
+      if (!force) {
+        const { data: existingOpen } = await supabase
+          .from("cash_boxes")
+          .select("id, opened_at")
+          .eq("status", "open")
+          .maybeSingle();
 
-      if (existingOpen) {
-        throw new Error("Já existe um caixa aberto. Feche-o antes de reabrir outro.");
+        if (existingOpen) {
+          throw new Error("Já existe um caixa aberto. Use 'Forçar' para fechar o outro caixa automaticamente.");
+        }
       }
 
+      // Se force=true, fechar TODOS os outros caixas abertos antes
+      if (force) {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        await supabase
+          .from("cash_boxes")
+          .update({ 
+            status: "closed", 
+            closed_at: new Date().toISOString(),
+            edited_by: user?.id,
+            edited_at: new Date().toISOString()
+          })
+          .eq("status", "open")
+          .neq("id", cashBoxId);
+      }
+
+      // Reabrir o caixa selecionado
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { data, error } = await supabase
         .from("cash_boxes")
         .update({
           closed_at: null,
           status: "open",
+          edited_by: user?.id,
+          edited_at: new Date().toISOString()
         })
         .eq("id", cashBoxId)
         .select()
