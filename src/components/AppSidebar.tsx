@@ -50,6 +50,12 @@ export function AppSidebar() {
       show: permissions.can_view_products || isAdmin,
     },
     {
+      path: "/admin/products",
+      icon: Package,
+      label: "Cadastro de Produtos",
+      show: permissions.can_edit_products || isAdmin,
+    },
+    {
       path: "/inventory/withdrawal",
       icon: PackageMinus,
       label: "Retirada de Material",
@@ -68,13 +74,13 @@ export function AppSidebar() {
     {
       path: "/assets/control",
       icon: BarChart3,
-      label: "Controle de Patrimônio",
+      label: "Painel de Controle",
       show: permissions.can_access_assets || isAdmin,
     },
     {
       path: "/assets",
       icon: QrCode,
-      label: "Gestão de Patrimônio",
+      label: "Lista de Ativos",
       show: permissions.can_access_assets || isAdmin,
     },
     {
@@ -102,7 +108,7 @@ export function AppSidebar() {
     {
       path: "/reports/status",
       icon: ClipboardList,
-      label: "Relatórios de Status",
+      label: "Status de Equipamentos",
       show: permissions.can_access_assets || isAdmin,
     },
     {
@@ -244,6 +250,24 @@ export function AppSidebar() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <SidebarMenuButton asChild>
+                        <NavLink to="/admin/users" className={getNavCls} onClick={handleNavClick}>
+                          <Users className="h-4 w-4" />
+                          <span>Usuários</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    {!open && (
+                      <TooltipContent side="right" className="font-normal">
+                        Usuários
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton asChild>
                         <NavLink to="/admin/cash-box" className={getNavCls} onClick={handleNavClick}>
                           <Wallet className="h-4 w-4" />
                           <span>Caixa</span>
@@ -271,42 +295,6 @@ export function AppSidebar() {
                     {!open && (
                       <TooltipContent side="right" className="font-normal">
                         Previsão Financeira
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </SidebarMenuItem>
-
-                <SidebarMenuItem>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <SidebarMenuButton asChild>
-                        <NavLink to="/admin/products" className={getNavCls} onClick={handleNavClick}>
-                          <Package className="h-4 w-4" />
-                          <span>Produtos</span>
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </TooltipTrigger>
-                    {!open && (
-                      <TooltipContent side="right" className="font-normal">
-                        Produtos
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </SidebarMenuItem>
-
-                <SidebarMenuItem>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <SidebarMenuButton asChild>
-                        <NavLink to="/admin/users" className={getNavCls} onClick={handleNavClick}>
-                          <Users className="h-4 w-4" />
-                          <span>Usuários</span>
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </TooltipTrigger>
-                    {!open && (
-                      <TooltipContent side="right" className="font-normal">
-                        Usuários
                       </TooltipContent>
                     )}
                   </Tooltip>
