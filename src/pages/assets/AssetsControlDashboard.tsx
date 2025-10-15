@@ -19,7 +19,7 @@ export default function AssetsControlDashboard() {
 
   // Filtrar equipamentos aguardando laudo
   const assetsAwaitingReport = assets.filter(
-    (asset) => asset.location_type === "aguardando_laudo" && asset.inspection_start_date
+    (asset) => asset.location_type === "aguardando_laudo"
   );
 
   if (isLoading) {
@@ -180,11 +180,18 @@ export default function AssetsControlDashboard() {
               ) : (
                 <div className="grid gap-3">
                   {assetsAwaitingReport.map((asset) => {
-                    const inspection = parseISO(asset.inspection_start_date);
-                    const today = new Date();
-                    const diffTime = today.getTime() - inspection.getTime();
-                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                    const isOverdue = diffDays > 5;
+                    let diffDays = 0;
+                    let isOverdue = false;
+                    let hasInspectionDate = false;
+                    
+                    if (asset.inspection_start_date) {
+                      const inspection = parseISO(asset.inspection_start_date);
+                      const today = new Date();
+                      const diffTime = today.getTime() - inspection.getTime();
+                      diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                      isOverdue = diffDays > 5;
+                      hasInspectionDate = true;
+                    }
                     
                     return (
                       <div
@@ -198,29 +205,37 @@ export default function AssetsControlDashboard() {
                             <span>{asset.equipment_name}</span>
                           </div>
                           <div className="text-sm text-muted-foreground mt-1">
-                            {asset.maintenance_company} - {asset.maintenance_work_site}
+                            {asset.maintenance_company || "Empresa não informada"} - {asset.maintenance_work_site || "Obra não informada"}
                           </div>
                         </div>
                         <div className="flex flex-col items-end gap-1">
-                          <Badge 
-                            variant={isOverdue ? "destructive" : "default"} 
-                            className="font-semibold whitespace-nowrap flex items-center gap-1"
-                          >
-                            {isOverdue ? (
-                              <>
-                                <AlertCircle className="h-3 w-3" />
-                                ATRASADO
-                              </>
-                            ) : (
-                              <>
-                                <Clock className="h-3 w-3" />
-                                NO PRAZO
-                              </>
-                            )}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {diffDays} {diffDays === 1 ? "dia" : "dias"} aguardando
-                          </span>
+                          {hasInspectionDate ? (
+                            <>
+                              <Badge 
+                                variant={isOverdue ? "destructive" : "default"} 
+                                className="font-semibold whitespace-nowrap flex items-center gap-1"
+                              >
+                                {isOverdue ? (
+                                  <>
+                                    <AlertCircle className="h-3 w-3" />
+                                    ATRASADO
+                                  </>
+                                ) : (
+                                  <>
+                                    <Clock className="h-3 w-3" />
+                                    NO PRAZO
+                                  </>
+                                )}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                {diffDays} {diffDays === 1 ? "dia" : "dias"} aguardando
+                              </span>
+                            </>
+                          ) : (
+                            <Badge variant="secondary" className="font-semibold whitespace-nowrap">
+                              📋 Aguardando registro
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     );
