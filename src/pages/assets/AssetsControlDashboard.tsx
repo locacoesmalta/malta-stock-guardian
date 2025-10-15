@@ -160,6 +160,9 @@ export default function AssetsControlDashboard() {
                           <div className="text-sm text-muted-foreground mt-1">
                             {asset.maintenance_company} - {asset.maintenance_work_site}
                           </div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            Responsável: {asset.malta_collaborator || "Não informado"}
+                          </div>
                         </div>
                         <Badge variant="destructive" className="font-semibold whitespace-nowrap">
                           ⏱️ {diffDays} {diffDays === 1 ? "dia" : "dias"}
@@ -206,6 +209,9 @@ export default function AssetsControlDashboard() {
                           </div>
                           <div className="text-sm text-muted-foreground mt-1">
                             {asset.maintenance_company || "Empresa não informada"} - {asset.maintenance_work_site || "Obra não informada"}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            Responsável: {asset.malta_collaborator || "Não informado"}
                           </div>
                         </div>
                         <div className="flex flex-col items-end gap-1">
