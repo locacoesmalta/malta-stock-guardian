@@ -1,14 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Settings as SettingsIcon, Database, Shield, FileText } from "lucide-react";
+import { ChangePasswordDialog } from "@/components/ChangePasswordDialog";
 
 const Settings = () => {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Configurações do Sistema</h1>
-        <p className="text-muted-foreground">
-          Gerencie as configurações do sistema Malta Locações
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Configurações do Sistema</h1>
+          <p className="text-muted-foreground">
+            Gerencie as configurações do sistema Malta Locações
+          </p>
+        </div>
+        <ChangePasswordDialog />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">

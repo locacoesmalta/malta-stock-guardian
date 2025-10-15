@@ -43,6 +43,8 @@ Deno.serve(async (req) => {
 
     const { email, password, full_name, permissions } = await req.json()
 
+    console.log('Creating user with email:', email)
+
     // Create user
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
@@ -54,40 +56,54 @@ Deno.serve(async (req) => {
     })
 
     if (createError) {
+      console.error('Error creating user:', createError)
       throw createError
     }
 
     if (!newUser.user) {
+      console.error('No user returned from createUser')
       throw new Error('Erro ao criar usuário')
     }
 
-    // Update permissions - Usuários criados por admin recebem todas as permissões
+    console.log('User created successfully:', newUser.user.id)
+
+    // Wait for trigger to create initial permission record
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    console.log('Upserting permissions for user:', newUser.user.id)
+
+    // Upsert permissions - handles both insert and update
     const { error: permError } = await supabaseAdmin
       .from('user_permissions')
-      .update({
-        is_active: true,
-        can_access_main_menu: true,
-        can_access_admin: true,
-        can_view_products: true,
-        can_create_reports: true,
-        can_view_reports: true,
-        can_create_withdrawals: true,
-        can_view_withdrawal_history: true,
-        can_edit_products: true,
-        can_delete_products: true,
-        can_edit_reports: true,
-        can_delete_reports: true,
-        can_access_assets: true,
-        can_create_assets: true,
-        can_edit_assets: true,
-        can_delete_assets: true,
-        can_scan_assets: true,
+      .upsert({
+        user_id: newUser.user.id,
+        is_active: permissions.is_active,
+        can_access_main_menu: permissions.can_access_main_menu,
+        can_access_admin: permissions.can_access_admin,
+        can_view_products: permissions.can_view_products,
+        can_create_reports: permissions.can_create_reports,
+        can_view_reports: permissions.can_view_reports,
+        can_create_withdrawals: permissions.can_create_withdrawals,
+        can_view_withdrawal_history: permissions.can_view_withdrawal_history,
+        can_edit_products: permissions.can_edit_products,
+        can_delete_products: permissions.can_delete_products,
+        can_edit_reports: permissions.can_edit_reports,
+        can_delete_reports: permissions.can_delete_reports,
+        can_access_assets: permissions.can_access_assets,
+        can_create_assets: permissions.can_create_assets,
+        can_edit_assets: permissions.can_edit_assets,
+        can_delete_assets: permissions.can_delete_assets,
+        can_scan_assets: permissions.can_scan_assets,
+      }, {
+        onConflict: 'user_id'
       })
-      .eq('user_id', newUser.user.id)
 
     if (permError) {
+      console.error('Error upserting permissions:', permError)
       throw permError
     }
+
+    console.log('Permissions upserted successfully')
 
     return new Response(
       JSON.stringify({ success: true, user: newUser.user }),

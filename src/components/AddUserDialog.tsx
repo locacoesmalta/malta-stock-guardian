@@ -76,12 +76,14 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
         }
       });
 
+      // Check for errors in response body
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+
       if (response.error) {
         throw new Error(response.error.message || "Erro ao criar usuário");
       }
-
-      const { error: dataError, data } = response;
-      if (dataError) throw dataError;
 
       toast.success("Usuário criado com sucesso!");
       setOpen(false);
