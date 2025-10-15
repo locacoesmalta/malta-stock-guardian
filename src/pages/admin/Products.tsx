@@ -18,6 +18,7 @@ import { productSchema, addStockSchema } from "@/lib/validations";
 import { ProductPurchaseHistory } from "@/components/ProductPurchaseHistory";
 import * as XLSX from "xlsx";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { BackButton } from "@/components/BackButton";
 
 interface Product {
   id: string;
@@ -554,34 +555,36 @@ const Products = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Gestão de Produtos</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Cadastre e gerencie os produtos do estoque</p>
-        </div>
-        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-          <Button variant="outline" onClick={downloadTemplate} className="flex-1 sm:flex-none text-xs sm:text-sm">
-            <Download className="h-4 w-4 mr-2" />
-            Exportar Estoque
-          </Button>
-          <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="flex-1 sm:flex-none text-xs sm:text-sm">
-            <Upload className="h-4 w-4 mr-2" />
-            {uploading ? "Processando..." : "Importar Excel"}
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".xlsx,.xls"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-          <Dialog open={open} onOpenChange={(value) => {
-            setOpen(value);
-            if (!value) {
-              setEditingProduct(null);
-              resetForm();
-            }
-          }}>
+      <div className="space-y-2">
+        <BackButton />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold">Gestão de Produtos</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Cadastre e gerencie os produtos do estoque</p>
+          </div>
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            <Button variant="outline" onClick={downloadTemplate} className="flex-1 sm:flex-none text-xs sm:text-sm">
+              <Download className="h-4 w-4 mr-2" />
+              Exportar Estoque
+            </Button>
+            <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="flex-1 sm:flex-none text-xs sm:text-sm">
+              <Upload className="h-4 w-4 mr-2" />
+              {uploading ? "Processando..." : "Importar Excel"}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <Dialog open={open} onOpenChange={(value) => {
+              setOpen(value);
+              if (!value) {
+                setEditingProduct(null);
+                resetForm();
+              }
+            }}>
             <DialogTrigger asChild>
               <Button className="flex-1 sm:flex-none text-xs sm:text-sm">
                 <Plus className="h-4 w-4 mr-2" />
@@ -812,7 +815,8 @@ const Products = () => {
               </div>
             </form>
           </DialogContent>
-        </Dialog>
+            </Dialog>
+          </div>
         </div>
       </div>
 

@@ -18,6 +18,7 @@ import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
 import { formatPAT } from "@/lib/patUtils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { WithdrawalCollaboratorsManager } from "@/components/WithdrawalCollaboratorsManager";
+import { BackButton } from "@/components/BackButton";
 
 
 interface WithdrawalItem {
@@ -302,7 +303,8 @@ const MaterialWithdrawal = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6 max-w-4xl">
-      <div>
+      <div className="space-y-2">
+        <BackButton />
         <h1 className="text-2xl sm:text-3xl font-bold">Retirada de Material</h1>
         <p className="text-sm sm:text-base text-muted-foreground">Registre a saída de produtos do estoque</p>
       </div>

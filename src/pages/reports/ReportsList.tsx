@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Calendar, FileText, Printer, Search, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { BackButton } from "@/components/BackButton";
 
 interface Report {
   id: string;
@@ -246,7 +247,8 @@ const ReportsList = () => {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="space-y-2">
+        <BackButton />
         <h1 className="text-3xl font-bold">Histórico de Relatórios</h1>
         <p className="text-muted-foreground">Visualize e filtre os relatórios gerados</p>
       </div>

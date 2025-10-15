@@ -15,6 +15,7 @@ import { useProductsQuery } from "@/hooks/useProductsQuery";
 import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
 import { formatPAT } from "@/lib/patUtils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { BackButton } from "@/components/BackButton";
 
 interface ReportPart {
   product_id: string;
@@ -333,11 +334,14 @@ const NewReport = () => {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div className="flex items-center gap-4">
-        <img src="/malta-logo.webp" alt="Malta Locações" className="h-12" />
-        <div>
-          <h1 className="text-3xl font-bold">Relatório Fotográfico de Avarias</h1>
-          <p className="text-muted-foreground">Registre a saída de produtos e serviços executados</p>
+      <div className="space-y-2">
+        <BackButton />
+        <div className="flex items-center gap-4">
+          <img src="/malta-logo.webp" alt="Malta Locações" className="h-12" />
+          <div>
+            <h1 className="text-3xl font-bold">Relatório Fotográfico de Avarias</h1>
+            <p className="text-muted-foreground">Registre a saída de produtos e serviços executados</p>
+          </div>
         </div>
       </div>
 

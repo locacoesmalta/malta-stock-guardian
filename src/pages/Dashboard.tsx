@@ -5,6 +5,7 @@ import { StockBadge } from "@/components/StockBadge";
 import { Package, AlertTriangle, TrendingUp, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useProductsQuery } from "@/hooks/useProductsQuery";
+import { BackButton } from "@/components/BackButton";
 
 const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -28,7 +29,8 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      <div className="px-2 md:px-0">
+      <div className="px-2 md:px-0 space-y-2">
+        <BackButton />
         <h1 className="text-2xl md:text-3xl font-bold mb-2">Dashboard</h1>
         <p className="text-sm md:text-base text-muted-foreground">
           Visão geral do estoque Malta Locações

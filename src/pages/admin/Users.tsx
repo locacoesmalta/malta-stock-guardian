@@ -21,6 +21,7 @@ import {
 import { AddUserDialog } from "@/components/AddUserDialog";
 import { useUsersQuery } from "@/hooks/useUsersQuery";
 import { useQueryClient } from "@tanstack/react-query";
+import { BackButton } from "@/components/BackButton";
 
 const USERS_PER_PAGE = 10;
 
@@ -165,7 +166,8 @@ const Users = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div>
+      <div className="space-y-2">
+        <BackButton />
         <h1 className="text-2xl sm:text-3xl font-bold">Gestão de Usuários</h1>
         <p className="text-sm sm:text-base text-muted-foreground">
           Gerencie permissões dos usuários cadastrados

@@ -12,6 +12,7 @@ import { ptBR } from "date-fns/locale";
 import { formatInTimeZone } from "date-fns-tz";
 import { useAssetsQuery } from "@/hooks/useAssetsQuery";
 import { DeadlineStatusBadge } from "@/components/DeadlineStatusBadge";
+import { BackButton } from "@/components/BackButton";
 
 export default function AssetsList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -75,15 +76,17 @@ export default function AssetsList() {
 
   return (
     <div className="container mx-auto p-4 md:p-6 max-w-7xl">
-      <div className="flex flex-col gap-4 mb-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Gestão de Patrimônio</h1>
-            <p className="text-muted-foreground mt-1">
-              Gerencie todos os equipamentos do patrimônio
-            </p>
-          </div>
-          <div className="flex gap-2 w-full sm:w-auto">
+      <div className="space-y-2 mb-6">
+        <BackButton />
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold">Gestão de Patrimônio</h1>
+              <p className="text-muted-foreground mt-1">
+                Gerencie todos os equipamentos do patrimônio
+              </p>
+            </div>
+            <div className="flex gap-2 w-full sm:w-auto">
             <Button
               onClick={() => navigate("/assets/traceability")}
               variant="outline"
@@ -111,8 +114,9 @@ export default function AssetsList() {
             )}
           </div>
         </div>
+      </div>
 
-        <div className="relative">
+      <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
             placeholder="Buscar por código, equipamento, empresa ou obra..."

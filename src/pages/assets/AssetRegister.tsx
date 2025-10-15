@@ -48,6 +48,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BackButton } from "@/components/BackButton";
 
 // Schema para a etapa 1 (verificação do PAT)
 const patVerificationSchema = z.object({
@@ -217,7 +218,8 @@ export default function AssetRegister() {
   if (step === 1) {
     return (
       <div className="container mx-auto py-8 px-4 max-w-2xl">
-        <Card>
+        <BackButton />
+        <Card className="mt-4">
           <CardHeader>
             <CardTitle>Cadastro de Equipamento</CardTitle>
             <CardDescription>
@@ -334,7 +336,8 @@ export default function AssetRegister() {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
-      <Card>
+      <BackButton />
+      <Card className="mt-4">
         <CardHeader>
           <CardTitle>Cadastro de Equipamento</CardTitle>
           <CardDescription>

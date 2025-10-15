@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { BackButton } from "@/components/BackButton";
 
 const LOGS_PER_PAGE = 50;
 
@@ -119,20 +120,23 @@ const AuditLogs = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Shield className="h-8 w-8" />
-            Logs de Auditoria
-          </h1>
-          <p className="text-muted-foreground">
-            Histórico completo de todas as ações realizadas no sistema
-          </p>
+      <div className="space-y-2">
+        <BackButton />
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <Shield className="h-8 w-8" />
+              Logs de Auditoria
+            </h1>
+            <p className="text-muted-foreground">
+              Histórico completo de todas as ações realizadas no sistema
+            </p>
+          </div>
+          <Button onClick={handleExport} disabled={filteredLogs.length === 0}>
+            <Download className="h-4 w-4 mr-2" />
+            Exportar CSV
+          </Button>
         </div>
-        <Button onClick={handleExport} disabled={filteredLogs.length === 0}>
-          <Download className="h-4 w-4 mr-2" />
-          Exportar CSV
-        </Button>
       </div>
 
       <Card>

@@ -10,6 +10,7 @@ import { Search, FileText } from "lucide-react";
 import { useWithdrawalsQuery } from "@/hooks/useWithdrawalsQuery";
 import { formatPAT } from "@/lib/patUtils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { BackButton } from "@/components/BackButton";
 
 const WithdrawalHistory = () => {
   const { data: withdrawals = [], isLoading, error } = useWithdrawalsQuery();
@@ -115,17 +116,20 @@ const WithdrawalHistory = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Histórico de Retiradas</h1>
-          <p className="text-muted-foreground">
-            Visualize todas as retiradas de material registradas
-          </p>
+      <div className="space-y-2">
+        <BackButton />
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Histórico de Retiradas</h1>
+            <p className="text-muted-foreground">
+              Visualize todas as retiradas de material registradas
+            </p>
+          </div>
+          <Button onClick={handleExport} disabled={filteredWithdrawals.length === 0}>
+            <FileText className="h-4 w-4 mr-2" />
+            Exportar CSV
+          </Button>
         </div>
-        <Button onClick={handleExport} disabled={filteredWithdrawals.length === 0}>
-          <FileText className="h-4 w-4 mr-2" />
-          Exportar CSV
-        </Button>
       </div>
 
       <Card>
