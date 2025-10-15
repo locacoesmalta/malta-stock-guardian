@@ -14,7 +14,7 @@ export default function AssetsControlDashboard() {
   
   // Filtrar equipamentos em manutenção
   const assetsInMaintenance = assets.filter(
-    (asset) => asset.location_type === "em_manutencao" && asset.maintenance_arrival_date
+    (asset) => asset.location_type === "em_manutencao"
   );
 
   // Filtrar equipamentos aguardando laudo
@@ -141,10 +141,16 @@ export default function AssetsControlDashboard() {
               ) : (
                 <div className="grid gap-3">
                   {assetsInMaintenance.map((asset) => {
-                    const arrival = parseISO(asset.maintenance_arrival_date + "T00:00:00");
-                    const today = new Date();
-                    const diffTime = today.getTime() - arrival.getTime();
-                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                    let diffDays = 0;
+                    let hasArrivalDate = false;
+                    
+                    if (asset.maintenance_arrival_date) {
+                      const arrival = parseISO(asset.maintenance_arrival_date + "T00:00:00");
+                      const today = new Date();
+                      const diffTime = today.getTime() - arrival.getTime();
+                      diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                      hasArrivalDate = true;
+                    }
                     
                     return (
                       <div
@@ -158,15 +164,23 @@ export default function AssetsControlDashboard() {
                             <span>{asset.equipment_name}</span>
                           </div>
                           <div className="text-sm text-muted-foreground mt-1">
-                            {asset.maintenance_company} - {asset.maintenance_work_site}
+                            {asset.maintenance_company || "Empresa não informada"} - {asset.maintenance_work_site || "Obra não informada"}
                           </div>
                           <div className="text-xs text-muted-foreground mt-0.5">
                             Responsável: {asset.malta_collaborator || "Não informado"}
                           </div>
                         </div>
-                        <Badge variant="destructive" className="font-semibold whitespace-nowrap">
-                          ⏱️ {diffDays} {diffDays === 1 ? "dia" : "dias"}
-                        </Badge>
+                        
+                        {hasArrivalDate ? (
+                          <Badge variant="destructive" className="font-semibold whitespace-nowrap">
+                            ⏱️ {diffDays} {diffDays === 1 ? "dia" : "dias"}
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="font-semibold whitespace-nowrap flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            📅 Sem data de chegada
+                          </Badge>
+                        )}
                       </div>
                     );
                   })}
