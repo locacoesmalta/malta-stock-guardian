@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,8 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ArrowLeft, RefreshCw } from "lucide-react";
@@ -22,6 +23,11 @@ export default function AssetReplacement() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { registrarEvento } = useAssetHistory();
+
+  const [substituteAssetCode, setSubstituteAssetCode] = useState("");
+  const [substituteAsset, setSubstituteAsset] = useState<any>(null);
+  const [loadingSubstitute, setLoadingSubstitute] = useState(false);
+  const [substituteNotFound, setSubstituteNotFound] = useState(false);
 
   const { data: asset, isLoading: assetLoading } = useQuery({
     queryKey: ["asset", id],
@@ -37,43 +43,89 @@ export default function AssetReplacement() {
     enabled: !!id,
   });
 
-  const { data: availableAssets, isLoading: assetsLoading } = useQuery({
-    queryKey: ["available-assets"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("assets")
-        .select("id, asset_code, equipment_name, location_type")
-        .eq("location_type", "deposito_malta")
-        .neq("id", id)
-        .order("asset_code");
-      if (error) throw error;
-      return data;
-    },
-  });
-
   const form = useForm<AssetReplacementFormData>({
     resolver: zodResolver(assetReplacementSchema),
   });
 
+  // Buscar equipamento substituto quando digitar PAT
+  const handleSearchSubstitute = async () => {
+    if (!substituteAssetCode.trim()) {
+      toast.error("Digite o PAT do equipamento substituto");
+      return;
+    }
+
+    // Formatar PAT com 6 dígitos (adicionar zeros à esquerda)
+    const formattedPAT = substituteAssetCode.trim().padStart(6, '0');
+    setSubstituteAssetCode(formattedPAT);
+
+    setLoadingSubstitute(true);
+    setSubstituteNotFound(false);
+    setSubstituteAsset(null);
+
+    try {
+      const { data, error } = await supabase
+        .from("assets")
+        .select("*")
+        .eq("asset_code", formattedPAT)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        setSubstituteNotFound(true);
+        toast.error(`Equipamento ${formattedPAT} não encontrado no sistema. Cadastre o equipamento antes de continuar.`);
+        return;
+      }
+
+      // Validar se equipamento está no Depósito Malta
+      const statusLabels: Record<string, string> = {
+        locacao: "Locação",
+        em_manutencao: "Manutenção",
+        aguardando_laudo: "Aguardando Laudo",
+        deposito_malta: "Depósito Malta",
+      };
+
+      if (data.location_type !== "deposito_malta") {
+        const currentStatus = statusLabels[data.location_type] || data.location_type;
+        setSubstituteNotFound(true);
+        toast.error(`Equipamento ${formattedPAT} está em "${currentStatus}". Para substituição, o equipamento deve estar no Depósito Malta.`);
+        return;
+      }
+
+      // Validar se o nome do equipamento é o mesmo
+      if (asset && data.equipment_name !== asset.equipment_name) {
+        toast.error(`Atenção: Você está substituindo "${asset.equipment_name}" por "${data.equipment_name}". Recomendamos substituir por equipamento do mesmo tipo.`);
+        setSubstituteNotFound(true);
+        return;
+      }
+
+      setSubstituteAsset(data);
+      form.setValue("replaced_by_asset_id", data.id);
+      toast.success(`Equipamento ${formattedPAT} encontrado e disponível!`);
+    } catch (error) {
+      console.error("Erro ao buscar equipamento:", error);
+      toast.error("Erro ao buscar equipamento no banco de dados");
+      setSubstituteNotFound(true);
+    } finally {
+      setLoadingSubstitute(false);
+    }
+  };
+
   const onSubmit = async (data: AssetReplacementFormData) => {
     if (!asset) return;
 
+    if (!substituteAsset) {
+      toast.error("Busque e valide o equipamento substituto antes de continuar");
+      return;
+    }
+
     try {
-      // Buscar dados do equipamento substituto
-      const { data: newAsset, error: newAssetError } = await supabase
-        .from("assets")
-        .select("asset_code")
-        .eq("id", data.replaced_by_asset_id)
-        .single();
-
-      if (newAssetError) throw newAssetError;
-
       // Atualizar equipamento ANTIGO
       const { error: oldAssetError } = await supabase
         .from("assets")
         .update({
           was_replaced: true,
-          replaced_by_asset_id: data.replaced_by_asset_id,
+          replaced_by_asset_id: substituteAsset.id,
           replacement_reason: data.replacement_reason,
           available_for_rental: false,
           location_type: "deposito_malta",
@@ -88,13 +140,13 @@ export default function AssetReplacement() {
         patId: asset.id,
         codigoPat: asset.asset_code,
         tipoEvento: "SUBSTITUIÇÃO",
-        detalhesEvento: `Substituído pelo PAT ${newAsset.asset_code}. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Observação: ${data.decision_notes}` : ""}`,
+        detalhesEvento: `Substituído pelo PAT ${substituteAsset.asset_code}. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Observação: ${data.decision_notes}` : ""}`,
       });
 
       // Registrar evento no NOVO
       await registrarEvento({
-        patId: data.replaced_by_asset_id,
-        codigoPat: newAsset.asset_code,
+        patId: substituteAsset.id,
+        codigoPat: substituteAsset.asset_code,
         tipoEvento: "SUBSTITUIÇÃO",
         detalhesEvento: `Substituiu o PAT ${asset.asset_code}. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Observação: ${data.decision_notes}` : ""}`,
       });
@@ -102,7 +154,7 @@ export default function AssetReplacement() {
       queryClient.invalidateQueries({ queryKey: ["asset", id] });
       queryClient.invalidateQueries({ queryKey: ["assets"] });
       queryClient.invalidateQueries({ queryKey: ["patrimonio-historico", id] });
-      queryClient.invalidateQueries({ queryKey: ["patrimonio-historico", data.replaced_by_asset_id] });
+      queryClient.invalidateQueries({ queryKey: ["patrimonio-historico", substituteAsset.id] });
 
       toast.success("Substituição registrada com sucesso");
       navigate(`/assets/view/${id}`);
@@ -112,7 +164,7 @@ export default function AssetReplacement() {
     }
   };
 
-  if (assetLoading || assetsLoading) {
+  if (assetLoading) {
     return (
       <div className="container mx-auto p-4 md:p-6">
         <p>Carregando...</p>
@@ -146,30 +198,71 @@ export default function AssetReplacement() {
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="replaced_by_asset_id">Equipamento Substituto *</Label>
-              <Select
-                onValueChange={(value) => form.setValue("replaced_by_asset_id", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o equipamento substituto" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableAssets && availableAssets.length > 0 ? (
-                    availableAssets.map((asset) => (
-                      <SelectItem key={asset.id} value={asset.id}>
-                        {asset.asset_code} - {asset.equipment_name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="none" disabled>
-                      Nenhum equipamento disponível no depósito
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-              {form.formState.errors.replaced_by_asset_id && (
-                <p className="text-sm text-destructive">{form.formState.errors.replaced_by_asset_id.message}</p>
+            {/* Buscar PAT Substituto */}
+            <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
+              <Label className="text-base font-semibold">Equipamento Substituto</Label>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Input
+                    placeholder="Digite o PAT (ex: 1812 ou 001812)"
+                    value={substituteAssetCode}
+                    onChange={(e) => {
+                      // Aceitar apenas números
+                      const value = e.target.value.replace(/\D/g, '');
+                      setSubstituteAssetCode(value);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSearchSubstitute();
+                      }
+                    }}
+                    maxLength={6}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    O sistema formatará automaticamente com 6 dígitos
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  onClick={handleSearchSubstitute}
+                  disabled={loadingSubstitute}
+                >
+                  {loadingSubstitute ? "Buscando..." : "Buscar"}
+                </Button>
+              </div>
+
+              {substituteNotFound && (
+                <div className="p-3 border border-destructive bg-destructive/10 rounded-md">
+                  <p className="text-sm text-destructive font-medium">
+                    ⚠️ Equipamento não disponível para substituição
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Verifique o status do equipamento ou cadastre um novo
+                  </p>
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="h-auto p-0 mt-2 text-sm"
+                    onClick={() => navigate("/assets/register")}
+                  >
+                    Cadastrar novo equipamento →
+                  </Button>
+                </div>
+              )}
+
+              {substituteAsset && (
+                <div className="p-4 bg-background border rounded-lg space-y-2">
+                  <p className="font-medium text-green-600">✓ Equipamento encontrado</p>
+                  <div className="space-y-1 text-sm">
+                    <p><span className="font-medium">PAT:</span> {substituteAsset.asset_code}</p>
+                    <p><span className="font-medium">Nome:</span> {substituteAsset.equipment_name}</p>
+                    <p><span className="font-medium">Fabricante:</span> {substituteAsset.manufacturer}</p>
+                    {substituteAsset.model && (
+                      <p><span className="font-medium">Modelo:</span> {substituteAsset.model}</p>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
 
@@ -197,7 +290,7 @@ export default function AssetReplacement() {
             </div>
 
             <div className="flex gap-2 pt-4">
-              <Button type="submit" disabled={form.formState.isSubmitting || !availableAssets || availableAssets.length === 0}>
+              <Button type="submit" disabled={form.formState.isSubmitting || !substituteAsset}>
                 {form.formState.isSubmitting ? "Registrando..." : "Confirmar Substituição"}
               </Button>
               <Button
@@ -212,12 +305,12 @@ export default function AssetReplacement() {
         </CardContent>
       </Card>
 
-      {(!availableAssets || availableAssets.length === 0) && (
+      {!substituteAsset && (
         <Card className="mt-4 bg-muted">
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">
-              Não há equipamentos disponíveis no depósito para substituição. 
-              Para realizar uma substituição, é necessário ter pelo menos um equipamento no Depósito Malta.
+              Para realizar a substituição, busque um equipamento disponível no Depósito Malta usando o campo acima.
+              O sistema validará automaticamente se o equipamento é do mesmo tipo.
             </p>
           </CardContent>
         </Card>

@@ -43,7 +43,7 @@ export default function AssetMovement() {
   const queryClient = useQueryClient();
   const { registrarEvento } = useAssetHistory();
   
-  const [movementType, setMovementType] = useState<MovementType>("deposito_malta");
+  const [movementType, setMovementType] = useState<MovementType | null>(null);
   const [photoFile1, setPhotoFile1] = useState<File | null>(null);
   const [photoFile2, setPhotoFile2] = useState<File | null>(null);
   const [photoPreview1, setPhotoPreview1] = useState<string | null>(null);
@@ -56,6 +56,8 @@ export default function AssetMovement() {
   const [substituteAsset, setSubstituteAsset] = useState<any>(null);
   const [loadingSubstitute, setLoadingSubstitute] = useState(false);
   const [substituteNotFound, setSubstituteNotFound] = useState(false);
+  const [replacedAssetToReturn, setReplacedAssetToReturn] = useState<any>(null);
+  const [replacedAssetReturnDecision, setReplacedAssetReturnDecision] = useState<boolean | null>(null);
   
 
   const { data: asset, isLoading } = useQuery({
@@ -141,6 +143,13 @@ export default function AssetMovement() {
         return;
       }
 
+      // Validar se o nome do equipamento é o mesmo
+      if (asset && data.equipment_name !== asset.equipment_name) {
+        toast.error(`Atenção: Você está substituindo "${asset.equipment_name}" por "${data.equipment_name}". Recomendamos substituir por equipamento do mesmo tipo.`);
+        setSubstituteNotFound(true);
+        return;
+      }
+
       setSubstituteAsset(data);
       form.setValue("substitute_asset_code", formattedPAT);
       toast.success(`Equipamento ${formattedPAT} encontrado e disponível!`);
@@ -187,13 +196,42 @@ export default function AssetMovement() {
     fetchWithdrawals();
   }, [partsReplaced, asset]);
 
+  // Buscar equipamento que foi substituído por este (para retorno_obra)
   useEffect(() => {
+    const fetchReplacedAsset = async () => {
+      if (movementType === "retorno_obra" && asset) {
+        try {
+          const { data, error } = await supabase
+            .from("assets")
+            .select("id, asset_code, equipment_name, rental_company, rental_work_site")
+            .eq("replaced_by_asset_id", asset.id)
+            .eq("location_type", "locacao")
+            .maybeSingle();
+
+          if (error) throw error;
+          setReplacedAssetToReturn(data);
+        } catch (error) {
+          console.error("Erro ao buscar equipamento substituído:", error);
+        }
+      } else {
+        setReplacedAssetToReturn(null);
+        setReplacedAssetReturnDecision(null);
+      }
+    };
+
+    fetchReplacedAsset();
+  }, [movementType, asset]);
+
+  useEffect(() => {
+    if (!movementType) return;
+    
     form.reset({});
     setPartsReplaced(null);
     setWithdrawals([]);
     setSubstituteAssetCode("");
     setSubstituteAsset(null);
     setSubstituteNotFound(false);
+    setReplacedAssetReturnDecision(null);
     
     // Auto-preencher dados quando for manutenção
     if (movementType === "em_manutencao" && asset) {
@@ -401,6 +439,32 @@ export default function AssetMovement() {
         }
         console.log(`${withdrawals.length} retiradas encontradas`);
       }
+
+      // Processar destino do equipamento substituído (se existir)
+      if (movementType === "retorno_obra" && replacedAssetToReturn && replacedAssetReturnDecision !== null) {
+        if (replacedAssetReturnDecision === true) {
+          // Equipamento substituído retorna para laudo
+          const { error: replacedError } = await supabase
+            .from("assets")
+            .update({
+              location_type: "aguardando_laudo",
+              inspection_start_date: new Date().toISOString(),
+            })
+            .eq("id", replacedAssetToReturn.id);
+
+          if (replacedError) throw replacedError;
+
+          await registrarEvento({
+            patId: replacedAssetToReturn.id,
+            codigoPat: replacedAssetToReturn.asset_code,
+            tipoEvento: "RETORNO PARA LAUDO",
+            detalhesEvento: `Equipamento que estava na obra retorna para laudo após ${asset.asset_code} voltar da manutenção`,
+          });
+
+          toast.success(`Equipamento ${replacedAssetToReturn.asset_code} enviado para laudo`);
+        }
+        // Se false, o equipamento substituído continua na obra (não fazer nada)
+      }
       
       const updateData: any = {
         // Retorno para obra NÃO altera o location_type
@@ -569,9 +633,9 @@ export default function AssetMovement() {
           <CardTitle>Tipo de Movimentação</CardTitle>
         </CardHeader>
         <CardContent>
-          <Select value={movementType} onValueChange={(value) => setMovementType(value as MovementType)}>
+          <Select value={movementType || ""} onValueChange={(value) => setMovementType(value as MovementType)}>
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue placeholder="Selecione o tipo de movimentação" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="deposito_malta">Retorno ao Depósito Malta</SelectItem>
@@ -585,7 +649,8 @@ export default function AssetMovement() {
         </CardContent>
       </Card>
 
-      <Card>
+      {movementType && (
+        <Card>
         <CardHeader>
           <CardTitle>Dados da Movimentação</CardTitle>
         </CardHeader>
@@ -1026,12 +1091,50 @@ export default function AssetMovement() {
                       </div>
                       <AssetCollaboratorsManager assetId={id} />
                     </>
-                  )}
-                </div>
-              </>
-            )}
+                   )}
 
-            {movementType === "substituicao" && (
+                  {/* Verificação de equipamento substituído */}
+                  {replacedAssetToReturn && (
+                    <div className="space-y-3 p-4 border rounded-lg bg-amber-50 border-amber-200">
+                      <Label className="text-base font-semibold text-amber-800">
+                        ⚠️ Equipamento Substituído Detectado
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Este equipamento substituiu o PAT <strong>{replacedAssetToReturn.asset_code}</strong> ({replacedAssetToReturn.equipment_name}) 
+                        que ainda está na obra <strong>{replacedAssetToReturn.rental_work_site}</strong>.
+                      </p>
+                      <div className="space-y-3 mt-3">
+                        <Label>O equipamento {replacedAssetToReturn.asset_code} retornará para Malta?</Label>
+                        <RadioGroup
+                          onValueChange={(value) => setReplacedAssetReturnDecision(value === "true")}
+                          value={replacedAssetReturnDecision === null ? undefined : String(replacedAssetReturnDecision)}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="true" id="replaced-return-yes" />
+                            <Label htmlFor="replaced-return-yes" className="font-normal cursor-pointer">
+                              Sim, retornar para laudo
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="false" id="replaced-return-no" />
+                            <Label htmlFor="replaced-return-no" className="font-normal cursor-pointer">
+                              Não, continuar na obra
+                            </Label>
+                          </div>
+                        </RadioGroup>
+                        {replacedAssetReturnDecision === null && (
+                          <p className="text-sm text-destructive">
+                            * Obrigatório informar o destino do equipamento substituído
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                 </div>
+               </>
+             )}
+
+             {movementType === "substituicao" && (
               <>
                 <div className="space-y-4">
                   {/* Buscar PAT Substituto */}
@@ -1217,7 +1320,14 @@ export default function AssetMovement() {
             )}
 
             <div className="flex gap-2 pt-4">
-              <Button type="submit" disabled={form.formState.isSubmitting || isUploading}>
+              <Button 
+                type="submit" 
+                disabled={
+                  form.formState.isSubmitting || 
+                  isUploading || 
+                  (movementType === "retorno_obra" && replacedAssetToReturn && replacedAssetReturnDecision === null)
+                }
+              >
                 {form.formState.isSubmitting || isUploading ? "Registrando..." : "Registrar Movimentação"}
               </Button>
               <Button
@@ -1232,6 +1342,7 @@ export default function AssetMovement() {
           </form>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -57,6 +57,59 @@ export default function PostInspection() {
   const returnForm = useForm<MovementLocacaoFormData>({
     resolver: zodResolver(movementLocacaoSchema),
   });
+
+  // Auto-preencher empresa e obra ao selecionar manutenção
+  useEffect(() => {
+    const autoFillMaintenanceData = async () => {
+      if (selectedDecision === "maintenance" && asset) {
+        try {
+          // Buscar dados históricos do equipamento ou do equipamento que foi substituído
+          let company = "";
+          let workSite = "";
+
+          if (asset.was_replaced && asset.replaced_by_asset_id) {
+            // Buscar dados do histórico do equipamento substituído
+            const { data: historicData } = await supabase
+              .from("patrimonio_historico")
+              .select("detalhes_evento")
+              .eq("pat_id", asset.id)
+              .eq("tipo_evento", "SUBSTITUIÇÃO")
+              .order("data_modificacao", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (historicData) {
+              // Tentar extrair empresa e obra do histórico
+              const details = historicData.detalhes_evento;
+              const companyMatch = details.match(/na obra (.+?) \((.+?)\)/);
+              if (companyMatch) {
+                workSite = companyMatch[1];
+                company = companyMatch[2];
+              }
+            }
+          }
+
+          // Se não encontrou no histórico, buscar do próprio asset
+          if (!company || !workSite) {
+            company = asset.rental_company || asset.maintenance_company || "";
+            workSite = asset.rental_work_site || asset.maintenance_work_site || "";
+          }
+
+          const currentDate = new Date().toISOString().split('T')[0];
+          
+          maintenanceForm.reset({
+            maintenance_company: company,
+            maintenance_work_site: workSite,
+            maintenance_arrival_date: currentDate,
+          });
+        } catch (error) {
+          console.error("Erro ao auto-preencher dados de manutenção:", error);
+        }
+      }
+    };
+
+    autoFillMaintenanceData();
+  }, [selectedDecision, asset, maintenanceForm]);
 
   const handleApproveForRental = async (data: PostInspectionApproveFormData) => {
     if (!asset) return;
@@ -343,6 +396,9 @@ export default function PostInspection() {
                         {...maintenanceForm.register("maintenance_company")}
                         placeholder="Nome da empresa"
                       />
+                      <p className="text-xs text-muted-foreground">
+                        ℹ️ Dados recuperados automaticamente do histórico do equipamento
+                      </p>
                       {maintenanceForm.formState.errors.maintenance_company && (
                         <p className="text-sm text-destructive">{maintenanceForm.formState.errors.maintenance_company.message}</p>
                       )}
@@ -354,6 +410,9 @@ export default function PostInspection() {
                         {...maintenanceForm.register("maintenance_work_site")}
                         placeholder="Nome da obra"
                       />
+                      <p className="text-xs text-muted-foreground">
+                        ℹ️ Dados recuperados automaticamente do histórico do equipamento
+                      </p>
                       {maintenanceForm.formState.errors.maintenance_work_site && (
                         <p className="text-sm text-destructive">{maintenanceForm.formState.errors.maintenance_work_site.message}</p>
                       )}
