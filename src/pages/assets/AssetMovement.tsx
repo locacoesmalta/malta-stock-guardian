@@ -106,6 +106,14 @@ export default function AssetMovement() {
     resolver: zodResolver(getSchema()),
   });
 
+  // Preencher automaticamente empresa e obra para retorno_obra
+  useEffect(() => {
+    if (asset && movementType === "retorno_obra" && asset.rental_company && asset.rental_work_site) {
+      form.setValue("rental_company", asset.rental_company);
+      form.setValue("rental_work_site", asset.rental_work_site);
+    }
+  }, [asset, movementType, form]);
+
   // Buscar equipamento substituto quando digitar PAT
   const handleSearchSubstitute = async () => {
     if (!substituteAssetCode.trim()) {
@@ -1027,6 +1035,40 @@ export default function AssetMovement() {
             {movementType === "retorno_obra" && (
               <>
                 <div className="space-y-4">
+                  {/* Campos de Empresa e Obra (preenchidos automaticamente e desabilitados) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/30">
+                    <div className="space-y-2">
+                      <Label htmlFor="rental_company">Empresa *</Label>
+                      <Input
+                        id="rental_company"
+                        {...form.register("rental_company")}
+                        placeholder="Nome da empresa"
+                        disabled={true}
+                        className="bg-muted"
+                      />
+                      {form.formState.errors.rental_company && (
+                        <p className="text-sm text-destructive">
+                          {form.formState.errors.rental_company.message as string}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="rental_work_site">Obra *</Label>
+                      <Input
+                        id="rental_work_site"
+                        {...form.register("rental_work_site")}
+                        placeholder="Nome da obra"
+                        disabled={true}
+                        className="bg-muted"
+                      />
+                      {form.formState.errors.rental_work_site && (
+                        <p className="text-sm text-destructive">
+                          {form.formState.errors.rental_work_site.message as string}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="space-y-3">
                     <Label>Foi trocada peça? *</Label>
                     <RadioGroup

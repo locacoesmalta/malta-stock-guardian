@@ -400,6 +400,14 @@ export const movementAguardandoLaudoSchema = z.object({
 
 // Movement Retorno para Obra Schema
 export const movementRetornoObraSchema = z.object({
+  rental_company: z.string()
+    .trim()
+    .min(1, "Empresa é obrigatória")
+    .max(200, "Empresa deve ter no máximo 200 caracteres"),
+  rental_work_site: z.string()
+    .trim()
+    .min(1, "Obra é obrigatória")
+    .max(200, "Obra deve ter no máximo 200 caracteres"),
   parts_replaced: z.boolean({
     required_error: "Selecione se foram trocadas peças",
     invalid_type_error: "Selecione se foram trocadas peças",
