@@ -120,7 +120,18 @@ export default function AssetReplacement() {
     }
 
     try {
-      // Atualizar equipamento ANTIGO - vai para aguardando laudo
+      // Capturar dados do equipamento antigo ANTES de qualquer update
+      const oldAssetData = {
+        location_type: asset.location_type,
+        rental_company: asset.rental_company,
+        rental_work_site: asset.rental_work_site,
+        rental_start_date: asset.rental_start_date,
+        rental_end_date: asset.rental_end_date,
+        rental_contract_number: asset.rental_contract_number,
+        available_for_rental: asset.available_for_rental,
+      };
+
+      // Atualizar equipamento ANTIGO - vai para MANUTENÇÃO
       const { error: oldAssetError } = await supabase
         .from("assets")
         .update({
@@ -128,32 +139,24 @@ export default function AssetReplacement() {
           replaced_by_asset_id: substituteAsset.id,
           replacement_reason: data.replacement_reason,
           available_for_rental: false,
-          location_type: "aguardando_laudo",
-          inspection_start_date: new Date().toISOString(),
-          // Limpar dados da locação anterior
-          rental_company: null,
-          rental_work_site: null,
-          rental_start_date: null,
-          rental_end_date: null,
-          rental_contract_number: null,
+          location_type: "em_manutencao",
+          // MANTÉM dados de locação - não limpa o histórico
         })
         .eq("id", id);
 
       if (oldAssetError) throw oldAssetError;
 
-      // Atualizar equipamento NOVO - assume posição do antigo
+      // Atualizar equipamento NOVO - assume posição do antigo em LOCAÇÃO
       const { error: newAssetError } = await supabase
         .from("assets")
         .update({
-          location_type: asset.location_type, // Assume o mesmo status do antigo
-          rental_company: asset.rental_company,
-          rental_work_site: asset.rental_work_site,
-          rental_start_date: asset.rental_start_date,
-          rental_end_date: asset.rental_end_date,
-          rental_contract_number: asset.rental_contract_number,
-          maintenance_company: asset.maintenance_company,
-          maintenance_work_site: asset.maintenance_work_site,
-          available_for_rental: asset.available_for_rental,
+          location_type: "locacao", // SEMPRE locacao (não copia do antigo)
+          rental_company: oldAssetData.rental_company, // Usa dados capturados
+          rental_work_site: oldAssetData.rental_work_site,
+          rental_start_date: oldAssetData.rental_start_date,
+          rental_end_date: oldAssetData.rental_end_date,
+          rental_contract_number: oldAssetData.rental_contract_number,
+          available_for_rental: true, // Novo equipamento disponível
         })
         .eq("id", substituteAsset.id);
 
@@ -164,7 +167,7 @@ export default function AssetReplacement() {
         patId: asset.id,
         codigoPat: asset.asset_code,
         tipoEvento: "SUBSTITUIÇÃO",
-        detalhesEvento: `Substituído pelo PAT ${substituteAsset.asset_code} e enviado para Laudo. Estava em: ${asset.location_type === 'locacao' ? `Locação - ${asset.rental_company} / ${asset.rental_work_site}` : asset.location_type}. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Observação: ${data.decision_notes}` : ""}`,
+        detalhesEvento: `Substituído pelo PAT ${substituteAsset.asset_code} e enviado para Manutenção. Estava em Locação - ${oldAssetData.rental_company} / ${oldAssetData.rental_work_site}. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Observação: ${data.decision_notes}` : ""}`,
       });
 
       // Registrar evento no NOVO
@@ -172,7 +175,7 @@ export default function AssetReplacement() {
         patId: substituteAsset.id,
         codigoPat: substituteAsset.asset_code,
         tipoEvento: "SUBSTITUIÇÃO",
-        detalhesEvento: `Substituiu o PAT ${asset.asset_code} e foi para: ${asset.location_type === 'locacao' ? `Locação - ${asset.rental_company} / ${asset.rental_work_site}` : asset.location_type}. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Observação: ${data.decision_notes}` : ""}`,
+        detalhesEvento: `Substituiu o PAT ${asset.asset_code} e foi para Locação - ${oldAssetData.rental_company} / ${oldAssetData.rental_work_site}. Equipamento anterior enviado para manutenção. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Observação: ${data.decision_notes}` : ""}`,
       });
 
       queryClient.invalidateQueries({ queryKey: ["asset", id] });
