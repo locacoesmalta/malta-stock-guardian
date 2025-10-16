@@ -5,7 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { KeyRound } from "lucide-react";
+import { KeyRound, Check, X } from "lucide-react";
+
+// Lista de senhas comuns que devem ser evitadas
+const COMMON_PASSWORDS = [
+  "123456", "password", "123456789", "12345678", "12345", "1234567",
+  "senha", "senha123", "admin", "123123", "qwerty", "abc123",
+];
 
 export function ChangePasswordDialog() {
   const [open, setOpen] = useState(false);
@@ -16,6 +22,21 @@ export function ChangePasswordDialog() {
     confirmPassword: "",
   });
 
+  // Validação de força de senha
+  const validatePasswordStrength = (password: string) => {
+    const checks = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      notCommon: !COMMON_PASSWORDS.includes(password.toLowerCase()),
+    };
+
+    return checks;
+  };
+
+  const passwordStrength = validatePasswordStrength(formData.newPassword);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -24,8 +45,29 @@ export function ChangePasswordDialog() {
       return;
     }
 
-    if (formData.newPassword.length < 6) {
-      toast.error("A nova senha deve ter no mínimo 6 caracteres");
+    // Validações de força de senha
+    if (!passwordStrength.length) {
+      toast.error("A senha deve ter no mínimo 8 caracteres");
+      return;
+    }
+
+    if (!passwordStrength.uppercase) {
+      toast.error("A senha deve conter pelo menos uma letra maiúscula");
+      return;
+    }
+
+    if (!passwordStrength.lowercase) {
+      toast.error("A senha deve conter pelo menos uma letra minúscula");
+      return;
+    }
+
+    if (!passwordStrength.number) {
+      toast.error("A senha deve conter pelo menos um número");
+      return;
+    }
+
+    if (!passwordStrength.notCommon) {
+      toast.error("Esta senha é muito comum. Por favor, escolha uma senha mais segura");
       return;
     }
 
@@ -55,6 +97,10 @@ export function ChangePasswordDialog() {
       });
 
       if (updateError) {
+        // Traduzir erros específicos do Supabase
+        if (updateError.message.includes("Password is known to be weak")) {
+          throw new Error("Esta senha é conhecida por ser fraca e fácil de adivinhar. Por favor, escolha uma senha mais forte e única");
+        }
         throw updateError;
       }
 
@@ -105,9 +151,40 @@ export function ChangePasswordDialog() {
               value={formData.newPassword}
               onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
               required
-              minLength={6}
+              minLength={8}
             />
-            <p className="text-xs text-muted-foreground">Mínimo de 6 caracteres</p>
+            
+            {/* Indicadores de requisitos de senha */}
+            {formData.newPassword && (
+              <div className="space-y-1 text-xs pt-2">
+                <p className="font-medium text-muted-foreground mb-2">Requisitos da senha:</p>
+                
+                <div className={`flex items-center gap-2 ${passwordStrength.length ? "text-green-600" : "text-red-600"}`}>
+                  {passwordStrength.length ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                  <span>Mínimo de 8 caracteres</span>
+                </div>
+                
+                <div className={`flex items-center gap-2 ${passwordStrength.uppercase ? "text-green-600" : "text-red-600"}`}>
+                  {passwordStrength.uppercase ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                  <span>Uma letra maiúscula</span>
+                </div>
+                
+                <div className={`flex items-center gap-2 ${passwordStrength.lowercase ? "text-green-600" : "text-red-600"}`}>
+                  {passwordStrength.lowercase ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                  <span>Uma letra minúscula</span>
+                </div>
+                
+                <div className={`flex items-center gap-2 ${passwordStrength.number ? "text-green-600" : "text-red-600"}`}>
+                  {passwordStrength.number ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                  <span>Um número</span>
+                </div>
+                
+                <div className={`flex items-center gap-2 ${passwordStrength.notCommon ? "text-green-600" : "text-red-600"}`}>
+                  {passwordStrength.notCommon ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                  <span>Não pode ser uma senha comum</span>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -118,7 +195,7 @@ export function ChangePasswordDialog() {
               value={formData.confirmPassword}
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               required
-              minLength={6}
+              minLength={8}
             />
           </div>
 
