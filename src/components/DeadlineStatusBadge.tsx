@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { differenceInDays, parseISO } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
 import { Clock, AlertCircle } from "lucide-react";
 
 interface DeadlineStatusBadgeProps {
@@ -7,11 +8,15 @@ interface DeadlineStatusBadgeProps {
 }
 
 export function DeadlineStatusBadge({ inspectionStartDate }: DeadlineStatusBadgeProps) {
-  const inspectionStart = parseISO(inspectionStartDate);
-  const today = new Date();
+  const BELEM_TIMEZONE = "America/Belem";
+  
+  // Converter para o timezone de Belém - PA
+  const inspectionStart = toZonedTime(parseISO(inspectionStartDate), BELEM_TIMEZONE);
+  const today = toZonedTime(new Date(), BELEM_TIMEZONE);
   const daysSinceInspection = differenceInDays(today, inspectionStart);
 
-  const isOverdue = daysSinceInspection > 5;
+  // Prazo de 6 dias para devolução do laudo
+  const isOverdue = daysSinceInspection > 6;
 
   return (
     <div className="flex items-center gap-2 mt-2 pt-2 border-t">

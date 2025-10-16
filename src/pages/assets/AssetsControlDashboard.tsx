@@ -6,6 +6,7 @@ import { useAssetsStats } from "@/hooks/useAssetsStats";
 import { useAssetsQuery } from "@/hooks/useAssetsQuery";
 import { Package, Wrench, Building2, BarChart3, Clock, FileText, AlertCircle } from "lucide-react";
 import { parseISO } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
 
 export default function AssetsControlDashboard() {
   const { data: stats, isLoading } = useAssetsStats();
@@ -197,16 +198,19 @@ export default function AssetsControlDashboard() {
               ) : (
                 <div className="grid gap-3">
                   {assetsAwaitingReport.map((asset) => {
+                    const BELEM_TIMEZONE = "America/Belem";
                     let diffDays = 0;
                     let isOverdue = false;
                     let hasInspectionDate = false;
                     
                     if (asset.inspection_start_date) {
-                      const inspection = parseISO(asset.inspection_start_date);
-                      const today = new Date();
+                      // Converter para o timezone de Belém - PA
+                      const inspection = toZonedTime(parseISO(asset.inspection_start_date), BELEM_TIMEZONE);
+                      const today = toZonedTime(new Date(), BELEM_TIMEZONE);
                       const diffTime = today.getTime() - inspection.getTime();
                       diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                      isOverdue = diffDays > 5;
+                      // Prazo de 6 dias para devolução do laudo
+                      isOverdue = diffDays > 6;
                       hasInspectionDate = true;
                     }
                     
