@@ -121,7 +121,7 @@ export default function AssetView() {
       )}
       
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/assets")} className="flex-shrink-0">
+        <Button type="button" variant="ghost" size="icon" onClick={() => navigate("/assets")} className="flex-shrink-0">
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1 min-w-0">

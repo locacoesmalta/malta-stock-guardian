@@ -120,7 +120,7 @@ export default function AssetReplacement() {
     }
 
     try {
-      // Atualizar equipamento ANTIGO
+      // Atualizar equipamento ANTIGO - vai para aguardando laudo
       const { error: oldAssetError } = await supabase
         .from("assets")
         .update({
@@ -128,19 +128,43 @@ export default function AssetReplacement() {
           replaced_by_asset_id: substituteAsset.id,
           replacement_reason: data.replacement_reason,
           available_for_rental: false,
-          location_type: "deposito_malta",
-          inspection_start_date: null,
+          location_type: "aguardando_laudo",
+          inspection_start_date: new Date().toISOString(),
+          // Limpar dados da locação anterior
+          rental_company: null,
+          rental_work_site: null,
+          rental_start_date: null,
+          rental_end_date: null,
+          rental_contract_number: null,
         })
         .eq("id", id);
 
       if (oldAssetError) throw oldAssetError;
+
+      // Atualizar equipamento NOVO - assume posição do antigo
+      const { error: newAssetError } = await supabase
+        .from("assets")
+        .update({
+          location_type: asset.location_type, // Assume o mesmo status do antigo
+          rental_company: asset.rental_company,
+          rental_work_site: asset.rental_work_site,
+          rental_start_date: asset.rental_start_date,
+          rental_end_date: asset.rental_end_date,
+          rental_contract_number: asset.rental_contract_number,
+          maintenance_company: asset.maintenance_company,
+          maintenance_work_site: asset.maintenance_work_site,
+          available_for_rental: asset.available_for_rental,
+        })
+        .eq("id", substituteAsset.id);
+
+      if (newAssetError) throw newAssetError;
 
       // Registrar evento no ANTIGO
       await registrarEvento({
         patId: asset.id,
         codigoPat: asset.asset_code,
         tipoEvento: "SUBSTITUIÇÃO",
-        detalhesEvento: `Substituído pelo PAT ${substituteAsset.asset_code}. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Observação: ${data.decision_notes}` : ""}`,
+        detalhesEvento: `Substituído pelo PAT ${substituteAsset.asset_code} e enviado para Laudo. Estava em: ${asset.location_type === 'locacao' ? `Locação - ${asset.rental_company} / ${asset.rental_work_site}` : asset.location_type}. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Observação: ${data.decision_notes}` : ""}`,
       });
 
       // Registrar evento no NOVO
@@ -148,7 +172,7 @@ export default function AssetReplacement() {
         patId: substituteAsset.id,
         codigoPat: substituteAsset.asset_code,
         tipoEvento: "SUBSTITUIÇÃO",
-        detalhesEvento: `Substituiu o PAT ${asset.asset_code}. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Observação: ${data.decision_notes}` : ""}`,
+        detalhesEvento: `Substituiu o PAT ${asset.asset_code} e foi para: ${asset.location_type === 'locacao' ? `Locação - ${asset.rental_company} / ${asset.rental_work_site}` : asset.location_type}. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Observação: ${data.decision_notes}` : ""}`,
       });
 
       queryClient.invalidateQueries({ queryKey: ["asset", id] });
@@ -177,7 +201,7 @@ export default function AssetReplacement() {
   return (
     <div className="container mx-auto p-4 md:p-6 max-w-4xl">
       <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => navigate(`/assets/post-inspection/${id}`)}>
+        <Button type="button" variant="ghost" size="icon" onClick={() => navigate(`/assets/post-inspection/${id}`)}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
@@ -296,7 +320,10 @@ export default function AssetReplacement() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate(`/assets/post-inspection/${id}`)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(`/assets/post-inspection/${id}`);
+                }}
               >
                 Cancelar
               </Button>

@@ -7,6 +7,7 @@ export function BackButton() {
 
   return (
     <Button
+      type="button"
       variant="ghost"
       size="sm"
       onClick={() => navigate(-1)}

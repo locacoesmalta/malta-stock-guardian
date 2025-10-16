@@ -637,7 +637,7 @@ export default function AssetMovement() {
   return (
     <div className="container mx-auto p-4 md:p-6 max-w-4xl">
       <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => navigate(`/assets/view/${id}`)}>
+        <Button type="button" variant="ghost" size="icon" onClick={() => navigate(`/assets/view/${id}`)}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
