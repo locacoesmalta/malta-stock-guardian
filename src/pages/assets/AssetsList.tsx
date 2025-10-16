@@ -13,12 +13,16 @@ import { formatInTimeZone } from "date-fns-tz";
 import { useAssetsQuery } from "@/hooks/useAssetsQuery";
 import { DeadlineStatusBadge } from "@/components/DeadlineStatusBadge";
 import { BackButton } from "@/components/BackButton";
+import { useAssetDataMigration } from "@/hooks/useAssetDataMigration";
 
 export default function AssetsList() {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const { data: assets = [], isLoading, error } = useAssetsQuery();
+  
+  // Sistema automático de migração de dados para equipamentos antigos
+  const { isMigrating } = useAssetDataMigration();
 
   if (error) {
     toast.error("Erro ao carregar patrimônios");
@@ -66,10 +70,10 @@ export default function AssetsList() {
       asset.rental_work_site?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (isLoading) {
+  if (isLoading || isMigrating) {
     return (
       <div className="container mx-auto p-4 md:p-6">
-        <p>Carregando...</p>
+        <p>{isMigrating ? "Atualizando sistema..." : "Carregando..."}</p>
       </div>
     );
   }
