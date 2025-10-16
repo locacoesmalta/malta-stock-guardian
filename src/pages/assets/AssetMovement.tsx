@@ -83,6 +83,14 @@ export default function AssetMovement() {
     }
   }, [asset, id, navigate]);
 
+  // Forçar "aguardando_laudo" para equipamentos em locação
+  useEffect(() => {
+    if (asset && asset.location_type === "locacao" && movementType === null) {
+      setMovementType("aguardando_laudo");
+      toast.info("Equipamento em locação deve passar por laudo antes de qualquer movimentação");
+    }
+  }, [asset, movementType]);
+
   const getSchema = () => {
     switch (movementType) {
       case "deposito_malta": return movementDepositoSchema;
@@ -470,6 +478,8 @@ export default function AssetMovement() {
         // Retorno para obra NÃO altera o location_type
         ...(movementType !== "retorno_obra" && { location_type: movementType }),
         ...data,
+        // Registrar data de início do laudo
+        ...(movementType === "aguardando_laudo" && { inspection_start_date: new Date().toISOString() }),
       };
 
       // Remover parts_replaced dos dados (não é coluna do banco)
@@ -633,17 +643,34 @@ export default function AssetMovement() {
           <CardTitle>Tipo de Movimentação</CardTitle>
         </CardHeader>
         <CardContent>
-          <Select value={movementType || ""} onValueChange={(value) => setMovementType(value as MovementType)}>
+          {asset.location_type === "locacao" && (
+            <div className="mb-3 p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-md">
+              <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
+                ⚠️ Equipamento em locação deve passar por laudo antes de qualquer movimentação
+              </p>
+            </div>
+          )}
+          <Select 
+            value={movementType || ""} 
+            onValueChange={(value) => setMovementType(value as MovementType)}
+            disabled={asset.location_type === "locacao"}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Selecione o tipo de movimentação" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="deposito_malta">Retorno ao Depósito Malta</SelectItem>
-              <SelectItem value="em_manutencao">Envio para Manutenção</SelectItem>
-              <SelectItem value="locacao">Saída para Locação</SelectItem>
-              <SelectItem value="retorno_obra">Retorno para Obra</SelectItem>
-              <SelectItem value="substituicao">Substituição</SelectItem>
-              <SelectItem value="aguardando_laudo">Aguardando Laudo</SelectItem>
+              {asset.location_type === "locacao" ? (
+                <SelectItem value="aguardando_laudo">Aguardando Laudo</SelectItem>
+              ) : (
+                <>
+                  <SelectItem value="deposito_malta">Retorno ao Depósito Malta</SelectItem>
+                  <SelectItem value="em_manutencao">Envio para Manutenção</SelectItem>
+                  <SelectItem value="locacao">Saída para Locação</SelectItem>
+                  <SelectItem value="retorno_obra">Retorno para Obra</SelectItem>
+                  <SelectItem value="substituicao">Substituição</SelectItem>
+                  <SelectItem value="aguardando_laudo">Aguardando Laudo</SelectItem>
+                </>
+              )}
             </SelectContent>
           </Select>
         </CardContent>
