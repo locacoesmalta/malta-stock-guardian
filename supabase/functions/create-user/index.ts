@@ -43,7 +43,26 @@ Deno.serve(async (req) => {
 
     const { email, password, full_name, permissions } = await req.json()
 
-    console.log('Creating user with email:', email)
+    // Validate input
+    if (!email || !password || !full_name) {
+      throw new Error('Email, password e nome completo são obrigatórios')
+    }
+
+    if (password.length < 8) {
+      throw new Error('A senha deve ter pelo menos 8 caracteres')
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      throw new Error('A senha deve conter pelo menos uma letra maiúscula')
+    }
+
+    if (!/[a-z]/.test(password)) {
+      throw new Error('A senha deve conter pelo menos uma letra minúscula')
+    }
+
+    if (!/[0-9]/.test(password)) {
+      throw new Error('A senha deve conter pelo menos um número')
+    }
 
     // Create user
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
@@ -56,21 +75,15 @@ Deno.serve(async (req) => {
     })
 
     if (createError) {
-      console.error('Error creating user:', createError)
       throw createError
     }
 
     if (!newUser.user) {
-      console.error('No user returned from createUser')
       throw new Error('Erro ao criar usuário')
     }
 
-    console.log('User created successfully:', newUser.user.id)
-
     // Wait for trigger to create initial permission record
     await new Promise(resolve => setTimeout(resolve, 500))
-
-    console.log('Upserting permissions for user:', newUser.user.id)
 
     // Upsert permissions - handles both insert and update
     const { error: permError } = await supabaseAdmin
@@ -99,11 +112,8 @@ Deno.serve(async (req) => {
       })
 
     if (permError) {
-      console.error('Error upserting permissions:', permError)
       throw permError
     }
-
-    console.log('Permissions upserted successfully')
 
     return new Response(
       JSON.stringify({ success: true, user: newUser.user }),

@@ -204,8 +204,11 @@ const Auth = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    minLength={6}
+                    minLength={8}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Mínimo 8 caracteres com maiúscula, minúscula e número
+                  </p>
                   {errors.password && (
                     <p className="text-sm text-destructive">{errors.password}</p>
                   )}

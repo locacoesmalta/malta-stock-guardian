@@ -111,7 +111,6 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
       });
       onUserAdded();
     } catch (error: any) {
-      console.error("Erro ao criar usuário:", error);
       toast.error(error.message || "Erro ao criar usuário");
     } finally {
       setLoading(false);
@@ -160,9 +159,11 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
-              minLength={6}
+              minLength={8}
             />
-            <p className="text-xs text-muted-foreground">Mínimo de 6 caracteres</p>
+            <p className="text-xs text-muted-foreground">
+              Mínimo 8 caracteres com maiúscula, minúscula e número
+            </p>
           </div>
 
           <div className="border-t pt-4 space-y-4">

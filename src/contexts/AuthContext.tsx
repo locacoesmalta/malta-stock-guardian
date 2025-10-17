@@ -60,8 +60,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (session?.user) {
           await checkAdminStatus(session.user.id);
         }
-      } catch (error) {
-        console.error("Error initializing auth:", error);
       } finally {
         if (mounted) {
           setLoading(false);
@@ -70,16 +68,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
       
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        setTimeout(() => {
-          checkAdminStatus(session.user.id);
-        }, 0);
+        await checkAdminStatus(session.user.id);
       } else {
         setIsAdmin(false);
         setIsActive(false);
@@ -103,7 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .eq("user_id", userId)
         .single();
 
-      if (roleError) {
+      if (roleError && import.meta.env.DEV) {
         console.error("Error fetching role:", roleError);
       }
 
@@ -117,7 +113,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .eq("user_id", userId)
         .single();
 
-      if (permError) {
+      if (permError && import.meta.env.DEV) {
         console.error("Error fetching permissions:", permError);
       }
 
@@ -150,7 +146,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
     } catch (error) {
-      console.error("Error checking user status:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error checking user status:", error);
+      }
       setIsAdmin(false);
       setIsActive(false);
       setPermissions(null);

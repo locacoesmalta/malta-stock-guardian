@@ -24,9 +24,13 @@ export const useAuditLog = () => {
     try {
       // Note: Audit logs are now handled automatically by database triggers
       // This hook is kept for backward compatibility but doesn't insert directly
-      console.log("Audit log would be created:", { action, tableName, recordId });
+      if (import.meta.env.DEV) {
+        console.log("Audit log would be created:", { action, tableName, recordId });
+      }
     } catch (error) {
-      console.error("Erro ao registrar log de auditoria:", error);
+      if (import.meta.env.DEV) {
+        console.error("Erro ao registrar log de auditoria:", error);
+      }
     }
   };
 

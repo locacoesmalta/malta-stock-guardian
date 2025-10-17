@@ -132,7 +132,10 @@ export const authSchema = z.object({
     .email("E-mail inválido")
     .max(255, "E-mail deve ter no máximo 255 caracteres"),
   password: z.string()
-    .min(6, "Senha deve ter no mínimo 6 caracteres")
+    .min(8, "A senha deve ter pelo menos 8 caracteres")
+    .regex(/[A-Z]/, "A senha deve conter pelo menos uma letra maiúscula")
+    .regex(/[a-z]/, "A senha deve conter pelo menos uma letra minúscula")
+    .regex(/[0-9]/, "A senha deve conter pelo menos um número")
     .max(100, "Senha deve ter no máximo 100 caracteres"),
   fullName: z.string()
     .trim()
