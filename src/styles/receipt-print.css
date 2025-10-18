@@ -1,0 +1,105 @@
+/* Estilos de impressão para comprovantes */
+@media print {
+  /* Configuração da página */
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+
+  /* Esconder elementos que não devem aparecer na impressão */
+  .print\:hidden {
+    display: none !important;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Layout do comprovante */
+  .receipt-print {
+    box-shadow: none !important;
+    border: 2px solid #000 !important;
+    page-break-inside: avoid;
+  }
+
+  /* Cabeçalho */
+  .receipt-print .bg-primary {
+    background-color: #fff !important;
+    color: #000 !important;
+    border-bottom: 2px solid #000 !important;
+  }
+
+  /* Tabela de equipamentos */
+  .receipt-print table {
+    border: 1px solid #000 !important;
+  }
+
+  .receipt-print th,
+  .receipt-print td {
+    border: 1px solid #000 !important;
+    padding: 8px !important;
+  }
+
+  .receipt-print .bg-muted {
+    background-color: #f5f5f5 !important;
+  }
+
+  /* Texto */
+  .receipt-print * {
+    color: #000 !important;
+  }
+
+  /* Garantir que o logo apareça */
+  .receipt-print img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Bordas e divisores */
+  .receipt-print .border {
+    border-color: #000 !important;
+  }
+
+  .receipt-print .divide-y > * {
+    border-color: #000 !important;
+  }
+
+  /* Espaçamento adequado */
+  .receipt-print .space-y-6 > * + * {
+    margin-top: 1.5rem !important;
+  }
+
+  /* Garantir que as fontes sejam legíveis */
+  .receipt-print {
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+  }
+
+  .receipt-print h1 {
+    font-size: 16pt !important;
+  }
+
+  .receipt-print h2 {
+    font-size: 14pt !important;
+  }
+
+  .receipt-print .text-sm {
+    font-size: 10pt !important;
+  }
+
+  .receipt-print .text-xs {
+    font-size: 9pt !important;
+  }
+
+  /* Número do comprovante em destaque */
+  .receipt-print .text-2xl {
+    font-size: 24pt !important;
+  }
+}
+
+/* Estilos para visualização em tela */
+.receipt-print {
+  max-width: 210mm;
+  margin: 0 auto;
+}

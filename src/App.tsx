@@ -37,6 +37,9 @@ const FinancialForecast = lazy(() => import("./pages/admin/FinancialForecast"));
 const CashBox = lazy(() => import("./pages/admin/CashBox"));
 const RentalCompaniesList = lazy(() => import("./pages/rental/RentalCompaniesList"));
 const RentalCompanyForm = lazy(() => import("./pages/rental/RentalCompanyForm"));
+const ReceiptForm = lazy(() => import("./pages/receipts/ReceiptForm"));
+const ReceiptHistory = lazy(() => import("./pages/receipts/ReceiptHistory"));
+const ReceiptView = lazy(() => import("./pages/receipts/ReceiptView"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Welcome = lazy(() => import("./pages/Welcome"));
 
@@ -320,6 +323,46 @@ const App = () => (
                   <ProtectedLayout>
                     <PermissionRoute permission="can_edit_assets">
                       <RentalCompanyForm />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/receipts/delivery/new" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_create_reports">
+                      <ReceiptForm type="entrega" />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/receipts/return/new" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_create_reports">
+                      <ReceiptForm type="devolucao" />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/receipts/history" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_view_reports">
+                      <ReceiptHistory />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/receipts/view/:id" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_view_reports">
+                      <ReceiptView />
                     </PermissionRoute>
                   </ProtectedLayout>
                 } 

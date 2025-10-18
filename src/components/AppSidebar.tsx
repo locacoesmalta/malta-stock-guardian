@@ -1,4 +1,4 @@
-import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3, ClipboardList, TrendingUp, Building2, Wallet } from "lucide-react";
+import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3, ClipboardList, TrendingUp, Building2, Wallet, FileCheck } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -119,10 +119,33 @@ export function AppSidebar() {
     },
   ];
 
+  // COMPROVANTES
+  const receiptsMenuItems = [
+    {
+      path: "/receipts/delivery/new",
+      icon: FileCheck,
+      label: "Nova Entrega",
+      show: permissions.can_create_reports || isAdmin,
+    },
+    {
+      path: "/receipts/return/new",
+      icon: FileCheck,
+      label: "Nova Devolução",
+      show: permissions.can_create_reports || isAdmin,
+    },
+    {
+      path: "/receipts/history",
+      icon: History,
+      label: "Histórico",
+      show: permissions.can_view_reports || isAdmin,
+    },
+  ];
+
   // Filtrar itens visíveis
   const visibleInventoryItems = inventoryMenuItems.filter(item => item.show);
   const visibleAssetsItems = assetsMenuItems.filter(item => item.show);
   const visibleReportsItems = reportsMenuItems.filter(item => item.show);
+  const visibleReceiptsItems = receiptsMenuItems.filter(item => item.show);
 
   // Só mostrar o menu principal se houver permissão ou se for admin
   const showMainMenu = permissions.can_access_main_menu || isAdmin;
@@ -218,6 +241,35 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {visibleReportsItems.map((item) => (
+                  <SidebarMenuItem key={item.path}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <SidebarMenuButton asChild>
+                          <NavLink to={item.path} className={getNavCls} onClick={handleNavClick}>
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.label}</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </TooltipTrigger>
+                      {!open && (
+                        <TooltipContent side="right" className="font-normal">
+                          {item.label}
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {showMainMenu && visibleReceiptsItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Comprovantes</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {visibleReceiptsItems.map((item) => (
                   <SidebarMenuItem key={item.path}>
                     <Tooltip>
                       <TooltipTrigger asChild>

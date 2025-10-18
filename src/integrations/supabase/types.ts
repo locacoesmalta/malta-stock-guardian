@@ -508,6 +508,106 @@ export type Database = {
         }
         Relationships: []
       }
+      equipment_receipt_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_order: number
+          quantity: number
+          receipt_id: string
+          specification: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_order: number
+          quantity: number
+          receipt_id: string
+          specification: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_order?: number
+          quantity?: number
+          receipt_id?: string
+          specification?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_receipt_items_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "equipment_receipts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      equipment_receipts: {
+        Row: {
+          asset_id: string | null
+          client_name: string
+          created_at: string
+          created_by: string | null
+          digital_signature: Json | null
+          id: string
+          operation_nature: string | null
+          pdf_url: string | null
+          receipt_date: string
+          receipt_number: number
+          receipt_type: string
+          received_by: string
+          received_by_malta: string | null
+          signature: string | null
+          updated_at: string
+          work_site: string
+        }
+        Insert: {
+          asset_id?: string | null
+          client_name: string
+          created_at?: string
+          created_by?: string | null
+          digital_signature?: Json | null
+          id?: string
+          operation_nature?: string | null
+          pdf_url?: string | null
+          receipt_date: string
+          receipt_number: number
+          receipt_type: string
+          received_by: string
+          received_by_malta?: string | null
+          signature?: string | null
+          updated_at?: string
+          work_site: string
+        }
+        Update: {
+          asset_id?: string | null
+          client_name?: string
+          created_at?: string
+          created_by?: string | null
+          digital_signature?: Json | null
+          id?: string
+          operation_nature?: string | null
+          pdf_url?: string | null
+          receipt_date?: string
+          receipt_number?: number
+          receipt_type?: string
+          received_by?: string
+          received_by_malta?: string | null
+          signature?: string | null
+          updated_at?: string
+          work_site?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_receipts_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       material_withdrawal_collaborators: {
         Row: {
           collaborator_name: string
