@@ -1,4 +1,4 @@
-import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3, ClipboardList, TrendingUp, Building2, Wallet, FileCheck } from "lucide-react";
+import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3, ClipboardList, TrendingUp, Building2, Wallet, FileCheck, FileBarChart } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -121,6 +121,12 @@ export function AppSidebar() {
 
   // COMPROVANTES
   const receiptsMenuItems = [
+    {
+      path: "/receipts/movement-report",
+      icon: FileBarChart,
+      label: "Relatório de Movimentação",
+      show: permissions.can_view_reports || isAdmin,
+    },
     {
       path: "/receipts/delivery/new",
       icon: FileCheck,

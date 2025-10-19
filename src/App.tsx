@@ -40,6 +40,7 @@ const RentalCompanyForm = lazy(() => import("./pages/rental/RentalCompanyForm"))
 const ReceiptForm = lazy(() => import("./pages/receipts/ReceiptForm"));
 const ReceiptHistory = lazy(() => import("./pages/receipts/ReceiptHistory"));
 const ReceiptView = lazy(() => import("./pages/receipts/ReceiptView"));
+const ReceiptMovementReport = lazy(() => import("./pages/receipts/ReceiptMovementReport"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Welcome = lazy(() => import("./pages/Welcome"));
 
@@ -363,6 +364,16 @@ const App = () => (
                   <ProtectedLayout>
                     <PermissionRoute permission="can_view_reports">
                       <ReceiptView />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/receipts/movement-report" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_view_reports">
+                      <ReceiptMovementReport />
                     </PermissionRoute>
                   </ProtectedLayout>
                 } 
