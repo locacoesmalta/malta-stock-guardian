@@ -68,8 +68,10 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
   };
 
   const [items, setItems] = useState<ReceiptItem[]>([
-    { quantity: 1, specification: '', item_order: 1, pat_code: '' },
+    { quantity: 1, specification: '', item_order: 1, pat_code: '', equipment_comments: '' },
   ]);
+
+  const [hasInvalidPAT, setHasInvalidPAT] = useState(false);
 
   const handleEquipmentFound = (client: string, workSite: string) => {
     setFormData(prev => ({
@@ -104,6 +106,12 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
     // Validar responsável Malta
     if (!formData.malta_operator.trim()) {
       toast.error('Nome do responsável Malta é obrigatório');
+      return;
+    }
+
+    // Bloquear se houver PAT inválido
+    if (hasInvalidPAT) {
+      toast.error('Existem PATs não encontrados. Por favor, cadastre todos os equipamentos antes de continuar.');
       return;
     }
 
@@ -262,6 +270,7 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
                 onChange={setItems}
                 disabled={createReceipt.isPending}
                 onEquipmentFound={handleEquipmentFound}
+                onValidationChange={setHasInvalidPAT}
               />
             </div>
 
@@ -300,7 +309,7 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
               </Button>
               <Button
                 type="submit"
-                disabled={createReceipt.isPending}
+                disabled={createReceipt.isPending || hasInvalidPAT}
               >
                 {createReceipt.isPending ? (
                   <>
@@ -317,7 +326,7 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
               <Button
                 type="button"
                 onClick={(e: any) => handleSubmit(e, true)}
-                disabled={createReceipt.isPending}
+                disabled={createReceipt.isPending || hasInvalidPAT}
               >
                 <Printer className="h-4 w-4 mr-2" />
                 Salvar e Imprimir

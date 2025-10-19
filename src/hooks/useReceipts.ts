@@ -10,6 +10,7 @@ export interface ReceiptItem {
   specification: string;
   item_order: number;
   pat_code?: string;
+  equipment_comments?: string;
 }
 
 export interface Receipt {

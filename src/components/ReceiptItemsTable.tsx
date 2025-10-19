@@ -1,5 +1,6 @@
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
 import { Trash2, Plus, AlertTriangle } from "lucide-react";
 import { ReceiptItem } from "@/hooks/useReceipts";
 import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
@@ -11,9 +12,19 @@ interface ReceiptItemsTableProps {
   onChange: (items: ReceiptItem[]) => void;
   disabled?: boolean;
   onEquipmentFound?: (client: string, workSite: string) => void;
+  onValidationChange?: (hasInvalidPAT: boolean) => void;
 }
 
-export const ReceiptItemsTable = ({ items, onChange, disabled, onEquipmentFound }: ReceiptItemsTableProps) => {
+export const ReceiptItemsTable = ({ items, onChange, disabled, onEquipmentFound, onValidationChange }: ReceiptItemsTableProps) => {
+  
+  // Verificar se há PATs inválidos
+  useEffect(() => {
+    const hasInvalid = items.some(item => {
+      const hasPAT = item.pat_code && item.pat_code.length >= 3;
+      return hasPAT && !item.specification; // Se tem PAT mas não tem especificação, é inválido
+    });
+    onValidationChange?.(hasInvalid);
+  }, [items, onValidationChange]);
   const addItem = () => {
     onChange([
       ...items,
@@ -31,7 +42,7 @@ export const ReceiptItemsTable = ({ items, onChange, disabled, onEquipmentFound 
     onChange(newItems.map((item, i) => ({ ...item, item_order: i + 1 })));
   };
 
-  const updateItem = (index: number, field: 'quantity' | 'specification' | 'pat_code', value: string | number) => {
+  const updateItem = (index: number, field: 'quantity' | 'specification' | 'pat_code' | 'equipment_comments', value: string | number) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
     onChange(newItems);
@@ -80,7 +91,7 @@ export const ReceiptItemsTable = ({ items, onChange, disabled, onEquipmentFound 
 interface ReceiptItemRowProps {
   item: ReceiptItem;
   index: number;
-  updateItem: (index: number, field: 'quantity' | 'specification' | 'pat_code', value: string | number) => void;
+  updateItem: (index: number, field: 'quantity' | 'specification' | 'pat_code' | 'equipment_comments', value: string | number) => void;
   removeItem: (index: number) => void;
   disabled?: boolean;
   itemsLength: number;
@@ -168,11 +179,22 @@ const ReceiptItemRow = ({
         </div>
       </div>
       
+      <div className="grid grid-cols-1 mt-2">
+        <Textarea
+          value={item.equipment_comments || ''}
+          onChange={(e) => updateItem(index, 'equipment_comments', e.target.value)}
+          placeholder="Comentários sobre o equipamento (opcional)"
+          disabled={disabled}
+          rows={2}
+          className="w-full text-sm"
+        />
+      </div>
+      
       {showNotFoundAlert && (
         <Alert variant="destructive" className="mt-2">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            PAT não encontrado no sistema. Por favor, procure o administrador do sistema para cadastrar este equipamento.
+            PAT não encontrado no sistema. Por favor, procure o administrador do sistema para cadastrar este equipamento antes de continuar.
           </AlertDescription>
         </Alert>
       )}
