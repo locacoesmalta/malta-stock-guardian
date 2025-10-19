@@ -127,11 +127,13 @@ const ReceiptItemRow = ({
         onEquipmentFound(client, workSite);
       }
 
-      // Preencher especificação automaticamente
-      const specification = `${equipment.equipment_name} - ${equipment.manufacturer}${equipment.model ? ` - ${equipment.model}` : ''}`;
-      updateItem(index, 'specification', specification);
+      // Preencher especificação automaticamente apenas se estiver vazio
+      const newSpecification = `${equipment.equipment_name} - ${equipment.manufacturer}${equipment.model ? ` - ${equipment.model}` : ''}`;
+      if (!item.specification || item.specification.trim() === '') {
+        updateItem(index, 'specification', newSpecification);
+      }
     }
-  }, [equipment, onEquipmentFound, index, updateItem]);
+  }, [equipment?.id]); // Apenas quando o equipamento mudar (por ID)
 
   const showNotFoundAlert = item.pat_code && item.pat_code.length >= 3 && !isLoading && !equipment;
 

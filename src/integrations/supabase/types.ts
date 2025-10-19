@@ -551,6 +551,7 @@ export type Database = {
           created_by: string | null
           digital_signature: Json | null
           id: string
+          malta_operator: string | null
           operation_nature: string | null
           pdf_url: string | null
           receipt_date: string
@@ -570,6 +571,7 @@ export type Database = {
           created_by?: string | null
           digital_signature?: Json | null
           id?: string
+          malta_operator?: string | null
           operation_nature?: string | null
           pdf_url?: string | null
           receipt_date: string
@@ -589,6 +591,7 @@ export type Database = {
           created_by?: string | null
           digital_signature?: Json | null
           id?: string
+          malta_operator?: string | null
           operation_nature?: string | null
           pdf_url?: string | null
           receipt_date?: string
