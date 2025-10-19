@@ -9,8 +9,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useReceipts, ReceiptType, ReceiptItem } from "@/hooks/useReceipts";
 import { useReceiptNumber } from "@/hooks/useReceiptNumber";
 import { ReceiptItemsTable } from "@/components/ReceiptItemsTable";
-import { Loader2, Save, Printer } from "lucide-react";
+import { Loader2, Save, Printer, AlertCircle } from "lucide-react";
 import { BackButton } from "@/components/BackButton";
+import { validateCPF } from "@/lib/validations";
+import { toast } from "sonner";
 
 interface ReceiptFormProps {
   type: ReceiptType;
@@ -32,7 +34,10 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
     received_by_malta: '',
     signature: '',
     whatsapp: '',
+    malta_operator: '',
   });
+
+  const [cpfError, setCpfError] = useState<string>('');
 
   const formatCPF = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -48,6 +53,18 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
   const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatCPF(e.target.value);
     setFormData({ ...formData, received_by_cpf: formatted });
+    
+    // Valida CPF quando completo
+    const cleanCPF = formatted.replace(/\D/g, '');
+    if (cleanCPF.length === 11) {
+      if (!validateCPF(formatted)) {
+        setCpfError('CPF inválido');
+      } else {
+        setCpfError('');
+      }
+    } else {
+      setCpfError('');
+    }
   };
 
   const [items, setItems] = useState<ReceiptItem[]>([
@@ -78,9 +95,15 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
       return;
     }
 
-    // Validar CPF (11 dígitos)
-    const cpfNumbers = formData.received_by_cpf.replace(/\D/g, '');
-    if (cpfNumbers.length !== 11) {
+    // Validar CPF
+    if (!validateCPF(formData.received_by_cpf)) {
+      toast.error('CPF inválido');
+      return;
+    }
+
+    // Validar responsável Malta
+    if (!formData.malta_operator.trim()) {
+      toast.error('Nome do responsável Malta é obrigatório');
       return;
     }
 
@@ -200,7 +223,14 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
                   placeholder="000.000.000-00"
                   maxLength={14}
                   required
+                  className={cpfError ? 'border-destructive' : ''}
                 />
+                {cpfError && (
+                  <div className="flex items-center gap-1 text-destructive text-sm">
+                    <AlertCircle className="h-3 w-3" />
+                    <span>{cpfError}</span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -210,6 +240,17 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
                   value={formData.whatsapp}
                   onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
                   placeholder="(91) 98888-8888"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="malta_operator">Responsável Malta pela Operação *</Label>
+                <Input
+                  id="malta_operator"
+                  value={formData.malta_operator}
+                  onChange={(e) => setFormData({ ...formData, malta_operator: e.target.value })}
+                  placeholder="Nome do responsável"
+                  required
                 />
               </div>
             </div>
