@@ -9,6 +9,7 @@ export interface ReceiptItem {
   quantity: number;
   specification: string;
   item_order: number;
+  pat_code?: string;
 }
 
 export interface Receipt {

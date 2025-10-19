@@ -31,6 +31,7 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
     received_by_cpf: '',
     received_by_malta: '',
     signature: '',
+    whatsapp: '',
   });
 
   const formatCPF = (value: string) => {
@@ -50,8 +51,16 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
   };
 
   const [items, setItems] = useState<ReceiptItem[]>([
-    { quantity: 1, specification: '', item_order: 1 },
+    { quantity: 1, specification: '', item_order: 1, pat_code: '' },
   ]);
+
+  const handleEquipmentFound = (client: string, workSite: string) => {
+    setFormData(prev => ({
+      ...prev,
+      client_name: client,
+      work_site: workSite,
+    }));
+  };
 
   const title = type === 'entrega' 
     ? 'COMPROVANTE DE ENTREGA DE EQUIPAMENTOS'
@@ -193,6 +202,16 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
                   required
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="whatsapp">WhatsApp para Envio do PDF</Label>
+                <Input
+                  id="whatsapp"
+                  value={formData.whatsapp}
+                  onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                  placeholder="(91) 98888-8888"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -201,6 +220,7 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
                 items={items}
                 onChange={setItems}
                 disabled={createReceipt.isPending}
+                onEquipmentFound={handleEquipmentFound}
               />
             </div>
 
