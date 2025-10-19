@@ -13,6 +13,7 @@ import { Loader2, Save, Printer, AlertCircle } from "lucide-react";
 import { BackButton } from "@/components/BackButton";
 import { validateCPF } from "@/lib/validations";
 import { toast } from "sonner";
+import { SignaturePad } from "@/components/SignatureCanvas";
 
 interface ReceiptFormProps {
   type: ReceiptType;
@@ -286,15 +287,12 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="signature">Espaço para Assinatura do Cliente</Label>
-                <div className="border-2 border-dashed border-muted-foreground/30 rounded-md p-4 min-h-[100px] bg-muted/10">
-                  <p className="text-xs text-muted-foreground text-center">
-                    Espaço reservado para assinatura
-                  </p>
-                  <div className="mt-8 border-t border-muted-foreground/30 pt-2">
-                    <p className="text-xs text-center text-muted-foreground">Assinatura do Cliente</p>
-                  </div>
-                </div>
+                <Label htmlFor="signature">Espaço para Assinatura do Cliente *</Label>
+                <SignaturePad
+                  value={formData.signature}
+                  onChange={(sig) => setFormData({ ...formData, signature: sig })}
+                  disabled={createReceipt.isPending}
+                />
               </div>
             </div>
 
