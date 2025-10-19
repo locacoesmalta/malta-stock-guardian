@@ -42,6 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isActive, setIsActive] = useState(false);
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -68,14 +69,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
       
+      console.log('[AUTH] onAuthStateChange triggered', { event, userId: session?.user?.id });
+      
+      // Apenas operações síncronas aqui
       setSession(session);
       setUser(session?.user ?? null);
       
+      // Defer async calls para evitar deadlock
       if (session?.user) {
-        await checkAdminStatus(session.user.id);
+        setTimeout(() => {
+          checkAdminStatus(session.user.id);
+        }, 0);
       } else {
         setIsAdmin(false);
         setIsActive(false);
@@ -92,59 +99,80 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const checkAdminStatus = async (userId: string) => {
+    // Previne múltiplas chamadas simultâneas
+    if (isCheckingAuth) {
+      console.log('[AUTH] Already checking auth, skipping...');
+      return;
+    }
+    
+    setIsCheckingAuth(true);
+    console.log('[AUTH] Starting checkAdminStatus for user:', userId);
+    
+    const timeoutPromise = new Promise<never>((_, reject) => 
+      setTimeout(() => reject(new Error('Auth timeout')), 10000)
+    );
+    
     try {
-      const { data: roleData, error: roleError } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .single();
+      await Promise.race([
+        (async () => {
+          const { data: roleData, error: roleError } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", userId)
+            .maybeSingle();
 
-      if (roleError && import.meta.env.DEV) {
-        console.error("Error fetching role:", roleError);
-      }
+          if (roleError && import.meta.env.DEV) {
+            console.error("Error fetching role:", roleError);
+          }
 
-      const isUserAdmin = roleData?.role === "admin";
-      setIsAdmin(isUserAdmin);
+          console.log('[AUTH] Role fetched:', roleData);
+          const isUserAdmin = roleData?.role === "admin";
+          setIsAdmin(isUserAdmin);
 
-      // Fetch all permissions
-      const { data: permData, error: permError } = await supabase
-        .from("user_permissions")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
+          // Fetch all permissions
+          const { data: permData, error: permError } = await supabase
+            .from("user_permissions")
+            .select("*")
+            .eq("user_id", userId)
+            .maybeSingle();
 
-      if (permError && import.meta.env.DEV) {
-        console.error("Error fetching permissions:", permError);
-      }
+          if (permError && import.meta.env.DEV) {
+            console.error("Error fetching permissions:", permError);
+          }
 
-      if (permData) {
-        setPermissions(permData as UserPermissions);
-        setIsActive(permData.is_active === true);
-      } else {
-        // Admins get all permissions by default
-        if (isUserAdmin) {
-          setPermissions({
-            is_active: true,
-            can_access_main_menu: true,
-            can_access_admin: true,
-            can_view_products: true,
-            can_create_reports: true,
-            can_view_reports: true,
-            can_create_withdrawals: true,
-            can_view_withdrawal_history: true,
-            can_edit_products: true,
-            can_delete_products: true,
-            can_edit_reports: true,
-            can_delete_reports: true,
-            can_access_assets: true,
-            can_create_assets: true,
-            can_edit_assets: true,
-            can_delete_assets: true,
-            can_scan_assets: true,
-          });
-          setIsActive(true);
-        }
-      }
+          console.log('[AUTH] Permissions fetched:', permData);
+
+          if (permData) {
+            setPermissions(permData as UserPermissions);
+            setIsActive(permData.is_active === true);
+          } else {
+            // Admins get all permissions by default
+            if (isUserAdmin) {
+              setPermissions({
+                is_active: true,
+                can_access_main_menu: true,
+                can_access_admin: true,
+                can_view_products: true,
+                can_create_reports: true,
+                can_view_reports: true,
+                can_create_withdrawals: true,
+                can_view_withdrawal_history: true,
+                can_edit_products: true,
+                can_delete_products: true,
+                can_edit_reports: true,
+                can_delete_reports: true,
+                can_access_assets: true,
+                can_create_assets: true,
+                can_edit_assets: true,
+                can_delete_assets: true,
+                can_scan_assets: true,
+              });
+              setIsActive(true);
+            }
+          }
+        })(),
+        timeoutPromise
+      ]);
     } catch (error) {
       if (import.meta.env.DEV) {
         console.error("Error checking user status:", error);
@@ -152,6 +180,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsAdmin(false);
       setIsActive(false);
       setPermissions(null);
+    } finally {
+      setIsCheckingAuth(false);
     }
   };
 
