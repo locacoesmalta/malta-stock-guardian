@@ -562,6 +562,7 @@ export type Database = {
           received_by_malta: string | null
           signature: string | null
           updated_at: string
+          whatsapp: string | null
           work_site: string
         }
         Insert: {
@@ -582,6 +583,7 @@ export type Database = {
           received_by_malta?: string | null
           signature?: string | null
           updated_at?: string
+          whatsapp?: string | null
           work_site: string
         }
         Update: {
@@ -602,6 +604,7 @@ export type Database = {
           received_by_malta?: string | null
           signature?: string | null
           updated_at?: string
+          whatsapp?: string | null
           work_site?: string
         }
         Relationships: [
