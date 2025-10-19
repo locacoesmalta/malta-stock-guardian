@@ -557,6 +557,7 @@ export type Database = {
           receipt_number: number
           receipt_type: string
           received_by: string
+          received_by_cpf: string | null
           received_by_malta: string | null
           signature: string | null
           updated_at: string
@@ -575,6 +576,7 @@ export type Database = {
           receipt_number: number
           receipt_type: string
           received_by: string
+          received_by_cpf?: string | null
           received_by_malta?: string | null
           signature?: string | null
           updated_at?: string
@@ -593,6 +595,7 @@ export type Database = {
           receipt_number?: number
           receipt_type?: string
           received_by?: string
+          received_by_cpf?: string | null
           received_by_malta?: string | null
           signature?: string | null
           updated_at?: string

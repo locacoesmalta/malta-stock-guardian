@@ -28,9 +28,26 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
     receipt_date: new Date().toISOString().split('T')[0],
     operation_nature: '',
     received_by: '',
+    received_by_cpf: '',
     received_by_malta: '',
     signature: '',
   });
+
+  const formatCPF = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 11) {
+      return numbers
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    }
+    return value;
+  };
+
+  const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCPF(e.target.value);
+    setFormData({ ...formData, received_by_cpf: formatted });
+  };
 
   const [items, setItems] = useState<ReceiptItem[]>([
     { quantity: 1, specification: '', item_order: 1 },
@@ -49,6 +66,12 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
 
     const hasEmptySpecification = items.some(item => !item.specification.trim());
     if (hasEmptySpecification) {
+      return;
+    }
+
+    // Validar CPF (11 dígitos)
+    const cpfNumbers = formData.received_by_cpf.replace(/\D/g, '');
+    if (cpfNumbers.length !== 11) {
       return;
     }
 
@@ -148,12 +171,25 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
                 />
               </div>
 
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="received_by">Recebido por *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="received_by">Recebido por (Nome Completo) *</Label>
                 <Input
                   id="received_by"
                   value={formData.received_by}
                   onChange={(e) => setFormData({ ...formData, received_by: e.target.value })}
+                  placeholder="Nome completo"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="received_by_cpf">CPF *</Label>
+                <Input
+                  id="received_by_cpf"
+                  value={formData.received_by_cpf}
+                  onChange={handleCPFChange}
+                  placeholder="000.000.000-00"
+                  maxLength={14}
                   required
                 />
               </div>
@@ -180,13 +216,15 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="signature">Assinatura</Label>
-                <Textarea
-                  id="signature"
-                  value={formData.signature}
-                  onChange={(e) => setFormData({ ...formData, signature: e.target.value })}
-                  rows={3}
-                />
+                <Label htmlFor="signature">Espaço para Assinatura do Cliente</Label>
+                <div className="border-2 border-dashed border-muted-foreground/30 rounded-md p-4 min-h-[100px] bg-muted/10">
+                  <p className="text-xs text-muted-foreground text-center">
+                    Espaço reservado para assinatura
+                  </p>
+                  <div className="mt-8 border-t border-muted-foreground/30 pt-2">
+                    <p className="text-xs text-center text-muted-foreground">Assinatura do Cliente</p>
+                  </div>
+                </div>
               </div>
             </div>
 

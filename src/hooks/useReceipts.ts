@@ -20,6 +20,7 @@ export interface Receipt {
   receipt_date: string;
   operation_nature?: string;
   received_by: string;
+  received_by_cpf: string;
   received_by_malta?: string;
   signature?: string;
   created_by?: string;

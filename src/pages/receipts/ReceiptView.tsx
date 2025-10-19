@@ -90,8 +90,11 @@ export const ReceiptView = () => {
                 <span className="font-semibold">Natureza da Operação:</span> {receipt.operation_nature}
               </div>
             )}
-            <div className="col-span-2">
+            <div>
               <span className="font-semibold">Recebido por:</span> {receipt.received_by}
+            </div>
+            <div>
+              <span className="font-semibold">CPF:</span> {receipt.received_by_cpf}
             </div>
           </div>
 
@@ -110,22 +113,28 @@ export const ReceiptView = () => {
             </div>
           </div>
 
-          {(receipt.received_by_malta || receipt.signature) && (
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-              {receipt.received_by_malta && (
-                <div>
-                  <p className="font-semibold text-sm mb-2">Recebido por Malta:</p>
-                  <p className="text-sm whitespace-pre-wrap">{receipt.received_by_malta}</p>
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+            {receipt.received_by_malta && (
+              <div>
+                <p className="font-semibold text-sm mb-2">Recebido por Malta:</p>
+                <p className="text-sm whitespace-pre-wrap">{receipt.received_by_malta}</p>
+              </div>
+            )}
+            <div>
+              <p className="font-semibold text-sm mb-2">Assinatura do Cliente:</p>
+              <div className="border-2 border-dashed border-muted-foreground/30 rounded-md p-4 min-h-[120px] bg-muted/10 print:bg-white">
+                <div className="h-16"></div>
+                <div className="border-t border-muted-foreground/50 pt-2 mt-2">
+                  <p className="text-xs text-center text-muted-foreground">
+                    {receipt.received_by}
+                  </p>
+                  <p className="text-xs text-center text-muted-foreground">
+                    CPF: {receipt.received_by_cpf}
+                  </p>
                 </div>
-              )}
-              {receipt.signature && (
-                <div>
-                  <p className="font-semibold text-sm mb-2">Assinatura:</p>
-                  <p className="text-sm whitespace-pre-wrap">{receipt.signature}</p>
-                </div>
-              )}
+              </div>
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
     </div>
