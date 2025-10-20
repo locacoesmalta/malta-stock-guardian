@@ -1168,6 +1168,7 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean | null
+          must_change_password: boolean | null
           updated_at: string
           user_id: string
         }
@@ -1191,6 +1192,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean | null
+          must_change_password?: boolean | null
           updated_at?: string
           user_id: string
         }
@@ -1214,6 +1216,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean | null
+          must_change_password?: boolean | null
           updated_at?: string
           user_id?: string
         }

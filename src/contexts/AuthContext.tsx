@@ -21,6 +21,7 @@ interface UserPermissions {
   can_edit_assets: boolean;
   can_delete_assets: boolean;
   can_scan_assets: boolean;
+  must_change_password?: boolean;
 }
 
 interface AuthContextType {
@@ -145,6 +146,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (permData) {
             setPermissions(permData as UserPermissions);
             setIsActive(permData.is_active === true);
+            
+            // Check if user must change password
+            if (permData.must_change_password === true) {
+              console.log('[AUTH] User must change password, redirecting...');
+              navigate("/change-password-required");
+            }
           } else {
             // Admins get all permissions by default
             if (isUserAdmin) {

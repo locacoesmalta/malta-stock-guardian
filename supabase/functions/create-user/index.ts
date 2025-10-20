@@ -107,6 +107,7 @@ Deno.serve(async (req) => {
         can_edit_assets: permissions.can_edit_assets,
         can_delete_assets: permissions.can_delete_assets,
         can_scan_assets: permissions.can_scan_assets,
+        must_change_password: true
       }, {
         onConflict: 'user_id'
       })

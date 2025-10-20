@@ -41,6 +41,7 @@ const ReceiptForm = lazy(() => import("./pages/receipts/ReceiptForm"));
 const ReceiptHistory = lazy(() => import("./pages/receipts/ReceiptHistory"));
 const ReceiptView = lazy(() => import("./pages/receipts/ReceiptView"));
 const ReceiptMovementReport = lazy(() => import("./pages/receipts/ReceiptMovementReport"));
+const ChangePasswordRequired = lazy(() => import("./pages/ChangePasswordRequired"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Welcome = lazy(() => import("./pages/Welcome"));
 
@@ -126,6 +127,7 @@ const App = () => (
           <Suspense fallback={<LoadingFallback />}>
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route path="/change-password-required" element={<ChangePasswordRequired />} />
               <Route path="/welcome" element={<ProtectedLayout><Welcome /></ProtectedLayout>} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route 
