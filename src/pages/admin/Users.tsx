@@ -19,6 +19,7 @@ import {
   Settings
 } from "lucide-react";
 import { AddUserDialog } from "@/components/AddUserDialog";
+import { ResetPasswordDialog } from "@/components/ResetPasswordDialog";
 import { useUsersQuery } from "@/hooks/useUsersQuery";
 import { useQueryClient } from "@tanstack/react-query";
 import { BackButton } from "@/components/BackButton";
@@ -234,38 +235,50 @@ const Users = () => {
                   key={user.id}
                   className="border rounded-lg p-3 sm:p-4 space-y-4"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1 min-w-0 flex-1">
-                      <div className="font-medium text-sm sm:text-base truncate">
-                        {user.full_name || "Sem nome"}
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <div className="font-medium text-sm sm:text-base truncate">
+                          {user.full_name || "Sem nome"}
+                        </div>
+                        <div className="text-xs sm:text-sm text-muted-foreground truncate">
+                          {user.email}
+                        </div>
                       </div>
-                      <div className="text-xs sm:text-sm text-muted-foreground truncate">
-                        {user.email}
+                      <div className="flex flex-wrap gap-2 items-start justify-end">
+                        {isAdmin(user) ? (
+                          <Badge variant="default" className="gap-1 text-xs whitespace-nowrap">
+                            <Shield className="h-3 w-3" />
+                            Administrador
+                          </Badge>
+                        ) : (
+                          <>
+                            <Badge variant="secondary" className="text-xs">Usuário</Badge>
+                            {user.user_permissions && (
+                              user.user_permissions.is_active ? (
+                                <Badge className="bg-green-600 hover:bg-green-700 text-white text-xs">
+                                  Ativo
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs">
+                                  Pendente
+                                </Badge>
+                              )
+                            )}
+                          </>
+                        )}
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-2 items-start justify-end">
-                      {isAdmin(user) ? (
-                        <Badge variant="default" className="gap-1 text-xs whitespace-nowrap">
-                          <Shield className="h-3 w-3" />
-                          Administrador
-                        </Badge>
-                      ) : (
-                        <>
-                          <Badge variant="secondary" className="text-xs">Usuário</Badge>
-                          {user.user_permissions && (
-                            user.user_permissions.is_active ? (
-                              <Badge className="bg-green-600 hover:bg-green-700 text-white text-xs">
-                                Ativo
-                              </Badge>
-                            ) : (
-                              <Badge className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs">
-                                Pendente
-                              </Badge>
-                            )
-                          )}
-                        </>
-                      )}
-                    </div>
+
+                    {!isAdmin(user) && (
+                      <div className="flex justify-end">
+                        <ResetPasswordDialog 
+                          userId={user.id}
+                          userEmail={user.email}
+                          onPasswordReset={refetchUsers}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {!isAdmin(user) && user.user_permissions && (

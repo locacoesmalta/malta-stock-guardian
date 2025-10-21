@@ -145,6 +145,10 @@ export default function ChangePasswordRequired() {
           <CardDescription className="text-center">
             Por segurança, você deve alterar sua senha temporária antes de continuar
           </CardDescription>
+          <div className="text-xs text-center text-muted-foreground mt-2 p-3 bg-muted/50 rounded-lg">
+            💡 <strong>Não consegue fazer login?</strong><br />
+            Se você não consegue entrar com sua senha atual, entre em contato com o administrador para redefinir sua senha.
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
