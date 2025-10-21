@@ -228,7 +228,7 @@ export default function AssetView() {
         <TabsContent value="status" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Status e Localização Atual</CardTitle>
+              <CardTitle className="text-base sm:text-lg">Status e Localização Atual</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {asset.location_type === "aguardando_laudo" && asset.inspection_start_date && (
@@ -254,24 +254,24 @@ export default function AssetView() {
 
               {asset.location_type === "em_manutencao" && (
                 <>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Empresa de Manutenção</p>
-                      <p className="text-base">{asset.maintenance_company || "—"}</p>
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground">Empresa de Manutenção</p>
+                      <p className="text-sm sm:text-base break-words">{asset.maintenance_company || "—"}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Obra</p>
-                      <p className="text-base">{asset.maintenance_work_site || "—"}</p>
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground">Obra</p>
+                      <p className="text-sm sm:text-base break-words">{asset.maintenance_work_site || "—"}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Data de Chegada</p>
-                      <p className="text-base">
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground">Data de Chegada</p>
+                      <p className="text-sm sm:text-base">
                         {asset.maintenance_arrival_date ? format(parseISO(asset.maintenance_arrival_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR }) : "—"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Previsão de Saída</p>
-                      <p className="text-base">
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground">Previsão de Saída</p>
+                      <p className="text-sm sm:text-base">
                         {asset.maintenance_departure_date ? format(parseISO(asset.maintenance_departure_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR }) : "—"}
                       </p>
                     </div>
@@ -293,24 +293,24 @@ export default function AssetView() {
 
               {asset.location_type === "locacao" && (
                 <>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Empresa</p>
-                      <p className="text-base">{asset.rental_company || "—"}</p>
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground">Empresa</p>
+                      <p className="text-sm sm:text-base break-words">{asset.rental_company || "—"}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Obra</p>
-                      <p className="text-base">{asset.rental_work_site || "—"}</p>
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground">Obra</p>
+                      <p className="text-sm sm:text-base break-words">{asset.rental_work_site || "—"}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Data Início</p>
-                      <p className="text-base">
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground">Data Início</p>
+                      <p className="text-sm sm:text-base">
                         {asset.rental_start_date ? format(parseISO(asset.rental_start_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR }) : "—"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Data Fim</p>
-                      <p className="text-base">
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground">Data Fim</p>
+                      <p className="text-sm sm:text-base">
                         {asset.rental_end_date ? format(parseISO(asset.rental_end_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR }) : "—"}
                       </p>
                     </div>

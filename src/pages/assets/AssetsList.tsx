@@ -79,14 +79,14 @@ export default function AssetsList() {
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-6 max-w-7xl">
-      <div className="space-y-2 mb-6">
+    <div className="container mx-auto p-3 sm:p-4 md:p-6 max-w-7xl">
+      <div className="space-y-3 mb-4 sm:mb-6">
         <BackButton />
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
+        <div className="flex flex-col gap-3 sm:gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+            <div className="flex-1 min-w-0">
               <h1 className="text-2xl md:text-3xl font-bold">Gestão de Patrimônio</h1>
-              <p className="text-muted-foreground mt-1">
+              <p className="text-sm sm:text-base text-muted-foreground mt-1">
                 Gerencie todos os equipamentos do patrimônio
               </p>
             </div>
@@ -140,20 +140,20 @@ export default function AssetsList() {
           filteredAssets.map((asset) => (
             <Card
               key={asset.id}
-              className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+              className="p-3 sm:p-4 cursor-pointer hover:shadow-md transition-shadow"
               onClick={() => navigate(`/assets/view/${asset.id}`)}
             >
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg">{asset.equipment_name}</h3>
-                  <p className="text-sm text-muted-foreground">PAT: {asset.asset_code}</p>
+              <div className="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-3 mb-3">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-base sm:text-lg break-words">{asset.equipment_name}</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">PAT: {asset.asset_code}</p>
                   {asset.malta_collaborator && (
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-muted-foreground mt-1 truncate">
                       Responsável: {asset.malta_collaborator}
                     </p>
                   )}
                 </div>
-                <Badge variant={getLocationVariant(asset.location_type)}>
+                <Badge variant={getLocationVariant(asset.location_type)} className="text-xs whitespace-nowrap flex-shrink-0">
                   {getLocationLabel(asset.location_type)}
                 </Badge>
               </div>
@@ -171,10 +171,10 @@ export default function AssetsList() {
               )}
 
               {asset.location_type === "em_manutencao" && (
-                <div className="space-y-2 text-sm">
+                <div className="space-y-2 text-xs sm:text-sm">
                   {asset.maintenance_arrival_date && (
-                    <div className="mb-3">
-                      <Badge variant="destructive" className="text-sm font-semibold">
+                    <div className="mb-2 sm:mb-3">
+                      <Badge variant="destructive" className="text-xs sm:text-sm font-semibold">
                         ⏱️ {(() => {
                           const arrival = parseISO(asset.maintenance_arrival_date + "T00:00:00");
                           const today = new Date();
@@ -187,18 +187,18 @@ export default function AssetsList() {
                   )}
                   {asset.maintenance_company && (
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <Building2 className="h-4 w-4" />
-                      <span>{asset.maintenance_company}</span>
+                      <Building2 className="h-4 w-4 flex-shrink-0" />
+                      <span className="break-words">{asset.maintenance_company}</span>
                     </div>
                   )}
                   {asset.maintenance_work_site && (
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      <span>{asset.maintenance_work_site}</span>
+                      <MapPin className="h-4 w-4 flex-shrink-0" />
+                      <span className="break-words">{asset.maintenance_work_site}</span>
                     </div>
                   )}
                   {asset.maintenance_description && (
-                    <p className="text-xs text-muted-foreground mt-2">{asset.maintenance_description}</p>
+                    <p className="text-xs text-muted-foreground mt-2 break-words">{asset.maintenance_description}</p>
                   )}
                   {asset.is_new_equipment !== undefined && (
                     <Badge variant="outline" className="text-xs">
@@ -209,24 +209,24 @@ export default function AssetsList() {
               )}
 
               {asset.location_type === "locacao" && (
-                <div className="space-y-2 text-sm">
+                <div className="space-y-2 text-xs sm:text-sm">
                   {asset.rental_company && (
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <Building2 className="h-4 w-4" />
-                      <span>{asset.rental_company}</span>
+                      <Building2 className="h-4 w-4 flex-shrink-0" />
+                      <span className="break-words">{asset.rental_company}</span>
                     </div>
                   )}
                   {asset.rental_work_site && (
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      <span>{asset.rental_work_site}</span>
+                      <MapPin className="h-4 w-4 flex-shrink-0" />
+                      <span className="break-words">{asset.rental_work_site}</span>
                     </div>
                   )}
                   {asset.rental_start_date && (
-                    <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t">
-                      <span>Início: {format(parseISO(asset.rental_start_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-xs mt-2 pt-2 border-t">
+                      <span className="whitespace-nowrap">Início: {format(parseISO(asset.rental_start_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}</span>
                       {asset.rental_end_date && (
-                        <span>Fim: {format(parseISO(asset.rental_end_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}</span>
+                        <span className="whitespace-nowrap">Fim: {format(parseISO(asset.rental_end_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}</span>
                       )}
                     </div>
                   )}

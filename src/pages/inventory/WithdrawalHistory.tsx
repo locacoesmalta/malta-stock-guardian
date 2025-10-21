@@ -116,16 +116,20 @@ const WithdrawalHistory = () => {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
+      <div className="space-y-3">
         <BackButton />
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Histórico de Retiradas</h1>
-            <p className="text-muted-foreground">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold">Histórico de Retiradas</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-1">
               Visualize todas as retiradas de material registradas
             </p>
           </div>
-          <Button onClick={handleExport} disabled={filteredWithdrawals.length === 0}>
+          <Button 
+            onClick={handleExport} 
+            disabled={filteredWithdrawals.length === 0}
+            className="w-full sm:w-auto flex-shrink-0"
+          >
             <FileText className="h-4 w-4 mr-2" />
             Exportar CSV
           </Button>
@@ -137,7 +141,7 @@ const WithdrawalHistory = () => {
           <CardTitle>Filtros</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="search">Buscar</Label>
               <div className="relative">
@@ -269,42 +273,56 @@ const WithdrawalHistory = () => {
                 return (
                   <div
                     key={withdrawal.id}
-                    className={`flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors ${
+                    className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg hover:bg-muted/50 transition-colors gap-3 ${
                       isMaintenance ? 'border-blue-500/50 bg-blue-50/50 dark:bg-blue-950/20' : ''
                     } ${
                       isSale ? 'border-green-500/50 bg-green-50/50 dark:bg-green-950/20' : ''
                     }`}
                   >
-                    <div className="flex-1 space-y-1">
-                      <div className="font-medium">
+                    <div className="flex-1 space-y-1.5 sm:space-y-1 min-w-0">
+                      <div className="font-medium text-sm sm:text-base break-words">
                         {withdrawal.products?.name || "Produto (sem permissão para visualizar)"}
-                        {isMaintenance && (
-                          <span className="ml-2 text-xs px-2 py-1 rounded bg-blue-500 text-white">
-                            Manutenção Interna
-                          </span>
-                        )}
-                        {isSale && (
-                          <span className="ml-2 text-xs px-2 py-1 rounded bg-green-500 text-white">
-                            Venda de Material
-                          </span>
-                        )}
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {isMaintenance && (
+                            <span className="text-xs px-2 py-0.5 rounded bg-blue-500 text-white whitespace-nowrap">
+                              Manutenção Interna
+                            </span>
+                          )}
+                          {isSale && (
+                            <span className="text-xs px-2 py-0.5 rounded bg-green-500 text-white whitespace-nowrap">
+                              Venda de Material
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-xs sm:text-sm text-muted-foreground">
                         Código: {withdrawal.products?.code || "-"}
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-xs sm:text-sm text-muted-foreground break-words">
                         {isSale 
-                          ? `Tipo: Venda de Material (sem PAT associado) | Obra: ${withdrawal.work_site} | Empresa: ${withdrawal.company}`
-                          : `PAT: ${withdrawal.equipment_code} | Obra: ${withdrawal.work_site} | Empresa: ${withdrawal.company}`
+                          ? <>
+                              <span className="font-medium">Tipo:</span> Venda de Material<br className="sm:hidden" />
+                              <span className="hidden sm:inline"> | </span>
+                              <span className="font-medium">Obra:</span> {withdrawal.work_site}<br className="sm:hidden" />
+                              <span className="hidden sm:inline"> | </span>
+                              <span className="font-medium">Empresa:</span> {withdrawal.company}
+                            </>
+                          : <>
+                              <span className="font-medium">PAT:</span> {withdrawal.equipment_code}<br className="sm:hidden" />
+                              <span className="hidden sm:inline"> | </span>
+                              <span className="font-medium">Obra:</span> {withdrawal.work_site}<br className="sm:hidden" />
+                              <span className="hidden sm:inline"> | </span>
+                              <span className="font-medium">Empresa:</span> {withdrawal.company}
+                            </>
                         }
                       </div>
                       {withdrawal.withdrawal_reason && (
-                        <div className="text-sm text-muted-foreground">
-                          Motivo: {withdrawal.withdrawal_reason}
+                        <div className="text-xs sm:text-sm text-muted-foreground">
+                          <span className="font-medium">Motivo:</span> {withdrawal.withdrawal_reason}
                         </div>
                       )}
                       {unitCost > 0 && (
-                        <div className="text-sm font-medium text-primary">
+                        <div className="text-xs sm:text-sm font-medium text-primary">
                           Custo Total: {new Intl.NumberFormat('pt-BR', {
                             style: 'currency',
                             currency: 'BRL',
@@ -313,16 +331,16 @@ const WithdrawalHistory = () => {
                       )}
                     </div>
 
-                    <div className="text-right space-y-1">
-                      <div className="font-semibold">
+                    <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start sm:text-right space-y-0 sm:space-y-1 border-t sm:border-t-0 pt-2 sm:pt-0 flex-shrink-0">
+                      <div className="font-semibold text-sm sm:text-base">
                         Qtd: {withdrawal.quantity}
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
                         {format(new Date(withdrawal.withdrawal_date), "dd/MM/yyyy", {
                           locale: ptBR,
                         })}
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-muted-foreground truncate max-w-[150px] sm:max-w-none">
                         {withdrawal.profiles?.full_name || withdrawal.profiles?.email || "-"}
                       </div>
                     </div>
