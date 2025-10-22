@@ -116,12 +116,13 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
       return;
     }
 
-    await createReceipt.mutateAsync({
+    const result = await createReceipt.mutateAsync({
       ...formData,
       receipt_number: receiptNumber,
       receipt_type: type,
       created_by: user?.id,
       items,
+      shouldSendWebhook: true,
     });
 
     if (shouldPrint) {
@@ -144,7 +145,7 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
       <BackButton />
       
       <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-6 mt-4">
-        <Card>
+        <Card id="receipt-form-content">
           <CardHeader className="bg-primary text-primary-foreground">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">

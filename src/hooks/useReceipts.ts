@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { sendReceiptToWebhook } from "@/utils/receiptWebhook";
 
 export type ReceiptType = 'entrega' | 'devolucao';
 
@@ -32,6 +33,9 @@ export interface Receipt {
 
 export interface ReceiptWithItems extends Receipt {
   items: ReceiptItem[];
+  whatsapp?: string;
+  malta_operator?: string;
+  shouldSendWebhook?: boolean;
 }
 
 export const useReceipts = () => {
@@ -52,7 +56,7 @@ export const useReceipts = () => {
 
   const createReceipt = useMutation({
     mutationFn: async (receiptData: ReceiptWithItems) => {
-      const { items, ...receipt } = receiptData;
+      const { items, shouldSendWebhook, whatsapp, malta_operator, ...receipt } = receiptData;
 
       const { data: receiptResult, error: receiptError } = await supabase
         .from('equipment_receipts')
@@ -74,6 +78,25 @@ export const useReceipts = () => {
         .insert(itemsToInsert);
 
       if (itemsError) throw itemsError;
+
+      // Enviar para o webhook após salvamento bem-sucedido (não bloqueia o fluxo principal)
+      if (shouldSendWebhook) {
+        setTimeout(async () => {
+          try {
+            await sendReceiptToWebhook({
+              client_name: receiptData.client_name,
+              work_site: receiptData.work_site,
+              receipt_date: receiptData.receipt_date,
+              operation_nature: receiptData.operation_nature,
+              received_by: receiptData.received_by,
+              whatsapp: whatsapp,
+              malta_operator: malta_operator || '',
+            }, 'receipt-form-content');
+          } catch (error) {
+            console.error('Erro ao enviar webhook:', error);
+          }
+        }, 100);
+      }
 
       return receiptResult;
     },
