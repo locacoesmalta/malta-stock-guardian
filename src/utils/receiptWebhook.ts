@@ -73,11 +73,8 @@ export const sendReceiptToWebhook = async (
     // Gera o PDF
     const pdfBlob = await generateReceiptPDF(receiptElementId);
 
-    // Define a URL do webhook baseado no tipo de recebimento
-    const webhookUrl =
-      receiptData.receipt_type === "entrega"
-        ? "https://webhook.7arrows.pro/webhook/relatorio"
-        : "https://webhook.7arrows.pro/webhook/relatorio";
+    // Define a URL do webhook (ela é fixa, sempre para este relatório)
+    const webhookUrl = "https://webhook.7arrows.pro/webhook/relatorio";
 
     // Prepara os dados para envio
     const formData = new FormData();
