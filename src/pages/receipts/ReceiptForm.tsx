@@ -69,7 +69,7 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
   };
 
   const [items, setItems] = useState<ReceiptItem[]>([
-    { quantity: 1, specification: '', item_order: 1, pat_code: '', equipment_comments: '' },
+    { quantity: 1, specification: '', item_order: 1, pat_code: '', equipment_comments: '', photos: [] },
   ]);
 
   const [hasInvalidPAT, setHasInvalidPAT] = useState(false);
@@ -95,6 +95,14 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
 
     const hasEmptySpecification = items.some(item => !item.specification.trim());
     if (hasEmptySpecification) {
+      toast.error('Todos os equipamentos devem ter especificação');
+      return;
+    }
+
+    // Validar se todos os itens têm 4 fotos
+    const hasInsufficientPhotos = items.some(item => !item.photos || item.photos.length < 4);
+    if (hasInsufficientPhotos) {
+      toast.error('Todos os equipamentos devem ter 4 fotos anexadas');
       return;
     }
 
@@ -107,6 +115,12 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
     // Validar responsável Malta
     if (!formData.malta_operator.trim()) {
       toast.error('Nome do responsável Malta é obrigatório');
+      return;
+    }
+
+    // Validar assinatura
+    if (!formData.signature || formData.signature.trim() === '') {
+      toast.error('Assinatura do cliente é obrigatória');
       return;
     }
 
@@ -170,6 +184,17 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
           <CardContent className="pt-6 space-y-6">
             <div className="text-center">
               <h2 className="text-lg font-bold">{title}</h2>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-lg font-semibold">Equipamentos *</Label>
+              <ReceiptItemsTable
+                items={items}
+                onChange={setItems}
+                disabled={createReceipt.isPending}
+                onEquipmentFound={handleEquipmentFound}
+                onValidationChange={setHasInvalidPAT}
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -265,17 +290,6 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Equipamentos *</Label>
-              <ReceiptItemsTable
-                items={items}
-                onChange={setItems}
-                disabled={createReceipt.isPending}
-                onEquipmentFound={handleEquipmentFound}
-                onValidationChange={setHasInvalidPAT}
-              />
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="received_by_malta">Recebido por Malta</Label>
@@ -288,7 +302,7 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="signature">Espaço para Assinatura do Cliente *</Label>
+                <Label htmlFor="signature">Assinatura do Cliente *</Label>
                 <SignaturePad
                   value={formData.signature}
                   onChange={(sig) => setFormData({ ...formData, signature: sig })}
@@ -297,18 +311,20 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
               </div>
             </div>
 
-            <div className="flex gap-4 justify-end">
+            <div className="flex flex-col sm:flex-row gap-4 justify-end">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => navigate('/receipts/history')}
                 disabled={createReceipt.isPending}
+                className="w-full sm:w-auto"
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={createReceipt.isPending || hasInvalidPAT}
+                className="w-full sm:w-auto"
               >
                 {createReceipt.isPending ? (
                   <>
@@ -326,6 +342,7 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
                 type="button"
                 onClick={(e: any) => handleSubmit(e, true)}
                 disabled={createReceipt.isPending || hasInvalidPAT}
+                className="w-full sm:w-auto"
               >
                 <Printer className="h-4 w-4 mr-2" />
                 Salvar e Imprimir

@@ -9,6 +9,7 @@ interface ReceiptWebhookData {
   received_by: string;
   whatsapp?: string;
   malta_operator: string;
+  receipt_type: 'entrega' | 'devolucao';
 }
 
 /**
@@ -72,6 +73,11 @@ export const sendReceiptToWebhook = async (
     // Gera o PDF
     const pdfBlob = await generateReceiptPDF(receiptElementId);
     
+    // Define a URL do webhook baseado no tipo de recebimento
+    const webhookUrl = receiptData.receipt_type === 'entrega'
+      ? 'https://webhook.7arrows.pro/webhook/relatorio/receipts/delivery/new'
+      : 'https://webhook.7arrows.pro/webhook/relatorio/receipts/return/new';
+    
     // Prepara os dados para envio
     const formData = new FormData();
     formData.append('pdf', pdfBlob, 'receipt.pdf');
@@ -84,7 +90,7 @@ export const sendReceiptToWebhook = async (
     formData.append('responsavel_malta', receiptData.malta_operator);
 
     // Envia para o webhook
-    const response = await fetch('https://webhook.7arrows.pro/webhook/relatorio/receipts/delivery/new', {
+    const response = await fetch(webhookUrl, {
       method: 'POST',
       body: formData,
     });

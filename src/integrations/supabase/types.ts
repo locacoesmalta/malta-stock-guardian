@@ -513,6 +513,7 @@ export type Database = {
           created_at: string
           id: string
           item_order: number
+          photos: Json | null
           quantity: number
           receipt_id: string
           specification: string
@@ -521,6 +522,7 @@ export type Database = {
           created_at?: string
           id?: string
           item_order: number
+          photos?: Json | null
           quantity: number
           receipt_id: string
           specification: string
@@ -529,6 +531,7 @@ export type Database = {
           created_at?: string
           id?: string
           item_order?: number
+          photos?: Json | null
           quantity?: number
           receipt_id?: string
           specification?: string

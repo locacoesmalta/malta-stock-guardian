@@ -12,6 +12,7 @@ export interface ReceiptItem {
   item_order: number;
   pat_code?: string;
   equipment_comments?: string;
+  photos?: string[];
 }
 
 export interface Receipt {
@@ -71,6 +72,7 @@ export const useReceipts = () => {
         quantity: item.quantity,
         specification: item.specification,
         item_order: index + 1,
+        photos: item.photos || [],
       }));
 
       const { error: itemsError } = await supabase
@@ -91,6 +93,7 @@ export const useReceipts = () => {
               received_by: receiptData.received_by,
               whatsapp: whatsapp,
               malta_operator: malta_operator || '',
+              receipt_type: receiptData.receipt_type,
             }, 'receipt-form-content');
           } catch (error) {
             console.error('Erro ao enviar webhook:', error);
