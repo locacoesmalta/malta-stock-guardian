@@ -8,6 +8,8 @@ interface ReceiptItem {
 }
 
 interface ReceiptWebhookData {
+  receipt_number: number;
+  receipt_type: "entrega" | "devolucao";
   client_name: string;
   work_site: string;
   receipt_date: string;
@@ -16,7 +18,7 @@ interface ReceiptWebhookData {
   received_by_cpf: string;
   whatsapp?: string;
   malta_operator: string;
-  receipt_type: "entrega" | "devolucao";
+  received_by_malta?: string;
   items: ReceiptItem[];
 }
 
@@ -87,6 +89,8 @@ export const sendReceiptToWebhook = async (
     // Prepara os dados para envio
     const formData = new FormData();
     formData.append("pdf", pdfBlob, "receipt.pdf");
+    formData.append("numero_recibo", receiptData.receipt_number.toString());
+    formData.append("tipo_recibo", receiptData.receipt_type === "entrega" ? "Entrega" : "Devolução");
     formData.append("cliente", receiptData.client_name);
     formData.append("obra", receiptData.work_site);
     formData.append("data", receiptData.receipt_date);
@@ -95,6 +99,7 @@ export const sendReceiptToWebhook = async (
     formData.append("cpf", receiptData.received_by_cpf);
     formData.append("whatsapp", formatWhatsAppForWebhook(receiptData.whatsapp));
     formData.append("responsavel_malta", receiptData.malta_operator);
+    formData.append("recebido_por_malta", receiptData.received_by_malta || "");
     
     // Adiciona os itens do recibo (PAT e Especificação)
     formData.append("itens", JSON.stringify(receiptData.items.map(item => ({

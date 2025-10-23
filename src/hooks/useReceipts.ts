@@ -86,6 +86,8 @@ export const useReceipts = () => {
         setTimeout(async () => {
           try {
             await sendReceiptToWebhook({
+              receipt_number: receiptData.receipt_number,
+              receipt_type: receiptData.receipt_type,
               client_name: receiptData.client_name,
               work_site: receiptData.work_site,
               receipt_date: receiptData.receipt_date,
@@ -94,7 +96,7 @@ export const useReceipts = () => {
               received_by_cpf: receiptData.received_by_cpf,
               whatsapp: whatsapp,
               malta_operator: malta_operator || '',
-              receipt_type: receiptData.receipt_type,
+              received_by_malta: receiptData.received_by_malta,
               items: items.map(item => ({
                 pat_code: item.pat_code,
                 specification: item.specification,
