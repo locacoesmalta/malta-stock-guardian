@@ -1,15 +1,23 @@
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 
+interface ReceiptItem {
+  pat_code?: string;
+  specification: string;
+  quantity: number;
+}
+
 interface ReceiptWebhookData {
   client_name: string;
   work_site: string;
   receipt_date: string;
   operation_nature?: string;
   received_by: string;
+  received_by_cpf: string;
   whatsapp?: string;
   malta_operator: string;
   receipt_type: "entrega" | "devolucao";
+  items: ReceiptItem[];
 }
 
 /**
@@ -84,8 +92,16 @@ export const sendReceiptToWebhook = async (
     formData.append("data", receiptData.receipt_date);
     formData.append("natureza_operacao", receiptData.operation_nature || "");
     formData.append("recebido_por", receiptData.received_by);
+    formData.append("cpf", receiptData.received_by_cpf);
     formData.append("whatsapp", formatWhatsAppForWebhook(receiptData.whatsapp));
     formData.append("responsavel_malta", receiptData.malta_operator);
+    
+    // Adiciona os itens do recibo (PAT e Especificação)
+    formData.append("itens", JSON.stringify(receiptData.items.map(item => ({
+      pat: item.pat_code || "",
+      especificacao: item.specification,
+      quantidade: item.quantity
+    }))));
 
     // Envia para o webhook
     const response = await fetch(webhookUrl, {

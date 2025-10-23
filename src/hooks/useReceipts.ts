@@ -91,9 +91,15 @@ export const useReceipts = () => {
               receipt_date: receiptData.receipt_date,
               operation_nature: receiptData.operation_nature,
               received_by: receiptData.received_by,
+              received_by_cpf: receiptData.received_by_cpf,
               whatsapp: whatsapp,
               malta_operator: malta_operator || '',
               receipt_type: receiptData.receipt_type,
+              items: items.map(item => ({
+                pat_code: item.pat_code,
+                specification: item.specification,
+                quantity: item.quantity
+              }))
             }, 'receipt-form-content');
           } catch (error) {
             console.error('Erro ao enviar webhook:', error);
