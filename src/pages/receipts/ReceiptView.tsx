@@ -96,18 +96,30 @@ export const ReceiptView = () => {
             <div>
               <span className="font-semibold">CPF:</span> {receipt.received_by_cpf}
             </div>
+            {receipt.whatsapp && (
+              <div>
+                <span className="font-semibold">WhatsApp:</span> {receipt.whatsapp}
+              </div>
+            )}
+            {receipt.malta_operator && (
+              <div>
+                <span className="font-semibold">Responsável Malta:</span> {receipt.malta_operator}
+              </div>
+            )}
           </div>
 
           <div className="border rounded-lg overflow-hidden">
             <div className="bg-muted grid grid-cols-12 gap-4 p-3 font-semibold text-sm print:bg-gray-200">
               <div className="col-span-2">QUANT.</div>
-              <div className="col-span-10">ESPECIFICAÇÃO</div>
+              <div className="col-span-8">ESPECIFICAÇÃO</div>
+              <div className="col-span-2">PAT</div>
             </div>
             <div className="divide-y">
               {receipt.items.map((item) => (
                 <div key={item.id} className="grid grid-cols-12 gap-4 p-3 text-sm">
                   <div className="col-span-2">{item.quantity}</div>
-                  <div className="col-span-10">{item.specification}</div>
+                  <div className="col-span-8">{item.specification}</div>
+                  <div className="col-span-2">{item.pat_code || '-'}</div>
                 </div>
               ))}
             </div>
@@ -122,17 +134,35 @@ export const ReceiptView = () => {
             )}
             <div>
               <p className="font-semibold text-sm mb-2">Assinatura do Cliente:</p>
-              <div className="border-2 border-dashed border-muted-foreground/30 rounded-md p-4 min-h-[120px] bg-muted/10 print:bg-white">
-                <div className="h-16"></div>
-                <div className="border-t border-muted-foreground/50 pt-2 mt-2">
-                  <p className="text-xs text-center text-muted-foreground">
-                    {receipt.received_by}
-                  </p>
-                  <p className="text-xs text-center text-muted-foreground">
-                    CPF: {receipt.received_by_cpf}
-                  </p>
+              {receipt.signature ? (
+                <div className="border-2 border-muted-foreground/30 rounded-md p-2 bg-white">
+                  <img 
+                    src={receipt.signature} 
+                    alt="Assinatura do Cliente" 
+                    className="w-full h-auto max-h-[120px] object-contain"
+                  />
+                  <div className="border-t border-muted-foreground/50 pt-2 mt-2">
+                    <p className="text-xs text-center text-muted-foreground">
+                      {receipt.received_by}
+                    </p>
+                    <p className="text-xs text-center text-muted-foreground">
+                      CPF: {receipt.received_by_cpf}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="border-2 border-dashed border-muted-foreground/30 rounded-md p-4 min-h-[120px] bg-muted/10 print:bg-white">
+                  <div className="h-16"></div>
+                  <div className="border-t border-muted-foreground/50 pt-2 mt-2">
+                    <p className="text-xs text-center text-muted-foreground">
+                      {receipt.received_by}
+                    </p>
+                    <p className="text-xs text-center text-muted-foreground">
+                      CPF: {receipt.received_by_cpf}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>

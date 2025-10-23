@@ -102,7 +102,7 @@ export const useReceipts = () => {
                 specification: item.specification,
                 quantity: item.quantity
               }))
-            }, 'receipt-form-content');
+            });
           } catch (error) {
             console.error('Erro ao enviar webhook:', error);
           }

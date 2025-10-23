@@ -41,33 +41,158 @@ const formatWhatsAppForWebhook = (whatsapp?: string): string => {
 };
 
 /**
- * Gera o PDF do recibo a partir do elemento HTML
+ * Gera o PDF do recibo diretamente dos dados
  */
-const generateReceiptPDF = async (elementId: string): Promise<Blob> => {
-  const element = document.getElementById(elementId);
-  if (!element) {
-    throw new Error("Elemento do recibo não encontrado");
-  }
-
-  // Captura o elemento como canvas
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    logging: false,
-  });
-
-  // Cria o PDF
-  const imgData = canvas.toDataURL("image/png");
+const generateReceiptPDF = async (data: ReceiptWebhookData): Promise<Blob> => {
   const pdf = new jsPDF({
     orientation: "portrait",
     unit: "mm",
     format: "a4",
   });
 
-  const imgWidth = 210; // A4 width in mm
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  // Configurações
+  let y = 20;
+  const pageWidth = 210;
+  const margin = 15;
+  const contentWidth = pageWidth - (2 * margin);
 
-  pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+  // Cabeçalho
+  pdf.setFillColor(0, 51, 153); // Azul Malta
+  pdf.rect(0, 0, pageWidth, 40, "F");
+  
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFontSize(20);
+  pdf.setFont("helvetica", "bold");
+  pdf.text("MALTA LOCAÇÕES", margin, 15);
+  
+  pdf.setFontSize(12);
+  pdf.setFont("helvetica", "normal");
+  pdf.text("DE MÁQUINAS E EQUIPAMENTOS", margin, 22);
+  
+  pdf.setFontSize(9);
+  pdf.text("Fones: 91 98605-4851 / 91 98421-1123", margin, 28);
+  
+  // Número do recibo
+  pdf.setFontSize(10);
+  pdf.text("N°", pageWidth - margin - 20, 15);
+  pdf.setFontSize(24);
+  pdf.setFont("helvetica", "bold");
+  pdf.text(data.receipt_number.toString(), pageWidth - margin - 20, 25);
+
+  y = 50;
+
+  // Título
+  pdf.setTextColor(0, 0, 0);
+  pdf.setFontSize(14);
+  pdf.setFont("helvetica", "bold");
+  const title = data.receipt_type === "entrega" 
+    ? "COMPROVANTE DE ENTREGA DE EQUIPAMENTOS"
+    : "COMPROVANTE DE DEVOLUÇÃO DE EQUIPAMENTOS";
+  pdf.text(title, pageWidth / 2, y, { align: "center" });
+
+  y += 15;
+
+  // Informações
+  pdf.setFontSize(10);
+  pdf.setFont("helvetica", "bold");
+  pdf.text("Cliente: ", margin, y);
+  pdf.setFont("helvetica", "normal");
+  pdf.text(data.client_name, margin + 20, y);
+
+  pdf.setFont("helvetica", "bold");
+  pdf.text("Obra: ", pageWidth / 2 + 10, y);
+  pdf.setFont("helvetica", "normal");
+  pdf.text(data.work_site, pageWidth / 2 + 25, y);
+
+  y += 7;
+
+  pdf.setFont("helvetica", "bold");
+  pdf.text("Data: ", margin, y);
+  pdf.setFont("helvetica", "normal");
+  pdf.text(data.receipt_date, margin + 20, y);
+
+  if (data.operation_nature) {
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Natureza da Operação: ", pageWidth / 2 + 10, y);
+    pdf.setFont("helvetica", "normal");
+    pdf.text(data.operation_nature, pageWidth / 2 + 50, y);
+  }
+
+  y += 7;
+
+  pdf.setFont("helvetica", "bold");
+  pdf.text("Recebido por: ", margin, y);
+  pdf.setFont("helvetica", "normal");
+  pdf.text(data.received_by, margin + 30, y);
+
+  pdf.setFont("helvetica", "bold");
+  pdf.text("CPF: ", pageWidth / 2 + 10, y);
+  pdf.setFont("helvetica", "normal");
+  pdf.text(data.received_by_cpf, pageWidth / 2 + 23, y);
+
+  y += 7;
+
+  if (data.whatsapp) {
+    pdf.setFont("helvetica", "bold");
+    pdf.text("WhatsApp: ", margin, y);
+    pdf.setFont("helvetica", "normal");
+    pdf.text(data.whatsapp, margin + 25, y);
+    y += 7;
+  }
+
+  if (data.malta_operator) {
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Responsável Malta: ", margin, y);
+    pdf.setFont("helvetica", "normal");
+    pdf.text(data.malta_operator, margin + 40, y);
+    y += 7;
+  }
+
+  if (data.received_by_malta) {
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Recebido por Malta: ", margin, y);
+    pdf.setFont("helvetica", "normal");
+    pdf.text(data.received_by_malta, margin + 40, y);
+    y += 7;
+  }
+
+  y += 5;
+
+  // Tabela de itens
+  pdf.setFillColor(240, 240, 240);
+  pdf.rect(margin, y, contentWidth, 8, "F");
+  
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(9);
+  pdf.text("QUANT.", margin + 2, y + 5);
+  pdf.text("ESPECIFICAÇÃO", margin + 20, y + 5);
+  if (data.items.some(item => item.pat_code)) {
+    pdf.text("PAT", pageWidth - margin - 25, y + 5);
+  }
+
+  y += 8;
+
+  // Itens
+  pdf.setFont("helvetica", "normal");
+  data.items.forEach((item) => {
+    if (y > 270) {
+      pdf.addPage();
+      y = 20;
+    }
+
+    pdf.text(item.quantity.toString(), margin + 2, y + 5);
+    
+    const specLines = pdf.splitTextToSize(item.specification, contentWidth - 40);
+    pdf.text(specLines, margin + 20, y + 5);
+    
+    if (item.pat_code) {
+      pdf.text(item.pat_code, pageWidth - margin - 25, y + 5);
+    }
+
+    const lineHeight = Math.max(specLines.length * 5, 8);
+    pdf.line(margin, y + lineHeight, pageWidth - margin, y + lineHeight);
+    y += lineHeight;
+  });
 
   return pdf.output("blob");
 };
@@ -77,11 +202,10 @@ const generateReceiptPDF = async (elementId: string): Promise<Blob> => {
  */
 export const sendReceiptToWebhook = async (
   receiptData: ReceiptWebhookData,
-  receiptElementId: string,
 ): Promise<void> => {
   try {
     // Gera o PDF
-    const pdfBlob = await generateReceiptPDF(receiptElementId);
+    const pdfBlob = await generateReceiptPDF(receiptData);
 
     // Define a URL do webhook (fixa para todos os tipos)
     const webhookUrl = "https://webhook.7arrows.pro/webhook/relatorio";
