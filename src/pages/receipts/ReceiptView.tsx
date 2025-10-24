@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useReceiptDetails } from "@/hooks/useReceipts";
 import { BackButton } from "@/components/BackButton";
-import { Loader2, Printer } from "lucide-react";
+import { Loader2, Printer, Download } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -41,10 +41,21 @@ export const ReceiptView = () => {
     <div className="container mx-auto p-6 max-w-5xl">
       <div className="print:hidden mb-4 flex items-center justify-between">
         <BackButton />
-        <Button onClick={handlePrint}>
-          <Printer className="h-4 w-4 mr-2" />
-          Imprimir
-        </Button>
+        <div className="flex gap-2">
+          {receipt.pdf_url && (
+            <Button 
+              variant="outline"
+              onClick={() => window.open(receipt.pdf_url, '_blank')}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Baixar PDF Original
+            </Button>
+          )}
+          <Button onClick={handlePrint}>
+            <Printer className="h-4 w-4 mr-2" />
+            Imprimir
+          </Button>
+        </div>
       </div>
 
       <Card className="receipt-print">

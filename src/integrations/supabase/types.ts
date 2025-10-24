@@ -513,6 +513,7 @@ export type Database = {
           created_at: string
           id: string
           item_order: number
+          pat_code: string | null
           photos: Json | null
           quantity: number
           receipt_id: string
@@ -522,6 +523,7 @@ export type Database = {
           created_at?: string
           id?: string
           item_order: number
+          pat_code?: string | null
           photos?: Json | null
           quantity: number
           receipt_id: string
@@ -531,6 +533,7 @@ export type Database = {
           created_at?: string
           id?: string
           item_order?: number
+          pat_code?: string | null
           photos?: Json | null
           quantity?: number
           receipt_id?: string
@@ -1267,56 +1270,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_user_access_assets: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
-      can_user_create_assets: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
-      can_user_create_reports: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
+      can_user_access_assets: { Args: { _user_id: string }; Returns: boolean }
+      can_user_create_assets: { Args: { _user_id: string }; Returns: boolean }
+      can_user_create_reports: { Args: { _user_id: string }; Returns: boolean }
       can_user_create_withdrawals: {
         Args: { _user_id: string }
         Returns: boolean
       }
-      can_user_delete_assets: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
-      can_user_delete_products: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
-      can_user_delete_reports: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
-      can_user_edit_assets: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
-      can_user_edit_products: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
-      can_user_edit_reports: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
-      can_user_view_products: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
-      can_user_view_reports: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
+      can_user_delete_assets: { Args: { _user_id: string }; Returns: boolean }
+      can_user_delete_products: { Args: { _user_id: string }; Returns: boolean }
+      can_user_delete_reports: { Args: { _user_id: string }; Returns: boolean }
+      can_user_edit_assets: { Args: { _user_id: string }; Returns: boolean }
+      can_user_edit_products: { Args: { _user_id: string }; Returns: boolean }
+      can_user_edit_reports: { Args: { _user_id: string }; Returns: boolean }
+      can_user_view_products: { Args: { _user_id: string }; Returns: boolean }
+      can_user_view_reports: { Args: { _user_id: string }; Returns: boolean }
       check_audit_logs_health: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           integrity_issues: number
           logs_without_hash: number
@@ -1362,14 +1332,8 @@ export type Database = {
           equipment_count: number
         }[]
       }
-      is_admin: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
-      is_user_active: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_user_active: { Args: { _user_id: string }; Returns: boolean }
       registrar_evento_patrimonio: {
         Args: {
           p_campo_alterado?: string

@@ -43,7 +43,7 @@ const formatWhatsAppForWebhook = (whatsapp?: string): string => {
 /**
  * Gera o PDF do recibo diretamente dos dados
  */
-const generateReceiptPDF = async (data: ReceiptWebhookData): Promise<Blob> => {
+export const generateReceiptPDF = async (data: ReceiptWebhookData): Promise<Blob> => {
   const pdf = new jsPDF({
     orientation: "portrait",
     unit: "mm",

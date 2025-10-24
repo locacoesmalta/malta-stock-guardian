@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { sendReceiptToWebhook } from "@/utils/receiptWebhook";
+import { sendReceiptToWebhook, generateReceiptPDF } from "@/utils/receiptWebhook";
 
 export type ReceiptType = 'entrega' | 'devolucao';
 
@@ -27,6 +27,7 @@ export interface Receipt {
   received_by_cpf: string;
   received_by_malta?: string;
   signature?: string;
+  pdf_url?: string;
   created_by?: string;
   created_at?: string;
   updated_at?: string;
@@ -87,6 +88,58 @@ export const useReceipts = () => {
         .insert(itemsToInsert);
 
       if (itemsError) throw itemsError;
+
+      // Gerar e salvar o PDF no Supabase Storage
+      try {
+        const pdfBlob = await generateReceiptPDF({
+          receipt_number: receiptData.receipt_number,
+          receipt_type: receiptData.receipt_type,
+          client_name: receiptData.client_name,
+          work_site: receiptData.work_site,
+          receipt_date: receiptData.receipt_date,
+          operation_nature: receiptData.operation_nature,
+          received_by: receiptData.received_by,
+          received_by_cpf: receiptData.received_by_cpf,
+          whatsapp: whatsapp,
+          malta_operator: malta_operator || '',
+          received_by_malta: receiptData.received_by_malta,
+          items: items.map(item => ({
+            pat_code: item.pat_code,
+            specification: item.specification,
+            quantity: item.quantity
+          }))
+        });
+
+        const fileName = `receipt-${receiptResult.id}-${Date.now()}.pdf`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('receipts')
+          .upload(fileName, pdfBlob, {
+            contentType: 'application/pdf',
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error('Erro ao fazer upload do PDF:', uploadError);
+          toast.warning('Recibo salvo, mas houve erro ao armazenar o PDF');
+        } else {
+          const { data: urlData } = supabase.storage
+            .from('receipts')
+            .getPublicUrl(fileName);
+
+          const { error: updateError } = await supabase
+            .from('equipment_receipts')
+            .update({ pdf_url: urlData.publicUrl })
+            .eq('id', receiptResult.id);
+
+          if (updateError) {
+            console.error('Erro ao atualizar URL do PDF:', updateError);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao gerar PDF:', error);
+        toast.warning('Recibo salvo, mas houve erro ao gerar o PDF');
+      }
 
       // Enviar para o webhook após salvamento bem-sucedido
       if (shouldSendWebhook) {
