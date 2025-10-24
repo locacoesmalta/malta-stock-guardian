@@ -137,7 +137,7 @@ export const useReceipts = () => {
           }
         }
       } catch (error) {
-        console.error('Erro ao gerar PDF:', error);
+        console.error('Erro ao gerar/salvar PDF:', error);
         toast.warning('Recibo salvo, mas houve erro ao gerar o PDF');
       }
 
