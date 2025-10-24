@@ -57,7 +57,13 @@ export const useReceipts = () => {
 
   const createReceipt = useMutation({
     mutationFn: async (receiptData: ReceiptWithItems) => {
-      const { items, shouldSendWebhook, whatsapp, malta_operator, ...receipt } = receiptData;
+      const { items, shouldSendWebhook, whatsapp, malta_operator, ...receiptBase } = receiptData;
+
+      const receipt = {
+        ...receiptBase,
+        whatsapp: whatsapp || null,
+        malta_operator: malta_operator || null,
+      };
 
       const { data: receiptResult, error: receiptError } = await supabase
         .from('equipment_receipts')
@@ -71,6 +77,7 @@ export const useReceipts = () => {
         receipt_id: receiptResult.id,
         quantity: item.quantity,
         specification: item.specification,
+        pat_code: item.pat_code || null,
         item_order: index + 1,
         photos: item.photos || [],
       }));
@@ -81,32 +88,36 @@ export const useReceipts = () => {
 
       if (itemsError) throw itemsError;
 
-      // Enviar para o webhook após salvamento bem-sucedido (não bloqueia o fluxo principal)
+      // Enviar para o webhook após salvamento bem-sucedido
       if (shouldSendWebhook) {
-        setTimeout(async () => {
-          try {
-            await sendReceiptToWebhook({
-              receipt_number: receiptData.receipt_number,
-              receipt_type: receiptData.receipt_type,
-              client_name: receiptData.client_name,
-              work_site: receiptData.work_site,
-              receipt_date: receiptData.receipt_date,
-              operation_nature: receiptData.operation_nature,
-              received_by: receiptData.received_by,
-              received_by_cpf: receiptData.received_by_cpf,
-              whatsapp: whatsapp,
-              malta_operator: malta_operator || '',
-              received_by_malta: receiptData.received_by_malta,
-              items: items.map(item => ({
-                pat_code: item.pat_code,
-                specification: item.specification,
-                quantity: item.quantity
-              }))
-            });
-          } catch (error) {
-            console.error('Erro ao enviar webhook:', error);
-          }
-        }, 100);
+        try {
+          toast.info('Enviando comprovante via webhook...');
+          
+          await sendReceiptToWebhook({
+            receipt_number: receiptData.receipt_number,
+            receipt_type: receiptData.receipt_type,
+            client_name: receiptData.client_name,
+            work_site: receiptData.work_site,
+            receipt_date: receiptData.receipt_date,
+            operation_nature: receiptData.operation_nature,
+            received_by: receiptData.received_by,
+            received_by_cpf: receiptData.received_by_cpf,
+            whatsapp: whatsapp,
+            malta_operator: malta_operator || '',
+            received_by_malta: receiptData.received_by_malta,
+            items: items.map(item => ({
+              pat_code: item.pat_code,
+              specification: item.specification,
+              quantity: item.quantity
+            }))
+          });
+          
+          toast.success('Comprovante enviado via webhook com sucesso!');
+        } catch (error) {
+          console.error('Erro ao enviar webhook:', error);
+          toast.warning('Comprovante salvo, mas houve erro ao enviar via webhook');
+          // Não falha o fluxo - o recibo já foi salvo
+        }
       }
 
       return receiptResult;
