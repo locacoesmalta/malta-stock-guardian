@@ -144,10 +144,17 @@
     height: auto !important;
   }
 
-  /* Logo específico do header */
-  .print\\:h-\\[50px\\] {
+  /* Logo Malta padronizado */
+  .print\\:h-\\[50px\\],
+  img[alt*="Malta"] {
     height: 50px !important;
     width: auto !important;
+    object-fit: contain !important;
+  }
+  
+  /* Cabeçalho Malta */
+  .print\\:border-b-2 {
+    border-color: #003399 !important;
   }
 
   /* Classes de print customizadas */

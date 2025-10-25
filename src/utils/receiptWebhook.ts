@@ -45,14 +45,15 @@ const formatWhatsAppForWebhook = (whatsapp?: string): string => {
  */
 export const generateReceiptPDF = async (data: ReceiptWebhookData): Promise<Blob> => {
   const pdf = new jsPDF({
-    orientation: "portrait",
+    orientation: "landscape",
     unit: "mm",
     format: "a4",
   });
 
-  // Configurações
+  // Configurações para landscape
   let y = 20;
-  const pageWidth = 210;
+  const pageWidth = 297; // A4 landscape
+  const pageHeight = 210;
   const margin = 15;
   const contentWidth = pageWidth - (2 * margin);
 
@@ -81,15 +82,25 @@ export const generateReceiptPDF = async (data: ReceiptWebhookData): Promise<Blob
 
   y = 50;
 
-  // Título
-  pdf.setTextColor(0, 0, 0);
+  // Título com cor por tipo
   pdf.setFontSize(14);
   pdf.setFont("helvetica", "bold");
   const title = data.receipt_type === "entrega" 
     ? "COMPROVANTE DE ENTREGA DE EQUIPAMENTOS"
     : "COMPROVANTE DE DEVOLUÇÃO DE EQUIPAMENTOS";
+  
+  // Fundo colorido para o título
+  if (data.receipt_type === "entrega") {
+    pdf.setFillColor(220, 252, 231); // Verde claro
+    pdf.setTextColor(22, 101, 52); // Verde escuro
+  } else {
+    pdf.setFillColor(254, 226, 226); // Vermelho claro
+    pdf.setTextColor(153, 27, 27); // Vermelho escuro
+  }
+  pdf.rect(margin, y - 8, contentWidth, 12, "F");
   pdf.text(title, pageWidth / 2, y, { align: "center" });
-
+  
+  pdf.setTextColor(0, 0, 0);
   y += 15;
 
   // Informações
@@ -158,41 +169,118 @@ export const generateReceiptPDF = async (data: ReceiptWebhookData): Promise<Blob
 
   y += 5;
 
-  // Tabela de itens
+  // Tabela de itens com comentários
   pdf.setFillColor(240, 240, 240);
   pdf.rect(margin, y, contentWidth, 8, "F");
   
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(9);
   pdf.text("QUANT.", margin + 2, y + 5);
-  pdf.text("ESPECIFICAÇÃO", margin + 20, y + 5);
-  if (data.items.some(item => item.pat_code)) {
-    pdf.text("PAT", pageWidth - margin - 25, y + 5);
-  }
+  pdf.text("ESPECIFICAÇÃO", margin + 25, y + 5);
+  pdf.text("PAT", pageWidth / 2 + 30, y + 5);
+  pdf.text("COMENTÁRIOS", pageWidth / 2 + 60, y + 5);
 
   y += 8;
 
   // Itens
   pdf.setFont("helvetica", "normal");
   data.items.forEach((item) => {
-    if (y > 270) {
+    if (y > 170) {
       pdf.addPage();
       y = 20;
     }
 
     pdf.text(item.quantity.toString(), margin + 2, y + 5);
     
-    const specLines = pdf.splitTextToSize(item.specification, contentWidth - 40);
-    pdf.text(specLines, margin + 20, y + 5);
+    const specLines = pdf.splitTextToSize(item.specification, 90);
+    pdf.text(specLines, margin + 25, y + 5);
     
     if (item.pat_code) {
-      pdf.text(item.pat_code, pageWidth - margin - 25, y + 5);
+      pdf.text(item.pat_code, pageWidth / 2 + 30, y + 5);
     }
 
     const lineHeight = Math.max(specLines.length * 5, 8);
     pdf.line(margin, y + lineHeight, pageWidth - margin, y + lineHeight);
     y += lineHeight;
   });
+
+  // Assinatura
+  y += 10;
+  if (y > 150) {
+    pdf.addPage();
+    y = 20;
+  }
+  
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(10);
+  pdf.text("Assinatura do Cliente", margin, y);
+  pdf.rect(margin, y + 5, 80, 30);
+  y += 40;
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(9);
+  pdf.text(data.received_by, margin + 40, y, { align: "center" });
+  pdf.text(`CPF: ${data.received_by_cpf}`, margin + 40, y + 5, { align: "center" });
+
+  // SEÇÃO DE FOTOS (se houver)
+  const itemsWithPhotos = data.items.filter(item => (item as any).photos && (item as any).photos.length > 0);
+  
+  if (itemsWithPhotos.length > 0) {
+    pdf.addPage(); // Nova página para fotos
+    
+    // Título da seção de fotos
+    pdf.setFontSize(14);
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(0, 51, 153); // Azul Malta
+    pdf.text("REGISTRO FOTOGRÁFICO DOS EQUIPAMENTOS", pageWidth / 2, 20, { align: "center" });
+    pdf.line(margin, 25, pageWidth - margin, 25);
+    
+    pdf.setTextColor(0, 0, 0);
+    
+    let photoX = margin;
+    let photoY = 35;
+    let photoCount = 0;
+    const photoWidth = 123.7; // 12.37cm
+    const photoHeight = 68.1; // 6.81cm
+    const photoGap = 10; // 1cm
+    
+    for (const item of itemsWithPhotos) {
+      const photos = (item as any).photos || [];
+      
+      for (const photoUrl of photos) {
+        try {
+          // Adicionar foto
+          pdf.addImage(photoUrl, 'JPEG', photoX, photoY, photoWidth, photoHeight);
+          
+          // Legenda
+          pdf.setFontSize(8);
+          pdf.setFont("helvetica", "bold");
+          pdf.text(`PAT: ${item.pat_code || 'N/A'}`, photoX, photoY + photoHeight + 5);
+          pdf.setFont("helvetica", "normal");
+          const specText = pdf.splitTextToSize(item.specification, photoWidth);
+          pdf.text(specText, photoX, photoY + photoHeight + 10);
+          
+          photoCount++;
+          
+          // Posicionar próxima foto (grid 2x2)
+          if (photoCount % 2 === 0) {
+            photoX = margin;
+            photoY += photoHeight + 20; // Próxima linha
+          } else {
+            photoX += photoWidth + photoGap; // Próxima coluna
+          }
+          
+          // Nova página a cada 4 fotos
+          if (photoCount % 4 === 0 && photoCount < itemsWithPhotos.length * photos.length) {
+            pdf.addPage();
+            photoX = margin;
+            photoY = 20;
+          }
+        } catch (error) {
+          console.error('Erro ao adicionar foto ao PDF:', error);
+        }
+      }
+    }
+  }
 
   return pdf.output("blob");
 };

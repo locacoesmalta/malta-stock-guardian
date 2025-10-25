@@ -30,12 +30,21 @@
     width: 100% !important;
   }
 
-  /* Cabeçalho do contrato */
+  /* Cabeçalho Malta padronizado */
   .contract-header {
     text-align: center;
     margin-bottom: 2rem;
-    border-bottom: 2px solid #000;
+    border-bottom: 2px solid #003399;
     padding-bottom: 1rem;
+    background-color: #f0f4ff;
+    padding: 1rem;
+  }
+  
+  .contract-header img {
+    height: 50px;
+    width: auto;
+    margin: 0 auto 0.5rem;
+    display: block;
   }
 
   /* Cards e seções */
@@ -46,19 +55,27 @@
     padding: 1rem;
   }
 
-  /* Títulos */
+  /* Títulos padronizados */
   h1, h2, h3 {
-    color: black;
+    color: #003399;
   }
 
   h1 {
-    font-size: 24pt;
+    font-size: 20pt;
     margin-bottom: 0.5rem;
+    font-weight: bold;
   }
 
   h2 {
-    font-size: 18pt;
+    font-size: 16pt;
     margin-bottom: 0.5rem;
+    font-weight: bold;
+  }
+  
+  h3 {
+    font-size: 12pt;
+    margin-bottom: 0.3rem;
+    font-weight: 600;
   }
 
   /* Tabelas e campos */

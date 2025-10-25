@@ -6,6 +6,7 @@ import { BackButton } from "@/components/BackButton";
 import { Loader2, Printer, Download } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import "@/styles/receipt-full-print.css";
 
 export const ReceiptView = () => {
   const { id } = useParams();
@@ -37,6 +38,19 @@ export const ReceiptView = () => {
     ? 'COMPROVANTE DE ENTREGA DE EQUIPAMENTOS'
     : 'COMPROVANTE DE DEVOLUÇÃO DE EQUIPAMENTOS';
 
+  // Coletar todas as fotos dos items
+  const allPhotos = receipt.items.flatMap((item) => {
+    if (!item.photos || item.photos.length === 0) return [];
+    return item.photos.map((photoUrl: string, index: number) => ({
+      url: photoUrl,
+      pat: item.pat_code || 'N/A',
+      specification: item.specification,
+      comment: `Foto ${index + 1} de ${item.photos.length}`,
+    }));
+  });
+
+  const hasPhotos = allPhotos.length > 0;
+
   return (
     <div className="container mx-auto p-6 max-w-5xl">
       <div className="print:hidden mb-4 flex items-center justify-between">
@@ -58,9 +72,9 @@ export const ReceiptView = () => {
         </div>
       </div>
 
-      <Card className="receipt-print">
-        <CardHeader className="bg-primary text-primary-foreground print:bg-white print:text-black print:border-b-2 print:border-black">
-          <div className="flex items-center justify-between">
+      <Card className="receipt-full-print">
+        <CardHeader className="receipt-full-print-header bg-primary text-primary-foreground">
+          <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-4">
               <img
                 src="/malta-logo.webp"
@@ -81,11 +95,11 @@ export const ReceiptView = () => {
         </CardHeader>
 
         <CardContent className="pt-6 space-y-6">
-          <div className="text-center">
-            <h2 className="text-lg font-bold print:text-xl">{title}</h2>
+          <div className={`receipt-title receipt-title-${receipt.receipt_type}`}>
+            {title}
           </div>
 
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="receipt-info-grid grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="font-semibold">Cliente:</span> {receipt.client_name}
             </div>
@@ -119,40 +133,44 @@ export const ReceiptView = () => {
             )}
           </div>
 
-          <div className="border rounded-lg overflow-hidden">
-            <div className="bg-muted grid grid-cols-12 gap-4 p-3 font-semibold text-sm print:bg-gray-200">
-              <div className="col-span-2">QUANT.</div>
-              <div className="col-span-8">ESPECIFICAÇÃO</div>
-              <div className="col-span-2">PAT</div>
-            </div>
-            <div className="divide-y">
+          <table className="receipt-equipment-table border rounded-lg overflow-hidden w-full">
+            <thead>
+              <tr className="bg-muted">
+                <th className="p-3 text-left font-semibold text-sm w-16">QUANT.</th>
+                <th className="p-3 text-left font-semibold text-sm">ESPECIFICAÇÃO</th>
+                <th className="p-3 text-left font-semibold text-sm w-24">PAT</th>
+                <th className="p-3 text-left font-semibold text-sm w-48">COMENTÁRIOS</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
               {receipt.items.map((item) => (
-                <div key={item.id} className="grid grid-cols-12 gap-4 p-3 text-sm">
-                  <div className="col-span-2">{item.quantity}</div>
-                  <div className="col-span-8">{item.specification}</div>
-                  <div className="col-span-2">{item.pat_code || '-'}</div>
-                </div>
+                <tr key={item.id} className="text-sm">
+                  <td className="p-3">{item.quantity}</td>
+                  <td className="p-3">{item.specification}</td>
+                  <td className="p-3">{item.pat_code || '-'}</td>
+                  <td className="p-3">{(item as any).equipment_comments || '-'}</td>
+                </tr>
               ))}
-            </div>
-          </div>
+            </tbody>
+          </table>
 
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+          <div className="receipt-signature-section grid grid-cols-2 gap-4 pt-4 border-t">
             {receipt.received_by_malta && (
-              <div>
-                <p className="font-semibold text-sm mb-2">Recebido por Malta:</p>
+              <div className="receipt-signature-box">
+                <h3 className="font-semibold text-sm mb-2">Recebido por Malta:</h3>
                 <p className="text-sm whitespace-pre-wrap">{receipt.received_by_malta}</p>
               </div>
             )}
-            <div>
-              <p className="font-semibold text-sm mb-2">Assinatura do Cliente:</p>
+            <div className="receipt-signature-box">
+              <h3 className="font-semibold text-sm mb-2">Assinatura do Cliente:</h3>
               {receipt.signature ? (
                 <div className="border-2 border-muted-foreground/30 rounded-md p-2 bg-white">
                   <img 
                     src={receipt.signature} 
                     alt="Assinatura do Cliente" 
-                    className="w-full h-auto max-h-[120px] object-contain"
+                    className="receipt-signature-img w-full h-auto max-h-[120px] object-contain"
                   />
-                  <div className="border-t border-muted-foreground/50 pt-2 mt-2">
+                  <div className="receipt-signature-footer border-t border-muted-foreground/50 pt-2 mt-2">
                     <p className="text-xs text-center text-muted-foreground">
                       {receipt.received_by}
                     </p>
@@ -164,7 +182,7 @@ export const ReceiptView = () => {
               ) : (
                 <div className="border-2 border-dashed border-muted-foreground/30 rounded-md p-4 min-h-[120px] bg-muted/10 print:bg-white">
                   <div className="h-16"></div>
-                  <div className="border-t border-muted-foreground/50 pt-2 mt-2">
+                  <div className="receipt-signature-footer border-t border-muted-foreground/50 pt-2 mt-2">
                     <p className="text-xs text-center text-muted-foreground">
                       {receipt.received_by}
                     </p>
@@ -178,6 +196,31 @@ export const ReceiptView = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* SEÇÃO DE FOTOS - Renderizada em página separada */}
+      {hasPhotos && (
+        <Card className="receipt-full-print mt-8 print:mt-0">
+          <CardContent className="receipt-photos-section pt-6">
+            <h2 className="receipt-photos-title">REGISTRO FOTOGRÁFICO DOS EQUIPAMENTOS</h2>
+            <div className="receipt-photos-grid">
+              {allPhotos.map((photo, index) => (
+                <div key={index} className="receipt-photo-item">
+                  <img 
+                    src={photo.url} 
+                    alt={`Foto ${index + 1}`} 
+                    className="receipt-photo-img"
+                  />
+                  <div className="receipt-photo-caption">
+                    <p><strong>PAT:</strong> {photo.pat}</p>
+                    <p><strong>Especificação:</strong> {photo.specification}</p>
+                    <p className="text-muted-foreground">{photo.comment}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

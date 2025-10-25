@@ -34,25 +34,38 @@
     margin: 1.5cm;
   }
 
-  /* Header do caixa */
+  /* Header Malta padronizado */
   .cash-box-print-header {
     text-align: center;
     margin-bottom: 30px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #000;
+    padding: 1rem;
+    background-color: #003399;
+    color: white;
+    border-radius: 4px;
+  }
+  
+  .cash-box-print-header img {
+    height: 50px;
+    width: auto;
+    margin: 0 auto 0.5rem;
+    display: block;
+    background: white;
+    padding: 4px;
+    border-radius: 4px;
   }
 
   .cash-box-print-header h1 {
-    font-size: 24pt;
+    font-size: 20pt;
     font-weight: bold;
     margin: 0 0 8px 0;
-    color: #000;
+    color: white;
   }
 
   .cash-box-print-header p {
     font-size: 11pt;
-    color: #333;
+    color: white;
     margin: 0;
+    opacity: 0.9;
   }
 
   /* Cards de informação */
@@ -65,31 +78,36 @@
   }
 
   .cash-box-card {
-    border: 1px solid #ddd;
+    border: 2px solid #003399;
     padding: 12px;
     border-radius: 6px;
     text-align: center;
-    background: #f9f9f9;
+    background: #f0f4ff;
   }
 
   .cash-box-card-label {
     font-size: 9pt;
-    color: #666;
+    color: #003399;
     margin-bottom: 6px;
+    font-weight: 600;
   }
 
   .cash-box-card-value {
     font-size: 13pt;
     font-weight: bold;
-    color: #000;
+    color: #003399;
   }
 
   .cash-box-card.low-balance {
     border-color: #ef4444;
-    background: #fee;
+    background: #fee2e2;
   }
 
   .cash-box-card.low-balance .cash-box-card-value {
+    color: #dc2626;
+  }
+  
+  .cash-box-card.low-balance .cash-box-card-label {
     color: #dc2626;
   }
 

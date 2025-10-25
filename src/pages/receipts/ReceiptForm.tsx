@@ -139,11 +139,14 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
       shouldSendWebhook: true,
     });
 
-    if (shouldPrint) {
-      // TODO: Implementar impressão
+    if (shouldPrint && result) {
+      // Aguardar um pouco para garantir que salvou
+      setTimeout(() => {
+        window.print();
+      }, 1000);
+    } else {
+      navigate('/receipts/history');
     }
-
-    navigate('/receipts/history');
   };
 
   if (isLoadingNumber) {
