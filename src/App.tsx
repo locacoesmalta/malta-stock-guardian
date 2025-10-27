@@ -44,6 +44,7 @@ const ReceiptMovementReport = lazy(() => import("./pages/receipts/ReceiptMovemen
 const ChangePasswordRequired = lazy(() => import("./pages/ChangePasswordRequired"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Welcome = lazy(() => import("./pages/Welcome"));
+const Chat = lazy(() => import("./pages/Chat"));
 
 const queryClient = new QueryClient();
 
@@ -377,6 +378,14 @@ const App = () => (
                     <PermissionRoute permission="can_view_reports">
                       <ReceiptMovementReport />
                     </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/chat" 
+                element={
+                  <ProtectedLayout>
+                    <Chat />
                   </ProtectedLayout>
                 } 
               />
