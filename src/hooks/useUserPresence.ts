@@ -9,6 +9,7 @@ export interface OnlineUser {
   user_email: string;
   status: 'online' | 'offline';
   last_seen: string;
+  is_active: boolean;
 }
 
 export const useUserPresence = () => {
@@ -18,29 +19,32 @@ export const useUserPresence = () => {
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
 
   // Buscar todos os usuários ativos do sistema
-  const fetchAllUsers = useCallback(async () => {
-    if (!user) return;
+  useEffect(() => {
+    const fetchAllUsers = async () => {
+      if (!user) return;
 
-    const { data: profiles, error } = await supabase
-      .from('profiles')
-      .select('id, full_name, email')
-      .neq('id', user.id);
+      const { data: activeUsers } = await supabase
+        .from('user_permissions')
+        .select('user_id, profiles(full_name, email)')
+        .eq('is_active', true);
 
-    if (error) {
-      console.error('Error fetching profiles:', error);
-      return;
-    }
+      if (activeUsers) {
+        const users: OnlineUser[] = activeUsers
+          .filter(u => u.user_id !== user.id && u.profiles)
+          .map(u => ({
+            user_id: u.user_id,
+            user_name: (u.profiles as any)?.full_name || (u.profiles as any)?.email?.split('@')[0] || 'Usuário',
+            user_email: (u.profiles as any)?.email || '',
+            status: 'offline' as const,
+            last_seen: new Date().toISOString(),
+            is_active: true,
+          }));
+        
+        setAllUsers(users);
+      }
+    };
 
-    if (profiles) {
-      const users: OnlineUser[] = profiles.map(profile => ({
-        user_id: profile.id,
-        user_name: profile.full_name || profile.email || 'Usuário',
-        user_email: profile.email || '',
-        status: 'offline',
-        last_seen: new Date().toISOString(),
-      }));
-      setAllUsers(users);
-    }
+    fetchAllUsers();
   }, [user]);
 
   const trackPresence = useCallback(async () => {
@@ -67,12 +71,12 @@ export const useUserPresence = () => {
             }
           });
         });
-        
-        // Atualizar status de todos os usuários baseado na presença
-        setAllUsers(prevUsers => 
-          prevUsers.map(u => ({
+
+        // Atualizar status dos usuários - marcar online os que estão presentes
+        setOnlineUsers(prevUsers => 
+          allUsers.map(u => ({
             ...u,
-            status: onlineUserIds.has(u.user_id) ? 'online' : 'offline'
+            status: onlineUserIds.has(u.user_id) ? 'online' as const : 'offline' as const,
           }))
         );
       })
@@ -102,10 +106,9 @@ export const useUserPresence = () => {
       });
 
     setChannel(presenceChannel);
-  }, [user]);
+  }, [user, allUsers]);
 
   useEffect(() => {
-    fetchAllUsers();
     trackPresence();
 
     return () => {
@@ -113,7 +116,14 @@ export const useUserPresence = () => {
         channel.unsubscribe();
       }
     };
-  }, [trackPresence, fetchAllUsers]);
+  }, [trackPresence]);
 
-  return { onlineUsers: allUsers };
+  // Atualizar onlineUsers quando allUsers mudar
+  useEffect(() => {
+    if (allUsers.length > 0 && onlineUsers.length === 0) {
+      setOnlineUsers(allUsers);
+    }
+  }, [allUsers, onlineUsers.length]);
+
+  return { onlineUsers };
 };

@@ -46,10 +46,13 @@ export const UserPresenceList = ({ onlineUsers, onSelectUser }: UserPresenceList
                   />
                 </div>
                 <div className="flex-1 text-left">
-                  <p className="text-sm font-medium">{user.user_name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {user.user_email} • {user.status === 'online' ? 'Online' : 'Offline'}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium">{user.user_name}</p>
+                    {user.status === 'online' && (
+                      <span className="text-xs text-green-600 dark:text-green-400">• Online</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{user.user_email}</p>
                 </div>
               </Button>
             ))
