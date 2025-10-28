@@ -99,6 +99,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
+  // Keep-alive: Refresh session a cada 5 minutos para manter usuário online
+  useEffect(() => {
+    if (!session) return;
+
+    const keepAlive = setInterval(async () => {
+      try {
+        const { data, error } = await supabase.auth.refreshSession();
+        if (error) {
+          console.error('[AUTH] Error refreshing session:', error);
+          return;
+        }
+        if (data.session) {
+          console.log('[AUTH] Session refreshed successfully');
+          setSession(data.session);
+          setUser(data.session.user);
+        }
+      } catch (error) {
+        console.error('[AUTH] Keep-alive error:', error);
+      }
+    }, 5 * 60 * 1000); // 5 minutos
+
+    return () => clearInterval(keepAlive);
+  }, [session]);
+
   const checkAdminStatus = async (userId: string) => {
     // Previne múltiplas chamadas simultâneas
     if (isCheckingAuth) {

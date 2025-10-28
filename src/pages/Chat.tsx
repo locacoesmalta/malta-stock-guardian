@@ -1,21 +1,42 @@
 import { useState, useRef, useEffect } from "react";
 import { useMessages } from "@/hooks/useMessages";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserPresence } from "@/hooks/useUserPresence";
+import { useTypingIndicator } from "@/hooks/useTypingIndicator";
+import { useConversations } from "@/hooks/useConversations";
+import { useGroups } from "@/hooks/useGroups";
+import { useNotificationSound } from "@/hooks/useNotificationSound";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
-import { Send, Loader2 } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Send, Loader2, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { UserPresenceList } from "@/components/chat/UserPresenceList";
+import { ConversationList } from "@/components/chat/ConversationList";
+import { TypingIndicator } from "@/components/chat/TypingIndicator";
+import { NotificationToggle } from "@/components/chat/NotificationToggle";
+import { CreateGroupDialog } from "@/components/chat/CreateGroupDialog";
 
 const Chat = () => {
   const { user } = useAuth();
-  const { messages, isLoading, sendMessage, isSending, newMessageId } = useMessages();
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const prevMessagesLengthRef = useRef(0);
+
+  const { messages, isLoading, sendMessage, isSending, newMessageId } = useMessages();
+  const { onlineUsers } = useUserPresence();
+  const { conversations, isLoading: loadingConversations, createDirectConversation, markAsRead } = useConversations();
+  const { groups } = useGroups();
+  const { typingUsers, startTyping, stopTyping } = useTypingIndicator(selectedConversationId);
+  const { playNotification, isMuted, toggleMute } = useNotificationSound();
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -24,9 +45,39 @@ const Chat = () => {
     }
   }, [messages]);
 
+  // Play notification sound for new messages from others
+  useEffect(() => {
+    if (messages.length > prevMessagesLengthRef.current) {
+      const latestMessage = messages[messages.length - 1];
+      if (latestMessage && latestMessage.user_id !== user?.id) {
+        playNotification();
+      }
+    }
+    prevMessagesLengthRef.current = messages.length;
+  }, [messages, user, playNotification]);
+
+  // Handle selecting user for direct message
+  const handleSelectUser = async (userId: string) => {
+    try {
+      const conversationId = await createDirectConversation(userId);
+      setSelectedConversationId(conversationId);
+      setSidebarOpen(false);
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+    }
+  };
+
+  // Handle selecting conversation
+  const handleSelectConversation = async (conversationId: string) => {
+    setSelectedConversationId(conversationId);
+    setSidebarOpen(false);
+    await markAsRead(conversationId);
+  };
+
   const handleSend = () => {
     if (!inputValue.trim() || isSending) return;
     
+    stopTyping();
     sendMessage(inputValue);
     setInputValue("");
     
@@ -49,20 +100,94 @@ const Chat = () => {
     // Auto-resize textarea
     e.target.style.height = "auto";
     e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+
+    // Start typing indicator
+    if (e.target.value.trim()) {
+      startTyping();
+    } else {
+      stopTyping();
+    }
   };
 
-  return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] md:h-[calc(100vh-5rem)] p-4 md:p-6">
-      <div className="mb-4">
-        <h1 className="text-3xl font-bold text-foreground">Chat em Tempo Real</h1>
-        <p className="text-muted-foreground mt-1">
-          Converse com a equipe em tempo real
-        </p>
+  const Sidebar = () => (
+    <div className="h-full border-r bg-card">
+      <div className="p-4 border-b flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Chat</h2>
+        <NotificationToggle isMuted={isMuted} onToggle={toggleMute} />
       </div>
 
-      <Card className="flex-1 flex flex-col overflow-hidden">
-        {/* Messages Area */}
-        <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+      <Tabs defaultValue="conversations" className="flex-1 flex flex-col">
+        <TabsList className="w-full grid grid-cols-3">
+          <TabsTrigger value="conversations">Conversas</TabsTrigger>
+          <TabsTrigger value="users">Online</TabsTrigger>
+          <TabsTrigger value="groups">Grupos</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="conversations" className="flex-1 mt-0">
+          <ConversationList
+            conversations={conversations}
+            selectedConversationId={selectedConversationId}
+            onSelectConversation={handleSelectConversation}
+          />
+        </TabsContent>
+        
+        <TabsContent value="users" className="flex-1 mt-0">
+          <UserPresenceList
+            onlineUsers={onlineUsers}
+            onSelectUser={handleSelectUser}
+          />
+        </TabsContent>
+        
+        <TabsContent value="groups" className="flex-1 mt-0">
+          <div className="p-4 space-y-4">
+            <CreateGroupDialog onlineUsers={onlineUsers} />
+            <ConversationList
+              conversations={conversations.filter(c => c.type === 'group')}
+              selectedConversationId={selectedConversationId}
+              onSelectConversation={handleSelectConversation}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+
+  return (
+    <div className="flex h-[calc(100vh-4rem)] md:h-[calc(100vh-5rem)]">
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block w-80">
+        <Sidebar />
+      </div>
+
+      {/* Mobile Sidebar */}
+      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetContent side="left" className="w-80 p-0">
+          <Sidebar />
+        </SheetContent>
+      </Sheet>
+
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col">
+        <div className="p-4 border-b flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="w-5 h-5" />
+          </Button>
+          <div>
+            <h1 className="text-lg font-bold">Chat em Tempo Real</h1>
+            <p className="text-sm text-muted-foreground">
+              {onlineUsers.length} usuários online
+            </p>
+          </div>
+        </div>
+
+        <Card className="flex-1 flex flex-col overflow-hidden m-4 mt-0">
+          {/* Messages Area */}
+          <ScrollArea className="flex-1 p-4" ref={scrollRef}>
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -114,6 +239,9 @@ const Chat = () => {
           )}
         </ScrollArea>
 
+        {/* Typing Indicator */}
+        <TypingIndicator typingUsers={typingUsers} />
+
         {/* Input Area - Fixed at bottom */}
         <div className="border-t bg-background p-4">
           <div className="flex gap-2 items-end">
@@ -142,6 +270,7 @@ const Chat = () => {
           </div>
         </div>
       </Card>
+      </div>
     </div>
   );
 };
