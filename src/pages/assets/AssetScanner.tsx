@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeScannerState, Html5QrcodeSupportedFormats } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -34,6 +34,9 @@ export default function AssetScanner() {
   
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const qrReaderRef = useRef<HTMLDivElement>(null);
+  const retryCountRef = useRef(0);
+  const MAX_RETRIES = 3;
 
   // Detectar se é mobile
   useEffect(() => {
@@ -83,26 +86,47 @@ export default function AssetScanner() {
   const requestCameraPermission = async (): Promise<boolean> => {
     setPermissionState("checking");
     
+    // Verificar se mediaDevices está disponível
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      toast.error("Seu navegador não suporta acesso à câmera", {
+        description: "Por favor, use um navegador mais recente ou verifique as configurações de segurança."
+      });
+      setPermissionState("denied");
+      return false;
+    }
+    
     try {
+      console.log("[Scanner] Solicitando permissão da câmera...");
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode } 
+        video: { 
+          facingMode,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
       });
       
+      console.log("[Scanner] Permissão concedida, fechando stream de teste");
       // Fechar o stream imediatamente - só queremos verificar permissões
       stream.getTracks().forEach(track => track.stop());
       
       setPermissionState("granted");
       return true;
     } catch (error: any) {
-      console.error("Erro ao solicitar permissão da câmera:", error);
+      console.error("[Scanner] Erro ao solicitar permissão da câmera:", error);
       
       if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
         setPermissionState("denied");
-        toast.error("Permissão da câmera negada. Por favor, habilite nas configurações do navegador.", {
+        toast.error("Permissão da câmera negada", {
+          description: "Por favor, habilite o acesso à câmera nas configurações do navegador.",
           duration: 5000
         });
       } else if (error.name === "NotFoundError") {
         toast.error("Nenhuma câmera encontrada no dispositivo.");
+        setPermissionState("denied");
+      } else if (error.name === "NotReadableError" || error.name === "AbortError") {
+        toast.error("Câmera já está em uso", {
+          description: "Feche outros aplicativos que possam estar usando a câmera."
+        });
         setPermissionState("denied");
       } else {
         toast.error("Erro ao acessar a câmera: " + error.message);
@@ -113,39 +137,86 @@ export default function AssetScanner() {
     }
   };
 
+  // Aguardar o elemento estar no DOM
+  const waitForElement = async (id: string, maxAttempts = 20): Promise<boolean> => {
+    for (let i = 0; i < maxAttempts; i++) {
+      console.log(`[Scanner] Tentativa ${i + 1}/${maxAttempts} de encontrar elemento #${id}`);
+      const element = document.getElementById(id);
+      if (element) {
+        console.log(`[Scanner] Elemento #${id} encontrado!`);
+        return true;
+      }
+      await new Promise(resolve => setTimeout(resolve, 150));
+    }
+    console.error(`[Scanner] Elemento #${id} não encontrado após ${maxAttempts} tentativas`);
+    return false;
+  };
+
   const startScanner = async () => {
-    if (scannerState !== "idle") return;
+    if (scannerState !== "idle" && scannerState !== "error") {
+      console.log("[Scanner] Scanner já está ativo ou inicializando");
+      return;
+    }
     
+    console.log("[Scanner] Iniciando scanner...");
     setScannerState("initializing");
+    retryCountRef.current = 0;
     
     // Solicitar permissão explicitamente
     const hasPermission = await requestCameraPermission();
     if (!hasPermission) {
+      console.log("[Scanner] Permissão não concedida");
       setScannerState("idle");
       return;
     }
 
     try {
+      // Aguardar o elemento estar disponível no DOM
+      console.log("[Scanner] Aguardando elemento #qr-reader...");
+      const elementFound = await waitForElement("qr-reader");
+      
+      if (!elementFound) {
+        throw new Error("Elemento #qr-reader não encontrado no DOM após múltiplas tentativas");
+      }
+
+      console.log("[Scanner] Criando instância Html5Qrcode...");
       const html5QrCode = new Html5Qrcode("qr-reader");
       html5QrCodeRef.current = html5QrCode;
 
       const config = {
-        fps: isMobile ? 10 : 15,
+        fps: isMobile ? 5 : 10,
         qrbox: isMobile 
-          ? { width: Math.min(250, window.innerWidth - 80), height: Math.min(250, window.innerWidth - 80) }
+          ? { 
+              width: Math.min(200, window.innerWidth * 0.7), 
+              height: Math.min(200, window.innerWidth * 0.7) 
+            }
           : { width: 300, height: 300 },
         aspectRatio: 1.0,
         disableFlip: false,
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats.QR_CODE,
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.CODE_39,
+        ],
+        videoConstraints: {
+          facingMode,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
       };
 
+      console.log("[Scanner] Iniciando câmera com config:", config);
       await html5QrCode.start(
         { facingMode },
         config,
-        (decodedText) => {
+        (decodedText, decodedResult) => {
+          console.log("[Scanner] Código detectado:", decodedText, "Formato:", decodedResult.result.format);
           setScannedCode(decodedText);
-          toast.success("QR Code detectado!", {
+          toast.success("Código detectado!", {
             icon: <CheckCircle2 className="h-4 w-4" />,
-            description: "Buscando patrimônio..."
+            description: `Formato: ${decodedResult.result.format?.formatName || "QR Code"}`
           });
           
           // Vibração se disponível
@@ -159,43 +230,81 @@ export default function AssetScanner() {
         undefined
       );
 
+      console.log("[Scanner] Câmera iniciada com sucesso!");
       setScannerState("active");
-      toast.success("Câmera ativada! Aponte para o QR Code", {
-        icon: <Camera className="h-4 w-4" />
+      retryCountRef.current = 0;
+      toast.success("Câmera ativada!", {
+        icon: <Camera className="h-4 w-4" />,
+        description: "Aponte para o QR Code ou código de barras"
       });
       
     } catch (error: any) {
-      console.error("Erro ao iniciar scanner:", error);
+      console.error("[Scanner] Erro ao iniciar scanner:", error);
       setScannerState("error");
-      toast.error("Erro ao iniciar scanner: " + error.message);
+      
+      // Retry automático se não exceder o máximo
+      if (retryCountRef.current < MAX_RETRIES && error.message.includes("qr-reader")) {
+        retryCountRef.current++;
+        toast.error(`Tentativa ${retryCountRef.current}/${MAX_RETRIES}...`, {
+          description: "Tentando novamente em 2 segundos"
+        });
+        setTimeout(() => startScanner(), 2000);
+      } else {
+        toast.error("Erro ao iniciar scanner", {
+          description: error.message,
+          action: {
+            label: "Tentar Novamente",
+            onClick: () => {
+              setScannerState("idle");
+              retryCountRef.current = 0;
+            }
+          }
+        });
+      }
     }
   };
 
   const stopScanner = async () => {
+    console.log("[Scanner] Parando scanner...");
     if (html5QrCodeRef.current) {
       try {
         const state = html5QrCodeRef.current.getState();
+        console.log("[Scanner] Estado atual:", state);
+        
         if (state === Html5QrcodeScannerState.SCANNING || state === Html5QrcodeScannerState.PAUSED) {
+          console.log("[Scanner] Parando scanner ativo...");
           await html5QrCodeRef.current.stop();
         }
+        
+        // Aguardar um pouco antes de limpar
+        await new Promise(resolve => setTimeout(resolve, 100));
         html5QrCodeRef.current.clear();
+        console.log("[Scanner] Scanner limpo com sucesso");
       } catch (error) {
-        console.error("Erro ao parar scanner:", error);
+        console.error("[Scanner] Erro ao parar scanner:", error);
+        // Forçar limpeza mesmo com erro
+        try {
+          html5QrCodeRef.current.clear();
+        } catch (e) {
+          console.error("[Scanner] Erro ao limpar scanner:", e);
+        }
       }
       html5QrCodeRef.current = null;
     }
     setScannerState("idle");
     setTorchEnabled(false);
+    retryCountRef.current = 0;
   };
 
   const toggleCamera = async () => {
+    console.log("[Scanner] Alternando câmera...");
     const newFacingMode = facingMode === "environment" ? "user" : "environment";
     setFacingMode(newFacingMode);
     
     if (scannerState === "active") {
       await stopScanner();
-      // Pequeno delay para garantir limpeza
-      setTimeout(() => startScanner(), 100);
+      // Delay maior para garantir limpeza completa
+      setTimeout(() => startScanner(), 500);
     }
   };
 
@@ -454,46 +563,13 @@ export default function AssetScanner() {
               </div>
             )}
             
-            {scannerState === "idle" ? (
-              <div className="space-y-3">
-                <Button
-                  onClick={startScanner}
-                  className="w-full h-14"
-                  size="lg"
-                  disabled={permissionState === "checking"}
-                >
-                  {permissionState === "checking" ? (
-                    <>
-                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                      Solicitando Permissão...
-                    </>
-                  ) : (
-                    <>
-                      <Camera className="h-5 w-5 mr-2" />
-                      Ativar Câmera
-                    </>
-                  )}
-                </Button>
-                
-                {isMobile && (
-                  <p className="text-xs text-center text-muted-foreground">
-                    💡 Dica: Posicione o QR Code a cerca de 15cm da câmera
-                  </p>
-                )}
-              </div>
-            ) : scannerState === "initializing" ? (
-              <div className="space-y-4">
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-                  <p className="text-lg font-semibold">Inicializando câmera...</p>
-                  <p className="text-sm text-muted-foreground mt-2">Aguarde um momento</p>
-                </div>
-              </div>
-            ) : scannerState === "active" ? (
+            {/* Elemento do scanner - sempre renderizado mas controlado por visibilidade */}
+            <div className={scannerState === "active" ? "block" : "hidden"}>
               <div className="space-y-4">
                 <div className="relative">
                   <div
                     id="qr-reader"
+                    ref={qrReaderRef}
                     className="w-full rounded-lg overflow-hidden border-4 border-primary/30 shadow-lg"
                   />
                   
@@ -539,7 +615,7 @@ export default function AssetScanner() {
                   
                   <div className="absolute bottom-2 left-2 right-2">
                     <div className="bg-background/80 backdrop-blur-sm rounded-lg p-2 text-center shadow-lg">
-                      <p className="text-xs font-medium">Alinhe o QR Code dentro do quadrado</p>
+                      <p className="text-xs font-medium">Alinhe o código dentro do quadrado</p>
                     </div>
                   </div>
                 </div>
@@ -548,28 +624,74 @@ export default function AssetScanner() {
                   onClick={stopScanner}
                   variant="outline"
                   className="w-full"
-                  size="lg"
                 >
-                  Cancelar Scanner
+                  <Camera className="h-4 w-4 mr-2" />
+                  Parar Scanner
                 </Button>
               </div>
-            ) : (
+            </div>
+            
+            {/* Estados do scanner */}
+            {scannerState === "idle" && (
+              <div className="space-y-3">
+                <Button
+                  onClick={startScanner}
+                  className="w-full h-14"
+                  size="lg"
+                  disabled={permissionState === "checking"}
+                >
+                  {permissionState === "checking" ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      Solicitando Permissão...
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="h-5 w-5 mr-2" />
+                      Ativar Câmera
+                    </>
+                  )}
+                </Button>
+                
+                {isMobile && (
+                  <p className="text-xs text-center text-muted-foreground">
+                    💡 Dica: Posicione o código a cerca de 15cm da câmera
+                  </p>
+                )}
+              </div>
+            )}
+            
+            {scannerState === "initializing" && (
               <div className="space-y-4">
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-                  <p className="text-lg font-semibold">Erro ao iniciar scanner</p>
-                  <p className="text-sm text-muted-foreground mt-2">Verifique as permissões da câmera</p>
+                  <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+                  <p className="text-lg font-semibold">Inicializando câmera...</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Aguarde enquanto preparamos o scanner
+                  </p>
                 </div>
-                <Button
-                  onClick={() => {
-                    setScannerState("idle");
-                    setPermissionState("prompt");
-                  }}
-                  variant="outline"
-                  className="w-full"
-                >
-                  Tentar Novamente
-                </Button>
+              </div>
+            )}
+            
+            {scannerState === "error" && (
+              <div className="space-y-4">
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+                  <p className="text-lg font-semibold text-destructive">Erro ao iniciar scanner</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Verifique se a câmera está disponível e tente novamente
+                  </p>
+                  <Button
+                    onClick={() => {
+                      setScannerState("idle");
+                      retryCountRef.current = 0;
+                    }}
+                    className="mt-4"
+                  >
+                    <Camera className="h-4 w-4 mr-2" />
+                    Tentar Novamente
+                  </Button>
+                </div>
               </div>
             )}
 
