@@ -106,6 +106,8 @@ export const useMessages = () => {
         .insert({
           user_id: user.id,
           content: content.trim(),
+          is_global: true,
+          conversation_id: null,
         })
         .select()
         .single();

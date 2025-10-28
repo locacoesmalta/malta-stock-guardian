@@ -7,14 +7,41 @@ export interface OnlineUser {
   user_id: string;
   user_name: string;
   user_email: string;
-  status: 'online' | 'away';
+  status: 'online' | 'offline';
   last_seen: string;
 }
 
 export const useUserPresence = () => {
   const { user } = useAuth();
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  const [allUsers, setAllUsers] = useState<OnlineUser[]>([]);
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
+
+  // Buscar todos os usuários ativos do sistema
+  const fetchAllUsers = useCallback(async () => {
+    if (!user) return;
+
+    const { data: profiles, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, email')
+      .neq('id', user.id);
+
+    if (error) {
+      console.error('Error fetching profiles:', error);
+      return;
+    }
+
+    if (profiles) {
+      const users: OnlineUser[] = profiles.map(profile => ({
+        user_id: profile.id,
+        user_name: profile.full_name || profile.email || 'Usuário',
+        user_email: profile.email || '',
+        status: 'offline',
+        last_seen: new Date().toISOString(),
+      }));
+      setAllUsers(users);
+    }
+  }, [user]);
 
   const trackPresence = useCallback(async () => {
     if (!user) return;
@@ -30,24 +57,24 @@ export const useUserPresence = () => {
     presenceChannel
       .on('presence', { event: 'sync' }, () => {
         const state = presenceChannel.presenceState();
-        const users: OnlineUser[] = [];
+        const onlineUserIds = new Set<string>();
         
         Object.keys(state).forEach((presenceKey) => {
           const presences = state[presenceKey];
           presences.forEach((presence: any) => {
             if (presence.user_id !== user.id) {
-              users.push({
-                user_id: presence.user_id,
-                user_name: presence.user_name,
-                user_email: presence.user_email,
-                status: presence.status || 'online',
-                last_seen: presence.last_seen || new Date().toISOString(),
-              });
+              onlineUserIds.add(presence.user_id);
             }
           });
         });
         
-        setOnlineUsers(users);
+        // Atualizar status de todos os usuários baseado na presença
+        setAllUsers(prevUsers => 
+          prevUsers.map(u => ({
+            ...u,
+            status: onlineUserIds.has(u.user_id) ? 'online' : 'offline'
+          }))
+        );
       })
       .on('presence', { event: 'join' }, ({ key, newPresences }) => {
         console.log('User joined:', key, newPresences);
@@ -78,6 +105,7 @@ export const useUserPresence = () => {
   }, [user]);
 
   useEffect(() => {
+    fetchAllUsers();
     trackPresence();
 
     return () => {
@@ -85,7 +113,7 @@ export const useUserPresence = () => {
         channel.unsubscribe();
       }
     };
-  }, [trackPresence]);
+  }, [trackPresence, fetchAllUsers]);
 
-  return { onlineUsers };
+  return { onlineUsers: allUsers };
 };

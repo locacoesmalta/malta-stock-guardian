@@ -90,7 +90,7 @@ export const CreateGroupDialog = ({ onlineUsers }: CreateGroupDialogProps) => {
             <div className="border rounded-lg p-3 max-h-[200px] overflow-y-auto space-y-2">
               {onlineUsers.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">
-                  Nenhum usuário online
+                  Nenhum usuário disponível
                 </p>
               ) : (
                 onlineUsers.map((user) => (
@@ -102,8 +102,13 @@ export const CreateGroupDialog = ({ onlineUsers }: CreateGroupDialogProps) => {
                     />
                     <label
                       htmlFor={`user-${user.user_id}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
                     >
+                      <div 
+                        className={`w-2 h-2 rounded-full ${
+                          user.status === 'online' ? 'bg-green-500' : 'bg-gray-400'
+                        }`} 
+                      />
                       {user.user_name}
                     </label>
                   </div>

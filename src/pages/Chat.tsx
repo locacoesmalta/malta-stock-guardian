@@ -180,7 +180,7 @@ const Chat = () => {
           <div>
             <h1 className="text-lg font-bold">Chat em Tempo Real</h1>
             <p className="text-sm text-muted-foreground">
-              {onlineUsers.length} usuários online
+              {onlineUsers.filter(u => u.status === 'online').length} usuários online
             </p>
           </div>
         </div>
