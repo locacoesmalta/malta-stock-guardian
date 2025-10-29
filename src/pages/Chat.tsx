@@ -6,6 +6,7 @@ import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 import { useConversations } from "@/hooks/useConversations";
 import { useGroups } from "@/hooks/useGroups";
 import { useNotificationSound } from "@/hooks/useNotificationSound";
+import { useAllUsers } from "@/hooks/useAllUsers";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -33,6 +34,7 @@ const Chat = () => {
 
   const { messages, isLoading, sendMessage, isSending, newMessageId } = useMessages();
   const { onlineUsers } = useUserPresence();
+  const { users: allUsers } = useAllUsers();
   const { conversations, isLoading: loadingConversations, createDirectConversation, markAsRead } = useConversations();
   const { groups } = useGroups();
   const { typingUsers, startTyping, stopTyping } = useTypingIndicator(selectedConversationId);
@@ -134,6 +136,7 @@ const Chat = () => {
         <TabsContent value="users" className="flex-1 mt-0">
           <UserPresenceList
             onlineUsers={onlineUsers}
+            allUsers={allUsers}
             onSelectUser={handleSelectUser}
           />
         </TabsContent>
