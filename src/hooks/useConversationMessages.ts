@@ -9,24 +9,33 @@ export interface Message {
   user_id: string;
   content: string;
   created_at: string;
+  conversation_id: string | null;
+  is_global: boolean;
   user_name?: string | null;
   user_email?: string;
 }
 
-export const useMessages = () => {
+export const useConversationMessages = (conversationId: string | null) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [newMessageId, setNewMessageId] = useState<string | null>(null);
 
-  // Fetch messages
+  // Fetch messages for specific conversation or global
   const { data: messages = [], isLoading } = useQuery({
-    queryKey: ["messages"],
+    queryKey: ["messages", conversationId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("messages")
         .select("*")
         .order("created_at", { ascending: true });
 
+      if (conversationId) {
+        query = query.eq("conversation_id", conversationId);
+      } else {
+        query = query.eq("is_global", true);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
 
       // Fetch user profiles for each message
@@ -36,7 +45,7 @@ export const useMessages = () => {
             .from("profiles")
             .select("full_name, email")
             .eq("id", msg.user_id)
-            .single();
+            .maybeSingle();
 
           return {
             ...msg,
@@ -48,44 +57,48 @@ export const useMessages = () => {
 
       return messagesWithProfiles as Message[];
     },
+    enabled: !!user,
   });
 
   // Realtime subscription
   useEffect(() => {
+    if (!user) return;
+
     const channel = supabase
-      .channel("messages-channel")
+      .channel(`messages-${conversationId || 'global'}`)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "messages",
+          filter: conversationId 
+            ? `conversation_id=eq.${conversationId}`
+            : `is_global=eq.true`,
         },
-        (payload) => {
+        async (payload) => {
           console.log("New message:", payload);
           setNewMessageId(payload.new.id);
           
           // Fetch the new message with profile data
-          Promise.all([
+          const [msgResult, profileResult] = await Promise.all([
             supabase.from("messages").select("*").eq("id", payload.new.id).single(),
-            supabase.from("profiles").select("full_name, email").eq("id", payload.new.user_id).single()
-          ]).then(([msgResult, profileResult]) => {
-            if (msgResult.data) {
-              const messageWithProfile: Message = {
-                ...msgResult.data,
-                user_name: profileResult.data?.full_name,
-                user_email: profileResult.data?.email,
-              };
+            supabase.from("profiles").select("full_name, email").eq("id", payload.new.user_id).maybeSingle()
+          ]);
 
-              queryClient.setQueryData<Message[]>(["messages"], (old = []) => {
-                // Avoid duplicates
-                if (old.some(msg => msg.id === messageWithProfile.id)) return old;
-                return [...old, messageWithProfile];
-              });
-            }
-          });
+          if (msgResult.data) {
+            const messageWithProfile: Message = {
+              ...msgResult.data,
+              user_name: profileResult.data?.full_name,
+              user_email: profileResult.data?.email,
+            };
 
-          // Clear new message highlight after animation
+            queryClient.setQueryData<Message[]>(["messages", conversationId], (old = []) => {
+              if (old.some(msg => msg.id === messageWithProfile.id)) return old;
+              return [...old, messageWithProfile];
+            });
+          }
+
           setTimeout(() => setNewMessageId(null), 1000);
         }
       )
@@ -94,7 +107,7 @@ export const useMessages = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [queryClient, conversationId, user]);
 
   // Send message mutation
   const sendMessage = useMutation({
@@ -106,8 +119,8 @@ export const useMessages = () => {
         .insert({
           user_id: user.id,
           content: content.trim(),
-          is_global: true,
-          conversation_id: null,
+          is_global: !conversationId,
+          conversation_id: conversationId,
         })
         .select()
         .single();

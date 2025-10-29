@@ -17,21 +17,21 @@ export const useAllUsers = () => {
     queryFn: async () => {
       if (!user) return [];
 
-      // Buscar todos os perfis ativos
+      // Buscar todos os perfis
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, full_name, email');
 
       if (profilesError) throw profilesError;
 
-      // Buscar permissões para verificar quem está ativo
+      // Buscar permissões para verificar quem está ativo no sistema
       const { data: permissions, error: permissionsError } = await supabase
         .from('user_permissions')
         .select('user_id, is_active');
 
       if (permissionsError) throw permissionsError;
 
-      // Mapear usuários com status ativo
+      // Mapear usuários com status ativo (permissão para usar o sistema)
       const usersWithStatus = profiles
         .filter(profile => profile.id !== user.id) // Excluir usuário atual
         .map(profile => {
@@ -43,7 +43,7 @@ export const useAllUsers = () => {
             is_active: permission?.is_active ?? false,
           };
         })
-        .filter(u => u.is_active); // Mostrar apenas usuários ativos
+        .filter(u => u.is_active); // Mostrar apenas usuários com permissão ativa
 
       return usersWithStatus as User[];
     },

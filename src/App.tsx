@@ -45,6 +45,7 @@ const ChangePasswordRequired = lazy(() => import("./pages/ChangePasswordRequired
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Welcome = lazy(() => import("./pages/Welcome"));
 const Chat = lazy(() => import("./pages/Chat"));
+const ConversationChat = lazy(() => import("./pages/ConversationChat"));
 
 const queryClient = new QueryClient();
 
@@ -131,6 +132,7 @@ const App = () => (
               <Route path="/change-password-required" element={<ChangePasswordRequired />} />
               <Route path="/welcome" element={<ProtectedLayout><Welcome /></ProtectedLayout>} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              
               <Route 
                 path="/dashboard" 
                 element={
@@ -381,6 +383,7 @@ const App = () => (
                   </ProtectedLayout>
                 } 
               />
+              
               <Route 
                 path="/chat" 
                 element={
@@ -389,6 +392,15 @@ const App = () => (
                   </ProtectedLayout>
                 } 
               />
+              <Route 
+                path="/chat/:conversationId" 
+                element={
+                  <ProtectedLayout>
+                    <ConversationChat />
+                  </ProtectedLayout>
+                } 
+              />
+              
               <Route path="/admin/financial-forecast" element={<ProtectedLayout><AdminRoute><FinancialForecast /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/cash-box" element={<ProtectedLayout><AdminRoute><CashBox /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/products" element={<ProtectedLayout><AdminRoute><Products /></AdminRoute></ProtectedLayout>} />

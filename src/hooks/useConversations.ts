@@ -157,24 +157,37 @@ export const useConversations = () => {
     mutationFn: async (otherUserId: string) => {
       if (!user) throw new Error('Usuário não autenticado');
 
-      // Verificar se já existe conversa entre esses usuários
-      const { data: existing } = await supabase
+      // Buscar conversas do usuário atual
+      const { data: myParticipations, error: myError } = await supabase
         .from('conversation_participants')
         .select('conversation_id')
         .eq('user_id', user.id);
 
-      if (existing) {
-        for (const participation of existing) {
-          const { data: otherParticipation } = await supabase
-            .from('conversation_participants')
-            .select('conversation_id')
-            .eq('conversation_id', participation.conversation_id)
-            .eq('user_id', otherUserId)
+      if (myError) throw myError;
+
+      // Verificar se já existe conversa com o outro usuário
+      if (myParticipations && myParticipations.length > 0) {
+        const conversationIds = myParticipations.map(p => p.conversation_id);
+        
+        const { data: otherParticipations, error: otherError } = await supabase
+          .from('conversation_participants')
+          .select('conversation_id')
+          .eq('user_id', otherUserId)
+          .in('conversation_id', conversationIds);
+
+        if (otherError) throw otherError;
+
+        if (otherParticipations && otherParticipations.length > 0) {
+          // Já existe conversa, verificar se é direct
+          const { data: existingConv } = await supabase
+            .from('conversations')
+            .select('id, type')
+            .eq('id', otherParticipations[0].conversation_id)
+            .eq('type', 'direct')
             .single();
 
-          if (otherParticipation) {
-            // Já existe conversa
-            return participation.conversation_id;
+          if (existingConv) {
+            return existingConv.id;
           }
         }
       }
@@ -202,7 +215,6 @@ export const useConversations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      toast.success('Conversa iniciada!');
     },
     onError: (error) => {
       console.error('Error creating conversation:', error);

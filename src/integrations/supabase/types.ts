@@ -1497,6 +1497,10 @@ export type Database = {
         }[]
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_conversation_participant: {
+        Args: { _conversation_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_user_active: { Args: { _user_id: string }; Returns: boolean }
       registrar_evento_patrimonio: {
         Args: {
