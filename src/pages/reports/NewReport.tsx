@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ProductSearchCombobox } from "@/components/ProductSearchCombobox";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Upload, X, CheckCircle2, AlertCircle } from "lucide-react";
@@ -521,22 +521,14 @@ const NewReport = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Produto *</Label>
-                        <Select
+                        <ProductSearchCombobox
+                          products={products}
                           value={part.product_id}
                           onValueChange={(value) => updatePart(index, "product_id", value)}
-                          required
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um produto" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {products.map((product) => (
-                              <SelectItem key={product.id} value={product.id}>
-                                {product.code} - {product.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          placeholder="Buscar produto por código ou nome..."
+                          showClearButton={true}
+                          onClear={() => updatePart(index, "product_id", "")}
+                        />
                       </div>
 
                       <div className="space-y-2">
