@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { ArrowLeft, Edit, Trash2, Move, AlertCircle } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Move, AlertCircle, CheckCircle2, Clock } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AssetHistorySection } from "@/components/AssetHistorySection";
@@ -19,6 +19,7 @@ import { DeadlineStatusBadge } from "@/components/DeadlineStatusBadge";
 import { AssetSparePartsSection } from "@/components/AssetSparePartsSection";
 import { AssetMaintenanceSection } from "@/components/AssetMaintenanceSection";
 import { AssetMobilizationPartsSection } from "@/components/AssetMobilizationPartsSection";
+import { formatHourmeter } from "@/lib/hourmeterUtils";
 
 export default function AssetView() {
   const { id } = useParams();
@@ -36,6 +37,20 @@ export default function AssetView() {
         .single();
       if (error) throw error;
       return data;
+    },
+    enabled: !!id,
+  });
+
+  // Buscar horímetro total atual
+  const { data: totalHourmeter } = useQuery({
+    queryKey: ["total-hourmeter", id],
+    queryFn: async () => {
+      if (!id) return 0;
+      const { data, error } = await supabase.rpc("get_total_hourmeter", {
+        p_asset_id: id,
+      });
+      if (error) throw error;
+      return data as number;
     },
     enabled: !!id,
   });
@@ -98,11 +113,73 @@ export default function AssetView() {
     return null;
   }
 
+  // Calcular horas restantes para próxima manutenção
+  const hoursUntilMaintenance = asset?.next_maintenance_hourmeter && totalHourmeter
+    ? asset.next_maintenance_hourmeter - totalHourmeter
+    : null;
+
   return (
     <div className="container mx-auto p-3 sm:p-4 md:p-6 max-w-6xl">
       <ConfirmDialog />
 
-      {asset.was_replaced && (
+      {/* Badge de Status de Manutenção */}
+      {asset?.next_maintenance_hourmeter && totalHourmeter !== undefined && (
+        <Alert 
+          className={
+            asset.maintenance_status === 'em_dia' 
+              ? 'mb-4 border-green-500 bg-green-50 dark:bg-green-950' 
+              : asset.maintenance_status === 'proxima_manutencao'
+              ? 'mb-4 border-orange-500 bg-orange-50 dark:bg-orange-950'
+              : asset.maintenance_status === 'atrasada'
+              ? 'mb-4 border-red-500 bg-red-50 dark:bg-red-950'
+              : 'mb-4'
+          }
+        >
+          <AlertDescription className="flex items-center gap-2">
+            {asset.maintenance_status === 'em_dia' && (
+              <>
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <span className="font-medium text-green-700">
+                  ✅ Manutenção em dia
+                </span>
+                {hoursUntilMaintenance && hoursUntilMaintenance > 0 && (
+                  <span className="text-green-600 text-sm ml-2">
+                    (Próxima em {formatHourmeter(hoursUntilMaintenance)})
+                  </span>
+                )}
+              </>
+            )}
+            {asset.maintenance_status === 'proxima_manutencao' && (
+              <>
+                <Clock className="h-4 w-4 text-orange-600" />
+                <span className="font-medium text-orange-700">
+                  🟠 Próxima manutenção se aproximando
+                </span>
+                {hoursUntilMaintenance && hoursUntilMaintenance > 0 && (
+                  <span className="text-orange-600 text-sm ml-2">
+                    (Faltam {formatHourmeter(hoursUntilMaintenance)})
+                  </span>
+                )}
+              </>
+            )}
+            {asset.maintenance_status === 'atrasada' && (
+              <>
+                <AlertCircle className="h-4 w-4 text-red-600" />
+                <span className="font-medium text-red-700">
+                  🔴 Manutenção atrasada
+                </span>
+                {hoursUntilMaintenance && hoursUntilMaintenance < 0 && (
+                  <span className="text-red-600 text-sm ml-2">
+                    (Atrasou {formatHourmeter(Math.abs(hoursUntilMaintenance))})
+                  </span>
+                )}
+              </>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {asset?.was_replaced && (
         <Alert variant="default" className="mb-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
           <AlertCircle className="h-4 w-4 text-yellow-600" />
           <AlertTitle className="text-sm sm:text-base">Equipamento Substituído</AlertTitle>

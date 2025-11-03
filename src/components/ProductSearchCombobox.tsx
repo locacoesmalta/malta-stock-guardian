@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +30,8 @@ interface ProductSearchComboboxProps {
   placeholder?: string;
   showStock?: boolean;
   required?: boolean;
+  showClearButton?: boolean;
+  onClear?: () => void;
 }
 
 export const ProductSearchCombobox = ({
@@ -39,13 +41,15 @@ export const ProductSearchCombobox = ({
   placeholder = "Buscar produto por código ou nome...",
   showStock = false,
   required = false,
+  showClearButton = false,
+  onClear,
 }: ProductSearchComboboxProps) => {
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
   const selectedProduct = products.find((product) => product.id === value);
 
-  // Filtrar produtos em tempo real conforme o usuário digita
+  // Filtrar produtos - mostrar lista ao clicar ou quando digitar
   const filteredProducts = searchValue.length > 0
     ? products.filter(product => {
         const search = searchValue.toLowerCase();
@@ -54,7 +58,14 @@ export const ProductSearchCombobox = ({
           product.name.toLowerCase().includes(search)
         );
       })
-    : [];
+    : products.slice(0, 50); // Mostrar primeiros 50 produtos quando clicar
+
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onValueChange("");
+    if (onClear) onClear();
+    setSearchValue("");
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -66,14 +77,22 @@ export const ProductSearchCombobox = ({
           className="w-full justify-between"
         >
           {selectedProduct ? (
-            <span className="truncate">
+            <span className="truncate flex-1 text-left">
               {selectedProduct.code} - {selectedProduct.name}
               {showStock && ` (Estoque: ${selectedProduct.quantity})`}
             </span>
           ) : (
-            <span className="text-muted-foreground">{placeholder}</span>
+            <span className="text-muted-foreground flex-1 text-left">{placeholder}</span>
           )}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <div className="flex items-center gap-1 ml-2">
+            {showClearButton && selectedProduct && (
+              <X 
+                className="h-4 w-4 shrink-0 opacity-50 hover:opacity-100 cursor-pointer" 
+                onClick={handleClear}
+              />
+            )}
+            <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+          </div>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0 z-50 bg-popover" align="start">
@@ -84,13 +103,11 @@ export const ProductSearchCombobox = ({
             onValueChange={setSearchValue}
           />
           <CommandList>
-            {searchValue.length === 0 ? (
+            {filteredProducts.length === 0 ? (
               <CommandEmpty>
-                Digite para buscar produtos...
-              </CommandEmpty>
-            ) : filteredProducts.length === 0 ? (
-              <CommandEmpty>
-                Nenhum produto encontrado.
+                {searchValue.length === 0 
+                  ? "Clique para ver produtos ou digite para buscar..." 
+                  : "Nenhum produto encontrado."}
               </CommandEmpty>
             ) : (
               <CommandGroup>

@@ -26,6 +26,24 @@ export const useAssetMaintenances = (assetId?: string) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  // Buscar dados do ativo para status de manutenção
+  const { data: assetData } = useQuery({
+    queryKey: ["asset-maintenance-info", assetId],
+    queryFn: async () => {
+      if (!assetId) return null;
+
+      const { data, error } = await supabase
+        .from("assets")
+        .select("next_maintenance_hourmeter, maintenance_status, maintenance_interval")
+        .eq("id", assetId)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!assetId,
+  });
+
   const { data: maintenances, isLoading } = useQuery({
     queryKey: ["asset-maintenances", assetId],
     queryFn: async () => {
@@ -131,8 +149,11 @@ export const useAssetMaintenances = (assetId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["asset-maintenances"] });
+      queryClient.invalidateQueries({ queryKey: ["asset-maintenance-info"] });
+      queryClient.invalidateQueries({ queryKey: ["asset"] });
       queryClient.invalidateQueries({ queryKey: ["patrimonio-historico"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["total-hourmeter"] });
       toast.success("Manutenção registrada com sucesso!");
     },
     onError: (error) => {
@@ -176,6 +197,11 @@ export const useAssetMaintenances = (assetId?: string) => {
     enabled: !!assetId,
   });
 
+  // Função para calcular consumo
+  const calculateConsumption = (current: number, previous: number): number => {
+    return Math.max(0, current - previous);
+  };
+
   return {
     maintenances: maintenances || [],
     isLoading,
@@ -183,5 +209,7 @@ export const useAssetMaintenances = (assetId?: string) => {
     deleteMaintenance,
     totalHourmeter: getTotalHourmeter.data || 0,
     isLoadingTotal: getTotalHourmeter.isLoading,
+    assetMaintenanceData: assetData,
+    calculateConsumption,
   };
 };

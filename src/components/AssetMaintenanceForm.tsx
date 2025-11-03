@@ -22,9 +22,13 @@ import {
 } from "@/components/ui/dialog";
 import { HourmeterInput } from "./HourmeterInput";
 import { ProductSearchCombobox } from "./ProductSearchCombobox";
-import { Plus, Save } from "lucide-react";
+import { Plus, Save, TrendingUp, X } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
 import { MaintenanceData, MaintenancePart } from "@/hooks/useAssetMaintenances";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { formatHourmeter } from "@/lib/hourmeterUtils";
 
 const maintenanceSchema = z.object({
   maintenance_date: z.string().min(1, "Data é obrigatória"),
@@ -57,13 +61,32 @@ export function AssetMaintenanceForm({
 }: AssetMaintenanceFormProps) {
   const [open, setOpen] = useState(false);
   const [selectedParts, setSelectedParts] = useState<MaintenancePart[]>([]);
-  const [previousHourmeter, setPreviousHourmeter] = useState(lastHourmeter);
+  const [previousHourmeter] = useState(lastHourmeter); // Removido setPreviousHourmeter - agora é automático
   const [currentHourmeter, setCurrentHourmeter] = useState(lastHourmeter);
   const [selectedProductId, setSelectedProductId] = useState("");
   const [partQuantity, setPartQuantity] = useState(1);
   const [partCost, setPartCost] = useState(0);
+  const [maintenanceUpToDate, setMaintenanceUpToDate] = useState(true);
   
   const { products } = useProducts();
+
+  // Função para buscar preço do produto automaticamente
+  const handleProductSelect = (productId: string) => {
+    setSelectedProductId(productId);
+    
+    const product = products.find(p => p.id === productId);
+    if (product && product.sale_price) {
+      setPartCost(product.sale_price);
+    } else {
+      setPartCost(0);
+    }
+  };
+
+  // Função para limpar seleção de produto
+  const clearProductSelection = () => {
+    setSelectedProductId("");
+    setPartCost(0);
+  };
 
   const {
     register,
@@ -82,6 +105,11 @@ export function AssetMaintenanceForm({
       labor_cost: 0,
     },
   });
+
+  // Calcular consumo em tempo real
+  const consumption = currentHourmeter > previousHourmeter 
+    ? currentHourmeter - previousHourmeter 
+    : 0;
 
   const maintenanceType = watch("maintenance_type");
 
@@ -183,13 +211,11 @@ export function AssetMaintenanceForm({
 
           <div className="grid grid-cols-2 gap-4">
             <HourmeterInput
-              label="Horímetro Anterior"
+              label="Horímetro Anterior (Automático)"
               value={previousHourmeter}
-              onChange={(value) => {
-                setPreviousHourmeter(value);
-                setValue("previous_hourmeter", value);
-              }}
-              error={errors.previous_hourmeter?.message}
+              onChange={() => {}} // Não permite mudança
+              disabled={true}
+              placeholder={formatHourmeter(previousHourmeter)}
             />
 
             <HourmeterInput
@@ -202,6 +228,27 @@ export function AssetMaintenanceForm({
               error={errors.current_hourmeter?.message}
             />
           </div>
+
+          {consumption > 0 && (
+            <Card className="bg-primary/5 border-primary">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Consumo desta Manutenção
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-1 text-sm">
+                  <p className="text-muted-foreground">Anterior: <span className="font-medium text-foreground">{formatHourmeter(previousHourmeter)}</span></p>
+                  <p className="text-muted-foreground">Atual: <span className="font-medium text-foreground">{formatHourmeter(currentHourmeter)}</span></p>
+                  <Separator className="my-2" />
+                  <p className="font-bold text-base text-primary flex items-center gap-2">
+                    ⚡ Consumo: {formatHourmeter(consumption)}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="services_performed">Serviços Realizados *</Label>
@@ -228,25 +275,41 @@ export function AssetMaintenanceForm({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="technician_name">Nome do Técnico</Label>
-              <Input
-                id="technician_name"
-                {...register("technician_name")}
-                placeholder="Nome do técnico responsável"
-              />
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="technician_name">Nome do Técnico</Label>
+                <Input
+                  id="technician_name"
+                  {...register("technician_name")}
+                  placeholder="Nome do técnico responsável"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="labor_cost">Custo de Mão de Obra (R$)</Label>
+                <Input
+                  id="labor_cost"
+                  type="number"
+                  step="0.01"
+                  {...register("labor_cost", { valueAsNumber: true })}
+                  placeholder="0.00"
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="labor_cost">Custo de Mão de Obra (R$)</Label>
-              <Input
-                id="labor_cost"
-                type="number"
-                step="0.01"
-                {...register("labor_cost", { valueAsNumber: true })}
-                placeholder="0.00"
+            <div className="flex items-center space-x-2 p-3 bg-accent/50 rounded-md">
+              <Checkbox
+                id="maintenance_up_to_date"
+                checked={maintenanceUpToDate}
+                onCheckedChange={(checked) => setMaintenanceUpToDate(checked === true)}
               />
+              <Label 
+                htmlFor="maintenance_up_to_date"
+                className="text-sm cursor-pointer font-normal"
+              >
+                Marcar manutenção como em dia
+              </Label>
             </div>
           </div>
 
@@ -256,12 +319,18 @@ export function AssetMaintenanceForm({
             <div className="grid grid-cols-12 gap-2 items-end">
               <div className="col-span-5">
                 <Label htmlFor="product">Produto</Label>
-                <ProductSearchCombobox
-                  products={products}
-                  value={selectedProductId}
-                  onValueChange={setSelectedProductId}
-                  placeholder="Selecione um produto"
-                />
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <ProductSearchCombobox
+                      products={products}
+                      value={selectedProductId}
+                      onValueChange={handleProductSelect}
+                      placeholder="Selecione um produto"
+                      showClearButton={true}
+                      onClear={clearProductSelection}
+                    />
+                  </div>
+                </div>
               </div>
               
               <div className="col-span-2">
