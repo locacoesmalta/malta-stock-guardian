@@ -348,11 +348,14 @@ export type Database = {
           maintenance_delay_observations: string | null
           maintenance_departure_date: string | null
           maintenance_description: string | null
+          maintenance_interval: number | null
+          maintenance_status: string | null
           maintenance_work_site: string | null
           malta_collaborator: string | null
           manual_attachment: string | null
           manufacturer: string
           model: string | null
+          next_maintenance_hourmeter: number | null
           purchase_date: string | null
           qr_code_data: string | null
           rental_company: string | null
@@ -395,11 +398,14 @@ export type Database = {
           maintenance_delay_observations?: string | null
           maintenance_departure_date?: string | null
           maintenance_description?: string | null
+          maintenance_interval?: number | null
+          maintenance_status?: string | null
           maintenance_work_site?: string | null
           malta_collaborator?: string | null
           manual_attachment?: string | null
           manufacturer: string
           model?: string | null
+          next_maintenance_hourmeter?: number | null
           purchase_date?: string | null
           qr_code_data?: string | null
           rental_company?: string | null
@@ -442,11 +448,14 @@ export type Database = {
           maintenance_delay_observations?: string | null
           maintenance_departure_date?: string | null
           maintenance_description?: string | null
+          maintenance_interval?: number | null
+          maintenance_status?: string | null
           maintenance_work_site?: string | null
           malta_collaborator?: string | null
           manual_attachment?: string | null
           manufacturer?: string
           model?: string | null
+          next_maintenance_hourmeter?: number | null
           purchase_date?: string | null
           qr_code_data?: string | null
           rental_company?: string | null
@@ -1625,6 +1634,7 @@ export type Database = {
         }
         Returns: string
       }
+      update_maintenance_status: { Args: never; Returns: undefined }
       verify_audit_log_integrity: {
         Args: { p_log_id: string }
         Returns: boolean
