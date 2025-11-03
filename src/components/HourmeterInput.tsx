@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatHourmeter, parseHourmeter, validateHourmeterFormat } from "@/lib/hourmeterUtils";
+import { formatHourmeter, parseHourmeter, normalizeHourmeterInput } from "@/lib/hourmeterUtils";
 import { useState, useEffect } from "react";
 
 interface HourmeterInputProps {
@@ -21,32 +21,29 @@ export function HourmeterInput({
   placeholder = "000:00:00",
 }: HourmeterInputProps) {
   const [displayValue, setDisplayValue] = useState(formatHourmeter(value));
+  const [localError, setLocalError] = useState<string>("");
 
   useEffect(() => {
     setDisplayValue(formatHourmeter(value));
   }, [value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let input = e.target.value.replace(/[^\d:]/g, "");
-    
-    // Auto-formatar conforme digita
-    if (input.length <= 3) {
-      input = input;
-    } else if (input.length <= 5) {
-      input = input.slice(0, 3) + ":" + input.slice(3);
-    } else if (input.length <= 8) {
-      input = input.slice(0, 3) + ":" + input.slice(3, 5) + ":" + input.slice(5);
-    } else {
-      input = input.slice(0, 8);
-      input = input.slice(0, 3) + ":" + input.slice(3, 5) + ":" + input.slice(5);
-    }
-
+    const input = e.target.value;
     setDisplayValue(input);
+    setLocalError(""); // Limpa erro enquanto digita
+  };
 
-    // Validar e converter
-    if (validateHourmeterFormat(input)) {
-      const seconds = parseHourmeter(input);
+  const handleBlur = () => {
+    // Quando usuário sai do campo, normaliza o input
+    const normalized = normalizeHourmeterInput(displayValue);
+    
+    if (normalized) {
+      setDisplayValue(normalized);
+      const seconds = parseHourmeter(normalized);
       onChange(seconds);
+      setLocalError("");
+    } else if (displayValue.trim() !== "") {
+      setLocalError("Formato inválido. Use HH:MM:SS (ex: 1:30:45)");
     }
   };
 
@@ -57,14 +54,16 @@ export function HourmeterInput({
         id={label}
         value={displayValue}
         onChange={handleChange}
+        onBlur={handleBlur}
         placeholder={placeholder}
         disabled={disabled}
-        maxLength={9}
-        className={error ? "border-destructive" : ""}
+        className={(error || localError) ? "border-destructive" : ""}
       />
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {(error || localError) && (
+        <p className="text-sm text-destructive">{error || localError}</p>
+      )}
       <p className="text-xs text-muted-foreground">
-        Formato: HHH:MM:SS (ex: 001:30:00 = 1h30min)
+        Formato: HH:MM:SS (ex: 1:30:45 será convertido para 001:30:45)
       </p>
     </div>
   );

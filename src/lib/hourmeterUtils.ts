@@ -39,3 +39,34 @@ export function validateHourmeterFormat(value: string): boolean {
 export function calculateHourmeterDiff(previous: number, current: number): number {
   return Math.max(0, current - previous);
 }
+
+/**
+ * Normaliza entrada de horímetro flexível para o formato padrão 000:00:00
+ * Aceita formatos como: 1:02:20, 12:30:45, 001:02:20
+ * @returns String formatada ou null se inválida
+ */
+export function normalizeHourmeterInput(input: string): string | null {
+  if (!input) return null;
+  
+  // Remove espaços e caracteres inválidos (apenas números e :)
+  const cleaned = input.trim().replace(/[^\d:]/g, '');
+  
+  // Divide pelas partes
+  const parts = cleaned.split(':');
+  
+  // Precisa ter exatamente 3 partes (HH:MM:SS)
+  if (parts.length !== 3) return null;
+  
+  // Converte para números
+  const hours = parseInt(parts[0]) || 0;
+  const minutes = parseInt(parts[1]) || 0;
+  const seconds = parseInt(parts[2]) || 0;
+  
+  // Validação de ranges
+  if (hours < 0 || hours > 999) return null;
+  if (minutes < 0 || minutes > 59) return null;
+  if (seconds < 0 || seconds > 59) return null;
+  
+  // Formata no padrão correto: 000:00:00
+  return `${String(hours).padStart(3, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
