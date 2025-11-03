@@ -46,6 +46,116 @@ export type Database = {
           },
         ]
       }
+      asset_maintenance_parts: {
+        Row: {
+          created_at: string
+          id: string
+          maintenance_id: string
+          product_id: string
+          quantity: number
+          total_cost: number | null
+          unit_cost: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          maintenance_id: string
+          product_id: string
+          quantity?: number
+          total_cost?: number | null
+          unit_cost?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          maintenance_id?: string
+          product_id?: string
+          quantity?: number
+          total_cost?: number | null
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_maintenance_parts_maintenance_id_fkey"
+            columns: ["maintenance_id"]
+            isOneToOne: false
+            referencedRelation: "asset_maintenances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_maintenance_parts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_maintenances: {
+        Row: {
+          asset_id: string
+          created_at: string
+          current_hourmeter: number
+          id: string
+          labor_cost: number | null
+          maintenance_date: string
+          maintenance_type: string
+          observations: string | null
+          parts_cost: number | null
+          previous_hourmeter: number
+          registered_by: string
+          services_performed: string
+          technician_name: string | null
+          total_cost: number | null
+          total_hourmeter: number | null
+          updated_at: string
+        }
+        Insert: {
+          asset_id: string
+          created_at?: string
+          current_hourmeter?: number
+          id?: string
+          labor_cost?: number | null
+          maintenance_date?: string
+          maintenance_type: string
+          observations?: string | null
+          parts_cost?: number | null
+          previous_hourmeter?: number
+          registered_by: string
+          services_performed: string
+          technician_name?: string | null
+          total_cost?: number | null
+          total_hourmeter?: number | null
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string
+          created_at?: string
+          current_hourmeter?: number
+          id?: string
+          labor_cost?: number | null
+          maintenance_date?: string
+          maintenance_type?: string
+          observations?: string | null
+          parts_cost?: number | null
+          previous_hourmeter?: number
+          registered_by?: string
+          services_performed?: string
+          technician_name?: string | null
+          total_cost?: number | null
+          total_hourmeter?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_maintenances_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asset_mobilization_expenses: {
         Row: {
           asset_id: string
@@ -1496,6 +1606,7 @@ export type Database = {
           equipment_count: number
         }[]
       }
+      get_total_hourmeter: { Args: { p_asset_id: string }; Returns: number }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_conversation_participant: {
         Args: { _conversation_id: string; _user_id: string }

@@ -17,6 +17,7 @@ import { AssetHistorySection } from "@/components/AssetHistorySection";
 import { AssetLifeCyclesSection } from "@/components/AssetLifeCyclesSection";
 import { DeadlineStatusBadge } from "@/components/DeadlineStatusBadge";
 import { AssetSparePartsSection } from "@/components/AssetSparePartsSection";
+import { AssetMaintenanceSection } from "@/components/AssetMaintenanceSection";
 import { AssetMobilizationPartsSection } from "@/components/AssetMobilizationPartsSection";
 
 export default function AssetView() {
@@ -162,9 +163,10 @@ export default function AssetView() {
       </div>
 
       <Tabs defaultValue="technical" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-7 h-auto">
           <TabsTrigger value="technical" className="text-xs sm:text-sm">Dados Técnicos</TabsTrigger>
           <TabsTrigger value="status" className="text-xs sm:text-sm">Status Atual</TabsTrigger>
+          <TabsTrigger value="maintenance" className="text-xs sm:text-sm">Manutenções</TabsTrigger>
           <TabsTrigger value="history" className="text-xs sm:text-sm">Histórico</TabsTrigger>
           <TabsTrigger value="lifecycle" className="text-xs sm:text-sm">Ciclos de Vida</TabsTrigger>
           <TabsTrigger value="spare-parts" className="text-xs sm:text-sm">Peças Reposição</TabsTrigger>
@@ -343,6 +345,10 @@ export default function AssetView() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="maintenance">
+          <AssetMaintenanceSection assetId={id!} assetCode={asset.asset_code} />
         </TabsContent>
 
         <TabsContent value="history">
