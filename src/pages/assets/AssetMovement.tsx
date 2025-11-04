@@ -7,6 +7,8 @@ import { format, parseISO } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAssetHistory } from "@/hooks/useAssetHistory";
+import { QRScanner } from "@/components/QRScanner";
+import { formatPAT } from "@/lib/patUtils";
 
 import {
   movementDepositoSchema,
@@ -31,7 +33,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { ArrowLeft, Upload, X } from "lucide-react";
+import { ArrowLeft, Upload, X, QrCode } from "lucide-react";
 import { AssetCollaboratorsManager } from "@/components/AssetCollaboratorsManager";
 
 type MovementType = "deposito_malta" | "em_manutencao" | "locacao" | "aguardando_laudo" | "retorno_obra" | "substituicao";
@@ -58,6 +60,7 @@ export default function AssetMovement() {
   const [substituteNotFound, setSubstituteNotFound] = useState(false);
   const [replacedAssetToReturn, setReplacedAssetToReturn] = useState<any>(null);
   const [replacedAssetReturnDecision, setReplacedAssetReturnDecision] = useState<boolean | null>(null);
+  const [showScanner, setShowScanner] = useState(false);
   
 
   const { data: asset, isLoading } = useQuery({
@@ -624,6 +627,35 @@ export default function AssetMovement() {
     }
   };
 
+  const handleQRScan = async (code: string) => {
+    const formattedPAT = formatPAT(code);
+    
+    if (!formattedPAT) {
+      toast.error("Código inválido");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("assets")
+        .select("id")
+        .eq("asset_code", formattedPAT)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        navigate(`/assets/movement/${data.id}`);
+        toast.success(`Movimentando PAT ${formattedPAT}`);
+      } else {
+        toast.error(`Patrimônio ${formattedPAT} não encontrado`);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar patrimônio:", error);
+      toast.error("Erro ao buscar patrimônio");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto p-4 md:p-6">
@@ -640,11 +672,27 @@ export default function AssetMovement() {
         <Button type="button" variant="ghost" size="icon" onClick={() => navigate(`/assets/view/${id}`)}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl md:text-3xl font-bold">Registrar Movimentação</h1>
           <p className="text-muted-foreground">{asset.equipment_name} - PAT: {asset.asset_code}</p>
         </div>
+        <Button 
+          variant="secondary" 
+          size="icon"
+          onClick={() => setShowScanner(true)}
+          title="Escanear QR Code"
+        >
+          <QrCode className="h-5 w-5" />
+        </Button>
       </div>
+
+      {/* QR Scanner */}
+      {showScanner && (
+        <QRScanner
+          onScan={handleQRScan}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
 
       <Card className="mb-6">
         <CardHeader>

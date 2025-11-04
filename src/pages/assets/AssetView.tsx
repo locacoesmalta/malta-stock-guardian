@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { ArrowLeft, Edit, Trash2, Move, AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Move, AlertCircle, CheckCircle2, Clock, QrCode } from "lucide-react";
+import { QRScanner } from "@/components/QRScanner";
+import { formatPAT } from "@/lib/patUtils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AssetHistorySection } from "@/components/AssetHistorySection";
@@ -26,6 +28,7 @@ export default function AssetView() {
   const navigate = useNavigate();
   const { permissions } = useAuth();
   const { confirm, ConfirmDialog } = useConfirm();
+  const [showScanner, setShowScanner] = useState(false);
 
   const { data: asset, isLoading, error } = useQuery({
     queryKey: ["asset", id],
@@ -78,6 +81,35 @@ export default function AssetView() {
     } catch (error) {
       console.error("Erro ao excluir patrimônio:", error);
       toast.error("Erro ao excluir patrimônio");
+    }
+  };
+
+  const handleQRScan = async (code: string) => {
+    const formattedPAT = formatPAT(code);
+    
+    if (!formattedPAT) {
+      toast.error("Código inválido");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("assets")
+        .select("id")
+        .eq("asset_code", formattedPAT)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        navigate(`/assets/view/${data.id}`);
+        toast.success(`Navegando para PAT ${formattedPAT}`);
+      } else {
+        toast.error(`Patrimônio ${formattedPAT} não encontrado`);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar patrimônio:", error);
+      toast.error("Erro ao buscar patrimônio");
     }
   };
 
@@ -212,6 +244,15 @@ export default function AssetView() {
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4 sm:mb-6">
+        <Button 
+          variant="secondary" 
+          onClick={() => setShowScanner(true)} 
+          className="flex-1 sm:flex-none text-xs sm:text-sm"
+        >
+          <QrCode className="h-4 w-4 mr-2" />
+          Escanear QR Code
+        </Button>
+        
         {permissions?.can_edit_assets && (
           <>
             <Button onClick={() => navigate(`/assets/edit/${id}`)} className="flex-1 sm:flex-none text-xs sm:text-sm">
@@ -238,6 +279,14 @@ export default function AssetView() {
           </Button>
         )}
       </div>
+
+      {/* QR Scanner */}
+      {showScanner && (
+        <QRScanner
+          onScan={handleQRScan}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
 
       <Tabs defaultValue="technical" className="w-full">
         <TabsList className="grid w-full grid-cols-3 sm:grid-cols-7 h-auto">
