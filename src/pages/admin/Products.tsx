@@ -16,6 +16,7 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { useProducts } from "@/hooks/useProducts";
 import { productSchema, addStockSchema } from "@/lib/validations";
 import { ProductPurchaseHistory } from "@/components/ProductPurchaseHistory";
+import { ProductStockAdjustmentsHistory } from "@/components/ProductStockAdjustmentsHistory";
 import * as XLSX from "xlsx";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BackButton } from "@/components/BackButton";
@@ -33,7 +34,7 @@ interface Product {
 }
 
 const Products = () => {
-  const { user } = useAuth();
+  const { user, isSuperuser } = useAuth();
   const { products, loading, searchTerm, setSearchTerm, refetch } = useProducts();
   const { confirm, ConfirmDialog } = useConfirm();
   const [open, setOpen] = useState(false);
@@ -191,6 +192,22 @@ const Products = () => {
       const dataToSave = { ...productData, created_by: user?.id };
       
       if (editingProduct) {
+        // Se superuser alterou a quantidade, registrar no log de ajustes
+        if (isSuperuser && productData.quantity !== editingProduct.quantity) {
+          const quantityChange = productData.quantity - editingProduct.quantity;
+          
+          // Registrar ajuste manual
+          await supabase.from("product_stock_adjustments").insert([{
+            product_id: editingProduct.id,
+            adjusted_by: user?.id,
+            previous_quantity: editingProduct.quantity,
+            new_quantity: productData.quantity,
+            quantity_change: quantityChange,
+            reason: quantityChange > 0 ? "Ajuste de estoque - aumento manual" : "Ajuste de estoque - redução manual",
+            notes: formData.comments || null,
+          }]);
+        }
+
         const { error } = await supabase
           .from("products")
           .update(dataToSave)
@@ -655,9 +672,23 @@ const Products = () => {
                     min="0"
                     value={formData.quantity}
                     onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
-                    disabled={!!editingProduct}
+                    disabled={editingProduct && !isSuperuser}
                     required={!editingProduct}
+                    className={editingProduct && isSuperuser ? "border-orange-500 bg-orange-50" : ""}
                   />
+                  {editingProduct && !isSuperuser && (
+                    <p className="text-xs text-muted-foreground">
+                      Para alterar quantidade, use o botão "Adicionar Estoque"
+                    </p>
+                  )}
+                  {editingProduct && isSuperuser && (
+                    <div className="bg-orange-50 border border-orange-300 rounded-md p-3 text-sm text-orange-800">
+                      <p className="font-semibold">⚠️ ATENÇÃO - Modo SUPERUSER</p>
+                      <p className="text-xs mt-1">
+                        Você pode editar a quantidade diretamente. Esta alteração será registrada no histórico de ajustes manuais.
+                      </p>
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="min_quantity">Quantidade Mínima *</Label>

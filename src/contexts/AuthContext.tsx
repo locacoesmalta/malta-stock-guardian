@@ -28,6 +28,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   isAdmin: boolean;
+  isSuperuser: boolean;
   isActive: boolean;
   permissions: UserPermissions | null;
   loading: boolean;
@@ -40,6 +41,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSuperuser, setIsSuperuser] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
   const [loading, setLoading] = useState(true);
@@ -86,6 +88,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }, 0);
       } else {
         setIsAdmin(false);
+        setIsSuperuser(false);
         setIsActive(false);
         setPermissions(null);
       }
@@ -152,7 +155,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
           console.log('[AUTH] Role fetched:', roleData);
           const isUserAdmin = roleData?.role === "admin";
+          const isUserSuperuser = roleData?.role === "superuser";
           setIsAdmin(isUserAdmin);
+          setIsSuperuser(isUserSuperuser);
 
           // Fetch all permissions
           const { data: permData, error: permError } = await supabase
@@ -209,6 +214,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error("Error checking user status:", error);
       }
       setIsAdmin(false);
+      setIsSuperuser(false);
       setIsActive(false);
       setPermissions(null);
     } finally {
@@ -221,13 +227,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     setSession(null);
     setIsAdmin(false);
+    setIsSuperuser(false);
     setIsActive(false);
     setPermissions(null);
     navigate("/auth");
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, isAdmin, isActive, permissions, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, isAdmin, isSuperuser, isActive, permissions, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

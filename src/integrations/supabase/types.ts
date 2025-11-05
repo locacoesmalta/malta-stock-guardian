@@ -1091,6 +1091,53 @@ export type Database = {
           },
         ]
       }
+      product_stock_adjustments: {
+        Row: {
+          adjusted_by: string
+          adjustment_date: string
+          created_at: string
+          id: string
+          new_quantity: number
+          notes: string | null
+          previous_quantity: number
+          product_id: string
+          quantity_change: number
+          reason: string | null
+        }
+        Insert: {
+          adjusted_by: string
+          adjustment_date?: string
+          created_at?: string
+          id?: string
+          new_quantity: number
+          notes?: string | null
+          previous_quantity: number
+          product_id: string
+          quantity_change: number
+          reason?: string | null
+        }
+        Update: {
+          adjusted_by?: string
+          adjustment_date?: string
+          created_at?: string
+          id?: string
+          new_quantity?: number
+          notes?: string | null
+          previous_quantity?: number
+          product_id?: string
+          quantity_change?: number
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_stock_adjustments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           code: string
@@ -1621,6 +1668,7 @@ export type Database = {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
+      is_superuser: { Args: { _user_id: string }; Returns: boolean }
       is_user_active: { Args: { _user_id: string }; Returns: boolean }
       registrar_evento_patrimonio: {
         Args: {

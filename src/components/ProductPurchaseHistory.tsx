@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useProductPurchases } from "@/hooks/useProductPurchases";
+import { ProductStockAdjustmentsHistory } from "@/components/ProductStockAdjustmentsHistory";
 import {
   Dialog,
   DialogContent,
@@ -95,8 +96,21 @@ export const ProductPurchaseHistory = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Histórico de Compras - {productName}</DialogTitle>
+          <DialogTitle>Histórico Completo - {productName}</DialogTitle>
         </DialogHeader>
+
+        {/* Seção de Ajustes Manuais */}
+        <div className="mb-6">
+          <ProductStockAdjustmentsHistory 
+            productId={productId} 
+            productName={productName} 
+          />
+        </div>
+
+        {/* Título para Histórico de Compras */}
+        <div className="border-t pt-6">
+          <h3 className="text-lg font-semibold mb-4">Histórico de Compras</h3>
+        </div>
 
         {/* Filtros */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
