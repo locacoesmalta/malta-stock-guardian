@@ -93,22 +93,35 @@ const Users = () => {
   const updateUserRole = async (userId: string, newRole: "admin" | "superuser" | "user") => {
     try {
       // Buscar role atual
-      const { data: currentRole } = await supabase
+      const { data: currentRole, error: fetchError } = await supabase
         .from("user_roles")
         .select("id, role")
         .eq("user_id", userId)
-        .single();
+        .maybeSingle();
 
-      if (!currentRole) {
-        toast.error("Erro: usuário sem role definida");
-        return;
+      if (fetchError) {
+        console.error("Erro ao buscar role:", fetchError);
+        throw fetchError;
       }
 
-      // Atualizar role
-      const { error } = await supabase
-        .from("user_roles")
-        .update({ role: newRole })
-        .eq("user_id", userId);
+      let error;
+
+      if (!currentRole) {
+        // Se não existir role, criar uma nova
+        const { error: insertError } = await supabase
+          .from("user_roles")
+          .insert({ user_id: userId, role: newRole });
+        
+        error = insertError;
+      } else {
+        // Se existir, atualizar
+        const { error: updateError } = await supabase
+          .from("user_roles")
+          .update({ role: newRole })
+          .eq("user_id", userId);
+        
+        error = updateError;
+      }
 
       if (error) throw error;
 
@@ -122,7 +135,7 @@ const Users = () => {
       refetchUsers();
     } catch (error: any) {
       console.error("Erro ao atualizar role:", error);
-      toast.error("Erro ao atualizar role do usuário");
+      toast.error(`Erro ao atualizar role: ${error.message || "Erro desconhecido"}`);
     }
   };
 
