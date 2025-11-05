@@ -80,6 +80,52 @@ const Users = () => {
     return user.user_roles.some((r) => r.role === "admin");
   };
 
+  const isSuperuser = (user: typeof users[0]) => {
+    return user.user_roles.some((r) => r.role === "superuser");
+  };
+
+  const getUserRole = (user: typeof users[0]): "admin" | "superuser" | "user" => {
+    if (isAdmin(user)) return "admin";
+    if (isSuperuser(user)) return "superuser";
+    return "user";
+  };
+
+  const updateUserRole = async (userId: string, newRole: "admin" | "superuser" | "user") => {
+    try {
+      // Buscar role atual
+      const { data: currentRole } = await supabase
+        .from("user_roles")
+        .select("id, role")
+        .eq("user_id", userId)
+        .single();
+
+      if (!currentRole) {
+        toast.error("Erro: usuário sem role definida");
+        return;
+      }
+
+      // Atualizar role
+      const { error } = await supabase
+        .from("user_roles")
+        .update({ role: newRole })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      const roleNames = {
+        admin: "Administrador",
+        superuser: "Superusuário",
+        user: "Usuário"
+      };
+
+      toast.success(`Usuário promovido a ${roleNames[newRole]}!`);
+      refetchUsers();
+    } catch (error: any) {
+      console.error("Erro ao atualizar role:", error);
+      toast.error("Erro ao atualizar role do usuário");
+    }
+  };
+
   // Verificar se o usuário tem todas as permissões de estoque
   const hasStockPermissions = (permissions: typeof users[0]['user_permissions']) => {
     if (!permissions) return false;
@@ -251,6 +297,11 @@ const Users = () => {
                             <Shield className="h-3 w-3" />
                             Administrador
                           </Badge>
+                        ) : isSuperuser(user) ? (
+                          <Badge className="gap-1 text-xs whitespace-nowrap bg-orange-600 hover:bg-orange-700">
+                            <Shield className="h-3 w-3" />
+                            Superusuário
+                          </Badge>
                         ) : (
                           <>
                             <Badge variant="secondary" className="text-xs">Usuário</Badge>
@@ -280,6 +331,64 @@ const Users = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Gerenciamento de Roles - Apenas para Admins */}
+                  {!isAdmin(user) && (
+                    <div className="border-t pt-4">
+                      <Card className="overflow-hidden border-purple-200 dark:border-purple-900 bg-purple-50/50 dark:bg-purple-950/20">
+                        <CardContent className="p-4">
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                              <Shield className="h-4 w-4 text-purple-600" />
+                              <Label className="font-semibold text-sm">Nível de Acesso</Label>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              Define o nível de privilégios do usuário no sistema
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                variant={getUserRole(user) === "user" ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => updateUserRole(user.id, "user")}
+                                disabled={getUserRole(user) === "user"}
+                                className="text-xs"
+                              >
+                                Usuário Padrão
+                              </Button>
+                              <Button
+                                variant={getUserRole(user) === "superuser" ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => updateUserRole(user.id, "superuser")}
+                                disabled={getUserRole(user) === "superuser"}
+                                className="text-xs bg-orange-600 hover:bg-orange-700 text-white border-orange-600"
+                              >
+                                <Shield className="h-3 w-3 mr-1" />
+                                Superusuário
+                              </Button>
+                              <Button
+                                variant={getUserRole(user) === "admin" ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => updateUserRole(user.id, "admin")}
+                                disabled={getUserRole(user) === "admin"}
+                                className="text-xs"
+                              >
+                                <Shield className="h-3 w-3 mr-1" />
+                                Administrador
+                              </Button>
+                            </div>
+                            <div className="bg-purple-100 dark:bg-purple-950/50 rounded-lg p-3 text-xs space-y-2">
+                              <p className="font-medium">ℹ️ Sobre os níveis:</p>
+                              <ul className="space-y-1 text-muted-foreground ml-4 list-disc">
+                                <li><strong>Usuário:</strong> Acesso limitado por permissões individuais</li>
+                                <li><strong>Superusuário:</strong> Pode editar quantidades de estoque diretamente</li>
+                                <li><strong>Administrador:</strong> Acesso total ao sistema</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
 
                   {!isAdmin(user) && user.user_permissions && (
                     <div className="border-t pt-4 space-y-4">
