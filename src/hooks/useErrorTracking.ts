@@ -13,10 +13,20 @@ interface ErrorLogPayload {
   error_code: string;
   user_name: string | null;
   user_email: string | null;
+  user_whatsapp: string | null;
   page_route: string;
   error_type: string;
   error_message: string;
+  severity_level: string;
   timestamp: string;
+  formatted_message: string;
+  notification_type: string;
+  evolution_api: {
+    instance: string;
+    message_type: string;
+    priority: string;
+    schedule_send: boolean;
+  };
   additional_data?: Record<string, any>;
 }
 
@@ -60,6 +70,96 @@ const getBrowserInfo = () => {
   return { browser, os, userAgent: ua };
 };
 
+const calculateSeverity = (errorCode: string, errorType: string): string => {
+  // Erros críticos que exigem ação imediata
+  if (errorCode.includes('CRITICAL') || errorType.includes('FATAL')) {
+    return 'CRITICAL';
+  }
+  
+  // Erros de autenticação e segurança
+  if (errorType.includes('AUTH') || errorType.includes('SECURITY')) {
+    return 'HIGH';
+  }
+  
+  // Erros de runtime e validação
+  if (errorType.includes('RUNTIME') || errorCode.startsWith('ERR-RUNTIME')) {
+    return 'HIGH';
+  }
+  
+  // Erros de rede e API
+  if (errorType.includes('NETWORK') || errorType.includes('API')) {
+    return 'MEDIUM';
+  }
+  
+  // Erros de validação e teste
+  if (errorType.includes('VALIDATION') || errorType === 'TEST_ERROR') {
+    return 'LOW';
+  }
+  
+  return 'MEDIUM';
+};
+
+const formatWhatsAppMessage = (data: {
+  errorCode: string;
+  userName: string | null;
+  pageRoute: string;
+  errorMessage: string;
+  timestamp: string;
+  severityLevel: string;
+}): string => {
+  const time = new Date(data.timestamp).toLocaleTimeString('pt-BR', { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+  
+  const date = new Date(data.timestamp).toLocaleDateString('pt-BR');
+  
+  const severityEmoji = {
+    CRITICAL: '🔴',
+    HIGH: '🟠',
+    MEDIUM: '🟡',
+    LOW: '🟢'
+  }[data.severityLevel] || '⚪';
+  
+  const pageNames: Record<string, string> = {
+    '/admin/settings': 'Configurações',
+    '/admin/users': 'Usuários',
+    '/admin/products': 'Produtos',
+    '/assets': 'Patrimônios',
+    '/assets/new': 'Cadastro de Patrimônio',
+    '/reports': 'Relatórios',
+  };
+  
+  const pageName = pageNames[data.pageRoute] || data.pageRoute;
+  
+  return `🚨 *Erro Detectado no Sistema*
+
+${severityEmoji} *Severidade:* ${data.severityLevel}
+📋 *Código:* ${data.errorCode}
+👤 *Usuário:* ${data.userName || 'Anônimo'}
+📍 *Página:* ${pageName}
+📅 *Data:* ${date}
+⏰ *Horário:* ${time}
+
+❌ *Mensagem:*
+${data.errorMessage}
+
+🔗 *Ver detalhes:*
+https://controlemalta.lovable.app/admin/error-logs`;
+};
+
+const getNotificationType = (severityLevel: string): string => {
+  if (severityLevel === 'CRITICAL' || severityLevel === 'HIGH') {
+    return 'immediate';
+  }
+  
+  if (severityLevel === 'MEDIUM') {
+    return 'batch';
+  }
+  
+  return 'none';
+};
+
 export const useErrorTracking = () => {
   const { user } = useAuth();
 
@@ -78,6 +178,7 @@ export const useErrorTracking = () => {
       // Buscar informações do usuário se estiver autenticado
       let userName = null;
       let userEmail = null;
+      let userWhatsApp = null;
       
       if (user) {
         const { data: profile } = await supabase
@@ -88,7 +189,25 @@ export const useErrorTracking = () => {
         
         userName = profile?.full_name || null;
         userEmail = profile?.email || null;
+        
+        // Buscar WhatsApp do usuário (assumindo que existe um campo whatsapp na tabela profiles)
+        // Se não existir, você pode adicionar esse campo posteriormente
+        userWhatsApp = null; // TODO: Adicionar campo whatsapp na tabela profiles
       }
+
+      // Calcular severidade e tipo de notificação
+      const severityLevel = calculateSeverity(errorCode, errorType);
+      const notificationType = getNotificationType(severityLevel);
+      
+      // Formatar mensagem para WhatsApp
+      const formattedMessage = formatWhatsAppMessage({
+        errorCode,
+        userName,
+        pageRoute: currentRoute,
+        errorMessage: message,
+        timestamp,
+        severityLevel,
+      });
 
       // Combinar dados adicionais com informações do navegador
       const fullAdditionalData = {
@@ -122,15 +241,25 @@ export const useErrorTracking = () => {
         return null;
       }
 
-      // Enviar para webhook n8n
-      const webhookPayload: ErrorLogPayload = {
+      // Enviar para webhook n8n com payload enriquecido
+      const webhookPayload = {
         error_code: errorCode,
         user_name: userName,
         user_email: userEmail,
+        user_whatsapp: userWhatsApp,
         page_route: currentRoute,
         error_type: errorType,
         error_message: message,
+        severity_level: severityLevel,
         timestamp,
+        formatted_message: formattedMessage,
+        notification_type: notificationType,
+        evolution_api: {
+          instance: "malta_locacoes",
+          message_type: "text",
+          priority: severityLevel === 'CRITICAL' || severityLevel === 'HIGH' ? 'high' : 'normal',
+          schedule_send: false,
+        },
         additional_data: fullAdditionalData,
       };
 
