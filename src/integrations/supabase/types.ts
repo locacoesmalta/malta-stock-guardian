@@ -1678,7 +1678,46 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_duplicate_equipment_names: {
+        Row: {
+          equipamento_normalizado: string | null
+          exemplos_pat: string[] | null
+          qtd_variacoes: number | null
+          total_registros: number | null
+          variacoes: string[] | null
+        }
+        Relationships: []
+      }
+      v_duplicate_manufacturers_assets: {
+        Row: {
+          exemplos_pat: string[] | null
+          fabricante_normalizado: string | null
+          qtd_variacoes: number | null
+          total_equipamentos: number | null
+          variacoes: string[] | null
+        }
+        Relationships: []
+      }
+      v_duplicate_manufacturers_products: {
+        Row: {
+          exemplos_codigo: string[] | null
+          fabricante_normalizado: string | null
+          qtd_variacoes: number | null
+          total_produtos: number | null
+          variacoes: string[] | null
+        }
+        Relationships: []
+      }
+      v_duplicate_products: {
+        Row: {
+          exemplos_codigo: string[] | null
+          produto_normalizado: string | null
+          qtd_variacoes: number | null
+          total_produtos: number | null
+          variacoes: string[] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       can_user_access_assets: { Args: { _user_id: string }; Returns: boolean }
@@ -1705,6 +1744,22 @@ export type Database = {
           recent_logs_count: number
           total_logs: number
         }[]
+      }
+      fix_duplicate_equipment_names: {
+        Args: { p_correct_name: string; p_variations: string[] }
+        Returns: number
+      }
+      fix_duplicate_manufacturers_assets: {
+        Args: { p_correct_name: string; p_variations: string[] }
+        Returns: number
+      }
+      fix_duplicate_manufacturers_products: {
+        Args: { p_correct_name: string; p_variations: string[] }
+        Returns: number
+      }
+      fix_duplicate_product_names: {
+        Args: { p_correct_name: string; p_variations: string[] }
+        Returns: number
       }
       generate_audit_log_hash: {
         Args: {
@@ -1782,6 +1837,7 @@ export type Database = {
       }
       is_superuser: { Args: { _user_id: string }; Returns: boolean }
       is_user_active: { Args: { _user_id: string }; Returns: boolean }
+      normalize_text: { Args: { input_text: string }; Returns: string }
       registrar_evento_patrimonio: {
         Args: {
           p_campo_alterado?: string
