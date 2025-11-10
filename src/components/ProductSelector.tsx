@@ -5,6 +5,8 @@ interface Product {
   code: string;
   name: string;
   quantity: number;
+  is_universal?: boolean;
+  compatibility_level?: string;
 }
 
 interface ProductSelectorProps {
@@ -14,6 +16,7 @@ interface ProductSelectorProps {
   placeholder?: string;
   showStock?: boolean;
   required?: boolean;
+  showCompatibility?: boolean;
 }
 
 export const ProductSelector = ({
@@ -23,6 +26,7 @@ export const ProductSelector = ({
   placeholder = "Selecione um produto",
   showStock = false,
   required = false,
+  showCompatibility = false,
 }: ProductSelectorProps) => {
   return (
     <ProductSearchCombobox
@@ -32,6 +36,7 @@ export const ProductSelector = ({
       placeholder={placeholder}
       showStock={showStock}
       required={required}
+      showCompatibility={showCompatibility}
     />
   );
 };

@@ -19,6 +19,8 @@ import { formatPAT } from "@/lib/patUtils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { WithdrawalCollaboratorsManager } from "@/components/WithdrawalCollaboratorsManager";
 import { BackButton } from "@/components/BackButton";
+import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
 
 
 interface WithdrawalItem {
@@ -49,6 +51,30 @@ const MaterialWithdrawal = () => {
 
   // Buscar informações do equipamento pelo PAT
   const { data: equipment, isLoading: loadingEquipment } = useEquipmentByPAT(equipmentCode);
+
+  // Buscar produtos compatíveis com o equipamento
+  const { data: compatibleProducts, isLoading: loadingProducts } = useQuery({
+    queryKey: ["compatible-products", equipment?.manufacturer, equipment?.equipment_name, equipment?.model],
+    queryFn: async () => {
+      if (!equipment) return [];
+      
+      const { data, error } = await supabase.rpc("get_compatible_products", {
+        p_equipment_brand: equipment.manufacturer,
+        p_equipment_type: equipment.equipment_name,
+        p_equipment_model: equipment.model || "",
+      });
+      
+      if (error) {
+        console.error("Erro ao buscar produtos compatíveis:", error);
+        throw error;
+      }
+      return data || [];
+    },
+    enabled: !!equipment && !isSaleWithdrawal,
+  });
+
+  // Selecionar lista de produtos: compatíveis se houver equipamento, todos se for venda
+  const availableProducts = isSaleWithdrawal ? products : (compatibleProducts || products);
 
   // Preencher informações automaticamente quando o equipamento for encontrado
   useEffect(() => {
@@ -503,6 +529,20 @@ const MaterialWithdrawal = () => {
             </Button>
           </CardHeader>
           <CardContent className="space-y-4">
+            {!isSaleWithdrawal && equipment && compatibleProducts && (
+              <Alert className="border-blue-500/50 bg-blue-50 dark:bg-blue-950/20">
+                <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-xs flex items-center gap-2 flex-wrap">
+                  <span>Mostrando apenas peças compatíveis com:</span>
+                  <Badge variant="outline" className="font-mono">
+                    {equipment.manufacturer} {equipment.equipment_name} {equipment.model}
+                  </Badge>
+                  <span className="text-muted-foreground">
+                    ({compatibleProducts.length} peças encontradas)
+                  </span>
+                </AlertDescription>
+              </Alert>
+            )}
             {items.length === 0 ? (
               <p className="text-center text-sm sm:text-base text-muted-foreground py-8">
                 Nenhum produto adicionado. Clique em "Adicionar Produto" para começar.
@@ -526,11 +566,12 @@ const MaterialWithdrawal = () => {
                     <div className="space-y-2">
                       <Label className="text-xs sm:text-sm">Produto *</Label>
                       <ProductSelector
-                        products={products}
+                        products={availableProducts}
                         value={item.product_id}
                         onValueChange={(value) => updateItem(index, "product_id", value)}
                         showStock={true}
                         required={true}
+                        showCompatibility={!isSaleWithdrawal && !!equipment}
                       />
                     </div>
 

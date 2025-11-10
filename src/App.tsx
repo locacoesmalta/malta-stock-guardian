@@ -48,6 +48,7 @@ const Welcome = lazy(() => import("./pages/Welcome"));
 const Chat = lazy(() => import("./pages/Chat"));
 const ConversationChat = lazy(() => import("./pages/ConversationChat"));
 const ErrorLogs = lazy(() => import("./pages/admin/ErrorLogs"));
+const ProductsMigration = lazy(() => import("./pages/admin/ProductsMigration"));
 
 const queryClient = new QueryClient();
 
@@ -407,6 +408,7 @@ const App = () => (
               <Route path="/admin/financial-forecast" element={<ProtectedLayout><AdminRoute><FinancialForecast /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/cash-box" element={<ProtectedLayout><AdminRoute><CashBox /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/products" element={<ProtectedLayout><AdminRoute><Products /></AdminRoute></ProtectedLayout>} />
+              <Route path="/admin/products/migration" element={<ProtectedLayout><AdminRoute><ProductsMigration /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/users" element={<ProtectedLayout><AdminRoute><Users /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/logs" element={<ProtectedLayout><AdminRoute><AuditLogs /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/error-logs" element={<ProtectedLayout><AdminRoute><ErrorLogs /></AdminRoute></ProtectedLayout>} />

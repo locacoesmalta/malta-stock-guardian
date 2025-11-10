@@ -20,6 +20,10 @@ import { ProductStockAdjustmentsHistory } from "@/components/ProductStockAdjustm
 import * as XLSX from "xlsx";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BackButton } from "@/components/BackButton";
+import { Checkbox } from "@/components/ui/checkbox";
+import { EquipmentBrandSelector } from "@/components/EquipmentBrandSelector";
+import { EquipmentTypeSelector } from "@/components/EquipmentTypeSelector";
+import { EquipmentModelSelector } from "@/components/EquipmentModelSelector";
 
 interface Product {
   id: string;
@@ -61,6 +65,10 @@ const Products = () => {
     payment_type: "",
     comments: "",
     profit_margin: "",
+    equipment_brand: "",
+    equipment_type: "",
+    equipment_model: "",
+    is_universal: true,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [duplicateDialog, setDuplicateDialog] = useState<{
@@ -168,6 +176,9 @@ const Products = () => {
       purchase_price: formData.purchase_price ? Number(formData.purchase_price) : null,
       sale_price: formData.sale_price ? Number(formData.sale_price) : null,
       comments: formData.comments || null,
+      equipment_brand: formData.is_universal ? null : (formData.equipment_brand || null),
+      equipment_type: formData.is_universal ? null : (formData.equipment_type || null),
+      equipment_model: formData.is_universal ? null : (formData.equipment_model || null),
     };
 
     // Para novos produtos, validar com schema completo
@@ -405,6 +416,10 @@ const Products = () => {
       payment_type: "",
       comments: "",
       profit_margin: "",
+      equipment_brand: "",
+      equipment_type: "",
+      equipment_model: "",
+      is_universal: true,
     });
     setErrors({});
   };
@@ -423,6 +438,10 @@ const Products = () => {
       payment_type: "",
       comments: product.comments || "",
       profit_margin: "",
+      equipment_brand: "",
+      equipment_type: "",
+      equipment_model: "",
+      is_universal: true,
     });
     setOpen(true);
   };
@@ -826,6 +845,88 @@ const Products = () => {
                   placeholder="Adicione observações específicas sobre este produto..."
                   rows={4}
                 />
+              </div>
+
+              {/* Seção de Compatibilidade de Equipamentos */}
+              <div className="space-y-4 border-t pt-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="is_universal"
+                    checked={formData.is_universal}
+                    onCheckedChange={(checked) => {
+                      setFormData({
+                        ...formData,
+                        is_universal: checked as boolean,
+                        equipment_brand: checked ? "" : formData.equipment_brand,
+                        equipment_type: checked ? "" : formData.equipment_type,
+                        equipment_model: checked ? "" : formData.equipment_model,
+                      });
+                    }}
+                  />
+                  <Label htmlFor="is_universal" className="font-semibold cursor-pointer">
+                    Peça Universal (compatível com todos os equipamentos)
+                  </Label>
+                </div>
+
+                {!formData.is_universal && (
+                  <div className="space-y-4 pl-6 border-l-2 border-border">
+                    <p className="text-sm text-muted-foreground">
+                      Defina a compatibilidade desta peça com equipamentos específicos
+                    </p>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="equipment_brand">Marca do Equipamento Compatível *</Label>
+                      <EquipmentBrandSelector
+                        value={formData.equipment_brand}
+                        onChange={(value) => setFormData({ 
+                          ...formData, 
+                          equipment_brand: value, 
+                          equipment_type: "", 
+                          equipment_model: "" 
+                        })}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Ex: Makita, Bosch, DeWalt
+                      </p>
+                    </div>
+
+                    {formData.equipment_brand && (
+                      <div className="space-y-2">
+                        <Label htmlFor="equipment_type">Tipo de Equipamento *</Label>
+                        <EquipmentTypeSelector
+                          brand={formData.equipment_brand}
+                          value={formData.equipment_type}
+                          onChange={(value) => setFormData({ 
+                            ...formData, 
+                            equipment_type: value, 
+                            equipment_model: "" 
+                          })}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Ex: Serra Mármore, Furadeira, Esmerilhadeira
+                        </p>
+                      </div>
+                    )}
+
+                    {formData.equipment_type && (
+                      <div className="space-y-2">
+                        <Label htmlFor="equipment_model">Modelo Específico (opcional)</Label>
+                        <EquipmentModelSelector
+                          brand={formData.equipment_brand}
+                          type={formData.equipment_type}
+                          value={formData.equipment_model}
+                          onChange={(value) => setFormData({ 
+                            ...formData, 
+                            equipment_model: value 
+                          })}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Ex: 4100NH3 110V (deixe vazio para qualquer modelo deste tipo)
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col-reverse sm:flex-row gap-2 justify-end">

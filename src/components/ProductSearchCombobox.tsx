@@ -15,12 +15,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 
 interface Product {
   id: string;
   code: string;
   name: string;
   quantity?: number;
+  is_universal?: boolean;
+  compatibility_level?: string;
 }
 
 interface ProductSearchComboboxProps {
@@ -32,6 +35,7 @@ interface ProductSearchComboboxProps {
   required?: boolean;
   showClearButton?: boolean;
   onClear?: () => void;
+  showCompatibility?: boolean;
 }
 
 export const ProductSearchCombobox = ({
@@ -43,6 +47,7 @@ export const ProductSearchCombobox = ({
   required = false,
   showClearButton = false,
   onClear,
+  showCompatibility = false,
 }: ProductSearchComboboxProps) => {
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
@@ -127,13 +132,38 @@ export const ProductSearchCombobox = ({
                         value === product.id ? "opacity-100" : "opacity-0"
                       )}
                     />
-                    <div className="flex-1 truncate">
-                      <span className="font-medium">{product.code}</span> - {product.name}
-                      {showStock && (
-                        <span className="text-muted-foreground ml-2">
-                          (Estoque: {product.quantity})
-                        </span>
-                      )}
+                    <div className="flex-1 flex items-center justify-between gap-2">
+                      <div className="flex-1 truncate">
+                        <span className="font-medium">{product.code}</span> - {product.name}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {showCompatibility && (
+                          <>
+                            {product.is_universal ? (
+                              <Badge variant="secondary" className="text-xs">
+                                Universal
+                              </Badge>
+                            ) : product.compatibility_level === 'exact_match' ? (
+                              <Badge variant="default" className="text-xs bg-green-600">
+                                ✓ Exata
+                              </Badge>
+                            ) : product.compatibility_level === 'type_match' ? (
+                              <Badge variant="default" className="text-xs bg-blue-600">
+                                ≈ Tipo
+                              </Badge>
+                            ) : product.compatibility_level === 'brand_match' ? (
+                              <Badge variant="default" className="text-xs bg-amber-600">
+                                ~ Marca
+                              </Badge>
+                            ) : null}
+                          </>
+                        )}
+                        {showStock && (
+                          <span className="text-muted-foreground text-sm">
+                            Est: {product.quantity}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </CommandItem>
                 ))}

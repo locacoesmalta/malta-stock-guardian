@@ -1195,6 +1195,9 @@ export type Database = {
           comments: string | null
           created_at: string
           created_by: string | null
+          equipment_brand: string | null
+          equipment_model: string | null
+          equipment_type: string | null
           id: string
           last_purchase_date: string | null
           manufacturer: string | null
@@ -1211,6 +1214,9 @@ export type Database = {
           comments?: string | null
           created_at?: string
           created_by?: string | null
+          equipment_brand?: string | null
+          equipment_model?: string | null
+          equipment_type?: string | null
           id?: string
           last_purchase_date?: string | null
           manufacturer?: string | null
@@ -1227,6 +1233,9 @@ export type Database = {
           comments?: string | null
           created_at?: string
           created_by?: string | null
+          equipment_brand?: string | null
+          equipment_model?: string | null
+          equipment_type?: string | null
           id?: string
           last_purchase_date?: string | null
           manufacturer?: string | null
@@ -1704,6 +1713,25 @@ export type Database = {
           maintenance_departure_date: string
           maintenance_work_site: string
           service_type: string
+        }[]
+      }
+      get_compatible_products: {
+        Args: {
+          p_equipment_brand: string
+          p_equipment_model: string
+          p_equipment_type: string
+        }
+        Returns: {
+          code: string
+          compatibility_level: string
+          id: string
+          is_universal: boolean
+          manufacturer: string
+          min_quantity: number
+          name: string
+          purchase_price: number
+          quantity: number
+          sale_price: number
         }[]
       }
       get_monthly_productivity: {
