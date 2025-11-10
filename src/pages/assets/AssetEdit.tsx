@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import { useRealtimeDuplicateDetection } from "@/hooks/useRealtimeDuplicateDetection";
 import { RealtimeDuplicateAlert } from "@/components/RealtimeDuplicateAlert";
+import { normalizeText } from "@/lib/textNormalization";
 
 export default function AssetEdit() {
   const { id } = useParams();
@@ -153,6 +154,11 @@ export default function AssetEdit() {
                   id="manufacturer"
                   {...form.register("manufacturer")}
                   placeholder="Ex: Bosch"
+                  onChange={(e) => {
+                    const normalized = e.target.value.toUpperCase();
+                    form.setValue("manufacturer", normalized);
+                  }}
+                  value={form.watch("manufacturer")?.toUpperCase() || ""}
                 />
                 {form.formState.errors.manufacturer && (
                   <p className="text-sm text-destructive">{form.formState.errors.manufacturer.message}</p>
@@ -172,6 +178,11 @@ export default function AssetEdit() {
                   id="model"
                   {...form.register("model")}
                   placeholder="Ex: GSR 12V-15"
+                  onChange={(e) => {
+                    const normalized = e.target.value.toUpperCase();
+                    form.setValue("model", normalized || undefined);
+                  }}
+                  value={form.watch("model")?.toUpperCase() || ""}
                 />
                 <RealtimeDuplicateAlert
                   duplicates={modelValidation.data?.duplicates}
@@ -188,6 +199,11 @@ export default function AssetEdit() {
                   id="serial_number"
                   {...form.register("serial_number")}
                   placeholder="Ex: 123456789"
+                  onChange={(e) => {
+                    const normalized = e.target.value.toUpperCase();
+                    form.setValue("serial_number", normalized || undefined);
+                  }}
+                  value={form.watch("serial_number")?.toUpperCase() || ""}
                 />
               </div>
 
@@ -196,8 +212,8 @@ export default function AssetEdit() {
                 <Input
                   id="voltage_combustion"
                   placeholder="Ex: 110V, 220V, Gasolina, Diesel, Gás"
-                  value={form.watch("voltage_combustion") || ""}
-                  onChange={(e) => form.setValue("voltage_combustion", e.target.value || undefined)}
+                  value={form.watch("voltage_combustion")?.toUpperCase() || ""}
+                  onChange={(e) => form.setValue("voltage_combustion", e.target.value.toUpperCase() || undefined)}
                 />
               </div>
 
@@ -207,6 +223,11 @@ export default function AssetEdit() {
                   id="supplier"
                   {...form.register("supplier")}
                   placeholder="Ex: Fornecedor ABC"
+                  onChange={(e) => {
+                    const normalized = e.target.value.toUpperCase();
+                    form.setValue("supplier", normalized || undefined);
+                  }}
+                  value={form.watch("supplier")?.toUpperCase() || ""}
                 />
               </div>
 
