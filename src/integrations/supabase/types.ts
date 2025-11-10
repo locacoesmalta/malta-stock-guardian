@@ -1688,6 +1688,16 @@ export type Database = {
         }
         Relationships: []
       }
+      v_duplicate_equipment_types: {
+        Row: {
+          exemplos_codigo: string[] | null
+          qtd_variacoes: number | null
+          tipo_normalizado: string | null
+          total_produtos: number | null
+          variacoes: string[] | null
+        }
+        Relationships: []
+      }
       v_duplicate_manufacturers_assets: {
         Row: {
           exemplos_pat: string[] | null
@@ -1704,6 +1714,16 @@ export type Database = {
           fabricante_normalizado: string | null
           qtd_variacoes: number | null
           total_produtos: number | null
+          variacoes: string[] | null
+        }
+        Relationships: []
+      }
+      v_duplicate_models: {
+        Row: {
+          exemplos_pat: string[] | null
+          modelo_normalizado: string | null
+          qtd_variacoes: number | null
+          total_equipamentos: number | null
           variacoes: string[] | null
         }
         Relationships: []
@@ -1749,11 +1769,19 @@ export type Database = {
         Args: { p_correct_name: string; p_variations: string[] }
         Returns: number
       }
+      fix_duplicate_equipment_types: {
+        Args: { p_correct_name: string; p_variations: string[] }
+        Returns: number
+      }
       fix_duplicate_manufacturers_assets: {
         Args: { p_correct_name: string; p_variations: string[] }
         Returns: number
       }
       fix_duplicate_manufacturers_products: {
+        Args: { p_correct_name: string; p_variations: string[] }
+        Returns: number
+      }
+      fix_duplicate_models: {
         Args: { p_correct_name: string; p_variations: string[] }
         Returns: number
       }
@@ -1837,6 +1865,14 @@ export type Database = {
       }
       is_superuser: { Args: { _user_id: string }; Returns: boolean }
       is_user_active: { Args: { _user_id: string }; Returns: boolean }
+      normalize_all_data: {
+        Args: never
+        Returns: {
+          field_name: string
+          records_updated: number
+          table_name: string
+        }[]
+      }
       normalize_text: { Args: { input_text: string }; Returns: string }
       registrar_evento_patrimonio: {
         Args: {
