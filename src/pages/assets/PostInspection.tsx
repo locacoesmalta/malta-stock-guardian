@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ArrowLeft, Check, Wrench, Building2, RefreshCw } from "lucide-react";
 import { DeadlineStatusBadge } from "@/components/DeadlineStatusBadge";
+import { getTodayLocalDate } from "@/lib/dateUtils";
 
 type DecisionType = "approve" | "maintenance" | "return" | "replace" | null;
 
@@ -95,7 +96,7 @@ export default function PostInspection() {
             workSite = asset.rental_work_site || asset.maintenance_work_site || "";
           }
 
-          const currentDate = new Date().toISOString().split('T')[0];
+          const currentDate = getTodayLocalDate();
           
           maintenanceForm.reset({
             maintenance_company: company,

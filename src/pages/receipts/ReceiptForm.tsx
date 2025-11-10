@@ -14,6 +14,7 @@ import { BackButton } from "@/components/BackButton";
 import { validateCPF } from "@/lib/validations";
 import { toast } from "sonner";
 import { SignaturePad } from "@/components/SignatureCanvas";
+import { getTodayLocalDate } from "@/lib/dateUtils";
 
 interface ReceiptFormProps {
   type: ReceiptType;
@@ -28,7 +29,7 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
   const [formData, setFormData] = useState({
     client_name: '',
     work_site: '',
-    receipt_date: new Date().toISOString().split('T')[0],
+    receipt_date: getTodayLocalDate(),
     operation_nature: '',
     received_by: '',
     received_by_cpf: '',

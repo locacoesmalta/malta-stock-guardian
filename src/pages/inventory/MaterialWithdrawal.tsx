@@ -21,6 +21,7 @@ import { WithdrawalCollaboratorsManager } from "@/components/WithdrawalCollabora
 import { BackButton } from "@/components/BackButton";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
+import { getTodayLocalDate } from "@/lib/dateUtils";
 
 
 interface WithdrawalItem {
@@ -38,7 +39,7 @@ const MaterialWithdrawal = () => {
   const { confirm, ConfirmDialog } = useConfirm();
   const [loading, setLoading] = useState(false);
   const [isSaleWithdrawal, setIsSaleWithdrawal] = useState(false);
-  const [withdrawalDate, setWithdrawalDate] = useState(new Date().toISOString().split('T')[0]);
+  const [withdrawalDate, setWithdrawalDate] = useState(getTodayLocalDate());
   const [withdrawalReason, setWithdrawalReason] = useState("");
   const [equipmentCode, setEquipmentCode] = useState("");
   const [workSite, setWorkSite] = useState("");

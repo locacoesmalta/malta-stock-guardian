@@ -16,6 +16,7 @@ import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
 import { formatPAT } from "@/lib/patUtils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BackButton } from "@/components/BackButton";
+import { getTodayLocalDate } from "@/lib/dateUtils";
 
 interface ReportPart {
   product_id: string;
@@ -42,7 +43,7 @@ const NewReport = () => {
     work_site: "",
     company: "",
     technician_name: "",
-    report_date: new Date().toISOString().split('T')[0],
+    report_date: getTodayLocalDate(),
     service_comments: "",
     considerations: "",
     observations: "",

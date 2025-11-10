@@ -29,6 +29,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatHourmeter } from "@/lib/hourmeterUtils";
+import { getTodayLocalDate } from "@/lib/dateUtils";
 
 const maintenanceSchema = z.object({
   maintenance_date: z.string().min(1, "Data é obrigatória"),
@@ -98,7 +99,7 @@ export function AssetMaintenanceForm({
   } = useForm<MaintenanceFormData>({
     resolver: zodResolver(maintenanceSchema),
     defaultValues: {
-      maintenance_date: new Date().toISOString().split("T")[0],
+      maintenance_date: getTodayLocalDate(),
       maintenance_type: "preventiva",
       previous_hourmeter: lastHourmeter,
       current_hourmeter: lastHourmeter,

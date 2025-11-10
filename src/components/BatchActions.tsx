@@ -12,6 +12,7 @@ import { Download, Trash2, MoreVertical, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { useSoftDelete } from "@/hooks/useSoftDelete";
 import { useConfirm } from "@/hooks/useConfirm";
+import { getTodayLocalDate } from "@/lib/dateUtils";
 import * as XLSX from "xlsx";
 
 interface BatchActionsProps {
@@ -46,7 +47,7 @@ export const BatchActions = ({
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Dados");
       
-      const filename = `${table}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      const filename = `${table}_${getTodayLocalDate()}.xlsx`;
       XLSX.writeFile(wb, filename);
       
       toast.success(`${selectedItems.length} itens exportados`);
@@ -106,7 +107,7 @@ export const BatchActions = ({
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Dados");
       
-      const filename = `${table}_completo_${new Date().toISOString().split('T')[0]}.xlsx`;
+      const filename = `${table}_completo_${getTodayLocalDate()}.xlsx`;
       XLSX.writeFile(wb, filename);
       
       toast.success(`Todos os ${data.length} itens exportados`);

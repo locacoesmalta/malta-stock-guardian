@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAssetHistory } from "@/hooks/useAssetHistory";
 import { QRScanner } from "@/components/QRScanner";
 import { formatPAT } from "@/lib/patUtils";
+import { getTodayLocalDate } from "@/lib/dateUtils";
 
 import {
   movementDepositoSchema,
@@ -254,7 +255,7 @@ export default function AssetMovement() {
     
     // Auto-preencher dados quando for manutenção
     if (movementType === "em_manutencao" && asset) {
-      const currentDate = new Date().toISOString().split('T')[0];
+      const currentDate = getTodayLocalDate();
       
       // Determinar empresa e obra baseado na localização atual
       let company = "";
@@ -395,7 +396,7 @@ export default function AssetMovement() {
           location_type: "locacao",
           rental_company: data.rental_company,
           rental_work_site: data.rental_work_site,
-          rental_start_date: new Date().toISOString().split('T')[0],
+          rental_start_date: getTodayLocalDate(),
         };
 
         console.log("Dados para equipamento substituto:", substituteUpdate);
