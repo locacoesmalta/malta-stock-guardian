@@ -333,6 +333,7 @@ export type Database = {
           comments: string | null
           created_at: string
           created_by: string | null
+          deleted_at: string | null
           deposito_description: string | null
           destination_after_maintenance: string | null
           equipment_condition: string | null
@@ -383,6 +384,7 @@ export type Database = {
           comments?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           deposito_description?: string | null
           destination_after_maintenance?: string | null
           equipment_condition?: string | null
@@ -433,6 +435,7 @@ export type Database = {
           comments?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           deposito_description?: string | null
           destination_after_maintenance?: string | null
           equipment_condition?: string | null
@@ -765,6 +768,7 @@ export type Database = {
           client_name: string
           created_at: string
           created_by: string | null
+          deleted_at: string | null
           digital_signature: Json | null
           id: string
           malta_operator: string | null
@@ -786,6 +790,7 @@ export type Database = {
           client_name: string
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           digital_signature?: Json | null
           id?: string
           malta_operator?: string | null
@@ -807,6 +812,7 @@ export type Database = {
           client_name?: string
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           digital_signature?: Json | null
           id?: string
           malta_operator?: string | null
@@ -1195,6 +1201,7 @@ export type Database = {
           comments: string | null
           created_at: string
           created_by: string | null
+          deleted_at: string | null
           equipment_brand: string | null
           equipment_model: string | null
           equipment_type: string | null
@@ -1214,6 +1221,7 @@ export type Database = {
           comments?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           equipment_brand?: string | null
           equipment_model?: string | null
           equipment_type?: string | null
@@ -1233,6 +1241,7 @@ export type Database = {
           comments?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           equipment_brand?: string | null
           equipment_model?: string | null
           equipment_type?: string | null
@@ -1487,6 +1496,7 @@ export type Database = {
           considerations: string | null
           created_at: string
           created_by: string
+          deleted_at: string | null
           equipment_code: string
           equipment_name: string | null
           id: string
@@ -1504,6 +1514,7 @@ export type Database = {
           considerations?: string | null
           created_at?: string
           created_by: string
+          deleted_at?: string | null
           equipment_code?: string
           equipment_name?: string | null
           id?: string
@@ -1521,6 +1532,7 @@ export type Database = {
           considerations?: string | null
           created_at?: string
           created_by?: string
+          deleted_at?: string | null
           equipment_code?: string
           equipment_name?: string | null
           id?: string

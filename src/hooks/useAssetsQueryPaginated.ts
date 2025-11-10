@@ -39,22 +39,50 @@ interface Asset {
   malta_collaborator?: string;
   inspection_start_date?: string;
   created_at: string;
+  maintenance_status?: string;
 }
 
-const fetchAssets = async (): Promise<Asset[]> => {
-  const { data, error } = await supabase
+interface UseAssetsQueryOptions {
+  page?: number;
+  pageSize?: number;
+  searchTerm?: string;
+  locationType?: string;
+}
+
+const fetchAssets = async ({ 
+  page = 0, 
+  pageSize = 50,
+  searchTerm = "",
+  locationType
+}: UseAssetsQueryOptions = {}): Promise<{ data: Asset[], count: number }> => {
+  const from = page * pageSize;
+  const to = from + pageSize - 1;
+
+  let query = supabase
     .from("assets")
-    .select("*")
-    .is("deleted_at", null) // Apenas ativos ativos
+    .select("*", { count: 'exact' })
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
+  // Filtro de busca
+  if (searchTerm) {
+    query = query.or(`asset_code.ilike.%${searchTerm}%,equipment_name.ilike.%${searchTerm}%`);
+  }
+
+  // Filtro por tipo de localização
+  if (locationType) {
+    query = query.eq("location_type", locationType);
+  }
+
+  const { data, error, count } = await query.range(from, to);
+
   if (error) throw error;
-  return data || [];
+  return { data: data || [], count: count || 0 };
 };
 
-export const useAssetsQuery = () => {
+export const useAssetsQueryPaginated = (options?: UseAssetsQueryOptions) => {
   return useQuery({
-    queryKey: ["assets"],
-    queryFn: fetchAssets,
+    queryKey: ["assets-paginated", options?.page, options?.pageSize, options?.searchTerm, options?.locationType],
+    queryFn: () => fetchAssets(options),
   });
 };

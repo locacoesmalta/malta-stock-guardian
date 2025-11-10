@@ -22,6 +22,7 @@ const fetchProducts = async (): Promise<Product[]> => {
   const { data, error } = await supabase
     .from("products")
     .select("*")
+    .is("deleted_at", null) // Apenas produtos ativos
     .order("name");
 
   if (error) throw error;
