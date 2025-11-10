@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, CheckCircle2, AlertTriangle, FileText } from "lucide-react";
+import { Loader2, CheckCircle2, AlertTriangle, FileText, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { useDuplicateDetection, useFixDuplicateManufacturersAssets, useFixDuplicateManufacturersProducts, useFixDuplicateEquipmentNames, useFixDuplicateProductNames, useFixDuplicateModels, useFixDuplicateEquipmentTypes } from "@/hooks/useDuplicateDetection";
+import { useBatchNormalization } from "@/hooks/useBatchNormalization";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Select,
@@ -28,9 +29,21 @@ const DataNormalization = () => {
   const fixProductNames = useFixDuplicateProductNames();
   const fixModels = useFixDuplicateModels();
   const fixEquipmentTypes = useFixDuplicateEquipmentTypes();
+  const batchNormalization = useBatchNormalization();
 
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [selectedCorrections, setSelectedCorrections] = useState<Record<string, string>>({});
+  const [batchResults, setBatchResults] = useState<any[] | null>(null);
+
+  const handleBatchNormalization = async () => {
+    try {
+      const results = await batchNormalization.mutateAsync();
+      setBatchResults(results);
+      await refetch();
+    } catch (error) {
+      console.error('Erro ao executar normalização em lote:', error);
+    }
+  };
 
   const handleCorrection = async (
     type: 'manufacturersAssets' | 'manufacturersProducts' | 'equipmentNames' | 'products' | 'models' | 'equipmentTypes',
@@ -224,6 +237,70 @@ const DataNormalization = () => {
                 Atualizar
               </Button>
             </div>
+
+            {/* Normalização em Lote */}
+            <Card className="border-primary/50 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-primary" />
+                  Normalização em Lote
+                </CardTitle>
+                <CardDescription>
+                  Execute a normalização automática de TODOS os registros existentes no banco de dados
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Alert>
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    Esta operação irá converter automaticamente todos os campos de texto para MAIÚSCULAS
+                    e remover espaços extras de todos os registros nas tabelas <code className="font-mono text-xs bg-muted px-1 py-0.5 rounded">assets</code> e <code className="font-mono text-xs bg-muted px-1 py-0.5 rounded">products</code>.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleBatchNormalization}
+                    disabled={batchNormalization.isPending}
+                    className="flex-1"
+                  >
+                    {batchNormalization.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Normalizando...
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="mr-2 h-4 w-4" />
+                        Executar Normalização em Lote
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {batchResults && (
+                  <div className="space-y-2 p-4 bg-muted/50 rounded-lg">
+                    <p className="text-sm font-medium">Resultado da Normalização:</p>
+                    <div className="grid gap-2">
+                      {batchResults.map((result, idx) => (
+                        <div key={idx} className="flex justify-between items-center text-sm p-2 bg-background rounded">
+                          <span className="font-mono">
+                            {result.table_name}.{result.field_name}
+                          </span>
+                          <Badge variant={result.records_updated > 0 ? "default" : "secondary"}>
+                            {result.records_updated} registros
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2 text-green-600 font-medium text-sm pt-2 border-t">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Total: {batchResults.reduce((sum, r) => sum + r.records_updated, 0)} registros normalizados
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Resumo */}
             <div className="grid gap-4 md:grid-cols-3">
