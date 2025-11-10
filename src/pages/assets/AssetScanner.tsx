@@ -370,8 +370,14 @@ export default function AssetScanner() {
           navigate(`/assets/view/${data.id}`);
         } else {
           addToHistory(formattedCode);
-          toast.info("Patrimônio não encontrado. Deseja cadastrá-lo?");
-          navigate(`/assets/new?code=${formattedCode}`);
+          toast.info("Patrimônio não cadastrado", {
+            description: "Você será direcionado para o cadastro",
+          });
+          
+          // Pequeno delay para o usuário ler a mensagem
+          setTimeout(() => {
+            navigate(`/assets/new?code=${formattedCode}`);
+          }, 1000);
         }
       } catch (error) {
         console.error("Erro ao buscar patrimônio:", error);

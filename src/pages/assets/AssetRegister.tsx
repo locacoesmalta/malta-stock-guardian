@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -75,6 +75,7 @@ type EquipmentFormData = z.infer<typeof equipmentSchema>;
 
 export default function AssetRegister() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { logError } = useErrorTracking();
   const [step, setStep] = useState<1 | 2>(1);
   const [patInput, setPATInput] = useState("");
@@ -102,6 +103,43 @@ export default function AssetRegister() {
       comments: "",
     },
   });
+
+  // Auto-preencher PAT quando vem da URL (ex: scanner não encontrou o patrimônio)
+  useEffect(() => {
+    const codeFromUrl = searchParams.get('code');
+    
+    if (codeFromUrl && !verifiedPAT && step === 1 && !patInput) {
+      const validation = validatePAT(codeFromUrl);
+      
+      if (validation.valid) {
+        const formatted = formatPAT(codeFromUrl);
+        
+        if (formatted) {
+          setPATInput(formatted);
+          
+          toast({
+            title: "Código detectado",
+            description: `Verificando disponibilidade do PAT ${formatted}...`,
+          });
+          
+          // Executar verificação automaticamente após 800ms
+          setTimeout(() => {
+            setVerifiedPAT(formatted);
+          }, 800);
+        }
+      } else {
+        logError({
+          errorCode: 'ERR-ASSET-102',
+          errorType: 'VALIDATION_ERROR',
+          message: `PAT inválido recebido da URL: ${validation.error}`,
+          additionalData: {
+            code_from_url: codeFromUrl,
+            validation_error: validation.error,
+          },
+        }).catch(console.error);
+      }
+    }
+  }, [searchParams, verifiedPAT, step, patInput, logError]);
 
   const handleVerifyPAT = () => {
     const validation = validatePAT(patInput);
