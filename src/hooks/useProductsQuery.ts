@@ -13,6 +13,9 @@ interface Product {
   comments: string | null;
   last_purchase_date: string | null;
   payment_type: string | null;
+  equipment_brand: string | null;
+  equipment_type: string | null;
+  equipment_model: string | null;
 }
 
 const fetchProducts = async (): Promise<Product[]> => {

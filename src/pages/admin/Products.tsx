@@ -1,4 +1,6 @@
 import { useState, useRef, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,12 +37,32 @@ interface Product {
   purchase_price: number | null;
   sale_price: number | null;
   comments: string | null;
+  equipment_brand: string | null;
+  equipment_type: string | null;
+  equipment_model: string | null;
 }
 
 const Products = () => {
+  const navigate = useNavigate();
   const { user, isSuperuser } = useAuth();
   const { products, loading, searchTerm, setSearchTerm, refetch } = useProducts();
   const { confirm, ConfirmDialog } = useConfirm();
+  
+  // Contar produtos sem compatibilidade definida
+  const { data: productsWithoutCompatibility = 0 } = useQuery({
+    queryKey: ["products-without-compatibility-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("products")
+        .select("*", { count: "exact", head: true })
+        .is("equipment_brand", null)
+        .is("equipment_type", null)
+        .is("equipment_model", null);
+      
+      if (error) throw error;
+      return count || 0;
+    },
+  });
   const [open, setOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -426,6 +448,10 @@ const Products = () => {
 
   const openEditDialog = (product: Product) => {
     setEditingProduct(product);
+    
+    // Determinar se é universal (todos os campos de compatibilidade são null)
+    const isUniversal = !product.equipment_brand && !product.equipment_type && !product.equipment_model;
+    
     setFormData({
       code: product.code,
       name: product.name,
@@ -438,10 +464,10 @@ const Products = () => {
       payment_type: "",
       comments: product.comments || "",
       profit_margin: "",
-      equipment_brand: "",
-      equipment_type: "",
-      equipment_model: "",
-      is_universal: true,
+      equipment_brand: product.equipment_brand || "",
+      equipment_type: product.equipment_type || "",
+      equipment_model: product.equipment_model || "",
+      is_universal: isUniversal,
     });
     setOpen(true);
   };
@@ -594,9 +620,22 @@ const Products = () => {
       <div className="space-y-2">
         <BackButton />
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl sm:text-3xl font-bold">Gestão de Produtos</h1>
             <p className="text-sm sm:text-base text-muted-foreground">Cadastre e gerencie os produtos do estoque</p>
+            
+            {/* Badge de Alerta de Produtos Sem Compatibilidade */}
+            {productsWithoutCompatibility > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/admin/products/migration")}
+                className="mt-3 border-orange-500 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950"
+              >
+                <AlertTriangle className="h-4 w-4 mr-2" />
+                {productsWithoutCompatibility} produtos sem compatibilidade - Configurar agora
+              </Button>
+            )}
           </div>
           <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             <Button variant="outline" onClick={downloadTemplate} className="flex-1 sm:flex-none text-xs sm:text-sm">
