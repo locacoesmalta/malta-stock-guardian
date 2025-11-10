@@ -6,6 +6,33 @@
     margin: 1.5cm 1cm;
   }
 
+  /* === CONTROLE DE SEÇÕES COLAPSÁVEIS === */
+  /* Esconder seções FECHADAS na impressão */
+  .print-section[data-open="false"] {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Garantir que seções ABERTAS sejam impressas */
+  .print-section[data-open="true"] {
+    display: block !important;
+    page-break-inside: avoid !important;
+  }
+  
+  /* Esconder botões de expandir/colapsar */
+  [data-radix-collapsible-trigger] {
+    display: none !important;
+  }
+  
+  /* Garantir que conteúdo expandido seja visível */
+  [data-radix-collapsible-content] {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
   /* Ocultar elementos não necessários - SEM OCUPAR ESPAÇO */
   .print\\:hidden {
     display: none !important;

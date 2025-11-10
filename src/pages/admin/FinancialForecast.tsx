@@ -5,11 +5,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { useFinancialProducts } from "@/hooks/useFinancialProducts";
 import { useFinancialAssets } from "@/hooks/useFinancialAssets";
 import { useMaintenanceWithdrawals } from "@/hooks/useMaintenanceWithdrawals";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
-import { TrendingUp, Package, Wrench, DollarSign, AlertCircle, Printer, Settings } from "lucide-react";
+import { TrendingUp, Package, Wrench, DollarSign, AlertCircle, Printer, Settings, ChevronDown, ChevronUp } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -30,6 +31,21 @@ export default function FinancialForecast() {
   const [maintenanceEquipmentFilter, setMaintenanceEquipmentFilter] = useState<string>("");
   const [maintenanceStartDate, setMaintenanceStartDate] = useState<string>("");
   const [maintenanceEndDate, setMaintenanceEndDate] = useState<string>("");
+
+  // Estado para controlar expansão das seções
+  const [openSections, setOpenSections] = useState({
+    products: true,
+    assets: true,
+    maintenance: false,
+    comparative: false,
+  });
+
+  const toggleSection = (section: keyof typeof openSections) => {
+    setOpenSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   const { 
     data: productsData, 
@@ -145,12 +161,36 @@ export default function FinancialForecast() {
       </div>
 
       {/* SEÇÃO 1: PEÇAS E BENS DE CONSUMO */}
-      <div className="space-y-4 page-break-inside-avoid">
+      <Collapsible 
+        open={openSections.products} 
+        onOpenChange={() => toggleSection('products')}
+        className="space-y-4 page-break-inside-avoid print-section"
+        data-open={openSections.products}
+      >
         <div className="flex items-center justify-between print:mb-2 print:pb-2 print:border-b print:border-border">
-          <h2 className="text-2xl font-semibold flex items-center gap-2 print:text-base print:font-bold">
-            <Package className="h-6 w-6 print:hidden" />
+          <CollapsibleTrigger asChild>
+            <Button 
+              variant="ghost" 
+              className="flex items-center gap-2 hover:bg-accent p-2 -ml-2 print:hidden"
+            >
+              <h2 className="text-2xl font-semibold flex items-center gap-2">
+                <Package className="h-6 w-6" />
+                Peças e Bens de Consumo
+              </h2>
+              {openSections.products ? (
+                <ChevronUp className="h-5 w-5 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+              )}
+            </Button>
+          </CollapsibleTrigger>
+          
+          {/* Título para impressão */}
+          <h2 className="hidden print:block print:text-base print:font-bold">
+            <Package className="inline h-4 w-4 mr-2" />
             Peças e Bens de Consumo
           </h2>
+          
           <Select value={selectedProductManufacturer} onValueChange={setSelectedProductManufacturer}>
             <SelectTrigger className="w-[250px] print:hidden">
               <SelectValue placeholder="Selecione o fabricante" />
@@ -165,6 +205,8 @@ export default function FinancialForecast() {
             </SelectContent>
           </Select>
         </div>
+
+        <CollapsibleContent className="space-y-4">
 
         {!hasProductSalePrices && (
           <Alert className="print:hidden">
@@ -289,15 +331,40 @@ export default function FinancialForecast() {
             </Table>
           </CardContent>
         </Card>
-      </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* SEÇÃO 2: PATRIMÔNIO (EQUIPAMENTOS) */}
-      <div className="space-y-4 page-break-before page-break-inside-avoid">
+      <Collapsible 
+        open={openSections.assets} 
+        onOpenChange={() => toggleSection('assets')}
+        className="space-y-4 page-break-before page-break-inside-avoid print-section"
+        data-open={openSections.assets}
+      >
         <div className="flex items-center justify-between print:mb-2 print:pb-2 print:border-b print:border-border">
-          <h2 className="text-2xl font-semibold flex items-center gap-2 print:text-base print:font-bold">
-            <Wrench className="h-6 w-6 print:hidden" />
+          <CollapsibleTrigger asChild>
+            <Button 
+              variant="ghost" 
+              className="flex items-center gap-2 hover:bg-accent p-2 -ml-2 print:hidden"
+            >
+              <h2 className="text-2xl font-semibold flex items-center gap-2">
+                <Wrench className="h-6 w-6" />
+                Patrimônio (Equipamentos)
+              </h2>
+              {openSections.assets ? (
+                <ChevronUp className="h-5 w-5 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+              )}
+            </Button>
+          </CollapsibleTrigger>
+          
+          {/* Título para impressão */}
+          <h2 className="hidden print:block print:text-base print:font-bold">
+            <Wrench className="inline h-4 w-4 mr-2" />
             Patrimônio (Equipamentos)
           </h2>
+          
           <Select value={selectedAssetManufacturer} onValueChange={setSelectedAssetManufacturer}>
             <SelectTrigger className="w-[250px] print:hidden">
               <SelectValue placeholder="Selecione o fabricante" />
@@ -312,6 +379,8 @@ export default function FinancialForecast() {
             </SelectContent>
           </Select>
         </div>
+
+        <CollapsibleContent className="space-y-4">
 
         {/* Cards de Resumo - Equipamentos */}
         <div className="grid gap-4 md:grid-cols-3 page-break-inside-avoid">
@@ -469,17 +538,43 @@ export default function FinancialForecast() {
             </Table>
           </CardContent>
         </Card>
-      </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* SEÇÃO 3: CUSTOS DE MANUTENÇÃO INTERNA */}
       {maintenanceData.length > 0 && (
-        <div className="space-y-4 page-break-before page-break-inside-avoid">
+        <Collapsible 
+          open={openSections.maintenance} 
+          onOpenChange={() => toggleSection('maintenance')}
+          className="space-y-4 page-break-before page-break-inside-avoid print-section"
+          data-open={openSections.maintenance}
+        >
           <div className="flex items-center justify-between print:mb-2 print:pb-2 print:border-b print:border-border">
-            <h2 className="text-2xl font-semibold flex items-center gap-2 print:text-base print:font-bold">
-              <Settings className="h-6 w-6 print:hidden" />
+            <CollapsibleTrigger asChild>
+              <Button 
+                variant="ghost" 
+                className="flex items-center gap-2 hover:bg-accent p-2 -ml-2 print:hidden"
+              >
+                <h2 className="text-2xl font-semibold flex items-center gap-2">
+                  <Settings className="h-6 w-6" />
+                  Custos de Manutenção Interna
+                </h2>
+                {openSections.maintenance ? (
+                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                )}
+              </Button>
+            </CollapsibleTrigger>
+            
+            {/* Título para impressão */}
+            <h2 className="hidden print:block print:text-base print:font-bold">
+              <Settings className="inline h-4 w-4 mr-2" />
               Custos de Manutenção Interna
             </h2>
           </div>
+
+          <CollapsibleContent className="space-y-4">
 
         {/* Cards de Resumo - Manutenção */}
         <div className="grid gap-4 md:grid-cols-3 page-break-inside-avoid">
@@ -642,15 +737,35 @@ export default function FinancialForecast() {
             )}
           </CardContent>
         </Card>
-        </div>
+          </CollapsibleContent>
+        </Collapsible>
       )}
 
       {/* SEÇÃO 4: ANÁLISE VISUAL COMPARATIVA */}
-      <div className="space-y-4 print:hidden">
-        <h2 className="text-2xl font-semibold flex items-center gap-2">
-          <TrendingUp className="h-6 w-6" />
-          Análise Visual Comparativa
-        </h2>
+      <Collapsible 
+        open={openSections.comparative} 
+        onOpenChange={() => toggleSection('comparative')}
+        className="space-y-4 print-section"
+        data-open={openSections.comparative}
+      >
+        <CollapsibleTrigger asChild>
+          <Button 
+            variant="ghost" 
+            className="flex items-center gap-2 hover:bg-accent p-2 -ml-2 w-full justify-start"
+          >
+            <h2 className="text-2xl font-semibold flex items-center gap-2">
+              <TrendingUp className="h-6 w-6" />
+              Análise Visual Comparativa
+            </h2>
+            {openSections.comparative ? (
+              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+            )}
+          </Button>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent className="space-y-4">
 
         <Card>
           <CardHeader>
@@ -700,7 +815,8 @@ export default function FinancialForecast() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-      </div>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }
