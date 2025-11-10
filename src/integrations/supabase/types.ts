@@ -1272,6 +1272,9 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          last_login_at: string | null
+          last_login_ip: string | null
+          login_count: number | null
           updated_at: string
         }
         Insert: {
@@ -1279,6 +1282,9 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          last_login_at?: string | null
+          last_login_ip?: string | null
+          login_count?: number | null
           updated_at?: string
         }
         Update: {
@@ -1286,6 +1292,9 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          last_login_at?: string | null
+          last_login_ip?: string | null
+          login_count?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -1754,6 +1763,7 @@ export type Database = {
         }[]
       }
       get_total_hourmeter: { Args: { p_asset_id: string }; Returns: number }
+      get_user_welcome_data: { Args: { p_user_id: string }; Returns: Json }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_admin_or_superuser: { Args: { _user_id: string }; Returns: boolean }
       is_conversation_participant: {
