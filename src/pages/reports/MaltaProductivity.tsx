@@ -130,7 +130,9 @@ export default function MaltaProductivity() {
                   dataKey="collaborator_name"
                   angle={-45}
                   textAnchor="end"
-                  height={100}
+                  height={120}
+                  tick={{ fontSize: 11 }}
+                  interval="preserveStartEnd"
                 />
                 <YAxis />
                 <Tooltip />

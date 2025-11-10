@@ -87,6 +87,32 @@ export default function FinancialForecast() {
     window.print();
   };
 
+  // Função para renderizar labels customizados no gráfico de pizza
+  const renderPieLabel = ({ 
+    cx, cy, midAngle, innerRadius, outerRadius, percentage, manufacturer 
+  }: any) => {
+    // Ocultar labels de valores < 3%
+    if (percentage < 3) return null;
+    
+    const RADIAN = Math.PI / 180;
+    const radius = outerRadius + 35;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    
+    return (
+      <text
+        x={x}
+        y={y}
+        fill="hsl(var(--foreground))"
+        textAnchor={x > cx ? 'start' : 'end'}
+        dominantBaseline="central"
+        className="text-sm font-semibold"
+      >
+        {`${manufacturer}: ${percentage.toFixed(1)}%`}
+      </text>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Screen Header */}
@@ -210,8 +236,9 @@ export default function FinancialForecast() {
                   dataKey="manufacturer" 
                   angle={-45} 
                   textAnchor="end" 
-                  height={100}
-                  tick={{ fontSize: 12 }}
+                  height={120}
+                  tick={{ fontSize: 11 }}
+                  interval="preserveStartEnd"
                 />
                 <YAxis 
                   tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
@@ -340,15 +367,18 @@ export default function FinancialForecast() {
             <CardTitle>Distribuição do Valor Patrimonial</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={400}>
+            <ResponsiveContainer width="100%" height={500}>
               <PieChart>
                 <Pie
                   data={assetsData?.byManufacturer || []}
                   cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ manufacturer, percentage }) => `${manufacturer}: ${percentage.toFixed(1)}%`}
-                  outerRadius={120}
+                  cy="45%"
+                  labelLine={{
+                    stroke: 'hsl(var(--border))',
+                    strokeWidth: 1,
+                  }}
+                  label={renderPieLabel}
+                  outerRadius={100}
                   fill="#8884d8"
                   dataKey="totalValue"
                 >
@@ -359,6 +389,19 @@ export default function FinancialForecast() {
                 <Tooltip 
                   formatter={(value: number) => formatCurrency(value)}
                   labelStyle={{ color: '#000' }}
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--background))',
+                    border: '1px solid hsl(var(--border))'
+                  }}
+                />
+                <Legend 
+                  verticalAlign="bottom"
+                  height={60}
+                  wrapperStyle={{ paddingTop: '20px' }}
+                  formatter={(value: string, entry: any) => {
+                    const item = entry.payload;
+                    return `${item.manufacturer}: ${item.percentage.toFixed(1)}% (${formatCurrency(item.totalValue)})`;
+                  }}
                 />
               </PieChart>
             </ResponsiveContainer>
