@@ -77,11 +77,11 @@ const Users = () => {
   };
 
   const isAdmin = (user: typeof users[0]) => {
-    return user.user_roles.some((r) => r.role === "admin");
+    return Array.isArray(user.user_roles) && user.user_roles.some((r) => r.role === "admin");
   };
 
   const isSuperuser = (user: typeof users[0]) => {
-    return user.user_roles.some((r) => r.role === "superuser");
+    return Array.isArray(user.user_roles) && user.user_roles.some((r) => r.role === "superuser");
   };
 
   const getUserRole = (user: typeof users[0]): "admin" | "superuser" | "user" => {
