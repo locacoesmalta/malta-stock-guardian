@@ -10,6 +10,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { AppHeader } from "@/components/AppHeader";
 import { PermissionRoute } from "@/components/PermissionRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { CommandPalette } from "@/components/CommandPalette";
 
 // Lazy load routes for better performance
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -132,6 +133,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
+            <CommandPalette />
             <Suspense fallback={<LoadingFallback />}>
               <Routes>
               <Route path="/auth" element={<Auth />} />

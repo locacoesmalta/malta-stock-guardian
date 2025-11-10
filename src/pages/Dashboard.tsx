@@ -6,6 +6,9 @@ import { Package, AlertTriangle, TrendingUp, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useProductsQuery } from "@/hooks/useProductsQuery";
 import { BackButton } from "@/components/BackButton";
+import { StockTrendChart } from "@/components/dashboard/StockTrendChart";
+import { LowStockAlerts } from "@/components/dashboard/LowStockAlerts";
+import { MaintenanceStatusChart } from "@/components/dashboard/MaintenanceStatusChart";
 
 const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -68,6 +71,14 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Novos gráficos e alertas interativos */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <StockTrendChart />
+        <MaintenanceStatusChart />
+      </div>
+
+      <LowStockAlerts />
 
       <Card>
         <CardHeader>
