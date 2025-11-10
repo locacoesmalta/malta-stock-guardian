@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useIdleTimeout } from "@/hooks/useIdleTimeout";
 import { useVersionCheck } from "@/hooks/useVersionCheck";
+import { useRealtimePresence } from "@/hooks/useRealtimePresence";
 import { IdleWarningDialog } from "@/components/IdleWarningDialog";
 import { UpdateAvailableDialog } from "@/components/UpdateAvailableDialog";
 import { setStoredVersion, APP_VERSION } from "@/lib/appVersion";
@@ -294,6 +295,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setShowIdleWarning(false);
     resetTimers();
   };
+
+  // Hook de rastreamento de presença em tempo real
+  useRealtimePresence({
+    user,
+    isEnabled: !!user && !loading,
+  });
 
   return (
     <AuthContext.Provider value={{ user, session, isAdmin, isSuperuser, isActive, permissions, loading, signOut }}>

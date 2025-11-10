@@ -1,4 +1,4 @@
-import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3, ClipboardList, TrendingUp, Building2, Wallet, FileCheck, FileBarChart, MessageSquare, AlertTriangle, ShoppingCart } from "lucide-react";
+import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3, ClipboardList, TrendingUp, Building2, Wallet, FileCheck, FileBarChart, MessageSquare, AlertTriangle, ShoppingCart, Activity } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -434,6 +434,24 @@ export function AppSidebar() {
                     {!open && (
                       <TooltipContent side="right" className="font-normal">
                         Central de Erros
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton asChild>
+                        <NavLink to="/admin/active-sessions" className={getNavCls} onClick={handleNavClick}>
+                          <Activity className="h-4 w-4" />
+                          <span>Sessões Ativas</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    {!open && (
+                      <TooltipContent side="right" className="font-normal">
+                        Sessões Ativas
                       </TooltipContent>
                     )}
                   </Tooltip>
