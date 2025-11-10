@@ -1,4 +1,4 @@
-import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3, ClipboardList, TrendingUp, Building2, Wallet, FileCheck, FileBarChart, MessageSquare, AlertTriangle } from "lucide-react";
+import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3, ClipboardList, TrendingUp, Building2, Wallet, FileCheck, FileBarChart, MessageSquare, AlertTriangle, ShoppingCart } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -380,6 +380,24 @@ export function AppSidebar() {
                     {!open && (
                       <TooltipContent side="right" className="font-normal">
                         Previsão Financeira
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton asChild>
+                        <NavLink to="/admin/predictive-purchases" className={getNavCls} onClick={handleNavClick}>
+                          <ShoppingCart className="h-4 w-4" />
+                          <span>Compras Preditivas</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    {!open && (
+                      <TooltipContent side="right" className="font-normal">
+                        Compras Preditivas
                       </TooltipContent>
                     )}
                   </Tooltip>
