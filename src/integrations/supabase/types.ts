@@ -1716,6 +1716,16 @@ export type Database = {
         }
         Returns: string
       }
+      get_assets_missing_manufacturer: {
+        Args: never
+        Returns: {
+          asset_code: string
+          created_at: string
+          equipment_name: string
+          id: string
+          location_type: string
+        }[]
+      }
       get_collaborator_details: {
         Args: {
           p_collaborator_name: string

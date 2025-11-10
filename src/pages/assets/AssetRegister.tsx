@@ -60,7 +60,7 @@ const patVerificationSchema = z.object({
 const equipmentSchema = z.object({
   asset_code: z.string().min(6, "PAT deve ter 6 dígitos"),
   equipment_name: z.string().min(1, "Nome do equipamento é obrigatório"),
-  manufacturer: z.string().min(1, "Marca/Fabricante é obrigatório"),
+  manufacturer: z.string().min(2, "Fabricante é obrigatório"),
   model: z.string().optional(),
   serial_number: z.string().optional(),
   voltage_combustion: z.string().trim().max(100, "Voltagem/Combustão deve ter no máximo 100 caracteres").optional(),

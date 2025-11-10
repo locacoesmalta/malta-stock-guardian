@@ -35,6 +35,7 @@ const AssetTraceability = lazy(() => import("./pages/assets/AssetTraceability"))
 const AssetsControlDashboard = lazy(() => import("./pages/assets/AssetsControlDashboard"));
 const PostInspection = lazy(() => import("./pages/assets/PostInspection"));
 const AssetReplacement = lazy(() => import("./pages/assets/AssetReplacement"));
+const AssetsMissingData = lazy(() => import("./pages/assets/AssetsMissingData"));
 const FinancialForecast = lazy(() => import("./pages/admin/FinancialForecast"));
 const PredictivePurchases = lazy(() => import("./pages/admin/PredictivePurchases"));
 const CashBox = lazy(() => import("./pages/admin/CashBox"));
@@ -312,6 +313,16 @@ const App = () => (
                 } 
               />
               <Route 
+                path="/assets/missing-data" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_access_assets">
+                      <AssetsMissingData />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route
                 path="/rental-companies" 
                 element={
                   <ProtectedLayout>

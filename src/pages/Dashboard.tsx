@@ -9,6 +9,7 @@ import { BackButton } from "@/components/BackButton";
 import { StockTrendChart } from "@/components/dashboard/StockTrendChart";
 import { LowStockAlerts } from "@/components/dashboard/LowStockAlerts";
 import { MaintenanceStatusChart } from "@/components/dashboard/MaintenanceStatusChart";
+import { DataQualityCard } from "@/components/dashboard/DataQualityCard";
 
 const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -40,7 +41,7 @@ const Dashboard = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-xs sm:text-sm font-medium">Total de Produtos</CardTitle>
@@ -70,6 +71,8 @@ const Dashboard = () => {
             <div className="text-xl sm:text-2xl font-bold">{outOfStockProducts.length}</div>
           </CardContent>
         </Card>
+
+        <DataQualityCard />
       </div>
 
       {/* Novos gráficos e alertas interativos */}

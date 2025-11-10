@@ -14,9 +14,16 @@ import { useAssetsQuery } from "@/hooks/useAssetsQuery";
 import { DeadlineStatusBadge } from "@/components/DeadlineStatusBadge";
 import { BackButton } from "@/components/BackButton";
 import { useAssetDataMigration } from "@/hooks/useAssetDataMigration";
+import { AssetDataWarning } from "@/components/AssetDataWarning";
+import { EquipmentBrandSelector } from "@/components/EquipmentBrandSelector";
+import { EquipmentTypeSelector } from "@/components/EquipmentTypeSelector";
+import { EquipmentModelSelector } from "@/components/EquipmentModelSelector";
 
 export default function AssetsList() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedManufacturer, setSelectedManufacturer] = useState("");
+  const [selectedEquipmentType, setSelectedEquipmentType] = useState("");
+  const [selectedModel, setSelectedModel] = useState("");
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const { data: assets = [], isLoading, error } = useAssetsQuery();
@@ -62,13 +69,41 @@ export default function AssetsList() {
     }
   };
 
-  const filteredAssets = assets.filter(
-    (asset) =>
-      asset.asset_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      asset.equipment_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      asset.rental_company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      asset.rental_work_site?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filtro hierárquico com validação de fabricante
+  const filteredAssets = assets.filter((asset) => {
+    // 1º FILTRO CRÍTICO: Verificar se tem fabricante (ocultar sem fabricante)
+    if (!asset.manufacturer || asset.manufacturer.trim() === "") {
+      return false;
+    }
+
+    // 2º FILTRO: Por fabricante selecionado
+    if (selectedManufacturer && asset.manufacturer !== selectedManufacturer) {
+      return false;
+    }
+
+    // 3º FILTRO: Por tipo de equipamento
+    if (selectedEquipmentType && asset.equipment_name !== selectedEquipmentType) {
+      return false;
+    }
+
+    // 4º FILTRO: Por modelo (opcional)
+    if (selectedModel && asset.model !== selectedModel) {
+      return false;
+    }
+
+    // 5º FILTRO: Busca textual
+    if (searchTerm) {
+      return (
+        asset.asset_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        asset.equipment_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        asset.manufacturer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        asset.rental_company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        asset.rental_work_site?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    return true;
+  });
 
   if (isLoading || isMigrating) {
     return (
@@ -82,6 +117,10 @@ export default function AssetsList() {
     <div className="container mx-auto p-3 sm:p-4 md:p-6 max-w-7xl">
       <div className="space-y-3 mb-4 sm:mb-6">
         <BackButton />
+        
+        {/* Alerta de Dados Incompletos */}
+        <AssetDataWarning />
+
         <div className="flex flex-col gap-3 sm:gap-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
             <div className="flex-1 min-w-0">
@@ -120,7 +159,62 @@ export default function AssetsList() {
         </div>
       </div>
 
-      <div className="relative">
+      {/* Filtros Hierárquicos */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Fabricante</label>
+          <EquipmentBrandSelector
+            value={selectedManufacturer}
+            onChange={(value) => {
+              setSelectedManufacturer(value);
+              setSelectedEquipmentType("");
+              setSelectedModel("");
+            }}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Tipo de Equipamento</label>
+          <EquipmentTypeSelector
+            brand={selectedManufacturer}
+            value={selectedEquipmentType}
+            onChange={(value) => {
+              setSelectedEquipmentType(value);
+              setSelectedModel("");
+            }}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Modelo (Opcional)</label>
+          <EquipmentModelSelector
+            brand={selectedManufacturer}
+            type={selectedEquipmentType}
+            value={selectedModel}
+            onChange={setSelectedModel}
+          />
+        </div>
+      </div>
+
+      {/* Botão para limpar filtros */}
+      {(selectedManufacturer || selectedEquipmentType || selectedModel) && (
+        <div className="mb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSelectedManufacturer("");
+              setSelectedEquipmentType("");
+              setSelectedModel("");
+            }}
+          >
+            Limpar Filtros
+          </Button>
+        </div>
+      )}
+
+      {/* Campo de busca textual */}
+      <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
             placeholder="Buscar por código, equipamento, empresa ou obra..."

@@ -22,6 +22,7 @@ import { AssetSparePartsSection } from "@/components/AssetSparePartsSection";
 import { AssetMaintenanceSection } from "@/components/AssetMaintenanceSection";
 import { AssetMobilizationPartsSection } from "@/components/AssetMobilizationPartsSection";
 import { formatHourmeter } from "@/lib/hourmeterUtils";
+import { QuickFixManufacturerDialog } from "@/components/QuickFixManufacturerDialog";
 
 export default function AssetView() {
   const { id } = useParams();
@@ -29,6 +30,7 @@ export default function AssetView() {
   const { permissions } = useAuth();
   const { confirm, ConfirmDialog } = useConfirm();
   const [showScanner, setShowScanner] = useState(false);
+  const [showManufacturerDialog, setShowManufacturerDialog] = useState(false);
 
   const { data: asset, isLoading, error } = useQuery({
     queryKey: ["asset", id],
@@ -153,6 +155,29 @@ export default function AssetView() {
   return (
     <div className="container mx-auto p-3 sm:p-4 md:p-6 max-w-6xl">
       <ConfirmDialog />
+
+      {/* Alerta de dados incompletos */}
+      {(!asset.manufacturer || asset.manufacturer.trim() === "") && (
+        <Alert variant="destructive" className="mb-4 border-orange-500 bg-orange-50 dark:bg-orange-950">
+          <AlertCircle className="h-4 w-4 text-orange-600" />
+          <AlertTitle className="text-orange-700">⚠️ Dados Incompletos</AlertTitle>
+          <AlertDescription className="text-orange-700">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+              <span>
+                Este equipamento não possui fabricante cadastrado e não aparece nos filtros.
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowManufacturerDialog(true)}
+                className="border-orange-600 text-orange-700 hover:bg-orange-100 dark:hover:bg-orange-900 whitespace-nowrap"
+              >
+                Corrigir agora
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Badge de Status de Manutenção */}
       {asset?.next_maintenance_hourmeter && totalHourmeter !== undefined && (
@@ -285,6 +310,17 @@ export default function AssetView() {
         <QRScanner
           onScan={handleQRScan}
           onClose={() => setShowScanner(false)}
+        />
+      )}
+
+      {/* Dialog de correção de fabricante */}
+      {showManufacturerDialog && asset && (
+        <QuickFixManufacturerDialog
+          assetId={asset.id}
+          assetCode={asset.asset_code}
+          equipmentName={asset.equipment_name}
+          open={showManufacturerDialog}
+          onOpenChange={setShowManufacturerDialog}
         />
       )}
 
