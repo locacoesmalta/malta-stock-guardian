@@ -52,6 +52,8 @@ import { cn } from "@/lib/utils";
 import { BackButton } from "@/components/BackButton";
 import { useRealtimeDuplicateDetection } from "@/hooks/useRealtimeDuplicateDetection";
 import { RealtimeDuplicateAlert } from "@/components/RealtimeDuplicateAlert";
+import { normalizeOnChange } from "@/lib/inputNormalization";
+import { normalizeText } from "@/lib/textNormalization";
 
 // Schema para a etapa 1 (verificação do PAT)
 const patVerificationSchema = z.object({
@@ -61,12 +63,12 @@ const patVerificationSchema = z.object({
 // Schema para a etapa 2 (formulário completo)
 const equipmentSchema = z.object({
   asset_code: z.string().min(6, "PAT deve ter 6 dígitos"),
-  equipment_name: z.string().min(1, "Nome do equipamento é obrigatório"),
-  manufacturer: z.string().min(2, "Fabricante é obrigatório"),
-  model: z.string().optional(),
-  serial_number: z.string().optional(),
-  voltage_combustion: z.string().trim().max(100, "Voltagem/Combustão deve ter no máximo 100 caracteres").optional(),
-  supplier: z.string().optional(),
+  equipment_name: z.string().min(1, "Nome do equipamento é obrigatório").transform(val => normalizeText(val)),
+  manufacturer: z.string().min(2, "Fabricante é obrigatório").transform(val => normalizeText(val)),
+  model: z.string().optional().transform(val => val ? normalizeText(val) : undefined),
+  serial_number: z.string().optional().transform(val => val ? normalizeText(val) : undefined),
+  voltage_combustion: z.string().trim().max(100, "Voltagem/Combustão deve ter no máximo 100 caracteres").optional().transform(val => val ? normalizeText(val) : undefined),
+  supplier: z.string().optional().transform(val => val ? normalizeText(val) : undefined),
   purchase_date: z.date().optional(),
   unit_value: z.number().nonnegative("Valor deve ser positivo").optional(),
   equipment_condition: z.enum(["NOVO", "USADO"]).optional(),
@@ -471,8 +473,9 @@ export default function AssetRegister() {
                             placeholder="Digite para buscar..."
                             value={equipmentSearchValue}
                             onValueChange={(value) => {
-                              setEquipmentSearchValue(value);
-                              field.onChange(value);
+                              const normalized = value.toUpperCase();
+                              setEquipmentSearchValue(normalized);
+                              field.onChange(normalized);
                             }}
                           />
                           <CommandList>
@@ -526,7 +529,12 @@ export default function AssetRegister() {
                   <FormItem>
                     <FormLabel>Marca / Fabricante *</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Ex: Bosch, Makita, etc." />
+                      <Input 
+                        {...field} 
+                        placeholder="Ex: Bosch, Makita, etc." 
+                        onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                        value={field.value?.toUpperCase() || ''}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -548,7 +556,12 @@ export default function AssetRegister() {
                   <FormItem>
                     <FormLabel>Modelo</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Ex: GBH 2-28 DFV" />
+                      <Input 
+                        {...field} 
+                        placeholder="Ex: GBH 2-28 DFV" 
+                        onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                        value={field.value?.toUpperCase() || ''}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -570,7 +583,12 @@ export default function AssetRegister() {
                   <FormItem>
                     <FormLabel>Série do Equipamento</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Número de série" />
+                      <Input 
+                        {...field} 
+                        placeholder="Número de série" 
+                        onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                        value={field.value?.toUpperCase() || ''}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -588,6 +606,8 @@ export default function AssetRegister() {
                       <Input
                         {...field}
                         placeholder="Ex: 110V, 220V, Gasolina, Diesel, Gás"
+                        onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                        value={field.value?.toUpperCase() || ''}
                       />
                     </FormControl>
                     <FormMessage />
@@ -603,7 +623,12 @@ export default function AssetRegister() {
                   <FormItem>
                     <FormLabel>Fornecedor</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Nome do fornecedor" />
+                      <Input 
+                        {...field} 
+                        placeholder="Nome do fornecedor" 
+                        onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                        value={field.value?.toUpperCase() || ''}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

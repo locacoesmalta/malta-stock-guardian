@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeText } from "@/lib/textNormalization";
 import {
   Command,
   CommandEmpty,
@@ -45,9 +46,9 @@ export const EquipmentModelSelector = ({
 
       if (error) throw error;
 
-      // Extrair valores únicos
+      // Extrair valores únicos e normalizar
       const uniqueModels = Array.from(
-        new Set(data.map((item) => item.model).filter(Boolean))
+        new Set(data.map((item) => normalizeText(item.model)).filter(Boolean))
       ).sort();
 
       return uniqueModels as string[];
@@ -98,7 +99,8 @@ export const EquipmentModelSelector = ({
                 key={model}
                 value={model}
                 onSelect={() => {
-                  onChange(model === value ? "" : model);
+                  const normalized = normalizeText(model);
+                  onChange(normalized === value ? "" : normalized);
                   setOpen(false);
                 }}
               >

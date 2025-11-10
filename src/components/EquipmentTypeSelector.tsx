@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeText } from "@/lib/textNormalization";
 import {
   Command,
   CommandEmpty,
@@ -42,9 +43,9 @@ export const EquipmentTypeSelector = ({
 
       if (error) throw error;
 
-      // Extrair valores únicos
+      // Extrair valores únicos e normalizar
       const uniqueTypes = Array.from(
-        new Set(data.map((item) => item.equipment_name).filter(Boolean))
+        new Set(data.map((item) => normalizeText(item.equipment_name)).filter(Boolean))
       ).sort();
 
       return uniqueTypes as string[];
@@ -78,7 +79,8 @@ export const EquipmentTypeSelector = ({
                 key={type}
                 value={type}
                 onSelect={() => {
-                  onChange(type === value ? "" : type);
+                  const normalized = normalizeText(type);
+                  onChange(normalized === value ? "" : normalized);
                   setOpen(false);
                 }}
               >

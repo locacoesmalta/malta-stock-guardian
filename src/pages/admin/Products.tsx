@@ -28,6 +28,7 @@ import { EquipmentTypeSelector } from "@/components/EquipmentTypeSelector";
 import { EquipmentModelSelector } from "@/components/EquipmentModelSelector";
 import { useRealtimeDuplicateDetection } from "@/hooks/useRealtimeDuplicateDetection";
 import { RealtimeDuplicateAlert } from "@/components/RealtimeDuplicateAlert";
+import { normalizeText } from "@/lib/textNormalization";
 
 interface Product {
   id: string;
@@ -706,7 +707,7 @@ const Products = () => {
                   <Input
                     id="code"
                     value={formData.code}
-                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                     onBlur={handleCodeBlur}
                     required
                   />
@@ -719,7 +720,7 @@ const Products = () => {
                   <Input
                     id="name"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value.toUpperCase() })}
                     required
                   />
                   {errors.name && (
@@ -740,7 +741,7 @@ const Products = () => {
                 <Input
                   id="manufacturer"
                   value={formData.manufacturer}
-                  onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value.toUpperCase() })}
                   placeholder="Nome do fabricante ou marca"
                 />
                 <RealtimeDuplicateAlert

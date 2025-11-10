@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeText } from "@/lib/textNormalization";
 import {
   Command,
   CommandEmpty,
@@ -39,9 +40,9 @@ export const EquipmentBrandSelector = ({
 
       if (error) throw error;
 
-      // Extrair valores únicos
+      // Extrair valores únicos e normalizar
       const uniqueBrands = Array.from(
-        new Set(data.map((item) => item.manufacturer).filter(Boolean))
+        new Set(data.map((item) => normalizeText(item.manufacturer)).filter(Boolean))
       ).sort();
 
       return uniqueBrands as string[];
@@ -73,7 +74,8 @@ export const EquipmentBrandSelector = ({
                 key={brand}
                 value={brand}
                 onSelect={() => {
-                  onChange(brand === value ? "" : brand);
+                  const normalized = normalizeText(brand);
+                  onChange(normalized === value ? "" : normalized);
                   setOpen(false);
                 }}
               >
