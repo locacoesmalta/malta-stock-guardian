@@ -1647,6 +1647,48 @@ export type Database = {
           },
         ]
       }
+      user_presence: {
+        Row: {
+          browser_info: Json | null
+          created_at: string
+          current_route: string | null
+          id: string
+          is_online: boolean
+          last_activity: string
+          session_id: string
+          updated_at: string
+          user_email: string
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          browser_info?: Json | null
+          created_at?: string
+          current_route?: string | null
+          id?: string
+          is_online?: boolean
+          last_activity?: string
+          session_id: string
+          updated_at?: string
+          user_email: string
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          browser_info?: Json | null
+          created_at?: string
+          current_route?: string | null
+          id?: string
+          is_online?: boolean
+          last_activity?: string
+          session_id?: string
+          updated_at?: string
+          user_email?: string
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1765,6 +1807,7 @@ export type Database = {
           total_logs: number
         }[]
       }
+      cleanup_inactive_sessions: { Args: never; Returns: undefined }
       fix_duplicate_equipment_names: {
         Args: { p_correct_name: string; p_variations: string[] }
         Returns: number
