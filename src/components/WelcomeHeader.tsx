@@ -13,9 +13,9 @@ interface WelcomeHeaderProps {
 const WelcomeHeader = ({ greeting, userName, userEmail, lastLoginAt, loginCount }: WelcomeHeaderProps) => {
   const initials = userName
     .split(" ")
-    .map((n) => n[0])
+    .filter(n => n.length > 0)
+    .map((n) => n[0].toUpperCase())
     .join("")
-    .toUpperCase()
     .slice(0, 2);
 
   const formatLastLogin = () => {
