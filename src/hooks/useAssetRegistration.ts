@@ -133,17 +133,38 @@ export const useCreateAsset = () => {
 
   return useMutation({
     mutationFn: async (assetData: any) => {
+      // Verificação dupla antes de inserir
+      const { data: existingAsset } = await supabase
+        .from("assets")
+        .select("asset_code, equipment_name")
+        .eq("asset_code", assetData.asset_code)
+        .maybeSingle();
+
+      if (existingAsset) {
+        throw new Error(
+          `O PAT ${assetData.asset_code} já está cadastrado para: ${existingAsset.equipment_name}`
+        );
+      }
+
       const { data, error } = await supabase
         .from("assets")
         .insert(assetData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505') { // Unique constraint violation
+          throw new Error(
+            `O PAT ${assetData.asset_code} já está cadastrado. Por favor, verifique e tente novamente.`
+          );
+        }
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["assets"] });
+      queryClient.invalidateQueries({ queryKey: ["verify-pat"] });
       toast({
         title: "Sucesso",
         description: "Equipamento cadastrado com sucesso!",

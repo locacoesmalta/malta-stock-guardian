@@ -208,9 +208,12 @@ export default function AssetRegister() {
       };
 
       await createAssetMutation.mutateAsync(assetData);
+      // Só navega se o cadastro foi bem-sucedido
       navigate("/assets");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting form:", error);
+      // Erro já é tratado no hook useCreateAsset com toast
+      // Não navega para não deixar o usuário perdido
     }
   };
 
