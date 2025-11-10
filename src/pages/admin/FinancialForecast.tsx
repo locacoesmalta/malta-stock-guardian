@@ -91,8 +91,8 @@ export default function FinancialForecast() {
   const renderPieLabel = ({ 
     cx, cy, midAngle, innerRadius, outerRadius, percentage, manufacturer 
   }: any) => {
-    // Ocultar labels de valores < 3%
-    if (percentage < 3) return null;
+    // Mostrar label APENAS para valores >= 10% (top fabricantes)
+    if (percentage < 10) return null;
     
     const RADIAN = Math.PI / 180;
     const radius = outerRadius + 35;
@@ -367,18 +367,18 @@ export default function FinancialForecast() {
             <CardTitle>Distribuição do Valor Patrimonial</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={500}>
+            <ResponsiveContainer width="100%" height={400}>
               <PieChart>
                 <Pie
                   data={assetsData?.byManufacturer || []}
                   cx="50%"
-                  cy="45%"
+                  cy="50%"
                   labelLine={{
                     stroke: 'hsl(var(--border))',
                     strokeWidth: 1,
                   }}
                   label={renderPieLabel}
-                  outerRadius={100}
+                  outerRadius={120}
                   fill="#8884d8"
                   dataKey="totalValue"
                 >
@@ -388,23 +388,54 @@ export default function FinancialForecast() {
                 </Pie>
                 <Tooltip 
                   formatter={(value: number) => formatCurrency(value)}
-                  labelStyle={{ color: '#000' }}
                   contentStyle={{ 
                     backgroundColor: 'hsl(var(--background))',
                     border: '1px solid hsl(var(--border))'
                   }}
                 />
-                <Legend 
-                  verticalAlign="bottom"
-                  height={60}
-                  wrapperStyle={{ paddingTop: '20px' }}
-                  formatter={(value: string, entry: any) => {
-                    const item = entry.payload;
-                    return `${item.manufacturer}: ${item.percentage.toFixed(1)}% (${formatCurrency(item.totalValue)})`;
-                  }}
-                />
               </PieChart>
             </ResponsiveContainer>
+            
+            {/* Tabela detalhada organizada */}
+            <div className="mt-6">
+              <h4 className="text-sm font-semibold mb-3 text-foreground">Detalhamento por Fabricante</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-2">
+                {assetsData?.byManufacturer
+                  .filter(item => item.percentage > 0)
+                  .map((item, index) => (
+                    <div 
+                      key={item.manufacturer}
+                      className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
+                    >
+                      {/* Indicador de cor */}
+                      <div 
+                        className="w-4 h-4 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                      />
+                      
+                      {/* Informações */}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm truncate text-foreground">
+                          {item.manufacturer}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {item.assetCount} equipamento{item.assetCount !== 1 ? 's' : ''}
+                        </div>
+                      </div>
+                      
+                      {/* Valores */}
+                      <div className="text-right flex-shrink-0">
+                        <div className="font-semibold text-sm text-foreground">
+                          {item.percentage.toFixed(1)}%
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatCurrency(item.totalValue)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
           </CardContent>
         </Card>
 
