@@ -1,54 +1,60 @@
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Clock } from "lucide-react";
 
 interface WelcomeHeaderProps {
+  greeting: string;
   userName: string;
   userEmail: string;
-  greeting: string;
-  lastLoginFormatted: string | null;
-  isFirstLogin: boolean;
+  lastLoginAt: string | null;
+  loginCount: number;
 }
 
-export const WelcomeHeader = ({
-  userName,
-  userEmail,
-  greeting,
-  lastLoginFormatted,
-  isFirstLogin,
-}: WelcomeHeaderProps) => {
+const WelcomeHeader = ({ greeting, userName, userEmail, lastLoginAt, loginCount }: WelcomeHeaderProps) => {
   const initials = userName
     .split(" ")
     .map((n) => n[0])
     .join("")
     .toUpperCase()
-    .substring(0, 2);
+    .slice(0, 2);
+
+  const formatLastLogin = () => {
+    if (!lastLoginAt) return "Este é seu primeiro acesso!";
+    
+    try {
+      const date = new Date(lastLoginAt);
+      return format(date, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+    } catch {
+      return "Data indisponível";
+    }
+  };
 
   return (
-    <div className="flex items-start gap-4 animate-fade-in">
-      <Avatar className="h-16 w-16 border-2 border-primary">
-        <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
+    <div className="flex flex-col sm:flex-row items-center gap-6 p-6 bg-gradient-to-r from-primary/10 via-primary/5 to-background rounded-lg border border-border/50 animate-fade-in">
+      <Avatar className="h-20 w-20 border-4 border-primary/20">
+        <AvatarFallback className="text-2xl font-bold bg-primary text-primary-foreground">
           {initials}
         </AvatarFallback>
       </Avatar>
       
-      <div className="flex-1">
-        <h1 className="text-3xl font-bold text-foreground mb-1">
+      <div className="flex-1 text-center sm:text-left space-y-2">
+        <h1 className="text-3xl font-bold text-foreground">
           {greeting}, {userName}! 👋
         </h1>
         
-        <p className="text-sm text-muted-foreground mb-2">{userEmail}</p>
-        
-        {isFirstLogin ? (
-          <div className="flex items-center gap-2 text-sm text-primary font-medium">
-            <span>✨ Este é seu primeiro acesso! Bem-vindo!</span>
-          </div>
-        ) : lastLoginFormatted ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Clock className="h-4 w-4" />
-            <span>Último acesso: {lastLoginFormatted}</span>
-          </div>
-        ) : null}
+        <div className="space-y-1 text-sm text-muted-foreground">
+          <p>
+            <span className="font-medium">Último acesso:</span> {formatLastLogin()}
+          </p>
+          {loginCount > 1 && (
+            <p className="text-xs">
+              Total de acessos: <span className="font-semibold">{loginCount}</span>
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
 };
+
+export default WelcomeHeader;

@@ -1,6 +1,6 @@
+import { LucideIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface NewsAlertProps {
@@ -8,62 +8,47 @@ interface NewsAlertProps {
   title: string;
   count: number;
   description: string;
-  actionLink: string;
+  linkTo: string;
   variant?: "default" | "warning" | "destructive";
 }
 
-export const NewsAlert = ({
-  icon: Icon,
-  title,
-  count,
-  description,
-  actionLink,
-  variant = "default",
-}: NewsAlertProps) => {
+const NewsAlert = ({ icon: Icon, title, count, description, linkTo, variant = "default" }: NewsAlertProps) => {
   const navigate = useNavigate();
 
   const variantStyles = {
-    default: "border-primary/20 hover:border-primary/40",
-    warning: "border-yellow-500/20 hover:border-yellow-500/40",
-    destructive: "border-destructive/20 hover:border-destructive/40",
+    default: "border-primary/30 hover:border-primary/50 bg-primary/5",
+    warning: "border-yellow-500/30 hover:border-yellow-500/50 bg-yellow-500/5",
+    destructive: "border-destructive/30 hover:border-destructive/50 bg-destructive/5"
   };
 
   const badgeVariants = {
     default: "default" as const,
-    warning: "secondary" as const,
-    destructive: "destructive" as const,
+    warning: "outline" as const,
+    destructive: "destructive" as const
   };
 
   return (
-    <Card
-      className={`p-4 cursor-pointer transition-all hover:shadow-md ${variantStyles[variant]}`}
-      onClick={() => navigate(actionLink)}
+    <Card 
+      className={`p-4 cursor-pointer transition-all hover:scale-105 hover:shadow-md ${variantStyles[variant]}`}
+      onClick={() => navigate(linkTo)}
     >
       <div className="flex items-start gap-3">
-        <div className={`p-2 rounded-full ${
-          variant === "warning" ? "bg-yellow-500/10" :
-          variant === "destructive" ? "bg-destructive/10" :
-          "bg-primary/10"
-        }`}>
-          <Icon className={`h-5 w-5 ${
-            variant === "warning" ? "text-yellow-600" :
-            variant === "destructive" ? "text-destructive" :
-            "text-primary"
-          }`} />
+        <div className="p-2 rounded-full bg-background/50">
+          <Icon className="w-5 h-5" />
         </div>
         
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold text-foreground">{title}</h3>
-            <Badge variant={badgeVariants[variant]} className="text-xs">
+        <div className="flex-1 space-y-1">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="font-semibold text-sm">{title}</h3>
+            <Badge variant={badgeVariants[variant]} className="shrink-0">
               {count}
             </Badge>
           </div>
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="text-xs text-muted-foreground">{description}</p>
         </div>
-        
-        <AlertCircle className="h-4 w-4 text-muted-foreground" />
       </div>
     </Card>
   );
 };
+
+export default NewsAlert;
