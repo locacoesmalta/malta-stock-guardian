@@ -1,4 +1,4 @@
-import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3, ClipboardList, TrendingUp, Building2, Wallet, FileCheck, FileBarChart, MessageSquare } from "lucide-react";
+import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3, ClipboardList, TrendingUp, Building2, Wallet, FileCheck, FileBarChart, MessageSquare, AlertTriangle } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -398,6 +398,24 @@ export function AppSidebar() {
                     {!open && (
                       <TooltipContent side="right" className="font-normal">
                         Logs de Auditoria
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton asChild>
+                        <NavLink to="/admin/error-logs" className={getNavCls} onClick={handleNavClick}>
+                          <AlertTriangle className="h-4 w-4" />
+                          <span>Central de Erros</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    {!open && (
+                      <TooltipContent side="right" className="font-normal">
+                        Central de Erros
                       </TooltipContent>
                     )}
                   </Tooltip>

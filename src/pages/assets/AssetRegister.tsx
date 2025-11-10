@@ -44,6 +44,7 @@ import { toast } from "@/hooks/use-toast";
 
 import { formatPAT, validatePAT, calculateEquipmentAge, formatCurrency, parseCurrency } from "@/lib/patUtils";
 import { useVerifyPAT, useEquipmentSuggestions, useUploadAttachment, useCreateAsset } from "@/hooks/useAssetRegistration";
+import { useErrorTracking } from "@/hooks/useErrorTracking";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
@@ -74,6 +75,7 @@ type EquipmentFormData = z.infer<typeof equipmentSchema>;
 
 export default function AssetRegister() {
   const navigate = useNavigate();
+  const { logError } = useErrorTracking();
   const [step, setStep] = useState<1 | 2>(1);
   const [patInput, setPATInput] = useState("");
   const [verifiedPAT, setVerifiedPAT] = useState<string | null>(null);
@@ -212,6 +214,19 @@ export default function AssetRegister() {
       navigate("/assets");
     } catch (error: any) {
       console.error("Error submitting form:", error);
+      
+      // Registrar erro na central
+      await logError({
+        errorCode: error.message?.includes("PAT") ? "ERR-ASSET-101" : "ERR-ASSET-100",
+        errorType: error.message?.includes("PAT") ? "VALIDATION_ERROR" : "API_ERROR",
+        message: error.message || "Erro ao cadastrar equipamento",
+        stack: error.stack,
+        additionalData: {
+          asset_code: data.asset_code,
+          equipment_name: data.equipment_name,
+        },
+      });
+      
       // Erro já é tratado no hook useCreateAsset com toast
       // Não navega para não deixar o usuário perdido
     }

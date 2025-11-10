@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { authSchema } from "@/lib/validations";
+import { useErrorTracking } from "@/hooks/useErrorTracking";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const { logError } = useErrorTracking();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -59,6 +61,15 @@ const Auth = () => {
       navigate("/welcome");
     } catch (error: any) {
       toast.error(error.message || "Erro ao fazer login");
+      
+      // Registrar erro na central
+      await logError({
+        errorCode: "ERR-AUTH-001",
+        errorType: "AUTH_ERROR",
+        message: error.message || "Falha ao fazer login",
+        stack: error.stack,
+        additionalData: { email },
+      });
     } finally {
       setLoading(false);
     }
@@ -102,6 +113,15 @@ const Auth = () => {
       navigate("/welcome");
     } catch (error: any) {
       toast.error(error.message || "Erro ao cadastrar");
+      
+      // Registrar erro na central
+      await logError({
+        errorCode: "ERR-AUTH-002",
+        errorType: "AUTH_ERROR",
+        message: error.message || "Falha ao criar conta",
+        stack: error.stack,
+        additionalData: { email, fullName },
+      });
     } finally {
       setLoading(false);
     }

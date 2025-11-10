@@ -833,6 +833,57 @@ export type Database = {
           },
         ]
       }
+      error_logs: {
+        Row: {
+          additional_data: Json | null
+          created_at: string
+          error_code: string
+          error_message: string
+          error_stack: string | null
+          error_type: string
+          id: string
+          page_route: string
+          timestamp: string
+          user_email: string | null
+          user_id: string | null
+          user_name: string | null
+          webhook_sent: boolean | null
+          webhook_sent_at: string | null
+        }
+        Insert: {
+          additional_data?: Json | null
+          created_at?: string
+          error_code: string
+          error_message: string
+          error_stack?: string | null
+          error_type: string
+          id?: string
+          page_route: string
+          timestamp?: string
+          user_email?: string | null
+          user_id?: string | null
+          user_name?: string | null
+          webhook_sent?: boolean | null
+          webhook_sent_at?: string | null
+        }
+        Update: {
+          additional_data?: Json | null
+          created_at?: string
+          error_code?: string
+          error_message?: string
+          error_stack?: string | null
+          error_type?: string
+          id?: string
+          page_route?: string
+          timestamp?: string
+          user_email?: string | null
+          user_id?: string | null
+          user_name?: string | null
+          webhook_sent?: boolean | null
+          webhook_sent_at?: string | null
+        }
+        Relationships: []
+      }
       group_permissions: {
         Row: {
           can_add_members: boolean | null

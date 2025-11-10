@@ -9,6 +9,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AppHeader } from "@/components/AppHeader";
 import { PermissionRoute } from "@/components/PermissionRoute";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 // Lazy load routes for better performance
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -46,6 +47,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Welcome = lazy(() => import("./pages/Welcome"));
 const Chat = lazy(() => import("./pages/Chat"));
 const ConversationChat = lazy(() => import("./pages/ConversationChat"));
+const ErrorLogs = lazy(() => import("./pages/admin/ErrorLogs"));
 
 const queryClient = new QueryClient();
 
@@ -122,12 +124,13 @@ const LoadingFallback = () => (
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Suspense fallback={<LoadingFallback />}>
-            <Routes>
+      <ErrorBoundary>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <Suspense fallback={<LoadingFallback />}>
+              <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/change-password-required" element={<ChangePasswordRequired />} />
               <Route path="/welcome" element={<ProtectedLayout><Welcome /></ProtectedLayout>} />
@@ -406,12 +409,14 @@ const App = () => (
               <Route path="/admin/products" element={<ProtectedLayout><AdminRoute><Products /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/users" element={<ProtectedLayout><AdminRoute><Users /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/logs" element={<ProtectedLayout><AdminRoute><AuditLogs /></AdminRoute></ProtectedLayout>} />
+              <Route path="/admin/error-logs" element={<ProtectedLayout><AdminRoute><ErrorLogs /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/settings" element={<ProtectedLayout><AdminRoute><Settings /></AdminRoute></ProtectedLayout>} />
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </AuthProvider>
-      </BrowserRouter>
+              </Routes>
+            </Suspense>
+          </AuthProvider>
+        </BrowserRouter>
+      </ErrorBoundary>
     </TooltipProvider>
   </QueryClientProvider>
 );
