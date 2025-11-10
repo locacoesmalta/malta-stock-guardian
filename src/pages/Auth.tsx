@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { authSchema } from "@/lib/validations";
 import { useErrorTracking } from "@/hooks/useErrorTracking";
+import { setStoredVersion, APP_VERSION } from "@/lib/appVersion";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -56,6 +57,9 @@ const Auth = () => {
       });
 
       if (error) throw error;
+      
+      // Armazenar versão atual após login bem-sucedido
+      setStoredVersion(APP_VERSION);
       
       toast.success("Login realizado com sucesso!");
       navigate("/welcome");
@@ -108,6 +112,9 @@ const Auth = () => {
       });
 
       if (error) throw error;
+      
+      // Armazenar versão atual após signup bem-sucedido
+      setStoredVersion(APP_VERSION);
       
       toast.success("Cadastro realizado! Você já pode fazer login.");
       navigate("/welcome");

@@ -2,6 +2,12 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useIdleTimeout } from "@/hooks/useIdleTimeout";
+import { useVersionCheck } from "@/hooks/useVersionCheck";
+import { IdleWarningDialog } from "@/components/IdleWarningDialog";
+import { UpdateAvailableDialog } from "@/components/UpdateAvailableDialog";
+import { setStoredVersion, APP_VERSION } from "@/lib/appVersion";
+import { toast } from "@/hooks/use-toast";
 
 interface UserPermissions {
   is_active: boolean;
@@ -46,6 +52,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
   const [loading, setLoading] = useState(true);
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
+  const [showIdleWarning, setShowIdleWarning] = useState(false);
+  const [showUpdateDialog, setShowUpdateDialog] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -223,19 +231,81 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
-    setIsAdmin(false);
-    setIsSuperuser(false);
-    setIsActive(false);
-    setPermissions(null);
-    navigate("/auth");
+    try {
+      // Limpar localStorage (manter apenas app_version)
+      const currentVersion = localStorage.getItem('app_version');
+      localStorage.clear();
+      if (currentVersion) {
+        localStorage.setItem('app_version', currentVersion);
+      }
+      
+      // Fazer logout no Supabase
+      await supabase.auth.signOut();
+      
+      // Limpar estados
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
+      setIsSuperuser(false);
+      setIsActive(false);
+      setPermissions(null);
+      
+      // Navegar para login
+      navigate("/auth");
+    } catch (error) {
+      console.error('[AUTH] Error during sign out:', error);
+      // Mesmo com erro, navegar para login
+      navigate("/auth");
+    }
+  };
+
+  const handleIdleLogout = async () => {
+    toast({
+      title: "Sessão Encerrada",
+      description: "Você foi desconectado por inatividade.",
+      variant: "destructive",
+    });
+    await signOut();
+  };
+
+  const handleUpdateLogout = async () => {
+    toast({
+      title: "Sistema Atualizado",
+      description: "Uma nova versão está disponível. Por favor, faça login novamente.",
+    });
+    await signOut();
+    window.location.reload();
+  };
+
+  // Hook de rastreamento de inatividade
+  const { isWarningShown, resetTimers } = useIdleTimeout({
+    onIdle: handleIdleLogout,
+    onWarning: () => setShowIdleWarning(true),
+    isEnabled: !!user && !loading,
+  });
+
+  // Hook de verificação de versão
+  useVersionCheck({
+    onUpdateDetected: () => setShowUpdateDialog(true),
+    isEnabled: !!user && !loading,
+  });
+
+  const handleContinueSession = () => {
+    setShowIdleWarning(false);
+    resetTimers();
   };
 
   return (
     <AuthContext.Provider value={{ user, session, isAdmin, isSuperuser, isActive, permissions, loading, signOut }}>
       {children}
+      <IdleWarningDialog 
+        open={showIdleWarning && isWarningShown} 
+        onContinue={handleContinueSession}
+      />
+      <UpdateAvailableDialog
+        open={showUpdateDialog}
+        onUpdate={handleUpdateLogout}
+      />
     </AuthContext.Provider>
   );
 };
