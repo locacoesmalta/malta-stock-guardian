@@ -120,13 +120,13 @@ export default function ActiveSessions() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Sessões</CardTitle>
+            <CardTitle className="text-sm font-medium">Total de Usuários</CardTitle>
             <Monitor className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{activeUsers.length}</div>
             <p className="text-xs text-muted-foreground">
-              Sessões rastreadas
+              Usuários únicos
             </p>
           </CardContent>
         </Card>

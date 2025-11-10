@@ -30,14 +30,24 @@ export const useActiveUsers = () => {
     }
 
     try {
-      const { data, error: fetchError } = await supabase
+      // Buscar todas as sessões ordenadas por atividade recente
+      const { data: allData, error: fetchError } = await supabase
         .from('user_presence')
         .select('*')
         .order('last_activity', { ascending: false });
-
+      
       if (fetchError) throw fetchError;
-
-      setActiveUsers(data || []);
+      
+      // Filtrar client-side: manter apenas a sessão mais recente de cada user_id
+      const uniqueUsers = new Map<string, ActiveUser>();
+      allData?.forEach(session => {
+        if (!uniqueUsers.has(session.user_id) || 
+            new Date(session.last_activity) > new Date(uniqueUsers.get(session.user_id)!.last_activity)) {
+          uniqueUsers.set(session.user_id, session);
+        }
+      });
+      
+      setActiveUsers(Array.from(uniqueUsers.values()));
       setError(null);
     } catch (err: any) {
       console.error('[ACTIVE_USERS] Error fetching:', err);
