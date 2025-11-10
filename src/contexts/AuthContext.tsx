@@ -182,12 +182,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               navigate("/change-password-required");
             }
           } else {
-            // Admins get all permissions by default
-            if (isUserAdmin) {
+            // Admins e Superusers recebem permissões completas por padrão
+            if (isUserAdmin || isUserSuperuser) {
               setPermissions({
                 is_active: true,
                 can_access_main_menu: true,
-                can_access_admin: true,
+                can_access_admin: isUserAdmin, // Apenas admin acessa gestão de usuários
                 can_view_products: true,
                 can_create_reports: true,
                 can_view_reports: true,

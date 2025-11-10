@@ -92,38 +92,26 @@ const Users = () => {
 
   const updateUserRole = async (userId: string, newRole: "admin" | "superuser" | "user") => {
     try {
-      // Buscar role atual
-      const { data: currentRole, error: fetchError } = await supabase
+      // 1. DELETAR todas as roles existentes do usuário
+      const { error: deleteError } = await supabase
         .from("user_roles")
-        .select("id, role")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      if (fetchError) {
-        console.error("Erro ao buscar role:", fetchError);
-        throw fetchError;
+        .delete()
+        .eq("user_id", userId);
+      
+      if (deleteError) {
+        console.error("Erro ao deletar roles antigas:", deleteError);
+        throw deleteError;
       }
 
-      let error;
-
-      if (!currentRole) {
-        // Se não existir role, criar uma nova
-        const { error: insertError } = await supabase
-          .from("user_roles")
-          .insert({ user_id: userId, role: newRole });
-        
-        error = insertError;
-      } else {
-        // Se existir, atualizar
-        const { error: updateError } = await supabase
-          .from("user_roles")
-          .update({ role: newRole })
-          .eq("user_id", userId);
-        
-        error = updateError;
+      // 2. INSERIR a nova role única
+      const { error: insertError } = await supabase
+        .from("user_roles")
+        .insert({ user_id: userId, role: newRole });
+      
+      if (insertError) {
+        console.error("Erro ao inserir nova role:", insertError);
+        throw insertError;
       }
-
-      if (error) throw error;
 
       const roleNames = {
         admin: "Administrador",
@@ -131,7 +119,7 @@ const Users = () => {
         user: "Usuário"
       };
 
-      toast.success(`Usuário promovido a ${roleNames[newRole]}!`);
+      toast.success(`Usuário atualizado para ${roleNames[newRole]}!`);
       refetchUsers();
     } catch (error: any) {
       console.error("Erro ao atualizar role:", error);
@@ -392,9 +380,9 @@ const Users = () => {
                             <div className="bg-purple-100 dark:bg-purple-950/50 rounded-lg p-3 text-xs space-y-2">
                               <p className="font-medium">ℹ️ Sobre os níveis:</p>
                               <ul className="space-y-1 text-muted-foreground ml-4 list-disc">
-                                <li><strong>Usuário:</strong> Acesso limitado por permissões individuais</li>
-                                <li><strong>Superusuário:</strong> Pode editar quantidades de estoque diretamente</li>
-                                <li><strong>Administrador:</strong> Acesso total ao sistema</li>
+                                <li><strong>Usuário:</strong> Acesso básico com permissões específicas</li>
+                                <li><strong>Superusuário:</strong> Acesso avançado (edita estoque, ativos, relatórios, empresas) mas não gerencia usuários</li>
+                                <li><strong>Administrador:</strong> Controle total incluindo gestão de usuários</li>
                               </ul>
                             </div>
                           </div>

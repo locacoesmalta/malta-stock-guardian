@@ -1589,7 +1589,7 @@ export type Database = {
           {
             foreignKeyName: "user_roles_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1664,6 +1664,7 @@ export type Database = {
       }
       get_total_hourmeter: { Args: { p_asset_id: string }; Returns: number }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_admin_or_superuser: { Args: { _user_id: string }; Returns: boolean }
       is_conversation_participant: {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
