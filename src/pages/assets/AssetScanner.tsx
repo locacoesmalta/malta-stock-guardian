@@ -376,7 +376,7 @@ export default function AssetScanner() {
           
           // Pequeno delay para o usuário ler a mensagem
           setTimeout(() => {
-            navigate(`/assets/new?code=${formattedCode}`);
+            navigate(`/assets/register?code=${formattedCode}`);
           }, 1000);
         }
       } catch (error) {
