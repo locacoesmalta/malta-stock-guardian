@@ -50,6 +50,8 @@ import { ptBR } from "date-fns/locale";
 import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BackButton } from "@/components/BackButton";
+import { useRealtimeDuplicateDetection } from "@/hooks/useRealtimeDuplicateDetection";
+import { RealtimeDuplicateAlert } from "@/components/RealtimeDuplicateAlert";
 
 // Schema para a etapa 1 (verificação do PAT)
 const patVerificationSchema = z.object({
@@ -89,6 +91,28 @@ export default function AssetRegister() {
   const { data: suggestions = [] } = useEquipmentSuggestions(equipmentSearchValue);
   const uploadMutation = useUploadAttachment();
   const createAssetMutation = useCreateAsset();
+
+  // Validação em tempo real
+  const manufacturerValidation = useRealtimeDuplicateDetection(
+    form.watch('manufacturer') || '',
+    'assets',
+    'manufacturer',
+    step === 2
+  );
+
+  const equipmentNameValidation = useRealtimeDuplicateDetection(
+    form.watch('equipment_name') || '',
+    'assets',
+    'equipment_name',
+    step === 2
+  );
+
+  const modelValidation = useRealtimeDuplicateDetection(
+    form.watch('model') || '',
+    'assets',
+    'model',
+    step === 2
+  );
 
   const form = useForm<EquipmentFormData>({
     resolver: zodResolver(equipmentSchema),

@@ -26,6 +26,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { EquipmentBrandSelector } from "@/components/EquipmentBrandSelector";
 import { EquipmentTypeSelector } from "@/components/EquipmentTypeSelector";
 import { EquipmentModelSelector } from "@/components/EquipmentModelSelector";
+import { useRealtimeDuplicateDetection } from "@/hooks/useRealtimeDuplicateDetection";
+import { RealtimeDuplicateAlert } from "@/components/RealtimeDuplicateAlert";
 
 interface Product {
   id: string;
@@ -114,6 +116,21 @@ const Products = () => {
     open: boolean;
     product: Product | null;
   }>({ open: false, product: null });
+
+  // Validação em tempo real
+  const manufacturerValidation = useRealtimeDuplicateDetection(
+    formData.manufacturer,
+    'products',
+    'manufacturer',
+    open
+  );
+
+  const nameValidation = useRealtimeDuplicateDetection(
+    formData.name,
+    'products',
+    'name',
+    open
+  );
 
   // Extrair marcas únicas dos produtos
   const availableBrands = useMemo(() => {

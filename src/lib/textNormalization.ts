@@ -16,16 +16,20 @@ export const detectDuplicates = async (
   tableName: 'assets' | 'products',
   fieldName: string
 ): Promise<string[]> => {
-  if (!value || value.trim() === "") return [];
+  if (!value || value.trim() === "" || value.length < 3) return [];
   
   const normalized = normalizeText(value);
   
   try {
+    // Buscar apenas registros com primeiras 3 letras similares para melhor performance
+    const searchPattern = `%${value.substring(0, 3)}%`;
+    
     const result = await (supabase as any)
       .from(tableName)
       .select(fieldName)
       .is('deleted_at', null)
-      .neq(fieldName, value);
+      .neq(fieldName, value)
+      .ilike(fieldName, searchPattern);
     
     if (result.error) {
       console.error('Error detecting duplicates:', result.error);

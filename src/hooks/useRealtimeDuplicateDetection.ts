@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { detectDuplicates, normalizeText, suggestCorrection } from "@/lib/textNormalization";
 
 interface DuplicateDetectionResult {
@@ -16,15 +17,21 @@ export const useRealtimeDuplicateDetection = (
   fieldName: string,
   enabled: boolean = true
 ) => {
+  // Debounce: só validar após 3 caracteres
+  const debouncedValue = useMemo(() => {
+    if (!value || value.length < 3) return "";
+    return value;
+  }, [value]);
+
   return useQuery<DuplicateDetectionResult>({
-    queryKey: ['realtime-duplicate', tableName, fieldName, value],
+    queryKey: ['realtime-duplicate', tableName, fieldName, debouncedValue],
     queryFn: async () => {
-      if (!value || value.trim() === "") {
+      if (!debouncedValue || debouncedValue.trim() === "") {
         return { duplicates: [], needsNormalization: false, suggestedValue: null };
       }
       
-      const duplicates = await detectDuplicates(value, tableName, fieldName);
-      const suggestedValue = suggestCorrection(value);
+      const duplicates = await detectDuplicates(debouncedValue, tableName, fieldName);
+      const suggestedValue = suggestCorrection(debouncedValue);
       const needsNormalization = suggestedValue !== null;
       
       return {
@@ -33,8 +40,8 @@ export const useRealtimeDuplicateDetection = (
         suggestedValue,
       };
     },
-    enabled: enabled && !!value && value.length > 0,
-    staleTime: 5000, // 5 segundos
+    enabled: enabled && !!debouncedValue && debouncedValue.length >= 3,
+    staleTime: 5000,
     retry: false,
   });
 };

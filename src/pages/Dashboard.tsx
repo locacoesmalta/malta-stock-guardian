@@ -9,7 +9,7 @@ import { BackButton } from "@/components/BackButton";
 import { StockTrendChart } from "@/components/dashboard/StockTrendChart";
 import { LowStockAlerts } from "@/components/dashboard/LowStockAlerts";
 import { MaintenanceStatusChart } from "@/components/dashboard/MaintenanceStatusChart";
-import { DataQualityCard } from "@/components/dashboard/DataQualityCard";
+import { DataNormalizationCard } from "@/components/dashboard/DataNormalizationCard";
 
 const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -72,7 +72,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <DataQualityCard />
+        <DataNormalizationCard />
       </div>
 
       {/* Novos gráficos e alertas interativos */}

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, CheckCircle2, AlertTriangle, FileText } from "lucide-react";
 import { toast } from "sonner";
-import { useDuplicateDetection, useFixDuplicateManufacturersAssets, useFixDuplicateManufacturersProducts, useFixDuplicateEquipmentNames, useFixDuplicateProductNames } from "@/hooks/useDuplicateDetection";
+import { useDuplicateDetection, useFixDuplicateManufacturersAssets, useFixDuplicateManufacturersProducts, useFixDuplicateEquipmentNames, useFixDuplicateProductNames, useFixDuplicateModels, useFixDuplicateEquipmentTypes } from "@/hooks/useDuplicateDetection";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Select,
@@ -26,6 +26,8 @@ const DataNormalization = () => {
   const fixManufacturersProducts = useFixDuplicateManufacturersProducts();
   const fixEquipmentNames = useFixDuplicateEquipmentNames();
   const fixProductNames = useFixDuplicateProductNames();
+  const fixModels = useFixDuplicateModels();
+  const fixEquipmentTypes = useFixDuplicateEquipmentTypes();
 
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [selectedCorrections, setSelectedCorrections] = useState<Record<string, string>>({});
@@ -60,6 +62,12 @@ const DataNormalization = () => {
           break;
         case 'products':
           updated = await fixProductNames(correctValue, variations);
+          break;
+        case 'models':
+          updated = await fixModels(correctValue, variations);
+          break;
+        case 'equipmentTypes':
+          updated = await fixEquipmentTypes(correctValue, variations);
           break;
       }
 
@@ -98,7 +106,7 @@ const DataNormalization = () => {
     title: string;
     icon: React.ComponentType<{ className?: string }>;
     items: any[];
-    type: 'manufacturersAssets' | 'manufacturersProducts' | 'equipmentNames' | 'products';
+    type: 'manufacturersAssets' | 'manufacturersProducts' | 'equipmentNames' | 'products' | 'models' | 'equipmentTypes';
     getLabel: (item: any) => string;
     getDescription: (item: any) => string;
   }) => (
@@ -263,7 +271,7 @@ const DataNormalization = () => {
 
             {/* Tabs de Normalização */}
             <Tabs defaultValue="manufacturers-assets" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="manufacturers-assets">
                   Fabricantes (Assets)
                   {(data?.manufacturersAssets?.length || 0) > 0 && (
@@ -293,6 +301,22 @@ const DataNormalization = () => {
                   {(data?.products?.length || 0) > 0 && (
                     <Badge variant="destructive" className="ml-2">
                       {data?.products?.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="models">
+                  Modelos
+                  {(data?.models?.length || 0) > 0 && (
+                    <Badge variant="destructive" className="ml-2">
+                      {data?.models?.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="equipment-types">
+                  Tipos de Equipamento
+                  {(data?.equipmentTypes?.length || 0) > 0 && (
+                    <Badge variant="destructive" className="ml-2">
+                      {data?.equipmentTypes?.length}
                     </Badge>
                   )}
                 </TabsTrigger>
@@ -346,6 +370,32 @@ const DataNormalization = () => {
                   getLabel={(item) => item.produto_normalizado}
                   getDescription={(item) => 
                     `${item.qtd_variacoes} variações • ${item.total_produtos} produtos • Exemplos: ${item.exemplos_codigo.slice(0, 3).join(', ')}`
+                  }
+                />
+              </TabsContent>
+
+              <TabsContent value="models" className="space-y-4">
+                <DuplicateCard
+                  title="Modelos de Equipamentos"
+                  icon={AlertTriangle}
+                  items={data?.models || []}
+                  type="models"
+                  getLabel={(item) => item.modelo_normalizado}
+                  getDescription={(item) => 
+                    `${item.qtd_variacoes} variações • ${item.total_equipamentos} equipamentos • Exemplos: ${item.exemplos_pat?.slice(0, 3).join(', ') || 'N/A'}`
+                  }
+                />
+              </TabsContent>
+
+              <TabsContent value="equipment-types" className="space-y-4">
+                <DuplicateCard
+                  title="Tipos de Equipamentos"
+                  icon={AlertTriangle}
+                  items={data?.equipmentTypes || []}
+                  type="equipmentTypes"
+                  getLabel={(item) => item.tipo_normalizado}
+                  getDescription={(item) => 
+                    `${item.qtd_variacoes} variações • ${item.total_produtos} produtos • Exemplos: ${item.exemplos_codigo?.slice(0, 3).join(', ') || 'N/A'}`
                   }
                 />
               </TabsContent>

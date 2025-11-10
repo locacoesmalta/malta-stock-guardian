@@ -14,6 +14,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
+import { useRealtimeDuplicateDetection } from "@/hooks/useRealtimeDuplicateDetection";
+import { RealtimeDuplicateAlert } from "@/components/RealtimeDuplicateAlert";
 
 export default function AssetEdit() {
   const { id } = useParams();
@@ -34,6 +36,19 @@ export default function AssetEdit() {
     },
     enabled: !!id,
   });
+
+  // Validação em tempo real
+  const manufacturerValidation = useRealtimeDuplicateDetection(
+    form.watch('manufacturer') || '',
+    'assets',
+    'manufacturer'
+  );
+
+  const modelValidation = useRealtimeDuplicateDetection(
+    form.watch('model') || '',
+    'assets',
+    model'
+  );
 
   const form = useForm<AssetEditFormData>({
     resolver: zodResolver(assetEditSchema),
