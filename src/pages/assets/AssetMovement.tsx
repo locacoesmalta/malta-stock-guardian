@@ -79,15 +79,17 @@ export default function AssetMovement() {
   });
 
 
-  // Bloquear movimentação se equipamento estiver em laudo
+  // Redirecionar para Pós-Laudo APENAS se equipamento JÁ ESTÁ em laudo no banco
+  // (não bloquear se usuário está CRIANDO uma movimentação para laudo)
   useEffect(() => {
-    if (asset && asset.location_type === "aguardando_laudo") {
+    if (asset && asset.location_type === "aguardando_laudo" && movementType === null) {
       toast.error("Equipamento em laudo deve passar pela Decisão Pós-Laudo");
       navigate(`/assets/post-inspection/${id}`);
     }
-  }, [asset, id, navigate]);
+  }, [asset, id, navigate, movementType]);
 
-  // Forçar "aguardando_laudo" para equipamentos em locação
+  // Auto-selecionar "aguardando_laudo" para equipamentos em locação
+  // PERMITIR que usuário finalize a movimentação normalmente
   useEffect(() => {
     if (asset && asset.location_type === "locacao" && movementType === null) {
       setMovementType("aguardando_laudo");
