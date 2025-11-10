@@ -1,15 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import { detectDuplicates, normalizeText } from "@/lib/textNormalization";
+import { detectDuplicates, normalizeText, suggestCorrection } from "@/lib/textNormalization";
 
-interface RealtimeDuplicateResult {
+interface DuplicateDetectionResult {
   duplicates: string[];
   needsNormalization: boolean;
-  suggestedValue: string;
+  suggestedValue: string | null;
 }
 
 /**
- * Hook para detecção de duplicatas em tempo real
- * Verifica enquanto o usuário digita nos formulários
+ * Hook para detectar duplicatas em tempo real durante digitação
  */
 export const useRealtimeDuplicateDetection = (
   value: string,
@@ -17,29 +16,25 @@ export const useRealtimeDuplicateDetection = (
   fieldName: string,
   enabled: boolean = true
 ) => {
-  return useQuery<RealtimeDuplicateResult>({
+  return useQuery<DuplicateDetectionResult>({
     queryKey: ['realtime-duplicate', tableName, fieldName, value],
     queryFn: async () => {
       if (!value || value.trim() === "") {
-        return { 
-          duplicates: [], 
-          needsNormalization: false,
-          suggestedValue: ""
-        };
+        return { duplicates: [], needsNormalization: false, suggestedValue: null };
       }
       
       const duplicates = await detectDuplicates(value, tableName, fieldName);
-      const normalized = normalizeText(value);
-      const needsNormalization = value !== normalized;
+      const suggestedValue = suggestCorrection(value);
+      const needsNormalization = suggestedValue !== null;
       
       return {
         duplicates,
         needsNormalization,
-        suggestedValue: normalized,
+        suggestedValue,
       };
     },
-    enabled: enabled && !!value && value.trim() !== "",
+    enabled: enabled && !!value && value.length > 0,
     staleTime: 5000, // 5 segundos
-    gcTime: 10000, // 10 segundos
+    retry: false,
   });
 };
