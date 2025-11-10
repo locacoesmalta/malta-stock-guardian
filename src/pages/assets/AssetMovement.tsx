@@ -868,8 +868,7 @@ export default function AssetMovement() {
                     <Input
                       id="malta_collaborator"
                       {...form.register("malta_collaborator")}
-                      placeholder="Nome do responsável principal"
-                      required
+                      placeholder="Nome do responsável principal (opcional)"
                     />
                   </div>
                   <AssetCollaboratorsManager assetId={id} />
@@ -1204,8 +1203,7 @@ export default function AssetMovement() {
                         <Input
                           id="malta_collaborator"
                           {...form.register("malta_collaborator")}
-                          placeholder="Nome do responsável principal"
-                          required
+                          placeholder="Nome do responsável principal (opcional)"
                         />
                       </div>
                       <AssetCollaboratorsManager assetId={id} />
@@ -1403,8 +1401,7 @@ export default function AssetMovement() {
                         <Input
                           id="malta_collaborator"
                           {...form.register("malta_collaborator")}
-                          placeholder="Nome do responsável principal"
-                          required
+                          placeholder="Nome do responsável principal (opcional)"
                         />
                       </div>
                       <AssetCollaboratorsManager assetId={id} />
@@ -1421,8 +1418,7 @@ export default function AssetMovement() {
                   <Input
                     id="malta_collaborator"
                     {...form.register("malta_collaborator")}
-                    placeholder="Nome do responsável principal"
-                    required
+                    placeholder="Nome do responsável principal (opcional)"
                   />
                 </div>
                 <AssetCollaboratorsManager assetId={id} />
