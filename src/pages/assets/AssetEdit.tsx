@@ -37,19 +37,6 @@ export default function AssetEdit() {
     enabled: !!id,
   });
 
-  // Validação em tempo real
-  const manufacturerValidation = useRealtimeDuplicateDetection(
-    form.watch('manufacturer') || '',
-    'assets',
-    'manufacturer'
-  );
-
-  const modelValidation = useRealtimeDuplicateDetection(
-    form.watch('model') || '',
-    'assets',
-    model'
-  );
-
   const form = useForm<AssetEditFormData>({
     resolver: zodResolver(assetEditSchema),
     defaultValues: {
@@ -61,6 +48,19 @@ export default function AssetEdit() {
       comments: "",
     },
   });
+
+  // Validação em tempo real
+  const manufacturerValidation = useRealtimeDuplicateDetection(
+    form.watch('manufacturer') || '',
+    'assets',
+    'manufacturer'
+  );
+
+  const modelValidation = useRealtimeDuplicateDetection(
+    form.watch('model') || '',
+    'assets',
+    'model'
+  );
 
   useEffect(() => {
     if (asset) {
@@ -157,6 +157,13 @@ export default function AssetEdit() {
                 {form.formState.errors.manufacturer && (
                   <p className="text-sm text-destructive">{form.formState.errors.manufacturer.message}</p>
                 )}
+                <RealtimeDuplicateAlert
+                  duplicates={manufacturerValidation.data?.duplicates}
+                  suggestion={manufacturerValidation.data?.suggestedValue}
+                  needsNormalization={manufacturerValidation.data?.needsNormalization}
+                  onApply={(value) => form.setValue('manufacturer', value)}
+                  fieldName="fabricante"
+                />
               </div>
 
               <div className="space-y-2">
@@ -165,6 +172,13 @@ export default function AssetEdit() {
                   id="model"
                   {...form.register("model")}
                   placeholder="Ex: GSR 12V-15"
+                />
+                <RealtimeDuplicateAlert
+                  duplicates={modelValidation.data?.duplicates}
+                  suggestion={modelValidation.data?.suggestedValue}
+                  needsNormalization={modelValidation.data?.needsNormalization}
+                  onApply={(value) => form.setValue('model', value)}
+                  fieldName="modelo"
                 />
               </div>
 

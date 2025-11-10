@@ -92,6 +92,20 @@ export default function AssetRegister() {
   const uploadMutation = useUploadAttachment();
   const createAssetMutation = useCreateAsset();
 
+  const form = useForm<EquipmentFormData>({
+    resolver: zodResolver(equipmentSchema),
+    defaultValues: {
+      asset_code: "",
+      equipment_name: "",
+      manufacturer: "",
+      model: "",
+      serial_number: "",
+      supplier: "",
+      unit_value: undefined,
+      comments: "",
+    },
+  });
+
   // Validação em tempo real
   const manufacturerValidation = useRealtimeDuplicateDetection(
     form.watch('manufacturer') || '',
@@ -113,20 +127,6 @@ export default function AssetRegister() {
     'model',
     step === 2
   );
-
-  const form = useForm<EquipmentFormData>({
-    resolver: zodResolver(equipmentSchema),
-    defaultValues: {
-      asset_code: "",
-      equipment_name: "",
-      manufacturer: "",
-      model: "",
-      serial_number: "",
-      supplier: "",
-      unit_value: undefined,
-      comments: "",
-    },
-  });
 
   // Auto-preencher PAT quando vem da URL (ex: scanner não encontrou o patrimônio)
   useEffect(() => {
@@ -510,6 +510,13 @@ export default function AssetRegister() {
                   </FormItem>
                 )}
               />
+              <RealtimeDuplicateAlert
+                duplicates={equipmentNameValidation.data?.duplicates}
+                suggestion={equipmentNameValidation.data?.suggestedValue}
+                needsNormalization={equipmentNameValidation.data?.needsNormalization}
+                onApply={(value) => form.setValue('equipment_name', value)}
+                fieldName="nome do equipamento"
+              />
 
               {/* Marca/Fabricante */}
               <FormField
@@ -525,6 +532,13 @@ export default function AssetRegister() {
                   </FormItem>
                 )}
               />
+              <RealtimeDuplicateAlert
+                duplicates={manufacturerValidation.data?.duplicates}
+                suggestion={manufacturerValidation.data?.suggestedValue}
+                needsNormalization={manufacturerValidation.data?.needsNormalization}
+                onApply={(value) => form.setValue('manufacturer', value)}
+                fieldName="fabricante"
+              />
 
               {/* Modelo */}
               <FormField
@@ -539,6 +553,13 @@ export default function AssetRegister() {
                     <FormMessage />
                   </FormItem>
                 )}
+              />
+              <RealtimeDuplicateAlert
+                duplicates={modelValidation.data?.duplicates}
+                suggestion={modelValidation.data?.suggestedValue}
+                needsNormalization={modelValidation.data?.needsNormalization}
+                onApply={(value) => form.setValue('model', value)}
+                fieldName="modelo"
               />
 
               {/* Série */}

@@ -725,6 +725,13 @@ const Products = () => {
                   {errors.name && (
                     <p className="text-sm text-destructive">{errors.name}</p>
                   )}
+                  <RealtimeDuplicateAlert
+                    duplicates={nameValidation.data?.duplicates}
+                    suggestion={nameValidation.data?.suggestedValue}
+                    needsNormalization={nameValidation.data?.needsNormalization}
+                    onApply={(value) => setFormData({ ...formData, name: value })}
+                    fieldName="nome do produto"
+                  />
                 </div>
               </div>
 
@@ -735,6 +742,13 @@ const Products = () => {
                   value={formData.manufacturer}
                   onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
                   placeholder="Nome do fabricante ou marca"
+                />
+                <RealtimeDuplicateAlert
+                  duplicates={manufacturerValidation.data?.duplicates}
+                  suggestion={manufacturerValidation.data?.suggestedValue}
+                  needsNormalization={manufacturerValidation.data?.needsNormalization}
+                  onApply={(value) => setFormData({ ...formData, manufacturer: value })}
+                  fieldName="fabricante"
                 />
               </div>
 

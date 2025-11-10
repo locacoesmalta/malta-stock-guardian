@@ -33,7 +33,7 @@ const DataNormalization = () => {
   const [selectedCorrections, setSelectedCorrections] = useState<Record<string, string>>({});
 
   const handleCorrection = async (
-    type: 'manufacturersAssets' | 'manufacturersProducts' | 'equipmentNames' | 'products',
+    type: 'manufacturersAssets' | 'manufacturersProducts' | 'equipmentNames' | 'products' | 'models' | 'equipmentTypes',
     normalized: string,
     variations: string[]
   ) => {
