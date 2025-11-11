@@ -46,6 +46,53 @@ export type Database = {
           },
         ]
       }
+      asset_lifecycle_history: {
+        Row: {
+          archived_withdrawals_count: number | null
+          asset_code: string
+          asset_id: string | null
+          closed_by: string | null
+          created_at: string | null
+          cycle_closed_at: string | null
+          cycle_number: number
+          cycle_started_at: string | null
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          archived_withdrawals_count?: number | null
+          asset_code: string
+          asset_id?: string | null
+          closed_by?: string | null
+          created_at?: string | null
+          cycle_closed_at?: string | null
+          cycle_number: number
+          cycle_started_at?: string | null
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          archived_withdrawals_count?: number | null
+          asset_code?: string
+          asset_id?: string | null
+          closed_by?: string | null
+          created_at?: string | null
+          cycle_closed_at?: string | null
+          cycle_number?: number
+          cycle_started_at?: string | null
+          id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_lifecycle_history_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asset_maintenance_parts: {
         Row: {
           created_at: string
@@ -963,6 +1010,8 @@ export type Database = {
           created_at: string
           equipment_code: string
           id: string
+          is_archived: boolean | null
+          lifecycle_cycle: number | null
           product_id: string
           quantity: number
           used_in_report_id: string | null
@@ -976,6 +1025,8 @@ export type Database = {
           created_at?: string
           equipment_code: string
           id?: string
+          is_archived?: boolean | null
+          lifecycle_cycle?: number | null
           product_id: string
           quantity: number
           used_in_report_id?: string | null
@@ -989,6 +1040,8 @@ export type Database = {
           created_at?: string
           equipment_code?: string
           id?: string
+          is_archived?: boolean | null
+          lifecycle_cycle?: number | null
           product_id?: string
           quantity?: number
           used_in_report_id?: string | null

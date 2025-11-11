@@ -22,6 +22,8 @@ import { BackButton } from "@/components/BackButton";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { getTodayLocalDate } from "@/lib/dateUtils";
+import { useWithdrawalsByPAT } from "@/hooks/useWithdrawalsByPAT";
+import { PendingWithdrawalsAlert } from "@/components/PendingWithdrawalsAlert";
 
 
 interface WithdrawalItem {
@@ -50,8 +52,17 @@ const MaterialWithdrawal = () => {
   const [additionalCollaborators, setAdditionalCollaborators] = useState<string[]>([]);
   const [showCollaborators, setShowCollaborators] = useState(false);
 
+  // Estados para controle de ciclo de vida
+  const [lifecycleDecision, setLifecycleDecision] = useState<"pending" | "keep" | "new">("keep");
+  const [currentCycle, setCurrentCycle] = useState(1);
+
   // Buscar informações do equipamento pelo PAT
   const { data: equipment, isLoading: loadingEquipment } = useEquipmentByPAT(equipmentCode);
+
+  // Buscar peças pendentes para este PAT
+  const { data: pendingWithdrawals = [], isLoading: loadingPendingWithdrawals } = useWithdrawalsByPAT(
+    formatPAT(equipmentCode) || ""
+  );
 
   // Buscar produtos compatíveis com o equipamento
   const { data: compatibleProducts, isLoading: loadingProducts } = useQuery({
@@ -76,6 +87,15 @@ const MaterialWithdrawal = () => {
 
   // Selecionar lista de produtos: compatíveis se houver equipamento, todos se for venda
   const availableProducts = isSaleWithdrawal ? products : (compatibleProducts || products);
+
+  // Controlar decisão de ciclo de vida quando detectar peças pendentes
+  useEffect(() => {
+    if (!isSaleWithdrawal && pendingWithdrawals && pendingWithdrawals.length > 0) {
+      setLifecycleDecision("pending");
+    } else {
+      setLifecycleDecision("keep");
+    }
+  }, [pendingWithdrawals, isSaleWithdrawal]);
 
   // Preencher informações automaticamente quando o equipamento for encontrado
   useEffect(() => {
@@ -152,6 +172,56 @@ const MaterialWithdrawal = () => {
     }
     
     setItems(newItems);
+  };
+
+  const handleKeepHistory = () => {
+    setLifecycleDecision("keep");
+    toast.success("As peças anteriores serão mantidas. Você pode adicionar novas peças agora.");
+  };
+
+  const handleNewCycle = async () => {
+    const confirmed = await confirm({
+      title: "Iniciar Novo Ciclo de Vida?",
+      description: `Isso irá arquivar ${pendingWithdrawals.length} peça(s) anterior(es). Elas não poderão mais ser usadas em relatórios. Deseja continuar?`,
+    });
+
+    if (!confirmed) return;
+
+    try {
+      // Arquivar retiradas antigas
+      const { error } = await supabase
+        .from("material_withdrawals")
+        .update({ is_archived: true })
+        .in("id", pendingWithdrawals.map(w => w.id));
+
+      if (error) throw error;
+
+      // Registrar fechamento do ciclo
+      const formattedPAT = formatPAT(equipmentCode);
+      const { data: assetData } = await supabase
+        .from("assets")
+        .select("id")
+        .eq("asset_code", formattedPAT)
+        .maybeSingle();
+
+      if (assetData) {
+        await supabase.from("asset_lifecycle_history").insert({
+          asset_id: assetData.id,
+          asset_code: formattedPAT,
+          cycle_number: currentCycle,
+          cycle_closed_at: new Date().toISOString(),
+          closed_by: user?.id,
+          reason: "Novo ciclo de manutenção iniciado",
+          archived_withdrawals_count: pendingWithdrawals.length,
+        });
+      }
+
+      setLifecycleDecision("new");
+      setCurrentCycle(currentCycle + 1);
+      toast.success("Novo ciclo iniciado! As peças antigas foram arquivadas.");
+    } catch (error: any) {
+      toast.error("Erro ao arquivar peças antigas: " + error.message);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -237,7 +307,9 @@ const MaterialWithdrawal = () => {
         withdrawal_date: withdrawalDate,
         equipment_code: isSaleWithdrawal ? "VENDA" : formattedPAT,
         work_site: workSite,
-        company: company
+        company: company,
+        lifecycle_cycle: currentCycle,
+        is_archived: false
       }));
 
       const { data: insertedWithdrawals, error } = await supabase
@@ -438,7 +510,20 @@ const MaterialWithdrawal = () => {
                 )}
                 </div>
               )}
+            </div>
 
+            {/* Alerta de Peças Pendentes */}
+            {!isSaleWithdrawal && equipmentCode && !loadingEquipment && equipment && !loadingPendingWithdrawals && 
+              lifecycleDecision === "pending" && pendingWithdrawals.length > 0 && (
+              <PendingWithdrawalsAlert
+                withdrawals={pendingWithdrawals}
+                equipmentCode={formatPAT(equipmentCode) || ""}
+                onKeepHistory={handleKeepHistory}
+                onNewCycle={handleNewCycle}
+              />
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="workSite" className="text-xs sm:text-sm">Obra *</Label>
                 <Input
@@ -524,12 +609,26 @@ const MaterialWithdrawal = () => {
         <Card>
           <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <CardTitle className="text-base sm:text-lg">Produtos</CardTitle>
-            <Button type="button" onClick={addItem} size="sm" className="w-full sm:w-auto text-xs sm:text-sm">
+            <Button 
+              type="button" 
+              onClick={addItem} 
+              size="sm" 
+              className="w-full sm:w-auto text-xs sm:text-sm"
+              disabled={lifecycleDecision === "pending"}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Adicionar Produto
             </Button>
           </CardHeader>
           <CardContent className="space-y-4">
+            {lifecycleDecision === "pending" && (
+              <Alert className="border-amber-500 bg-amber-50">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-sm text-amber-900">
+                  Por favor, decida o que fazer com as peças pendentes antes de adicionar novos produtos.
+                </AlertDescription>
+              </Alert>
+            )}
             {!isSaleWithdrawal && equipment && compatibleProducts && (
               <Alert className="border-blue-500/50 bg-blue-50 dark:bg-blue-950/20">
                 <CheckCircle2 className="h-4 w-4 text-blue-600" />

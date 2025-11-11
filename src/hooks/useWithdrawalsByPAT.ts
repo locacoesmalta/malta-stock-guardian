@@ -10,6 +10,8 @@ interface WithdrawalWithProduct {
   equipment_code: string;
   work_site: string;
   company: string;
+  lifecycle_cycle: number;
+  is_archived: boolean;
   products: {
     code: string;
     name: string;
@@ -38,9 +40,12 @@ export const useWithdrawalsByPAT = (equipmentCode: string) => {
           equipment_code,
           work_site,
           company,
+          lifecycle_cycle,
+          is_archived,
           products(code, name, purchase_price)
         `)
         .eq("equipment_code", equipmentCode)
+        .eq("is_archived", false) // Apenas retiradas não arquivadas
         .is("used_in_report_id", null) // Apenas retiradas não usadas em relatórios
         .order("withdrawal_date", { ascending: false });
 
