@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { ArrowLeft, Edit, Trash2, Move, AlertCircle, CheckCircle2, Clock, QrCode } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Move, AlertCircle, CheckCircle2, Clock, QrCode, FileText } from "lucide-react";
 import { QRScanner } from "@/components/QRScanner";
 import { formatPAT } from "@/lib/patUtils";
 import { format, parseISO } from "date-fns";
@@ -27,7 +27,7 @@ import { QuickFixManufacturerDialog } from "@/components/QuickFixManufacturerDia
 export default function AssetView() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { permissions } = useAuth();
+  const { permissions, isAdmin } = useAuth();
   const { confirm, ConfirmDialog } = useConfirm();
   const [showScanner, setShowScanner] = useState(false);
   const [showManufacturerDialog, setShowManufacturerDialog] = useState(false);
@@ -277,6 +277,17 @@ export default function AssetView() {
           <QrCode className="h-4 w-4 mr-2" />
           Escanear QR Code
         </Button>
+        
+        {isAdmin && (
+          <Button 
+            variant="outline" 
+            onClick={() => navigate(`/assets/unified-history?pat=${asset.asset_code}`)} 
+            className="flex-1 sm:flex-none text-xs sm:text-sm"
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            Histórico Unificado
+          </Button>
+        )}
         
         {permissions?.can_edit_assets && (
           <>

@@ -20,6 +20,7 @@ import {
   Home,
   BarChart3,
   BoxIcon,
+  History as HistoryIcon,
 } from "lucide-react";
 import { useProductsQuery } from "@/hooks/useProductsQuery";
 import { useAssetsQuery } from "@/hooks/useAssetsQuery";
@@ -74,6 +75,14 @@ export const CommandPalette = () => {
       description: "Gerenciar equipamentos",
       icon: Wrench,
       onSelect: () => navigate("/assets"),
+      group: "Navegação",
+    },
+    {
+      id: "unified-history",
+      title: "Histórico Unificado",
+      description: "Timeline completa de eventos por equipamento",
+      icon: HistoryIcon,
+      onSelect: () => navigate("/assets/unified-history"),
       group: "Navegação",
     },
     {

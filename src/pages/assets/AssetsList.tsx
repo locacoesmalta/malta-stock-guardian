@@ -131,6 +131,16 @@ export default function AssetsList() {
               </p>
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
+            {isAdmin && (
+              <Button
+                onClick={() => navigate("/assets/unified-history")}
+                variant="outline"
+                className="flex-1 sm:flex-none"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Histórico Unificado
+              </Button>
+            )}
             <Button
               onClick={() => navigate("/assets/traceability")}
               variant="outline"
