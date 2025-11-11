@@ -1,147 +1,35 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import { Calendar, FileText, Printer, Search, ChevronDown, ChevronUp } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Printer, Search, ChevronDown, ChevronUp, Link as LinkIcon } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { BackButton } from "@/components/BackButton";
-
-interface Report {
-  id: string;
-  report_date: string;
-  work_site: string;
-  company: string;
-  technician_name: string;
-  service_comments: string;
-  equipment_code: string;
-  equipment_name: string | null;
-  report_parts: Array<{
-    products: {
-      code: string;
-      name: string;
-      purchase_price: number | null;
-    };
-    quantity_used: number;
-  }>;
-  report_photos: Array<{
-    photo_url: string;
-    photo_comment: string;
-    photo_order: number;
-    signedUrl?: string; // Add signed URL field
-  }>;
-}
+import { useReportsWithTraceability } from "@/hooks/useReportsWithTraceability";
+import { ReportPartsTraceability } from "@/components/ReportPartsTraceability";
 
 const ReportsList = () => {
-  const [reports, setReports] = useState<Report[]>([]);
-  const [filteredReports, setFilteredReports] = useState<Report[]>([]);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [companyFilter, setCompanyFilter] = useState("");
+  const [equipmentCodeFilter, setEquipmentCodeFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [loading, setLoading] = useState(true);
   const [expandedReportId, setExpandedReportId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchReports();
-  }, []);
-
-  useEffect(() => {
-    filterReports();
-  }, [reports, startDate, endDate, companyFilter, searchTerm]);
-
-  const fetchReports = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("reports")
-        .select(`
-          *,
-          report_parts(
-            quantity_used,
-            products(code, name, purchase_price)
-          ),
-          report_photos(photo_url, photo_comment, photo_order)
-        `)
-        .order("report_date", { ascending: false });
-
-      if (error) throw error;
-      
-      // Generate signed URLs for all photos
-      const reportsWithSignedUrls = await Promise.all(
-        (data || []).map(async (report) => {
-          const photosWithSignedUrls = await Promise.all(
-            report.report_photos.map(async (photo) => {
-              try {
-                const { data: signedData } = await supabase.storage
-                  .from('report-photos')
-                  .createSignedUrl(photo.photo_url, 3600); // 1 hour expiry
-                
-                return {
-                  ...photo,
-                  signedUrl: signedData?.signedUrl || photo.photo_url
-                };
-              } catch (err) {
-                console.error('Error generating signed URL:', err);
-                return { ...photo, signedUrl: photo.photo_url };
-              }
-            })
-          );
-          
-          return {
-            ...report,
-            report_photos: photosWithSignedUrls
-          };
-        })
-      );
-      
-      setReports(reportsWithSignedUrls);
-    } catch (error: any) {
-      toast.error("Erro ao carregar relatórios");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filterReports = () => {
-    let filtered = [...reports];
-
-    if (startDate) {
-      filtered = filtered.filter((r) => r.report_date >= startDate);
-    }
-
-    if (endDate) {
-      filtered = filtered.filter((r) => r.report_date <= endDate);
-    }
-
-    if (companyFilter) {
-      filtered = filtered.filter((r) =>
-        r.company.toLowerCase().includes(companyFilter.toLowerCase())
-      );
-    }
-
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (r) =>
-          r.work_site.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          r.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          r.technician_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          r.equipment_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (r.equipment_name && r.equipment_name.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-    }
-
-    setFilteredReports(filtered);
-  };
+  const { data: reports = [], isLoading } = useReportsWithTraceability({
+    startDate,
+    endDate,
+    equipmentCode: equipmentCodeFilter,
+    searchTerm,
+  });
 
   const toggleReportExpansion = (reportId: string) => {
     setExpandedReportId(expandedReportId === reportId ? null : reportId);
   };
 
-  const handlePrint = (report: Report) => {
+  const handlePrint = (report: typeof reports[0]) => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
@@ -152,17 +40,33 @@ const ReportsList = () => {
       return sum + (price * part.quantity_used);
     }, 0);
 
-    const partsTable = report.report_parts.map((part, idx) => {
+    const partsTable = report.report_parts.map((part) => {
       const unitPrice = part.products.purchase_price || 0;
       const lineCost = unitPrice * part.quantity_used;
+      const hasTraceability = part.withdrawal_id && part.material_withdrawals;
+      
       return `
         <tr>
           <td style="padding: 8px; border: 1px solid #ddd;">${part.products.code}</td>
-          <td style="padding: 8px; border: 1px solid #ddd;">${part.products.name}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">
+            ${part.products.name}
+            ${hasTraceability ? '<br/><small style="color: #059669;">✓ Rastreável</small>' : ''}
+          </td>
           <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${part.quantity_used}</td>
           <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">R$ ${unitPrice.toFixed(2)}</td>
           <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">R$ ${lineCost.toFixed(2)}</td>
         </tr>
+        ${hasTraceability ? `
+          <tr style="background: #f0fdf4;">
+            <td colspan="5" style="padding: 8px; border: 1px solid #ddd; font-size: 12px;">
+              <strong>Rastreabilidade:</strong> 
+              Retirada em ${format(new Date(part.material_withdrawals!.withdrawal_date), "dd/MM/yyyy")} - 
+              Obra: ${part.material_withdrawals!.work_site} - 
+              Empresa: ${part.material_withdrawals!.company}
+              ${part.material_withdrawals!.withdrawal_reason ? ` - ${part.material_withdrawals!.withdrawal_reason}` : ''}
+            </td>
+          </tr>
+        ` : ''}
       `;
     }).join('');
 
@@ -291,12 +195,12 @@ const ReportsList = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="company">Empresa</Label>
+              <Label htmlFor="equipment-code">Código PAT</Label>
               <Input
-                id="company"
-                placeholder="Filtrar por empresa"
-                value={companyFilter}
-                onChange={(e) => setCompanyFilter(e.target.value)}
+                id="equipment-code"
+                placeholder="Filtrar por PAT"
+                value={equipmentCodeFilter}
+                onChange={(e) => setEquipmentCodeFilter(e.target.value)}
               />
             </div>
             <div className="space-y-2 flex items-end">
@@ -305,7 +209,7 @@ const ReportsList = () => {
                 onClick={() => {
                   setStartDate("");
                   setEndDate("");
-                  setCompanyFilter("");
+                  setEquipmentCodeFilter("");
                   setSearchTerm("");
                 }}
                 className="w-full"
@@ -319,20 +223,20 @@ const ReportsList = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Relatórios ({filteredReports.length})</CardTitle>
+          <CardTitle>Relatórios ({reports.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">
               Carregando relatórios...
             </div>
-          ) : filteredReports.length === 0 ? (
+          ) : reports.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               Nenhum relatório encontrado
             </div>
           ) : (
             <div className="space-y-3">
-              {filteredReports.map((report) => {
+              {reports.map((report) => {
                 const isExpanded = expandedReportId === report.id;
                 const totalCost = report.report_parts.reduce((sum, part) => {
                   const price = part.products.purchase_price || 0;
@@ -360,6 +264,12 @@ const ReportsList = () => {
                             <span>Obra: {report.work_site}</span>
                             <span>Empresa: {report.company}</span>
                             <span className="font-medium">Custo: R$ {totalCost.toFixed(2)}</span>
+                            {report.report_parts.some(p => p.withdrawal_id) && (
+                              <Badge variant="outline" className="text-green-700 border-green-700">
+                                <LinkIcon className="h-3 w-3 mr-1" />
+                                Rastreável
+                              </Badge>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -392,30 +302,7 @@ const ReportsList = () => {
                           <span className="font-medium">Funcionário:</span> {report.technician_name}
                         </div>
 
-                        <div className="border-t pt-3">
-                          <div className="font-medium text-sm mb-2">Peças Utilizadas:</div>
-                          <div className="space-y-2">
-                            {report.report_parts.map((part, idx) => {
-                              const unitPrice = part.products.purchase_price || 0;
-                              const lineCost = unitPrice * part.quantity_used;
-                              return (
-                                <div key={idx} className="text-sm bg-muted/50 p-2 rounded">
-                                  <div className="font-medium">
-                                    {part.products.code} - {part.products.name}
-                                  </div>
-                                  <div className="text-muted-foreground flex justify-between mt-1">
-                                    <span>Quantidade: {part.quantity_used}</span>
-                                    <span>R$ {unitPrice.toFixed(2)} × {part.quantity_used} = R$ {lineCost.toFixed(2)}</span>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                            <div className="text-sm font-semibold border-t pt-2 flex justify-between">
-                              <span>CUSTO TOTAL:</span>
-                              <span>R$ {totalCost.toFixed(2)}</span>
-                            </div>
-                          </div>
-                        </div>
+                        <ReportPartsTraceability parts={report.report_parts} />
 
                         <div className="border-t pt-3">
                           <div className="font-medium text-sm mb-2">Comentários do Serviço:</div>
