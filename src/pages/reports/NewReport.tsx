@@ -356,7 +356,28 @@ const NewReport = () => {
       );
       navigate("/reports");
     } catch (error: any) {
-      toast.error(error.message || "Erro ao criar relatório");
+      console.error("Erro completo:", error);
+      
+      // Tratamento de erros específicos dos constraints SQL
+      let errorMessage = "Erro ao criar relatório";
+      
+      if (error.message) {
+        if (error.message.includes("excede quantidade retirada")) {
+          errorMessage = "Quantidade usada excede a quantidade retirada! Verifique as peças.";
+        } else if (error.message.includes("Retirada de material não encontrada")) {
+          errorMessage = "Erro: Retirada de material não encontrada no sistema.";
+        } else if (error.message.includes("check_hourmeter_progression")) {
+          errorMessage = "Horímetro atual deve ser maior ou igual ao anterior.";
+        } else if (error.message.includes("check_rental_dates")) {
+          errorMessage = "Data final de locação deve ser posterior à data inicial.";
+        } else if (error.message.includes("check_maintenance_dates")) {
+          errorMessage = "Data de saída da manutenção deve ser posterior à entrada.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

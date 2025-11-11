@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { getTodayLocalDate } from "@/lib/dateUtils";
 import { useWithdrawalsByPAT } from "@/hooks/useWithdrawalsByPAT";
 import { PendingWithdrawalsAlert } from "@/components/PendingWithdrawalsAlert";
+import { RetroactiveDateWarning } from "@/components/RetroactiveDateWarning";
 
 
 interface WithdrawalItem {
@@ -560,6 +561,7 @@ const MaterialWithdrawal = () => {
                   required
                   className="text-sm"
                 />
+                <RetroactiveDateWarning selectedDate={withdrawalDate} />
               </div>
 
               {showCollaborators && (
