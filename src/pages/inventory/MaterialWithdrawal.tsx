@@ -13,8 +13,9 @@ import { Minus, Plus, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
 import { ProductSelector } from "@/components/ProductSelector";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useProducts } from "@/hooks/useProducts";
-import { withdrawalSchema } from "@/lib/validations";
+import { withdrawalSchema } from "@/lib/schemas";
 import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
+import { useEquipmentFormAutofill } from "@/hooks/useEquipmentFormAutofill";
 import { formatPAT } from "@/lib/patUtils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { WithdrawalCollaboratorsManager } from "@/components/WithdrawalCollaboratorsManager";
@@ -98,7 +99,7 @@ const MaterialWithdrawal = () => {
     }
   }, [pendingWithdrawals, isSaleWithdrawal]);
 
-  // Preencher informações automaticamente quando o equipamento for encontrado
+  // Usar hook de autofill - lógica específica para Depósito Malta
   useEffect(() => {
     console.log("🔍 Equipment data:", equipment);
     

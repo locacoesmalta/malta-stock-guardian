@@ -3,20 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { Upload, X, CheckCircle2, AlertCircle, Plus, Minus } from "lucide-react";
 import "@/styles/report-print.css";
 import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
 import { useWithdrawalsByPAT } from "@/hooks/useWithdrawalsByPAT";
+import { useEquipmentFormAutofill } from "@/hooks/useEquipmentFormAutofill";
 import { formatPAT } from "@/lib/patUtils";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BackButton } from "@/components/BackButton";
 import { getTodayLocalDate } from "@/lib/dateUtils";
-import { Badge } from "@/components/ui/badge";
+import { ReportEquipmentSelector } from "@/components/reports/ReportEquipmentSelector";
+import { ReportPartsManager } from "@/components/reports/ReportPartsManager";
+import { ReportPhotoUploader } from "@/components/reports/ReportPhotoUploader";
+import { ReportFormFields } from "@/components/reports/ReportFormFields";
 
 interface ReportPart {
   withdrawal_id: string;
@@ -65,56 +64,12 @@ const NewReport = () => {
     formatPAT(formData.equipment_code) || ""
   );
 
-  // Preencher informações automaticamente quando o equipamento for encontrado
-  useEffect(() => {
-    console.log("🔍 Equipment data in NewReport:", equipment);
-    
-    if (equipment) {
-      setFormData(prev => ({
-        ...prev,
-        equipment_name: equipment.equipment_name,
-      }));
-      
-      // Preencher empresa: prioriza rental_company, senão maintenance_company
-      if (equipment.rental_company) {
-        console.log("✅ Preenchendo empresa de locação:", equipment.rental_company);
-        setFormData(prev => ({
-          ...prev,
-          company: equipment.rental_company || "",
-        }));
-      } else if (equipment.maintenance_company) {
-        console.log("✅ Preenchendo empresa de manutenção:", equipment.maintenance_company);
-        setFormData(prev => ({
-          ...prev,
-          company: equipment.maintenance_company || "",
-        }));
-      }
-      
-      // Preencher obra: prioriza rental_work_site, senão maintenance_work_site
-      if (equipment.rental_work_site) {
-        console.log("✅ Preenchendo obra de locação:", equipment.rental_work_site);
-        setFormData(prev => ({
-          ...prev,
-          work_site: equipment.rental_work_site || "",
-        }));
-      } else if (equipment.maintenance_work_site) {
-        console.log("✅ Preenchendo obra de manutenção:", equipment.maintenance_work_site);
-        setFormData(prev => ({
-          ...prev,
-          work_site: equipment.maintenance_work_site || "",
-        }));
-      }
-    } else if (!formData.equipment_code) {
-      // Limpa os campos se o PAT for apagado
-      console.log("🧹 Limpando campos em NewReport");
-      setFormData(prev => ({
-        ...prev,
-        equipment_name: "",
-        work_site: "",
-        company: "",
-      }));
-    }
-  }, [equipment, formData.equipment_code]);
+  // Usar hook de autofill para preencher campos automaticamente
+  useEquipmentFormAutofill({
+    equipment,
+    equipmentCode: formData.equipment_code,
+    setFormData,
+  });
 
   // Converter retiradas em formato de peças
   useEffect(() => {
@@ -402,468 +357,72 @@ const NewReport = () => {
             <CardTitle>Informações Gerais</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="equipment_code">Patrimônio (PAT) * (6 dígitos)</Label>
-                <div className="relative">
-                  <Input
-                    id="equipment_code"
-                    type="text"
-                    value={formData.equipment_code}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, ''); // Remove não-números
-                      if (value.length <= 6) {
-                        setFormData({ 
-                          ...formData, 
-                          equipment_code: value,
-                          equipment_name: value ? formData.equipment_name : "",
-                          company: value ? formData.company : "",
-                          work_site: value ? formData.work_site : "",
-                        });
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const formatted = formatPAT(e.target.value);
-                      if (formatted) {
-                        setFormData({ ...formData, equipment_code: formatted });
-                      }
-                    }}
-                    placeholder="000000"
-                    maxLength={6}
-                    required
-                    className="font-mono"
-                  />
-                  {loadingEquipment && formData.equipment_code && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                    </div>
-                  )}
-                </div>
-                {formData.equipment_code && !loadingEquipment && (
-                  equipment ? (
-                    <Alert className="mt-2 border-green-500/50 bg-green-50 dark:bg-green-950/20">
-                      <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                      <AlertDescription className="text-xs text-green-700 dark:text-green-300">
-                        Equipamento encontrado: {equipment.equipment_name}
-                      </AlertDescription>
-                    </Alert>
-                  ) : (
-                    <Alert className="mt-2 border-red-500/50 bg-red-50 dark:bg-red-950/20">
-                      <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                      <AlertDescription className="text-xs text-red-700 dark:text-red-300">
-                        Equipamento não encontrado. Verifique o PAT.
-                      </AlertDescription>
-                    </Alert>
-                  )
-                )}
-              </div>
+            <ReportEquipmentSelector
+              equipmentCode={formData.equipment_code}
+              equipmentName={formData.equipment_name}
+              onEquipmentCodeChange={(value) => 
+                setFormData({ 
+                  ...formData, 
+                  equipment_code: value,
+                  equipment_name: value ? formData.equipment_name : "",
+                  company: value ? formData.company : "",
+                  work_site: value ? formData.work_site : "",
+                })
+              }
+              onEquipmentNameChange={(value) => 
+                setFormData({ ...formData, equipment_name: value })
+              }
+              onEquipmentCodeBlur={(value) => {
+                const formatted = formatPAT(value);
+                if (formatted) {
+                  setFormData({ ...formData, equipment_code: formatted });
+                }
+              }}
+              equipment={equipment}
+              loadingEquipment={loadingEquipment}
+            />
 
-              <div className="space-y-2">
-                <Label htmlFor="equipment_name">Equipamento *</Label>
-                <Input
-                  id="equipment_name"
-                  value={formData.equipment_name}
-                  onChange={(e) => setFormData({ ...formData, equipment_name: e.target.value })}
-                  placeholder="Nome do equipamento"
-                  required
-                  readOnly={!!equipment}
-                  className={equipment ? "bg-muted cursor-not-allowed" : ""}
-                />
-                {equipment && (
-                  <p className="text-xs text-muted-foreground">
-                    Preenchido automaticamente do cadastro do equipamento
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="company">Cliente *</Label>
-                <Input
-                  id="company"
-                  value={formData.company}
-                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                  placeholder="Nome do cliente"
-                  required
-                  readOnly={!!equipment}
-                  className={equipment ? "bg-muted cursor-not-allowed" : ""}
-                />
-                {equipment && (
-                  <p className="text-xs text-muted-foreground">
-                    Preenchido automaticamente do cadastro do equipamento
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="work_site">Obra *</Label>
-                <Input
-                  id="work_site"
-                  value={formData.work_site}
-                  onChange={(e) => setFormData({ ...formData, work_site: e.target.value })}
-                  placeholder="Local da obra"
-                  required
-                  readOnly={!!equipment}
-                  className={equipment ? "bg-muted cursor-not-allowed" : ""}
-                />
-                {equipment && (
-                  <p className="text-xs text-muted-foreground">
-                    Preenchido automaticamente do cadastro do equipamento
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="date">Data *</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={formData.report_date}
-                  onChange={(e) => setFormData({ ...formData, report_date: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="technician">Assunto/Técnico Responsável *</Label>
-                <Input
-                  id="technician"
-                  value={formData.technician_name}
-                  onChange={(e) => setFormData({ ...formData, technician_name: e.target.value })}
-                  placeholder="Nome do técnico"
-                  required
-                />
-              </div>
-            </div>
+            <ReportFormFields
+              company={formData.company}
+              workSite={formData.work_site}
+              technicianName={formData.technician_name}
+              reportDate={formData.report_date}
+              serviceComments={formData.service_comments}
+              considerations={formData.considerations}
+              observations={formData.observations}
+              receiver={formData.receiver}
+              responsible={formData.responsible}
+              equipment={equipment}
+              onCompanyChange={(value) => setFormData({ ...formData, company: value })}
+              onWorkSiteChange={(value) => setFormData({ ...formData, work_site: value })}
+              onTechnicianNameChange={(value) => setFormData({ ...formData, technician_name: value })}
+              onReportDateChange={(value) => setFormData({ ...formData, report_date: value })}
+              onServiceCommentsChange={(value) => setFormData({ ...formData, service_comments: value })}
+              onConsiderationsChange={(value) => setFormData({ ...formData, considerations: value })}
+              onObservationsChange={(value) => setFormData({ ...formData, observations: value })}
+              onReceiverChange={(value) => setFormData({ ...formData, receiver: value })}
+              onResponsibleChange={(value) => setFormData({ ...formData, responsible: value })}
+            />
           </CardContent>
         </Card>
 
-        {withdrawals && withdrawals.length > 0 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
-                Peças Utilizadas (Retiradas Registradas)
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Peças automaticamente vinculadas através da Retirada de Material deste equipamento.
-                </AlertDescription>
-              </Alert>
+        <ReportPartsManager
+          parts={parts}
+          onUpdateQuantity={updatePartQuantity}
+          loadingWithdrawals={loadingWithdrawals}
+        />
 
-              {withdrawals.map((withdrawal, index) => (
-                <div key={withdrawal.id} className="p-4 border rounded-lg bg-muted/30">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label className="text-sm text-muted-foreground">Produto</Label>
-                      <p className="font-medium">{withdrawal.products?.name}</p>
-                      <p className="text-sm text-muted-foreground">Código: {withdrawal.products?.code}</p>
-                    </div>
-                    <div>
-                      <Label className="text-sm text-muted-foreground">Quantidade Utilizada</Label>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => updatePartQuantity(
-                            index, 
-                            parts[index].quantity_used - 1
-                          )}
-                          disabled={parts[index].quantity_used <= 1}
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        
-                        <Input
-                          type="number"
-                          min={1}
-                          max={withdrawal.quantity}
-                          value={parts[index].quantity_used}
-                          onChange={(e) => updatePartQuantity(index, parseInt(e.target.value) || 0)}
-                          className="w-20 text-center"
-                        />
-                        
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => updatePartQuantity(
-                            index, 
-                            parts[index].quantity_used + 1
-                          )}
-                          disabled={parts[index].quantity_used >= withdrawal.quantity}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                        
-                        <span className="text-sm text-muted-foreground">
-                          / {withdrawal.quantity} retiradas
-                        </span>
-                      </div>
-                      
-                      {parts[index].quantity_used === withdrawal.quantity ? (
-                        <Badge className="mt-2 bg-green-600 hover:bg-green-600">
-                          Uso Total
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="mt-2 border-yellow-600 text-yellow-600">
-                          Uso Parcial ({parts[index].quantity_used}/{withdrawal.quantity})
-                        </Badge>
-                      )}
-                      
-                      {parts[index].quantity_used < withdrawal.quantity && (
-                        <Alert className="mt-2 border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20">
-                          <AlertCircle className="h-4 w-4 text-yellow-600" />
-                          <AlertDescription className="text-xs text-yellow-700 dark:text-yellow-300">
-                            {withdrawal.quantity - parts[index].quantity_used} peças não serão vinculadas a este relatório.
-                          </AlertDescription>
-                        </Alert>
-                      )}
-                    </div>
-                    <div>
-                      <Label className="text-sm text-muted-foreground">Retirado em</Label>
-                      <p className="font-medium">{new Date(withdrawal.withdrawal_date).toLocaleDateString('pt-BR')}</p>
-                    </div>
-                  </div>
-                  {withdrawal.withdrawal_reason && (
-                    <div className="mt-2">
-                      <Label className="text-sm text-muted-foreground">Motivo da Retirada</Label>
-                      <p className="text-sm">{withdrawal.withdrawal_reason}</p>
-                    </div>
-                  )}
-                  {withdrawal.products?.purchase_price && (
-                    <div className="mt-3 bg-background p-3 rounded-md text-sm space-y-1">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Preço unitário:</span>
-                        <span className="font-medium">R$ {withdrawal.products.purchase_price.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between border-t pt-1">
-                        <span className="text-muted-foreground">Custo usado neste relatório:</span>
-                        <span className="font-semibold">
-                          R$ {(withdrawal.products.purchase_price * parts[index].quantity_used).toFixed(2)}
-                        </span>
-                      </div>
-                      {parts[index].quantity_used < withdrawal.quantity && (
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>Custo não vinculado:</span>
-                          <span>
-                            R$ {(withdrawal.products.purchase_price * (withdrawal.quantity - parts[index].quantity_used)).toFixed(2)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        ) : (
-          formData.equipment_code && !loadingWithdrawals && equipment && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Nenhuma peça encontrada em "Retirada de Material" para este equipamento.
-                Para registrar peças no relatório, primeiro faça a retirada em <strong>Gestão de Estoque → Retirada de Material</strong>.
-              </AlertDescription>
-            </Alert>
-          )
-        )}
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Laudo Técnico / Relatório Fotográfico</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="comments">Descrição do Serviço *</Label>
-              <Textarea
-                id="comments"
-                rows={4}
-                value={formData.service_comments}
-                onChange={(e) => setFormData({ ...formData, service_comments: e.target.value })}
-                placeholder="Descreva o serviço realizado"
-                required
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Fotos do Serviço (6 obrigatórias)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4 report-photos-grid">
-              {photos.map((photo, index) => (
-                <div key={index} className="space-y-2 border rounded-lg p-4 report-photo-item">
-                  <Label>Foto {index + 1} *</Label>
-                  {photo.preview ? (
-                    <div className="relative">
-                      <img
-                        src={photo.preview}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full aspect-[12.34/6.83] object-cover rounded report-photo-img"
-                      />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-2 right-2 print:hidden"
-                        onClick={() => removePhoto(index)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <label className="flex flex-col items-center justify-center aspect-[12.34/6.83] border-2 border-dashed rounded cursor-pointer hover:bg-muted/50 print:hidden">
-                      <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                      <span className="text-sm text-muted-foreground">Clique para selecionar</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handlePhotoChange(index, file);
-                        }}
-                      />
-                    </label>
-                  )}
-                  <Textarea
-                    placeholder="Comentário da foto *"
-                    rows={2}
-                    value={photo.comment}
-                    onChange={(e) => handlePhotoCommentChange(index, e.target.value)}
-                    required={!!photo.file}
-                    className="report-photo-comment"
-                  />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {additionalPhotos.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Fotos Adicionais</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4 report-photos-grid">
-                {additionalPhotos.map((photo, index) => (
-                  <div key={index} className="space-y-2 border rounded-lg p-4 report-photo-item">
-                    <Label>Foto Adicional {index + 1}</Label>
-                    {photo.preview ? (
-                      <div className="relative">
-                        <img
-                          src={photo.preview}
-                          alt={`Preview adicional ${index + 1}`}
-                          className="w-full aspect-[12.34/6.83] object-cover rounded report-photo-img"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-2 right-2 print:hidden"
-                          onClick={() => removeAdditionalPhoto(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <label className="flex flex-col items-center justify-center aspect-[12.34/6.83] border-2 border-dashed rounded cursor-pointer hover:bg-muted/50 print:hidden">
-                        <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                        <span className="text-sm text-muted-foreground">Clique para selecionar</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleAdditionalPhotoChange(index, file);
-                          }}
-                        />
-                      </label>
-                    )}
-                    <Textarea
-                      placeholder="Comentário da foto"
-                      rows={2}
-                      value={photo.comment}
-                      onChange={(e) => handleAdditionalPhotoCommentChange(index, e.target.value)}
-                      className="report-photo-comment"
-                    />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <div className="flex justify-center print:hidden">
-          <Button type="button" variant="outline" onClick={addAdditionalPhoto}>
-            Adicionar Mais Fotos
-          </Button>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Considerações e Observações</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="considerations">Considerações</Label>
-              <Textarea
-                id="considerations"
-                rows={3}
-                value={formData.considerations}
-                onChange={(e) => setFormData({ ...formData, considerations: e.target.value })}
-                placeholder="Considerações sobre o serviço"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="observations">Observação</Label>
-              <Textarea
-                id="observations"
-                rows={3}
-                value={formData.observations}
-                onChange={(e) => setFormData({ ...formData, observations: e.target.value })}
-                placeholder="Observações gerais"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="receiver">Recebedor</Label>
-                <Input
-                  id="receiver"
-                  value={formData.receiver}
-                  onChange={(e) => setFormData({ ...formData, receiver: e.target.value })}
-                  placeholder="Nome do recebedor"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="responsible">Responsável</Label>
-                <Input
-                  id="responsible"
-                  value={formData.responsible}
-                  onChange={(e) => setFormData({ ...formData, responsible: e.target.value })}
-                  placeholder="Nome do responsável"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <ReportPhotoUploader
+          photos={photos}
+          additionalPhotos={additionalPhotos}
+          onPhotoChange={handlePhotoChange}
+          onPhotoCommentChange={handlePhotoCommentChange}
+          onRemovePhoto={removePhoto}
+          onAdditionalPhotoChange={handleAdditionalPhotoChange}
+          onAdditionalPhotoCommentChange={handleAdditionalPhotoCommentChange}
+          onRemoveAdditionalPhoto={removeAdditionalPhoto}
+          onAddAdditionalPhoto={addAdditionalPhoto}
+        />
 
         <div className="flex gap-4">
           <Button
