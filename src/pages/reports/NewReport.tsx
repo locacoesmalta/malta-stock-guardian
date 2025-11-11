@@ -122,8 +122,8 @@ const NewReport = () => {
       const partsFromWithdrawals = withdrawals.map(w => ({
         withdrawal_id: w.id,
         product_id: w.product_id,
-        quantity_used: w.quantity,
-        quantity_withdrawn: w.quantity,
+        quantity_used: w.remaining_quantity,
+        quantity_withdrawn: w.remaining_quantity,
         productName: w.products?.name || "",
         productCode: w.products?.code || "",
         purchasePrice: w.products?.purchase_price || null,
@@ -337,22 +337,6 @@ const NewReport = () => {
           .insert(partsData);
 
         if (partsError) throw partsError;
-
-        // Marcar retiradas como usadas SOMENTE se 100% foi usado
-        const fullyUsedWithdrawals = parts.filter(
-          p => p.quantity_used === p.quantity_withdrawn
-        );
-        
-        if (fullyUsedWithdrawals.length > 0) {
-          const withdrawalIds = fullyUsedWithdrawals.map(p => p.withdrawal_id);
-          
-          const { error: updateError } = await supabase
-            .from("material_withdrawals")
-            .update({ used_in_report_id: reportData.id })
-            .in("id", withdrawalIds);
-
-          if (updateError) throw updateError;
-        }
       }
 
       await uploadPhotos(reportData.id);
