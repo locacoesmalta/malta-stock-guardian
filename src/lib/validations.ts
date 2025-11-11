@@ -335,6 +335,20 @@ export const assetEditSchema = z.object({
 
 // Movement Depósito Schema
 export const movementDepositoSchema = z.object({
+  movement_date: z.string()
+    .min(1, "Data da movimentação é obrigatória")
+    .refine((date) => {
+      const selectedDate = new Date(date);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      return selectedDate <= today;
+    }, {
+      message: "Data não pode ser futura"
+    }),
+  retroactive_justification: z.string()
+    .trim()
+    .max(500, "Justificativa deve ter no máximo 500 caracteres")
+    .optional(),
   deposito_description: z.string()
     .trim()
     .max(500, "Descrição deve ter no máximo 500 caracteres")
@@ -349,7 +363,22 @@ export const movementDepositoSchema = z.object({
     .optional(),
   was_washed: z.boolean().optional(),
   was_painted: z.boolean().optional(),
-});
+}).refine(
+  (data) => {
+    const movementDate = new Date(data.movement_date);
+    const today = new Date();
+    const daysDiff = Math.floor((today.getTime() - movementDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysDiff > 7 && !data.retroactive_justification) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Justificativa é obrigatória para datas com mais de 7 dias no passado",
+    path: ["retroactive_justification"],
+  }
+);
 
 // Movement Manutenção Schema
 export const movementManutencaoSchema = z.object({
@@ -366,13 +395,25 @@ export const movementManutencaoSchema = z.object({
     .min(1, "Descrição é obrigatória")
     .max(1000, "Descrição deve ter no máximo 1000 caracteres"),
   maintenance_arrival_date: z.string()
-    .min(1, "Data de chegada é obrigatória"),
+    .min(1, "Data de chegada é obrigatória")
+    .refine((date) => {
+      const selectedDate = new Date(date);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      return selectedDate <= today;
+    }, {
+      message: "Data não pode ser futura"
+    }),
   maintenance_departure_date: z.string()
     .transform(val => val === "" ? undefined : val)
     .optional(),
   maintenance_delay_observations: z.string()
     .trim()
     .max(1000, "Observações devem ter no máximo 1000 caracteres")
+    .optional(),
+  retroactive_justification: z.string()
+    .trim()
+    .max(500, "Justificativa deve ter no máximo 500 caracteres")
     .optional(),
   returns_to_work_site: z.boolean().optional(),
   destination_after_maintenance: z.string().optional(),
@@ -390,7 +431,22 @@ export const movementManutencaoSchema = z.object({
     .trim()
     .max(200, "Nome do colaborador deve ter no máximo 200 caracteres")
     .optional(),
-});
+}).refine(
+  (data) => {
+    const movementDate = new Date(data.maintenance_arrival_date);
+    const today = new Date();
+    const daysDiff = Math.floor((today.getTime() - movementDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysDiff > 7 && !data.retroactive_justification) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Justificativa é obrigatória para datas com mais de 7 dias no passado",
+    path: ["retroactive_justification"],
+  }
+);
 
 // Movement Locação Schema
 export const movementLocacaoSchema = z.object({
@@ -403,7 +459,15 @@ export const movementLocacaoSchema = z.object({
     .min(1, "Obra é obrigatória")
     .max(200, "Obra deve ter no máximo 200 caracteres"),
   rental_start_date: z.string()
-    .min(1, "Data de locação é obrigatória"),
+    .min(1, "Data de locação é obrigatória")
+    .refine((date) => {
+      const selectedDate = new Date(date);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      return selectedDate <= today;
+    }, {
+      message: "Data não pode ser futura"
+    }),
   rental_end_date: z.string()
     .transform(val => val === "" ? undefined : val)
     .optional(),
@@ -411,6 +475,10 @@ export const movementLocacaoSchema = z.object({
     .trim()
     .max(200, "Número do contrato deve ter no máximo 200 caracteres")
     .optional(),
+  retroactive_justification: z.string()
+    .trim()
+    .max(500, "Justificativa deve ter no máximo 500 caracteres")
+    .optional(),
   equipment_observations: z.string()
     .trim()
     .max(1000, "Observação deve ter no máximo 1000 caracteres")
@@ -419,10 +487,39 @@ export const movementLocacaoSchema = z.object({
     .trim()
     .max(200, "Nome do colaborador deve ter no máximo 200 caracteres")
     .optional(),
-});
+}).refine(
+  (data) => {
+    const movementDate = new Date(data.rental_start_date);
+    const today = new Date();
+    const daysDiff = Math.floor((today.getTime() - movementDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysDiff > 7 && !data.retroactive_justification) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Justificativa é obrigatória para datas com mais de 7 dias no passado",
+    path: ["retroactive_justification"],
+  }
+);
 
 // Movement Aguardando Laudo Schema
 export const movementAguardandoLaudoSchema = z.object({
+  movement_date: z.string()
+    .min(1, "Data da movimentação é obrigatória")
+    .refine((date) => {
+      const selectedDate = new Date(date);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      return selectedDate <= today;
+    }, {
+      message: "Data não pode ser futura"
+    }),
+  retroactive_justification: z.string()
+    .trim()
+    .max(500, "Justificativa deve ter no máximo 500 caracteres")
+    .optional(),
   equipment_observations: z.string()
     .trim()
     .max(1000, "Observação deve ter no máximo 1000 caracteres")
@@ -431,7 +528,22 @@ export const movementAguardandoLaudoSchema = z.object({
     .trim()
     .max(200, "Nome do colaborador deve ter no máximo 200 caracteres")
     .optional(),
-});
+}).refine(
+  (data) => {
+    const movementDate = new Date(data.movement_date);
+    const today = new Date();
+    const daysDiff = Math.floor((today.getTime() - movementDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysDiff > 7 && !data.retroactive_justification) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Justificativa é obrigatória para datas com mais de 7 dias no passado",
+    path: ["retroactive_justification"],
+  }
+);
 
 // Movement Retorno para Obra Schema
 export const movementRetornoObraSchema = z.object({
@@ -443,6 +555,20 @@ export const movementRetornoObraSchema = z.object({
     .trim()
     .min(1, "Obra é obrigatória")
     .max(200, "Obra deve ter no máximo 200 caracteres"),
+  movement_date: z.string()
+    .min(1, "Data da movimentação é obrigatória")
+    .refine((date) => {
+      const selectedDate = new Date(date);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      return selectedDate <= today;
+    }, {
+      message: "Data não pode ser futura"
+    }),
+  retroactive_justification: z.string()
+    .trim()
+    .max(500, "Justificativa deve ter no máximo 500 caracteres")
+    .optional(),
   parts_replaced: z.boolean({
     required_error: "Selecione se foram trocadas peças",
     invalid_type_error: "Selecione se foram trocadas peças",
@@ -467,6 +593,21 @@ export const movementRetornoObraSchema = z.object({
     message: "Observações são obrigatórias quando não foram trocadas peças",
     path: ["equipment_observations"],
   }
+).refine(
+  (data) => {
+    const movementDate = new Date(data.movement_date);
+    const today = new Date();
+    const daysDiff = Math.floor((today.getTime() - movementDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysDiff > 7 && !data.retroactive_justification) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Justificativa é obrigatória para datas com mais de 7 dias no passado",
+    path: ["retroactive_justification"],
+  }
 );
 
 // Movement Substituição Schema
@@ -483,6 +624,20 @@ export const movementSubstituicaoSchema = z.object({
     .trim()
     .min(1, "Obra é obrigatória para o equipamento substituto")
     .max(200, "Obra deve ter no máximo 200 caracteres"),
+  movement_date: z.string()
+    .min(1, "Data da movimentação é obrigatória")
+    .refine((date) => {
+      const selectedDate = new Date(date);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      return selectedDate <= today;
+    }, {
+      message: "Data não pode ser futura"
+    }),
+  retroactive_justification: z.string()
+    .trim()
+    .max(500, "Justificativa deve ter no máximo 500 caracteres")
+    .optional(),
   old_asset_destination: z.enum(["aguardando_laudo", "em_manutencao", "deposito_malta"], {
     required_error: "Selecione o destino do equipamento antigo",
   }),
@@ -494,7 +649,22 @@ export const movementSubstituicaoSchema = z.object({
     .trim()
     .max(200, "Nome do colaborador deve ter no máximo 200 caracteres")
     .optional(),
-});
+}).refine(
+  (data) => {
+    const movementDate = new Date(data.movement_date);
+    const today = new Date();
+    const daysDiff = Math.floor((today.getTime() - movementDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysDiff > 7 && !data.retroactive_justification) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Justificativa é obrigatória para datas com mais de 7 dias no passado",
+    path: ["retroactive_justification"],
+  }
+);
 
 // Post Inspection Schemas
 export const postInspectionApproveSchema = z.object({

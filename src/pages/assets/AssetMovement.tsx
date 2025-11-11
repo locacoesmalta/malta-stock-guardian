@@ -8,8 +8,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAssetHistory } from "@/hooks/useAssetHistory";
 import { QRScanner } from "@/components/QRScanner";
+import { RetroactiveDateWarning } from "@/components/RetroactiveDateWarning";
 import { formatPAT } from "@/lib/patUtils";
 import { getTodayLocalDate } from "@/lib/dateUtils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import {
   movementDepositoSchema,
@@ -62,6 +73,8 @@ export default function AssetMovement() {
   const [replacedAssetToReturn, setReplacedAssetToReturn] = useState<any>(null);
   const [replacedAssetReturnDecision, setReplacedAssetReturnDecision] = useState<boolean | null>(null);
   const [showScanner, setShowScanner] = useState(false);
+  const [showDateConfirmDialog, setShowDateConfirmDialog] = useState(false);
+  const [pendingSubmitData, setPendingSubmitData] = useState<any>(null);
   
 
   const { data: asset, isLoading } = useQuery({
@@ -278,6 +291,24 @@ export default function AssetMovement() {
       });
     }
 
+    // Auto-preencher data atual para outros tipos de movimentação
+    if (movementType === "deposito_malta") {
+      form.reset({ movement_date: getTodayLocalDate() });
+    }
+    if (movementType === "aguardando_laudo") {
+      form.reset({ movement_date: getTodayLocalDate() });
+    }
+    if (movementType === "retorno_obra" && asset) {
+      form.reset({ 
+        rental_company: asset.rental_company || "",
+        rental_work_site: asset.rental_work_site || "",
+        movement_date: getTodayLocalDate() 
+      });
+    }
+    if (movementType === "locacao") {
+      form.reset({ rental_start_date: getTodayLocalDate() });
+    }
+
     // Auto-preencher empresa e obra quando for substituição
     if (movementType === "substituicao" && asset) {
       let company = "";
@@ -294,6 +325,7 @@ export default function AssetMovement() {
       form.reset({
         rental_company: company,
         rental_work_site: workSite,
+        movement_date: getTodayLocalDate(),
       });
     }
   }, [movementType, form, asset]);
@@ -347,6 +379,28 @@ export default function AssetMovement() {
   const onSubmit = async (data: any) => {
     if (!asset || !user) return;
 
+    // Verificar se a data é retroativa (> 30 dias) e mostrar confirmação
+    const movementDate = new Date(
+      data.movement_date || 
+      data.maintenance_arrival_date || 
+      data.rental_start_date || 
+      getTodayLocalDate()
+    );
+    const today = new Date();
+    const daysDiff = Math.floor((today.getTime() - movementDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (daysDiff > 30) {
+      setPendingSubmitData(data);
+      setShowDateConfirmDialog(true);
+      return;
+    }
+
+    await processSubmit(data);
+  };
+
+  const processSubmit = async (data: any) => {
+    if (!asset || !user) return;
+
     try {
       setIsUploading(true);
       console.log("=== INICIO DO SUBMIT ===");
@@ -398,7 +452,7 @@ export default function AssetMovement() {
           location_type: "locacao",
           rental_company: data.rental_company,
           rental_work_site: data.rental_work_site,
-          rental_start_date: getTodayLocalDate(),
+          rental_start_date: data.movement_date || getTodayLocalDate(),
         };
 
         console.log("Dados para equipamento substituto:", substituteUpdate);
@@ -744,6 +798,47 @@ export default function AssetMovement() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {movementType === "deposito_malta" && (
               <>
+                <div className="space-y-2">
+                  <Label htmlFor="movement_date">Data da Movimentação *</Label>
+                  <Input
+                    id="movement_date"
+                    type="date"
+                    {...form.register("movement_date")}
+                  />
+                  {form.formState.errors.movement_date && (
+                    <p className="text-sm text-destructive">{form.formState.errors.movement_date.message as string}</p>
+                  )}
+                </div>
+
+                {form.watch("movement_date") && (
+                  <RetroactiveDateWarning selectedDate={form.watch("movement_date")} />
+                )}
+
+                {(() => {
+                  const date = form.watch("movement_date");
+                  if (!date) return null;
+                  const movementDate = new Date(date);
+                  const today = new Date();
+                  const daysDiff = Math.floor((today.getTime() - movementDate.getTime()) / (1000 * 60 * 60 * 24));
+                  if (daysDiff > 7) {
+                    return (
+                      <div className="space-y-2">
+                        <Label htmlFor="retroactive_justification">Justificativa (Obrigatória para datas antigas) *</Label>
+                        <Textarea
+                          id="retroactive_justification"
+                          {...form.register("retroactive_justification")}
+                          placeholder="Explique o motivo do registro retroativo..."
+                          rows={3}
+                        />
+                        {form.formState.errors.retroactive_justification && (
+                          <p className="text-sm text-destructive">{form.formState.errors.retroactive_justification.message as string}</p>
+                        )}
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
                 <div className="space-y-4">
                   <div className="space-y-3">
                     <Label>Equipamento foi lavado?</Label>
@@ -848,9 +943,6 @@ export default function AssetMovement() {
                       type="date"
                       {...form.register("maintenance_arrival_date")}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Data de hoje preenchida automaticamente
-                    </p>
                     {form.formState.errors.maintenance_arrival_date && (
                       <p className="text-sm text-destructive">{form.formState.errors.maintenance_arrival_date.message as string}</p>
                     )}
@@ -873,6 +965,35 @@ export default function AssetMovement() {
                   </div>
                   <AssetCollaboratorsManager assetId={id} />
                 </div>
+
+                {form.watch("maintenance_arrival_date") && (
+                  <RetroactiveDateWarning selectedDate={form.watch("maintenance_arrival_date")} />
+                )}
+
+                {(() => {
+                  const date = form.watch("maintenance_arrival_date");
+                  if (!date) return null;
+                  const movementDate = new Date(date);
+                  const today = new Date();
+                  const daysDiff = Math.floor((today.getTime() - movementDate.getTime()) / (1000 * 60 * 60 * 24));
+                  if (daysDiff > 7) {
+                    return (
+                      <div className="space-y-2">
+                        <Label htmlFor="retroactive_justification">Justificativa (Obrigatória para datas antigas) *</Label>
+                        <Textarea
+                          id="retroactive_justification"
+                          {...form.register("retroactive_justification")}
+                          placeholder="Explique o motivo do registro retroativo..."
+                          rows={3}
+                        />
+                        {form.formState.errors.retroactive_justification && (
+                          <p className="text-sm text-destructive">{form.formState.errors.retroactive_justification.message as string}</p>
+                        )}
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
                 <div className="space-y-2">
                   <Label htmlFor="maintenance_description">Descrição *</Label>
                   <Textarea
@@ -939,6 +1060,35 @@ export default function AssetMovement() {
                     )}
                   </div>
                 </div>
+
+                {form.watch("rental_start_date") && (
+                  <RetroactiveDateWarning selectedDate={form.watch("rental_start_date")} />
+                )}
+
+                {(() => {
+                  const date = form.watch("rental_start_date");
+                  if (!date) return null;
+                  const movementDate = new Date(date);
+                  const today = new Date();
+                  const daysDiff = Math.floor((today.getTime() - movementDate.getTime()) / (1000 * 60 * 60 * 24));
+                  if (daysDiff > 7) {
+                    return (
+                      <div className="space-y-2">
+                        <Label htmlFor="retroactive_justification">Justificativa (Obrigatória para datas antigas) *</Label>
+                        <Textarea
+                          id="retroactive_justification"
+                          {...form.register("retroactive_justification")}
+                          placeholder="Explique o motivo do registro retroativo..."
+                          rows={3}
+                        />
+                        {form.formState.errors.retroactive_justification && (
+                          <p className="text-sm text-destructive">{form.formState.errors.retroactive_justification.message as string}</p>
+                        )}
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
 
                 <div className="space-y-2">
                   <Label htmlFor="rental_end_date">Data de Devolução (Opcional)</Label>
@@ -1084,6 +1234,48 @@ export default function AssetMovement() {
             {movementType === "retorno_obra" && (
               <>
                 <div className="space-y-4">
+                  {/* Data da Movimentação */}
+                  <div className="space-y-2">
+                    <Label htmlFor="movement_date">Data do Retorno *</Label>
+                    <Input
+                      id="movement_date"
+                      type="date"
+                      {...form.register("movement_date")}
+                    />
+                    {form.formState.errors.movement_date && (
+                      <p className="text-sm text-destructive">{form.formState.errors.movement_date.message as string}</p>
+                    )}
+                  </div>
+
+                  {form.watch("movement_date") && (
+                    <RetroactiveDateWarning selectedDate={form.watch("movement_date")} />
+                  )}
+
+                  {(() => {
+                    const date = form.watch("movement_date");
+                    if (!date) return null;
+                    const movementDate = new Date(date);
+                    const today = new Date();
+                    const daysDiff = Math.floor((today.getTime() - movementDate.getTime()) / (1000 * 60 * 60 * 24));
+                    if (daysDiff > 7) {
+                      return (
+                        <div className="space-y-2">
+                          <Label htmlFor="retroactive_justification">Justificativa (Obrigatória para datas antigas) *</Label>
+                          <Textarea
+                            id="retroactive_justification"
+                            {...form.register("retroactive_justification")}
+                            placeholder="Explique o motivo do registro retroativo..."
+                            rows={3}
+                          />
+                          {form.formState.errors.retroactive_justification && (
+                            <p className="text-sm text-destructive">{form.formState.errors.retroactive_justification.message as string}</p>
+                          )}
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+
                   {/* Campos de Empresa e Obra (preenchidos automaticamente e desabilitados) */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/30">
                     <div className="space-y-2">
@@ -1325,6 +1517,48 @@ export default function AssetMovement() {
                   {/* Dados da Obra/Empresa para o equipamento substituto */}
                   {substituteAsset && (
                     <>
+                      {/* Data da Movimentação */}
+                      <div className="space-y-2">
+                        <Label htmlFor="movement_date">Data da Substituição *</Label>
+                        <Input
+                          id="movement_date"
+                          type="date"
+                          {...form.register("movement_date")}
+                        />
+                        {form.formState.errors.movement_date && (
+                          <p className="text-sm text-destructive">{form.formState.errors.movement_date.message as string}</p>
+                        )}
+                      </div>
+
+                      {form.watch("movement_date") && (
+                        <RetroactiveDateWarning selectedDate={form.watch("movement_date")} />
+                      )}
+
+                      {(() => {
+                        const date = form.watch("movement_date");
+                        if (!date) return null;
+                        const movementDate = new Date(date);
+                        const today = new Date();
+                        const daysDiff = Math.floor((today.getTime() - movementDate.getTime()) / (1000 * 60 * 60 * 24));
+                        if (daysDiff > 7) {
+                          return (
+                            <div className="space-y-2">
+                              <Label htmlFor="retroactive_justification">Justificativa (Obrigatória para datas antigas) *</Label>
+                              <Textarea
+                                id="retroactive_justification"
+                                {...form.register("retroactive_justification")}
+                                placeholder="Explique o motivo do registro retroativo..."
+                                rows={3}
+                              />
+                              {form.formState.errors.retroactive_justification && (
+                                <p className="text-sm text-destructive">{form.formState.errors.retroactive_justification.message as string}</p>
+                              )}
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
+
                       <div className="space-y-3 p-4 border rounded-lg">
                         <Label className="text-base font-semibold">Destino do Equipamento Substituto</Label>
                         <p className="text-sm text-muted-foreground">
@@ -1413,6 +1647,48 @@ export default function AssetMovement() {
 
             {movementType === "aguardando_laudo" && (
               <>
+                {/* Data da Movimentação */}
+                <div className="space-y-2">
+                  <Label htmlFor="movement_date">Data da Movimentação *</Label>
+                  <Input
+                    id="movement_date"
+                    type="date"
+                    {...form.register("movement_date")}
+                  />
+                  {form.formState.errors.movement_date && (
+                    <p className="text-sm text-destructive">{form.formState.errors.movement_date.message as string}</p>
+                  )}
+                </div>
+
+                {form.watch("movement_date") && (
+                  <RetroactiveDateWarning selectedDate={form.watch("movement_date")} />
+                )}
+
+                {(() => {
+                  const date = form.watch("movement_date");
+                  if (!date) return null;
+                  const movementDate = new Date(date);
+                  const today = new Date();
+                  const daysDiff = Math.floor((today.getTime() - movementDate.getTime()) / (1000 * 60 * 60 * 24));
+                  if (daysDiff > 7) {
+                    return (
+                      <div className="space-y-2">
+                        <Label htmlFor="retroactive_justification">Justificativa (Obrigatória para datas antigas) *</Label>
+                        <Textarea
+                          id="retroactive_justification"
+                          {...form.register("retroactive_justification")}
+                          placeholder="Explique o motivo do registro retroativo..."
+                          rows={3}
+                        />
+                        {form.formState.errors.retroactive_justification && (
+                          <p className="text-sm text-destructive">{form.formState.errors.retroactive_justification.message as string}</p>
+                        )}
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
                 <div className="space-y-2">
                   <Label htmlFor="malta_collaborator">Responsável Malta (Principal)</Label>
                   <Input
@@ -1458,6 +1734,38 @@ export default function AssetMovement() {
         </CardContent>
       </Card>
       )}
+
+      {/* Dialog de confirmação para datas muito antigas */}
+      <AlertDialog open={showDateConfirmDialog} onOpenChange={setShowDateConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>⚠️ Confirmar Data Retroativa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está registrando uma movimentação com mais de 30 dias de atraso.
+              Isso pode impactar relatórios e ciclos de vida dos equipamentos.
+              <br /><br />
+              Deseja realmente continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setShowDateConfirmDialog(false);
+              setPendingSubmitData(null);
+            }}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={async () => {
+              setShowDateConfirmDialog(false);
+              if (pendingSubmitData) {
+                await processSubmit(pendingSubmitData);
+                setPendingSubmitData(null);
+              }
+            }}>
+              Confirmar e Registrar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
