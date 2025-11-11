@@ -37,6 +37,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isSuperuser: boolean;
   isActive: boolean;
+  isSystemOwner: boolean;
   permissions: UserPermissions | null;
   loading: boolean;
   signOut: () => Promise<void>;
@@ -50,6 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSuperuser, setIsSuperuser] = useState(false);
   const [isActive, setIsActive] = useState(false);
+  const [isSystemOwner, setIsSystemOwner] = useState(false);
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
   const [loading, setLoading] = useState(true);
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
@@ -167,6 +169,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const isUserSuperuser = roleData?.role === "superuser";
           setIsAdmin(isUserAdmin);
           setIsSuperuser(isUserSuperuser);
+          
+          // Verificar se é o system owner via função SQL
+          const { data: ownerCheck } = await supabase.rpc('is_system_owner', {
+            _user_id: userId
+          });
+          setIsSystemOwner(ownerCheck || false);
 
           // Fetch all permissions
           const { data: permData, error: permError } = await supabase
@@ -225,6 +233,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsAdmin(false);
       setIsSuperuser(false);
       setIsActive(false);
+      setIsSystemOwner(false);
       setPermissions(null);
     } finally {
       setIsCheckingAuth(false);
@@ -246,10 +255,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Limpar estados
       setUser(null);
       setSession(null);
-      setIsAdmin(false);
-      setIsSuperuser(false);
-      setIsActive(false);
-      setPermissions(null);
+    setIsAdmin(false);
+    setIsSuperuser(false);
+    setIsActive(false);
+    setIsSystemOwner(false);
+    setPermissions(null);
       
       // Navegar para login
       navigate("/auth");
@@ -303,7 +313,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   });
 
   return (
-    <AuthContext.Provider value={{ user, session, isAdmin, isSuperuser, isActive, permissions, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, isAdmin, isSuperuser, isActive, isSystemOwner, permissions, loading, signOut }}>
       {children}
       <IdleWarningDialog 
         open={showIdleWarning && isWarningShown} 

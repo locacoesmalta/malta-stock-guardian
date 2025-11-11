@@ -2080,6 +2080,7 @@ export type Database = {
         Returns: boolean
       }
       is_superuser: { Args: { _user_id: string }; Returns: boolean }
+      is_system_owner: { Args: { _user_id: string }; Returns: boolean }
       is_user_active: { Args: { _user_id: string }; Returns: boolean }
       normalize_all_data: {
         Args: never

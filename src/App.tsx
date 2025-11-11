@@ -9,6 +9,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AppHeader } from "@/components/AppHeader";
 import { PermissionRoute } from "@/components/PermissionRoute";
+import { OwnerOnlyRoute } from "@/components/OwnerOnlyRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { CommandPalette } from "@/components/CommandPalette";
 
@@ -440,7 +441,7 @@ const App = () => (
               <Route path="/admin/products" element={<ProtectedLayout><AdminRoute><Products /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/products/migration" element={<ProtectedLayout><AdminRoute><ProductsMigration /></AdminRoute></ProtectedLayout>} />
               <Route path="/reports/parts-consumption" element={<ProtectedLayout><AdminRoute><PartsConsumptionReport /></AdminRoute></ProtectedLayout>} />
-              <Route path="/admin/users" element={<ProtectedLayout><AdminRoute><Users /></AdminRoute></ProtectedLayout>} />
+              <Route path="/admin/users" element={<ProtectedLayout><OwnerOnlyRoute><Users /></OwnerOnlyRoute></ProtectedLayout>} />
               <Route path="/admin/logs" element={<ProtectedLayout><AdminRoute><AuditLogs /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/error-logs" element={<ProtectedLayout><AdminRoute><ErrorLogs /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/active-sessions" element={<ProtectedLayout><AdminRoute><ActiveSessions /></AdminRoute></ProtectedLayout>} />

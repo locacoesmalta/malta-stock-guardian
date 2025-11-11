@@ -30,15 +30,13 @@ Deno.serve(async (req) => {
       throw new Error('Não autorizado')
     }
 
-    // Check if user is admin
-    const { data: roleData, error: roleError } = await supabaseAdmin
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single()
+    // Check if user is system owner
+    const { data: isOwner, error: ownerError } = await supabaseAdmin.rpc('is_system_owner', {
+      _user_id: user.id
+    })
 
-    if (roleError || roleData?.role !== 'admin') {
-      throw new Error('Apenas administradores podem criar usuários')
+    if (ownerError || !isOwner) {
+      throw new Error('Apenas o proprietário do sistema pode criar usuários')
     }
 
     const { email, password, full_name, permissions } = await req.json()

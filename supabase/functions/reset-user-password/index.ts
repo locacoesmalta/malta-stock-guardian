@@ -50,17 +50,14 @@ Deno.serve(async (req) => {
 
     console.log('Request from user:', authUser.id);
 
-    // Verify that the authenticated user is an admin
-    const { data: userRole, error: roleError } = await supabaseAdmin
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', authUser.id)
-      .eq('role', 'admin')
-      .single();
+    // Verify that the authenticated user is system owner
+    const { data: isOwner, error: ownerError } = await supabaseAdmin.rpc('is_system_owner', {
+      _user_id: authUser.id
+    });
 
-    if (roleError || !userRole) {
-      console.error('User is not admin:', authUser.id);
-      throw new Error('Only administrators can reset user passwords');
+    if (ownerError || !isOwner) {
+      console.error('User is not system owner:', authUser.id);
+      throw new Error('Only system owner can reset user passwords');
     }
 
     console.log('Admin verified:', authUser.id);
