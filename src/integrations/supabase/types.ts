@@ -1807,6 +1807,40 @@ export type Database = {
           total_logs: number
         }[]
       }
+      check_audit_logs_integrity: {
+        Args: never
+        Returns: {
+          action: string
+          created_at: string
+          issue_type: string
+          log_id: string
+          table_name: string
+          user_email: string
+        }[]
+      }
+      check_products_integrity: {
+        Args: never
+        Returns: {
+          current_quantity: number
+          has_adjustment_history: boolean
+          issue_type: string
+          product_code: string
+          product_id: string
+          product_name: string
+        }[]
+      }
+      check_sessions_integrity: {
+        Args: never
+        Returns: {
+          is_online: boolean
+          issue_type: string
+          last_activity: string
+          session_count: number
+          session_id: string
+          user_email: string
+          user_name: string
+        }[]
+      }
       cleanup_inactive_sessions: { Args: never; Returns: undefined }
       fix_duplicate_equipment_names: {
         Args: { p_correct_name: string; p_variations: string[] }
