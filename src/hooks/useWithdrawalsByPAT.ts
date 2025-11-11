@@ -30,13 +30,14 @@ export const useWithdrawalsByPAT = (equipmentCode: string) => {
     queryFn: async (): Promise<WithdrawalWithProduct[]> => {
       if (!equipmentCode) return [];
 
-      // Buscar retiradas não arquivadas (sem filtrar por used_in_report_id)
-      const { data: withdrawals, error } = await supabase
-        .from("material_withdrawals")
+      // Usar view otimizada que calcula remaining_quantity no banco (1 única query)
+      const { data, error } = await supabase
+        .from("v_withdrawals_with_remaining")
         .select(`
           id,
           product_id,
           quantity,
+          remaining_quantity,
           withdrawal_date,
           withdrawal_reason,
           equipment_code,
@@ -47,7 +48,7 @@ export const useWithdrawalsByPAT = (equipmentCode: string) => {
           products(code, name, purchase_price)
         `)
         .eq("equipment_code", equipmentCode)
-        .eq("is_archived", false)
+        .gt("remaining_quantity", 0) // Filtrar no banco, não no JS
         .order("withdrawal_date", { ascending: false });
 
       if (error) {
@@ -55,28 +56,7 @@ export const useWithdrawalsByPAT = (equipmentCode: string) => {
         throw error;
       }
 
-      if (!withdrawals) return [];
-
-      // Para cada retirada, calcular quantidade já usada em relatórios
-      const withdrawalsWithRemaining = await Promise.all(
-        withdrawals.map(async (w) => {
-          const { data: usedParts } = await supabase
-            .from("report_parts")
-            .select("quantity_used")
-            .eq("withdrawal_id", w.id);
-
-          const totalUsed = usedParts?.reduce((sum, p) => sum + p.quantity_used, 0) || 0;
-          const remaining = w.quantity - totalUsed;
-
-          return {
-            ...w,
-            remaining_quantity: remaining,
-          };
-        })
-      );
-
-      // Filtrar apenas retiradas com quantidade restante disponível
-      return withdrawalsWithRemaining.filter(w => w.remaining_quantity > 0);
+      return data || [];
     },
     enabled: !!equipmentCode && equipmentCode.length > 0,
   });
