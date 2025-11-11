@@ -16,6 +16,7 @@ import { ReportEquipmentSelector } from "@/components/reports/ReportEquipmentSel
 import { ReportPartsManager } from "@/components/reports/ReportPartsManager";
 import { ReportPhotoUploader } from "@/components/reports/ReportPhotoUploader";
 import { ReportFormFields } from "@/components/reports/ReportFormFields";
+import { DuplicateReportWarning } from "@/components/DuplicateReportWarning";
 
 interface ReportPart {
   withdrawal_id: string;
@@ -37,8 +38,13 @@ const NewReport = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  
+  // Capturar PAT da URL (query parameter)
+  const searchParams = new URLSearchParams(window.location.search);
+  const patFromUrl = searchParams.get("pat");
+
   const [formData, setFormData] = useState({
-    equipment_code: "",
+    equipment_code: patFromUrl || "",
     equipment_name: "",
     work_site: "",
     company: "",
@@ -352,6 +358,13 @@ const NewReport = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {formData.equipment_code && formData.report_date && (
+          <DuplicateReportWarning
+            equipmentCode={formatPAT(formData.equipment_code) || formData.equipment_code}
+            reportDate={formData.report_date}
+          />
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle>Informações Gerais</CardTitle>

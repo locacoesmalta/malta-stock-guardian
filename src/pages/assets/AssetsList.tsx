@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Search, QrCode, Building2, MapPin, FileText } from "lucide-react";
+import { Plus, Search, QrCode, Building2, MapPin, FileText, Package } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatInTimeZone } from "date-fns-tz";
@@ -18,6 +18,7 @@ import { AssetDataWarning } from "@/components/AssetDataWarning";
 import { EquipmentBrandSelector } from "@/components/EquipmentBrandSelector";
 import { EquipmentTypeSelector } from "@/components/EquipmentTypeSelector";
 import { EquipmentModelSelector } from "@/components/EquipmentModelSelector";
+import { AssetCardHeader } from "@/components/AssetCard";
 
 export default function AssetsList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -237,20 +238,13 @@ export default function AssetsList() {
               className="p-3 sm:p-4 cursor-pointer hover:shadow-md transition-shadow"
               onClick={() => navigate(`/assets/view/${asset.id}`)}
             >
-              <div className="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-3 mb-3">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-base sm:text-lg break-words">{asset.equipment_name}</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground">PAT: {asset.asset_code}</p>
-                  {asset.malta_collaborator && (
-                    <p className="text-xs text-muted-foreground mt-1 truncate">
-                      Responsável: {asset.malta_collaborator}
-                    </p>
-                  )}
-                </div>
-                <Badge variant={getLocationVariant(asset.location_type)} className="text-xs whitespace-nowrap flex-shrink-0">
-                  {getLocationLabel(asset.location_type)}
-                </Badge>
-              </div>
+              <AssetCardHeader
+                assetCode={asset.asset_code}
+                equipmentName={asset.equipment_name}
+                maltaCollaborator={asset.malta_collaborator}
+                locationLabel={getLocationLabel(asset.location_type)}
+                locationVariant={getLocationVariant(asset.location_type)}
+              />
 
               {asset.location_type === "deposito_malta" && asset.deposito_description && (
                 <div className="text-sm text-muted-foreground">

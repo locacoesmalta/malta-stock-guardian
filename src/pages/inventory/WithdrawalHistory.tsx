@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,13 +7,14 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Search, FileText } from "lucide-react";
+import { Search, FileText, FileEdit } from "lucide-react";
 import { useWithdrawalsQuery } from "@/hooks/useWithdrawalsQuery";
 import { formatPAT } from "@/lib/patUtils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { BackButton } from "@/components/BackButton";
 
 const WithdrawalHistory = () => {
+  const navigate = useNavigate();
   const { data: withdrawals = [], isLoading, error } = useWithdrawalsQuery();
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -331,18 +333,34 @@ const WithdrawalHistory = () => {
                       )}
                     </div>
 
-                    <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start sm:text-right space-y-0 sm:space-y-1 border-t sm:border-t-0 pt-2 sm:pt-0 flex-shrink-0">
-                      <div className="font-semibold text-sm sm:text-base">
-                        Qtd: {withdrawal.quantity}
+                    <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start sm:text-right space-y-0 sm:space-y-1 border-t sm:border-t-0 pt-2 sm:pt-0 flex-shrink-0 gap-2">
+                      <div className="flex flex-col items-end gap-1 flex-1">
+                        <div className="font-semibold text-sm sm:text-base">
+                          Qtd: {withdrawal.quantity}
+                        </div>
+                        <div className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+                          {format(new Date(withdrawal.withdrawal_date), "dd/MM/yyyy", {
+                            locale: ptBR,
+                          })}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate max-w-[150px] sm:max-w-none">
+                          {withdrawal.profiles?.full_name || withdrawal.profiles?.email || "-"}
+                        </div>
                       </div>
-                      <div className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
-                        {format(new Date(withdrawal.withdrawal_date), "dd/MM/yyyy", {
-                          locale: ptBR,
-                        })}
-                      </div>
-                      <div className="text-xs text-muted-foreground truncate max-w-[150px] sm:max-w-none">
-                        {withdrawal.profiles?.full_name || withdrawal.profiles?.email || "-"}
-                      </div>
+                      {!isSale && withdrawal.equipment_code && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 px-2 text-xs whitespace-nowrap"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/reports/new?pat=${withdrawal.equipment_code}`);
+                          }}
+                        >
+                          <FileEdit className="h-3 w-3 mr-1" />
+                          Criar Relatório
+                        </Button>
+                      )}
                     </div>
                   </div>
                 );

@@ -45,7 +45,12 @@ const MaterialWithdrawal = () => {
   const [isSaleWithdrawal, setIsSaleWithdrawal] = useState(false);
   const [withdrawalDate, setWithdrawalDate] = useState(getTodayLocalDate());
   const [withdrawalReason, setWithdrawalReason] = useState("");
-  const [equipmentCode, setEquipmentCode] = useState("");
+  
+  // Capturar PAT da URL (query parameter)
+  const searchParams = new URLSearchParams(window.location.search);
+  const patFromUrl = searchParams.get("pat");
+  
+  const [equipmentCode, setEquipmentCode] = useState(patFromUrl || "");
   const [workSite, setWorkSite] = useState("");
   const [company, setCompany] = useState("");
   const [items, setItems] = useState<WithdrawalItem[]>([]);
