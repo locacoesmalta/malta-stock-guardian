@@ -398,6 +398,104 @@ export default function AssetMovement() {
     await processSubmit(data);
   };
 
+  // Função auxiliar para sanitizar datas vazias/undefined para null
+  const sanitizeDate = (value: any): string | null => {
+    if (!value || value === "" || (typeof value === "object" && value._type === "undefined")) {
+      return null;
+    }
+    return value;
+  };
+
+  // Função auxiliar para construir payload seguro por tipo de movimento
+  const buildUpdatePayloadByMovementType = (movementType: MovementType, formData: any): any => {
+    const basePayload: any = {};
+
+    // Campos compartilhados (sanitizados)
+    const sanitizedData = {
+      ...formData,
+      maintenance_arrival_date: sanitizeDate(formData.maintenance_arrival_date),
+      maintenance_departure_date: sanitizeDate(formData.maintenance_departure_date),
+      rental_start_date: sanitizeDate(formData.rental_start_date),
+      rental_end_date: sanitizeDate(formData.rental_end_date),
+      purchase_date: sanitizeDate(formData.purchase_date),
+    };
+
+    switch (movementType) {
+      case "deposito_malta":
+        return {
+          location_type: "deposito_malta",
+          was_washed: sanitizedData.was_washed ?? false,
+          was_painted: sanitizedData.was_painted ?? false,
+          deposito_description: sanitizedData.deposito_description || null,
+          malta_collaborator: sanitizedData.malta_collaborator || null,
+          equipment_observations: sanitizedData.equipment_observations || null,
+          // Limpar campos de locação e manutenção
+          rental_company: null,
+          rental_work_site: null,
+          rental_start_date: null,
+          rental_end_date: null,
+          rental_contract_number: null,
+          maintenance_company: null,
+          maintenance_work_site: null,
+          maintenance_description: null,
+          maintenance_arrival_date: null,
+          maintenance_departure_date: null,
+          maintenance_delay_observations: null,
+          returns_to_work_site: null,
+          destination_after_maintenance: null,
+          was_replaced: null,
+          replacement_reason: null,
+          is_new_equipment: null,
+        };
+
+      case "em_manutencao":
+        return {
+          location_type: "em_manutencao",
+          maintenance_company: sanitizedData.maintenance_company || null,
+          maintenance_work_site: sanitizedData.maintenance_work_site || null,
+          maintenance_arrival_date: sanitizedData.maintenance_arrival_date,
+          maintenance_departure_date: sanitizedData.maintenance_departure_date,
+          maintenance_description: sanitizedData.maintenance_description || null,
+          equipment_observations: sanitizedData.equipment_observations || null,
+          malta_collaborator: sanitizedData.malta_collaborator || null,
+        };
+
+      case "locacao":
+        return {
+          location_type: "locacao",
+          rental_company: sanitizedData.rental_company || null,
+          rental_work_site: sanitizedData.rental_work_site || null,
+          rental_start_date: sanitizedData.rental_start_date,
+          rental_end_date: sanitizedData.rental_end_date,
+          rental_contract_number: sanitizedData.rental_contract_number || null,
+          equipment_observations: sanitizedData.equipment_observations || null,
+          malta_collaborator: sanitizedData.malta_collaborator || null,
+        };
+
+      case "aguardando_laudo":
+        return {
+          location_type: "aguardando_laudo",
+          inspection_start_date: new Date().toISOString(),
+          equipment_observations: sanitizedData.equipment_observations || null,
+          malta_collaborator: sanitizedData.malta_collaborator || null,
+        };
+
+      case "retorno_obra":
+        // Retorno para obra NÃO altera location_type
+        return {
+          equipment_observations: sanitizedData.equipment_observations || null,
+          malta_collaborator: sanitizedData.malta_collaborator || null,
+        };
+
+      case "substituicao":
+        // Tratado separadamente, não chega aqui
+        return {};
+
+      default:
+        return basePayload;
+    }
+  };
+
   const processSubmit = async (data: any) => {
     if (!asset || !user) return;
 
@@ -542,54 +640,8 @@ export default function AssetMovement() {
         // Se false, o equipamento substituído continua na obra (não fazer nada)
       }
       
-      const updateData: any = {
-        // Retorno para obra NÃO altera o location_type
-        ...(movementType !== "retorno_obra" && { location_type: movementType }),
-        ...data,
-        // Registrar data de início do laudo
-        ...(movementType === "aguardando_laudo" && { inspection_start_date: new Date().toISOString() }),
-      };
-
-      // Remover parts_replaced dos dados (não é coluna do banco)
-      if (movementType === "retorno_obra") {
-        console.log("Removendo parts_replaced dos dados de update...");
-        delete updateData.parts_replaced;
-      }
-
-      console.log("Update data ANTES de enviar para Supabase:", updateData);
-
-      // Upload de fotos para locação
-      if (movementType === "locacao") {
-        if (photoFile1) {
-          const url1 = await uploadPhoto(photoFile1, 1);
-          if (url1) updateData.rental_photo_1 = url1;
-        }
-        if (photoFile2) {
-          const url2 = await uploadPhoto(photoFile2, 2);
-          if (url2) updateData.rental_photo_2 = url2;
-        }
-
-      }
-
-      // Converter strings vazias de datas para null
-      if (updateData.maintenance_departure_date === "") {
-        updateData.maintenance_departure_date = null;
-      }
-      if (updateData.rental_end_date === "") {
-        updateData.rental_end_date = null;
-      }
-      if (updateData.purchase_date === "") {
-        updateData.purchase_date = null;
-      }
-
-      // Se for para aguardando laudo, setar inspection_start_date
-      if (movementType === "aguardando_laudo") {
-        updateData.inspection_start_date = new Date().toISOString();
-      }
-
-      // Limpar campos de outros tipos de movimento
+      // Arquivar dados antigos antes de limpar (apenas para depósito)
       if (movementType === "deposito_malta") {
-        // Arquivar dados antigos antes de limpar
         const historicoDetalhes = [];
         if (asset.rental_company) historicoDetalhes.push(`Empresa Locação: ${asset.rental_company}`);
         if (asset.rental_work_site) historicoDetalhes.push(`Obra Locação: ${asset.rental_work_site}`);
@@ -606,26 +658,24 @@ export default function AssetMovement() {
             detalhesEvento: `Dados arquivados antes do retorno ao Depósito Malta: ${historicoDetalhes.join(", ")}`,
           });
         }
-        
-        updateData.rental_company = null;
-        updateData.rental_work_site = null;
-        updateData.rental_start_date = null;
-        updateData.rental_end_date = null;
-        updateData.rental_contract_number = null;
-        updateData.maintenance_company = null;
-        updateData.maintenance_work_site = null;
-        updateData.maintenance_description = null;
-        updateData.maintenance_arrival_date = null;
-        updateData.maintenance_departure_date = null;
-        updateData.maintenance_delay_observations = null;
-        updateData.returns_to_work_site = null;
-        updateData.destination_after_maintenance = null;
-        updateData.was_replaced = null;
-        updateData.replacement_reason = null;
-        updateData.is_new_equipment = null;
       }
 
-      console.log("Update data to be sent:", updateData);
+      // Construir payload seguro baseado no tipo de movimento
+      const updateData = buildUpdatePayloadByMovementType(movementType!, data);
+
+      // Upload de fotos para locação
+      if (movementType === "locacao") {
+        if (photoFile1) {
+          const url1 = await uploadPhoto(photoFile1, 1);
+          if (url1) updateData.rental_photo_1 = url1;
+        }
+        if (photoFile2) {
+          const url2 = await uploadPhoto(photoFile2, 2);
+          if (url2) updateData.rental_photo_2 = url2;
+        }
+      }
+
+      console.log("✅ Payload sanitizado e pronto para envio:", updateData);
       
       const { error: updateError } = await supabase
         .from("assets")
@@ -633,9 +683,12 @@ export default function AssetMovement() {
         .eq("id", id);
 
       if (updateError) {
-        console.error("Supabase update error:", updateError);
+        console.error("❌ Erro no update do Supabase:", updateError);
+        toast.error(`Erro ao atualizar: ${updateError.message}`);
         throw updateError;
       }
+
+      console.log("✅ Asset atualizado com sucesso!");
 
       const locationLabels: Record<MovementType, string> = {
         deposito_malta: "Depósito Malta",
@@ -646,27 +699,39 @@ export default function AssetMovement() {
         substituicao: "Substituição",
       };
 
-      // Para Retorno para Obra, registrar evento diferente
+      // Construir detalhes do evento incluindo justificativa retroativa (se fornecida)
+      let detalhesEvento = "";
+      
       if (movementType === "retorno_obra") {
-        const detalhes = data.parts_replaced 
+        detalhesEvento = data.parts_replaced 
           ? `Retorno para obra COM troca de peças. Peças retiradas: ${withdrawals.map(w => w.products?.name).join(", ")}`
           : `Retorno para obra SEM troca de peças. Observações: ${data.equipment_observations || "Nenhuma"}`;
-        
+      } else {
+        detalhesEvento = `Equipamento movido para ${locationLabels[movementType]}`;
+      }
+
+      // Incluir justificativa retroativa nos detalhes do histórico (se fornecida)
+      if (data.retroactive_justification) {
+        detalhesEvento += ` | Justificativa: ${data.retroactive_justification}`;
+      }
+
+      // Registrar evento no histórico
+      if (movementType === "retorno_obra") {
         await registrarEvento({
           patId: asset.id,
           codigoPat: asset.asset_code,
           tipoEvento: "RETORNO PARA OBRA",
-          detalhesEvento: detalhes,
+          detalhesEvento,
         });
       } else {
         await registrarEvento({
           patId: asset.id,
           codigoPat: asset.asset_code,
           tipoEvento: "MOVIMENTAÇÃO",
-          detalhesEvento: `Equipamento movido para ${locationLabels[movementType]}`,
+          detalhesEvento,
           campoAlterado: "location_type",
           valorAntigo: asset.location_type,
-          valorNovo: movementType,
+          valorNovo: movementType!,
         });
       }
 
