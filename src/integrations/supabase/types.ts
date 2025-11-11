@@ -1002,6 +1002,13 @@ export type Database = {
             referencedRelation: "material_withdrawals"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "material_withdrawal_collaborators_withdrawal_id_fkey"
+            columns: ["withdrawal_id"]
+            isOneToOne: false
+            referencedRelation: "v_withdrawals_with_remaining"
+            referencedColumns: ["id"]
+          },
         ]
       }
       material_withdrawals: {
@@ -1535,6 +1542,13 @@ export type Database = {
             referencedRelation: "material_withdrawals"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "report_parts_withdrawal_id_fkey"
+            columns: ["withdrawal_id"]
+            isOneToOne: false
+            referencedRelation: "v_withdrawals_with_remaining"
+            referencedColumns: ["id"]
+          },
         ]
       }
       report_photos: {
@@ -1852,6 +1866,40 @@ export type Database = {
           variacoes: string[] | null
         }
         Relationships: []
+      }
+      v_withdrawals_with_remaining: {
+        Row: {
+          company: string | null
+          created_at: string | null
+          equipment_code: string | null
+          id: string | null
+          is_archived: boolean | null
+          lifecycle_cycle: number | null
+          product_id: string | null
+          quantity: number | null
+          remaining_quantity: number | null
+          used_in_report_id: string | null
+          withdrawal_date: string | null
+          withdrawal_reason: string | null
+          withdrawn_by: string | null
+          work_site: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_withdrawals_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_withdrawals_used_in_report_id_fkey"
+            columns: ["used_in_report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
