@@ -6,19 +6,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ProductSearchCombobox } from "@/components/ProductSearchCombobox";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Upload, X, CheckCircle2, AlertCircle } from "lucide-react";
 import "@/styles/report-print.css";
-import { useProductsQuery } from "@/hooks/useProductsQuery";
 import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
+import { useWithdrawalsByPAT } from "@/hooks/useWithdrawalsByPAT";
 import { formatPAT } from "@/lib/patUtils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BackButton } from "@/components/BackButton";
 import { getTodayLocalDate } from "@/lib/dateUtils";
 
 interface ReportPart {
+  withdrawal_id: string;
   product_id: string;
   quantity_used: number;
   productName: string;
@@ -35,7 +35,6 @@ interface PhotoData {
 const NewReport = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: products = [] } = useProductsQuery();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     equipment_code: "",
@@ -58,6 +57,11 @@ const NewReport = () => {
 
   // Buscar informações do equipamento pelo PAT
   const { data: equipment, isLoading: loadingEquipment } = useEquipmentByPAT(formData.equipment_code);
+  
+  // Buscar retiradas de material vinculadas ao PAT
+  const { data: withdrawals = [], isLoading: loadingWithdrawals } = useWithdrawalsByPAT(
+    formatPAT(formData.equipment_code) || ""
+  );
 
   // Preencher informações automaticamente quando o equipamento for encontrado
   useEffect(() => {
@@ -109,6 +113,23 @@ const NewReport = () => {
       }));
     }
   }, [equipment, formData.equipment_code]);
+
+  // Converter retiradas em formato de peças
+  useEffect(() => {
+    if (withdrawals && withdrawals.length > 0) {
+      const partsFromWithdrawals = withdrawals.map(w => ({
+        withdrawal_id: w.id,
+        product_id: w.product_id,
+        quantity_used: w.quantity,
+        productName: w.products?.name || "",
+        productCode: w.products?.code || "",
+        purchasePrice: w.products?.purchase_price || null,
+      }));
+      setParts(partsFromWithdrawals);
+    } else {
+      setParts([]);
+    }
+  }, [withdrawals]);
 
   // Cleanup preview URLs on unmount
   useEffect(() => {
@@ -183,36 +204,6 @@ const NewReport = () => {
     setAdditionalPhotos(additionalPhotos.filter((_, i) => i !== index));
   };
 
-  const addPart = () => {
-    setParts([...parts, {
-      product_id: "",
-      quantity_used: 1,
-      productName: "",
-      productCode: "",
-      purchasePrice: null
-    }]);
-  };
-
-  const removePart = (index: number) => {
-    setParts(parts.filter((_, i) => i !== index));
-  };
-
-  const updatePart = (index: number, field: keyof ReportPart, value: any) => {
-    const newParts = [...parts];
-    newParts[index] = { ...newParts[index], [field]: value };
-    
-    if (field === "product_id") {
-      const product = products.find(p => p.id === value);
-      if (product) {
-        newParts[index].productName = product.name;
-        newParts[index].productCode = product.code;
-        newParts[index].purchasePrice = product.purchase_price;
-      }
-    }
-    
-    setParts(newParts);
-  };
-
   const uploadPhotos = async (reportId: string) => {
     const allPhotos = [...photos, ...additionalPhotos.filter(p => p.file)];
     
@@ -283,17 +274,6 @@ const NewReport = () => {
       return;
     }
 
-    if (parts.length === 0) {
-      toast.error("Adicione pelo menos uma peça utilizada!");
-      return;
-    }
-
-    const invalidParts = parts.filter(part => !part.product_id || part.quantity_used <= 0);
-    if (invalidParts.length > 0) {
-      toast.error("Verifique as peças: todas devem ter produto e quantidade!");
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -309,22 +289,40 @@ const NewReport = () => {
 
       if (reportError) throw reportError;
 
-      // Salvar as peças usadas
-      const partsData = parts.map(part => ({
-        report_id: reportData.id,
-        product_id: part.product_id,
-        quantity_used: part.quantity_used
-      }));
+      // Salvar as peças usadas e vincular às retiradas
+      if (parts.length > 0) {
+        const partsData = parts.map(part => ({
+          report_id: reportData.id,
+          product_id: part.product_id,
+          quantity_used: part.quantity_used,
+          withdrawal_id: part.withdrawal_id,
+        }));
 
-      const { error: partsError } = await supabase
-        .from("report_parts")
-        .insert(partsData);
+        const { error: partsError } = await supabase
+          .from("report_parts")
+          .insert(partsData);
 
-      if (partsError) throw partsError;
+        if (partsError) throw partsError;
+
+        // Marcar retiradas como usadas no relatório
+        const withdrawalIds = parts.map(p => p.withdrawal_id).filter(Boolean);
+        if (withdrawalIds.length > 0) {
+          const { error: updateError } = await supabase
+            .from("material_withdrawals")
+            .update({ used_in_report_id: reportData.id })
+            .in("id", withdrawalIds);
+
+          if (updateError) throw updateError;
+        }
+      }
 
       await uploadPhotos(reportData.id);
 
-      toast.success("Relatório criado com sucesso!");
+      toast.success(
+        parts.length > 0
+          ? `Relatório criado com sucesso! ${parts.length} peças vinculadas.`
+          : "Relatório criado com sucesso!"
+      );
       navigate("/reports");
     } catch (error: any) {
       toast.error(error.message || "Erro ao criar relatório");
@@ -491,77 +489,72 @@ const NewReport = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Peças Utilizadas na Manutenção</CardTitle>
-            <Button type="button" onClick={addPart} size="sm">
-              Adicionar Peça
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {parts.length === 0 ? (
-              <p className="text-center text-muted-foreground py-4">
-                Nenhuma peça adicionada. Clique em "Adicionar Peça" para começar.
-              </p>
-            ) : (
-              parts.map((part, index) => (
-                <div key={index} className="border rounded-lg p-4 space-y-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium">Peça {index + 1}</h4>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removePart(index)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+        {withdrawals && withdrawals.length > 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                Peças Utilizadas (Retiradas Registradas)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Peças automaticamente vinculadas através da Retirada de Material deste equipamento.
+                </AlertDescription>
+              </Alert>
+
+              {withdrawals.map((withdrawal, index) => (
+                <div key={withdrawal.id} className="p-4 border rounded-lg bg-muted/30">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label className="text-sm text-muted-foreground">Produto</Label>
+                      <p className="font-medium">{withdrawal.products?.name}</p>
+                      <p className="text-sm text-muted-foreground">Código: {withdrawal.products?.code}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-muted-foreground">Quantidade Utilizada</Label>
+                      <p className="font-medium">{withdrawal.quantity} un</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-muted-foreground">Retirado em</Label>
+                      <p className="font-medium">{new Date(withdrawal.withdrawal_date).toLocaleDateString('pt-BR')}</p>
+                    </div>
                   </div>
-
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Produto *</Label>
-                        <ProductSearchCombobox
-                          products={products}
-                          value={part.product_id}
-                          onValueChange={(value) => updatePart(index, "product_id", value)}
-                          placeholder="Buscar produto por código ou nome..."
-                          showClearButton={true}
-                          onClear={() => updatePart(index, "product_id", "")}
-                        />
+                  {withdrawal.withdrawal_reason && (
+                    <div className="mt-2">
+                      <Label className="text-sm text-muted-foreground">Motivo da Retirada</Label>
+                      <p className="text-sm">{withdrawal.withdrawal_reason}</p>
+                    </div>
+                  )}
+                  {withdrawal.products?.purchase_price && (
+                    <div className="mt-3 bg-background p-3 rounded-md text-sm space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Preço unitário:</span>
+                        <span className="font-medium">R$ {withdrawal.products.purchase_price.toFixed(2)}</span>
                       </div>
-
-                      <div className="space-y-2">
-                        <Label>Quantidade Utilizada *</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          value={part.quantity_used}
-                          onChange={(e) => updatePart(index, "quantity_used", Number(e.target.value))}
-                          required
-                        />
+                      <div className="flex justify-between border-t pt-1">
+                        <span className="text-muted-foreground">Custo total:</span>
+                        <span className="font-semibold">R$ {(withdrawal.products.purchase_price * withdrawal.quantity).toFixed(2)}</span>
                       </div>
                     </div>
-
-                    {part.purchasePrice !== null && (
-                      <div className="bg-muted/50 p-3 rounded-md text-sm space-y-1">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Preço unitário:</span>
-                          <span className="font-medium">R$ {part.purchasePrice.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between border-t pt-1">
-                          <span className="text-muted-foreground">Custo total:</span>
-                          <span className="font-semibold">R$ {(part.purchasePrice * part.quantity_used).toFixed(2)}</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+              ))}
+            </CardContent>
+          </Card>
+        ) : (
+          formData.equipment_code && !loadingWithdrawals && equipment && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Nenhuma peça encontrada em "Retirada de Material" para este equipamento.
+                Para registrar peças no relatório, primeiro faça a retirada em <strong>Gestão de Estoque → Retirada de Material</strong>.
+              </AlertDescription>
+            </Alert>
+          )
+        )}
 
         <Card>
           <CardHeader>

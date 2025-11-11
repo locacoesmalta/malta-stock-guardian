@@ -965,6 +965,7 @@ export type Database = {
           id: string
           product_id: string
           quantity: number
+          used_in_report_id: string | null
           withdrawal_date: string
           withdrawal_reason: string | null
           withdrawn_by: string
@@ -977,6 +978,7 @@ export type Database = {
           id?: string
           product_id: string
           quantity: number
+          used_in_report_id?: string | null
           withdrawal_date?: string
           withdrawal_reason?: string | null
           withdrawn_by: string
@@ -989,6 +991,7 @@ export type Database = {
           id?: string
           product_id?: string
           quantity?: number
+          used_in_report_id?: string | null
           withdrawal_date?: string
           withdrawal_reason?: string | null
           withdrawn_by?: string
@@ -1000,6 +1003,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_withdrawals_used_in_report_id_fkey"
+            columns: ["used_in_report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
             referencedColumns: ["id"]
           },
         ]
@@ -1432,6 +1442,7 @@ export type Database = {
           product_id: string
           quantity_used: number
           report_id: string
+          withdrawal_id: string | null
         }
         Insert: {
           created_at?: string
@@ -1439,6 +1450,7 @@ export type Database = {
           product_id: string
           quantity_used?: number
           report_id: string
+          withdrawal_id?: string | null
         }
         Update: {
           created_at?: string
@@ -1446,6 +1458,7 @@ export type Database = {
           product_id?: string
           quantity_used?: number
           report_id?: string
+          withdrawal_id?: string | null
         }
         Relationships: [
           {
@@ -1460,6 +1473,13 @@ export type Database = {
             columns: ["report_id"]
             isOneToOne: false
             referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_parts_withdrawal_id_fkey"
+            columns: ["withdrawal_id"]
+            isOneToOne: false
+            referencedRelation: "material_withdrawals"
             referencedColumns: ["id"]
           },
         ]
