@@ -1963,6 +1963,24 @@ export type Database = {
         }[]
       }
       cleanup_inactive_sessions: { Args: never; Returns: undefined }
+      create_report_with_parts: {
+        Args: {
+          p_company: string
+          p_considerations?: string
+          p_created_by?: string
+          p_equipment_code: string
+          p_equipment_name: string
+          p_observations?: string
+          p_parts?: Json
+          p_receiver?: string
+          p_report_date: string
+          p_responsible?: string
+          p_service_comments: string
+          p_technician_name: string
+          p_work_site: string
+        }
+        Returns: string
+      }
       fix_duplicate_equipment_names: {
         Args: { p_correct_name: string; p_variations: string[] }
         Returns: number

@@ -311,35 +311,43 @@ const NewReport = () => {
     setLoading(true);
 
     try {
-      const { data: reportData, error: reportError } = await supabase
-        .from("reports")
-        .insert([{
-          ...formData,
-          equipment_code: formatPAT(formData.equipment_code) || formData.equipment_code,
-          created_by: user?.id,
-        }])
-        .select()
-        .single();
+      // Usar função transacional com rollback automático em caso de erro
+      const partsJson = parts.map(part => ({
+        product_id: part.product_id,
+        quantity_used: part.quantity_used,
+        withdrawal_id: part.withdrawal_id,
+      }));
 
-      if (reportError) throw reportError;
+      const { data: reportId, error: reportError } = await supabase.rpc(
+        'create_report_with_parts',
+        {
+          p_equipment_code: formatPAT(formData.equipment_code) || formData.equipment_code,
+          p_equipment_name: formData.equipment_name,
+          p_work_site: formData.work_site,
+          p_company: formData.company,
+          p_technician_name: formData.technician_name,
+          p_report_date: formData.report_date,
+          p_service_comments: formData.service_comments,
+          p_considerations: formData.considerations || null,
+          p_observations: formData.observations || null,
+          p_receiver: formData.receiver || null,
+          p_responsible: formData.responsible || null,
+          p_created_by: user?.id,
+          p_parts: partsJson,
+        }
+      );
 
-      // Salvar as peças usadas e vincular às retiradas
-      if (parts.length > 0) {
-        const partsData = parts.map(part => ({
-          report_id: reportData.id,
-          product_id: part.product_id,
-          quantity_used: part.quantity_used,
-          withdrawal_id: part.withdrawal_id,
-        }));
-
-        const { error: partsError } = await supabase
-          .from("report_parts")
-          .insert(partsData);
-
-        if (partsError) throw partsError;
+      if (reportError) {
+        console.error("Erro ao criar relatório:", reportError);
+        throw new Error(reportError.message || "Erro ao criar relatório");
       }
 
-      await uploadPhotos(reportData.id);
+      if (!reportId) {
+        throw new Error("ID do relatório não foi retornado");
+      }
+
+      // Upload de fotos após transação bem-sucedida
+      await uploadPhotos(reportId);
 
       toast.success(
         parts.length > 0
