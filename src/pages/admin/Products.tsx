@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, Download, Upload, Layers, AlertTriangle, History } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Download, Upload, Layers, AlertTriangle, History, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { StockBadge } from "@/components/StockBadge";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,6 +19,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { productSchema, addStockSchema } from "@/lib/validations";
 import { ProductPurchaseHistory } from "@/components/ProductPurchaseHistory";
 import { ProductStockAdjustmentsHistory } from "@/components/ProductStockAdjustmentsHistory";
+import { ProductStockAdjustmentDialog } from "@/components/ProductStockAdjustmentDialog";
 import * as XLSX from "xlsx";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BackButton } from "@/components/BackButton";
@@ -114,6 +115,10 @@ const Products = () => {
     profit_margin: "",
   });
   const [historyDialog, setHistoryDialog] = useState<{
+    open: boolean;
+    product: Product | null;
+  }>({ open: false, product: null });
+  const [adjustStockDialog, setAdjustStockDialog] = useState<{
     open: boolean;
     product: Product | null;
   }>({ open: false, product: null });
@@ -762,13 +767,21 @@ const Products = () => {
                     min="0"
                     value={formData.quantity}
                     onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
-                    disabled={editingProduct && !isSuperuser}
+                    disabled={editingProduct && formData.quantity > 0 && !isSuperuser}
                     required={!editingProduct}
-                    className={editingProduct && isSuperuser ? "border-orange-500 bg-orange-50" : ""}
+                    className={editingProduct && isSuperuser ? "border-orange-500 bg-orange-50" : (editingProduct && formData.quantity === 0 ? "border-blue-500 bg-blue-50" : "")}
                   />
-                  {editingProduct && !isSuperuser && (
+                  {editingProduct && formData.quantity === 0 && !isSuperuser && (
+                    <div className="bg-blue-50 border border-blue-300 rounded-md p-3 text-sm text-blue-800">
+                      <p className="font-semibold">💡 Estoque Zerado</p>
+                      <p className="text-xs mt-1">
+                        Você pode ajustar a quantidade diretamente ou usar "Adicionar Estoque" quando houver uma compra.
+                      </p>
+                    </div>
+                  )}
+                  {editingProduct && formData.quantity > 0 && !isSuperuser && (
                     <p className="text-xs text-muted-foreground">
-                      Para alterar quantidade, use o botão "Adicionar Estoque"
+                      Para alterar quantidade, use os botões "Adicionar Estoque" ou "Ajustar Estoque"
                     </p>
                   )}
                   {editingProduct && isSuperuser && (
@@ -1126,9 +1139,17 @@ const Products = () => {
                         variant="ghost"
                         size="icon"
                         onClick={() => setAddStockDialog({ open: true, product })}
-                        title="Adicionar Estoque"
+                        title="Adicionar Estoque (Com Compra)"
                       >
                         <Plus className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setAdjustStockDialog({ open: true, product })}
+                        title="Ajustar Estoque (Sem Compra)"
+                      >
+                        <Settings className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -1213,9 +1234,17 @@ const Products = () => {
                         variant="ghost"
                         size="icon"
                         onClick={() => setAddStockDialog({ open: true, product })}
-                        title="Adicionar Estoque"
+                        title="Adicionar Estoque (Com Compra)"
                       >
                         <Plus className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setAdjustStockDialog({ open: true, product })}
+                        title="Ajustar Estoque (Sem Compra)"
+                      >
+                        <Settings className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -1511,6 +1540,18 @@ const Products = () => {
           productName={historyDialog.product.name}
         />
       )}
+
+      {/* Dialog Ajustar Estoque */}
+      <ProductStockAdjustmentDialog
+        open={adjustStockDialog.open}
+        product={adjustStockDialog.product}
+        onOpenChange={(open) => {
+          if (!open) {
+            setAdjustStockDialog({ open: false, product: null });
+          }
+        }}
+        onSuccess={refetch}
+      />
     </div>
   );
 };
