@@ -240,6 +240,26 @@ const Products = () => {
         toast.error("Por favor, corrija os erros no formulário");
         return;
       }
+    } else {
+      // Para edições, validar apenas campos críticos
+      if (!productData.code?.trim()) {
+        setErrors({ code: "Código é obrigatório" });
+        toast.error("Código do produto é obrigatório");
+        return;
+      }
+      
+      if (!productData.name?.trim()) {
+        setErrors({ name: "Nome é obrigatório" });
+        toast.error("Nome do produto é obrigatório");
+        return;
+      }
+      
+      // Validar quantidade não-negativa
+      if (productData.quantity < 0) {
+        setErrors({ quantity: "Quantidade não pode ser negativa" });
+        toast.error("Quantidade não pode ser negativa");
+        return;
+      }
     }
 
     setSubmitting(true);

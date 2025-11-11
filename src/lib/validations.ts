@@ -50,7 +50,7 @@ export const productSchema = z.object({
     .or(z.literal("")),
   quantity: z.number()
     .int("Quantidade deve ser um número inteiro")
-    .min(1, "Quantidade deve ser maior que 0"),
+    .min(0, "Quantidade não pode ser negativa"),
   min_quantity: z.number()
     .int("Quantidade mínima deve ser um número inteiro")
     .min(0, "Quantidade mínima não pode ser negativa"),
