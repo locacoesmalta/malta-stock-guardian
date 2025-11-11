@@ -1,4 +1,4 @@
-import { Package, FileText, Users, Settings, LogOut, PackageMinus, History as HistoryIcon, QrCode, Shield, BarChart3, ClipboardList, TrendingUp, Building2, Wallet, FileCheck, FileBarChart, MessageSquare, AlertTriangle, ShoppingCart, Activity, CheckCircle2 } from "lucide-react";
+import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3, ClipboardList, TrendingUp, Building2, Wallet, FileCheck, FileBarChart, MessageSquare, AlertTriangle, ShoppingCart, Activity, CheckCircle2, type LucideIcon } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -63,7 +63,7 @@ export function AppSidebar() {
     },
     {
       path: "/inventory/history",
-      icon: HistoryIcon,
+      icon: History,
       label: "Histórico de Retiradas",
       show: permissions.can_view_withdrawal_history || isAdmin,
     },
@@ -85,7 +85,7 @@ export function AppSidebar() {
     },
     {
       path: "/assets/unified-history",
-      icon: HistoryIcon,
+      icon: History,
       label: "Histórico Unificado",
       show: isAdmin, // Apenas para admin
     },
@@ -147,7 +147,7 @@ export function AppSidebar() {
     },
     {
       path: "/receipts/history",
-      icon: HistoryIcon,
+      icon: History,
       label: "Histórico",
       show: permissions.can_view_reports || isAdmin,
     },
