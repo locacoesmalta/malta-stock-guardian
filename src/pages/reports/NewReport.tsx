@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { Upload, X, CheckCircle2, AlertCircle } from "lucide-react";
+import { Upload, X, CheckCircle2, AlertCircle, Plus, Minus } from "lucide-react";
 import "@/styles/report-print.css";
 import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
 import { useWithdrawalsByPAT } from "@/hooks/useWithdrawalsByPAT";
@@ -16,11 +16,13 @@ import { formatPAT } from "@/lib/patUtils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BackButton } from "@/components/BackButton";
 import { getTodayLocalDate } from "@/lib/dateUtils";
+import { Badge } from "@/components/ui/badge";
 
 interface ReportPart {
   withdrawal_id: string;
   product_id: string;
   quantity_used: number;
+  quantity_withdrawn: number;
   productName: string;
   productCode: string;
   purchasePrice: number | null;
@@ -121,6 +123,7 @@ const NewReport = () => {
         withdrawal_id: w.id,
         product_id: w.product_id,
         quantity_used: w.quantity,
+        quantity_withdrawn: w.quantity,
         productName: w.products?.name || "",
         productCode: w.products?.code || "",
         purchasePrice: w.products?.purchase_price || null,
@@ -130,6 +133,26 @@ const NewReport = () => {
       setParts([]);
     }
   }, [withdrawals]);
+
+  const updatePartQuantity = (index: number, newQuantity: number) => {
+    const part = parts[index];
+    
+    if (newQuantity <= 0) {
+      toast.error("Quantidade deve ser maior que zero!");
+      return;
+    }
+    
+    if (newQuantity > part.quantity_withdrawn) {
+      toast.error(
+        `Quantidade não pode exceder ${part.quantity_withdrawn} (total retirado)!`
+      );
+      return;
+    }
+    
+    const updatedParts = [...parts];
+    updatedParts[index].quantity_used = newQuantity;
+    setParts(updatedParts);
+  };
 
   // Cleanup preview URLs on unmount
   useEffect(() => {
@@ -274,6 +297,17 @@ const NewReport = () => {
       return;
     }
 
+    const invalidParts = parts.filter(
+      part => part.quantity_used > part.quantity_withdrawn || part.quantity_used <= 0
+    );
+    
+    if (invalidParts.length > 0) {
+      toast.error(
+        "Verifique as quantidades das peças! Algumas estão inválidas."
+      );
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -304,9 +338,14 @@ const NewReport = () => {
 
         if (partsError) throw partsError;
 
-        // Marcar retiradas como usadas no relatório
-        const withdrawalIds = parts.map(p => p.withdrawal_id).filter(Boolean);
-        if (withdrawalIds.length > 0) {
+        // Marcar retiradas como usadas SOMENTE se 100% foi usado
+        const fullyUsedWithdrawals = parts.filter(
+          p => p.quantity_used === p.quantity_withdrawn
+        );
+        
+        if (fullyUsedWithdrawals.length > 0) {
+          const withdrawalIds = fullyUsedWithdrawals.map(p => p.withdrawal_id);
+          
           const { error: updateError } = await supabase
             .from("material_withdrawals")
             .update({ used_in_report_id: reportData.id })
@@ -515,7 +554,67 @@ const NewReport = () => {
                     </div>
                     <div>
                       <Label className="text-sm text-muted-foreground">Quantidade Utilizada</Label>
-                      <p className="font-medium">{withdrawal.quantity} un</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => updatePartQuantity(
+                            index, 
+                            parts[index].quantity_used - 1
+                          )}
+                          disabled={parts[index].quantity_used <= 1}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        
+                        <Input
+                          type="number"
+                          min={1}
+                          max={withdrawal.quantity}
+                          value={parts[index].quantity_used}
+                          onChange={(e) => updatePartQuantity(index, parseInt(e.target.value) || 0)}
+                          className="w-20 text-center"
+                        />
+                        
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => updatePartQuantity(
+                            index, 
+                            parts[index].quantity_used + 1
+                          )}
+                          disabled={parts[index].quantity_used >= withdrawal.quantity}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                        
+                        <span className="text-sm text-muted-foreground">
+                          / {withdrawal.quantity} retiradas
+                        </span>
+                      </div>
+                      
+                      {parts[index].quantity_used === withdrawal.quantity ? (
+                        <Badge className="mt-2 bg-green-600 hover:bg-green-600">
+                          Uso Total
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="mt-2 border-yellow-600 text-yellow-600">
+                          Uso Parcial ({parts[index].quantity_used}/{withdrawal.quantity})
+                        </Badge>
+                      )}
+                      
+                      {parts[index].quantity_used < withdrawal.quantity && (
+                        <Alert className="mt-2 border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20">
+                          <AlertCircle className="h-4 w-4 text-yellow-600" />
+                          <AlertDescription className="text-xs text-yellow-700 dark:text-yellow-300">
+                            {withdrawal.quantity - parts[index].quantity_used} peças não serão vinculadas a este relatório.
+                          </AlertDescription>
+                        </Alert>
+                      )}
                     </div>
                     <div>
                       <Label className="text-sm text-muted-foreground">Retirado em</Label>
@@ -535,9 +634,19 @@ const NewReport = () => {
                         <span className="font-medium">R$ {withdrawal.products.purchase_price.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between border-t pt-1">
-                        <span className="text-muted-foreground">Custo total:</span>
-                        <span className="font-semibold">R$ {(withdrawal.products.purchase_price * withdrawal.quantity).toFixed(2)}</span>
+                        <span className="text-muted-foreground">Custo usado neste relatório:</span>
+                        <span className="font-semibold">
+                          R$ {(withdrawal.products.purchase_price * parts[index].quantity_used).toFixed(2)}
+                        </span>
                       </div>
+                      {parts[index].quantity_used < withdrawal.quantity && (
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>Custo não vinculado:</span>
+                          <span>
+                            R$ {(withdrawal.products.purchase_price * (withdrawal.quantity - parts[index].quantity_used)).toFixed(2)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
