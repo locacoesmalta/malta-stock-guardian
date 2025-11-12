@@ -9,6 +9,7 @@ interface RegistrarEventoParams {
   campoAlterado?: string;
   valorAntigo?: string;
   valorNovo?: string;
+  dataEventoReal?: string;
 }
 
 export const useRegistrarEventoPatrimonio = () => {
@@ -22,6 +23,7 @@ export const useRegistrarEventoPatrimonio = () => {
     campoAlterado,
     valorAntigo,
     valorNovo,
+    dataEventoReal,
   }: RegistrarEventoParams) => {
     if (!user) {
       console.error("Usuário não autenticado");
@@ -37,6 +39,7 @@ export const useRegistrarEventoPatrimonio = () => {
         p_campo_alterado: campoAlterado || null,
         p_valor_antigo: valorAntigo || null,
         p_valor_novo: valorNovo || null,
+        p_data_evento_real: dataEventoReal || null,
       });
 
       if (error) throw error;
