@@ -36,24 +36,53 @@ export const useRealtimePresence = ({ user, isEnabled }: UseRealtimePresenceOpti
         browser_info: browserInfo,
       };
 
-      if (!presenceIdRef.current) {
-        // Primeira inserção
-        const { data, error } = await supabase
-          .from('user_presence')
-          .insert(presenceData)
-          .select('id')
-          .single();
+      // Usar upsert para evitar conflitos 409
+      // Se já existe um registro para este user_id+session_id, atualiza; senão, insere
+      const { data, error } = await supabase
+        .from('user_presence')
+        .upsert(presenceData, {
+          onConflict: 'user_id,session_id',
+          ignoreDuplicates: false,
+        })
+        .select('id')
+        .single();
 
-        if (error) throw error;
-        presenceIdRef.current = data?.id || null;
+      if (error) {
+        // Se o upsert falhar por não ter constraint, tenta estratégia alternativa
+        if (error.code === '42P10' || error.message?.includes('duplicate')) {
+          // Buscar registro existente do usuário nesta sessão
+          const { data: existing } = await supabase
+            .from('user_presence')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('session_id', sessionIdRef.current)
+            .single();
+
+          if (existing?.id) {
+            // Atualizar registro existente
+            presenceIdRef.current = existing.id;
+            const { error: updateError } = await supabase
+              .from('user_presence')
+              .update(presenceData)
+              .eq('id', existing.id);
+
+            if (updateError) throw updateError;
+          } else {
+            // Tentar inserir novamente
+            const { data: inserted, error: insertError } = await supabase
+              .from('user_presence')
+              .insert(presenceData)
+              .select('id')
+              .single();
+
+            if (insertError) throw insertError;
+            presenceIdRef.current = inserted?.id || null;
+          }
+        } else {
+          throw error;
+        }
       } else {
-        // Atualização
-        const { error } = await supabase
-          .from('user_presence')
-          .update(presenceData)
-          .eq('id', presenceIdRef.current);
-
-        if (error) throw error;
+        presenceIdRef.current = data?.id || null;
       }
     } catch (error) {
       if (import.meta.env.DEV) {
