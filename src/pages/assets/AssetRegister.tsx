@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, AlertCircle, Search } from "lucide-react";
+import { Loader2, AlertCircle, Search, AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,7 +45,7 @@ import { toast } from "@/hooks/use-toast";
 import { formatPAT, validatePAT, calculateEquipmentAge, formatCurrency, parseCurrency } from "@/lib/patUtils";
 import { useVerifyPAT, useEquipmentSuggestions, useUploadAttachment, useCreateAsset } from "@/hooks/useAssetRegistration";
 import { useErrorTracking } from "@/hooks/useErrorTracking";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -695,6 +695,38 @@ export default function AssetRegister() {
                   </FormItem>
                 )}
               />
+
+              {/* Alerta de Recomendação Inteligente */}
+              {purchaseDate && differenceInDays(new Date(), purchaseDate) > 7 && !retroactiveEnabled && (
+                <Alert className="border-amber-500 bg-amber-50 dark:bg-amber-950">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  <AlertTitle className="text-amber-600">
+                    💡 Recomendação: Ative o Modo Retroativo
+                  </AlertTitle>
+                  <AlertDescription>
+                    <p className="text-sm mb-2">
+                      A data de compra informada ({format(purchaseDate, "dd/MM/yyyy", { locale: ptBR })}) 
+                      foi há <strong>{differenceInDays(new Date(), purchaseDate)} dias</strong>.
+                    </p>
+                    <p className="text-sm mb-3">
+                      Recomendamos ativar o modo retroativo para registrar a data real de entrada 
+                      do equipamento e manter a rastreabilidade temporal correta.
+                    </p>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      type="button"
+                      onClick={() => {
+                        setRetroactiveEnabled(true);
+                        setEffectiveDate(purchaseDate);
+                      }}
+                      className="border-amber-500 text-amber-700 hover:bg-amber-50"
+                    >
+                      Ativar Modo Retroativo
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
 
               {/* Tempo do Equipamento (Calculado) */}
               {equipmentAge !== null && (
