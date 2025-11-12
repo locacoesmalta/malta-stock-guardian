@@ -389,6 +389,18 @@ export default function AssetMovement() {
     const today = new Date();
     const daysDiff = Math.floor((today.getTime() - movementDate.getTime()) / (1000 * 60 * 60 * 24));
 
+    // VALIDAÇÃO: data de movimento não pode ser anterior à entrada do equipamento
+    const assetEntryDate = new Date(asset.effective_registration_date || asset.created_at);
+    assetEntryDate.setHours(0, 0, 0, 0);
+    movementDate.setHours(0, 0, 0, 0);
+
+    if (movementDate < assetEntryDate) {
+      toast.error(
+        `Data da movimentação (${format(movementDate, 'dd/MM/yyyy')}) não pode ser anterior à entrada do equipamento (${format(assetEntryDate, 'dd/MM/yyyy')})`
+      );
+      return;
+    }
+
     if (daysDiff > 30) {
       setPendingSubmitData(data);
       setShowDateConfirmDialog(true);

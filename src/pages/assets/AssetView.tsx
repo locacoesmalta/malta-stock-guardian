@@ -23,6 +23,7 @@ import { AssetMaintenanceSection } from "@/components/AssetMaintenanceSection";
 import { AssetMobilizationPartsSection } from "@/components/AssetMobilizationPartsSection";
 import { formatHourmeter } from "@/lib/hourmeterUtils";
 import { QuickFixManufacturerDialog } from "@/components/QuickFixManufacturerDialog";
+import { RetroactiveBadge } from "@/components/RetroactiveBadge";
 
 export default function AssetView() {
   const { id } = useParams();
@@ -266,6 +267,14 @@ export default function AssetView() {
         <Badge variant={getLocationVariant(asset.location_type)} className="text-xs sm:text-sm whitespace-nowrap">
           {getLocationLabel(asset.location_type)}
         </Badge>
+        {asset.effective_registration_date && (
+          <RetroactiveBadge
+            effectiveDate={asset.effective_registration_date}
+            registrationDate={asset.created_at}
+            notes={asset.retroactive_registration_notes}
+            size="sm"
+          />
+        )}
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4 sm:mb-6">
@@ -396,6 +405,33 @@ export default function AssetView() {
                   <p className="text-sm sm:text-base">{asset.comments}</p>
                 </div>
               )}
+              
+              {/* Informações de Registro Retroativo */}
+              <div className="space-y-3 border-t pt-4 mt-4">
+                <p className="text-sm font-semibold">Informações de Registro</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Data de Entrada Real</p>
+                    <p className="text-sm sm:text-base">
+                      {asset.effective_registration_date 
+                        ? format(parseISO(asset.effective_registration_date), "dd/MM/yyyy", { locale: ptBR })
+                        : format(parseISO(asset.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Data de Registro no Sistema</p>
+                    <p className="text-sm sm:text-base">
+                      {format(parseISO(asset.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                    </p>
+                  </div>
+                </div>
+                {asset.retroactive_registration_notes && (
+                  <div>
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground">Justificativa de Registro Retroativo</p>
+                    <p className="text-sm sm:text-base italic text-muted-foreground">{asset.retroactive_registration_notes}</p>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

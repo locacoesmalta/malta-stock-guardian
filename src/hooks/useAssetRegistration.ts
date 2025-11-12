@@ -160,6 +160,22 @@ export const useCreateAsset = () => {
         }
         throw error;
       }
+
+      // Registrar evento no histórico com data real se for retroativo
+      if (assetData.effective_registration_date) {
+        try {
+          await supabase.rpc('registrar_evento_patrimonio', {
+            p_pat_id: data.id,
+            p_codigo_pat: data.asset_code,
+            p_tipo_evento: 'CADASTRO RETROATIVO',
+            p_detalhes_evento: `Equipamento registrado retroativamente. Data real de entrada: ${assetData.effective_registration_date}. ${assetData.retroactive_registration_notes ? `Justificativa: ${assetData.retroactive_registration_notes}` : ''}`,
+            p_data_evento_real: new Date(assetData.effective_registration_date + 'T00:00:00').toISOString()
+          });
+        } catch (historyError) {
+          console.error("Erro ao registrar evento retroativo no histórico:", historyError);
+        }
+      }
+
       return data;
     },
     onSuccess: () => {

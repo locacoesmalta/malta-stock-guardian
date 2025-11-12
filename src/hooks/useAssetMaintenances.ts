@@ -20,6 +20,7 @@ export interface MaintenanceData {
   technician_name?: string;
   labor_cost?: number;
   parts: MaintenancePart[];
+  effective_maintenance_date?: string;
 }
 
 export const useAssetMaintenances = (assetId?: string) => {
@@ -83,6 +84,7 @@ export const useAssetMaintenances = (assetId?: string) => {
           labor_cost: data.labor_cost || 0,
           parts_cost: 0, // Será calculado depois
           registered_by: user.id,
+          effective_maintenance_date: data.effective_maintenance_date || null,
         })
         .select()
         .single();

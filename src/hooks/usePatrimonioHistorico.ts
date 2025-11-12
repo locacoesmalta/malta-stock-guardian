@@ -13,6 +13,8 @@ interface HistoricoItem {
   usuario_modificacao: string | null;
   usuario_nome: string | null;
   data_modificacao: string;
+  data_evento_real: string | null;
+  registro_retroativo: boolean | null;
 }
 
 interface HistoricoFilters {

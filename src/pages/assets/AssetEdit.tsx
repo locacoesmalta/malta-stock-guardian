@@ -281,6 +281,42 @@ export default function AssetEdit() {
               />
             </div>
 
+            {/* Seção de Registro Retroativo */}
+            <div className="space-y-4 border-t pt-4 mt-4">
+              <div>
+                <Label className="text-base font-semibold">Informações de Registro Retroativo</Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Use estes campos se o equipamento foi registrado após sua entrada real no sistema
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="effective_registration_date">Data Real de Entrada</Label>
+                  <Input
+                    id="effective_registration_date"
+                    type="date"
+                    defaultValue={asset.effective_registration_date || ""}
+                    onChange={(e) => form.setValue("effective_registration_date" as any, e.target.value || undefined)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Se deixar em branco, será considerada a data de criação do cadastro
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="retroactive_registration_notes">Justificativa de Registro Retroativo</Label>
+                  <Textarea
+                    id="retroactive_registration_notes"
+                    defaultValue={asset.retroactive_registration_notes || ""}
+                    onChange={(e) => form.setValue("retroactive_registration_notes" as any, e.target.value || undefined)}
+                    placeholder="Motivo do cadastro tardio..."
+                    rows={3}
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="flex gap-2 pt-4">
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Salvando..." : "Salvar Alterações"}

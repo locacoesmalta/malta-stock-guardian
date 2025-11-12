@@ -40,6 +40,7 @@ const maintenanceSchema = z.object({
   observations: z.string().optional(),
   technician_name: z.string().optional(),
   labor_cost: z.number().min(0).optional(),
+  effective_maintenance_date: z.string().optional(),
 }).refine((data) => data.current_hourmeter > data.previous_hourmeter, {
   message: "Horímetro atual deve ser maior que o anterior",
   path: ["current_hourmeter"],
@@ -68,6 +69,8 @@ export function AssetMaintenanceForm({
   const [partQuantity, setPartQuantity] = useState(1);
   const [partCost, setPartCost] = useState(0);
   const [maintenanceUpToDate, setMaintenanceUpToDate] = useState(true);
+  const [retroactiveMode, setRetroactiveMode] = useState(false);
+  const [effectiveMaintenanceDate, setEffectiveMaintenanceDate] = useState("");
   
   const { products } = useProducts();
 
@@ -126,6 +129,7 @@ export function AssetMaintenanceForm({
       technician_name: data.technician_name,
       labor_cost: data.labor_cost,
       parts: selectedParts,
+      effective_maintenance_date: retroactiveMode ? effectiveMaintenanceDate : undefined,
     };
     
     onSubmit(maintenanceData);
@@ -133,6 +137,8 @@ export function AssetMaintenanceForm({
     setOpen(false);
     reset();
     setSelectedParts([]);
+    setRetroactiveMode(false);
+    setEffectiveMaintenanceDate("");
   };
 
   const addPart = () => {
@@ -176,9 +182,22 @@ export function AssetMaintenanceForm({
         </DialogHeader>
 
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+          <div className="flex items-center space-x-2 p-3 bg-accent/50 rounded-md">
+            <Checkbox
+              id="retroactive_maintenance"
+              checked={retroactiveMode}
+              onCheckedChange={(checked) => setRetroactiveMode(checked === true)}
+            />
+            <Label htmlFor="retroactive_maintenance" className="text-sm cursor-pointer">
+              Esta manutenção ocorreu em uma data retroativa
+            </Label>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="maintenance_date">Data da Manutenção</Label>
+              <Label htmlFor="maintenance_date">
+                {retroactiveMode ? "Data de Registro" : "Data da Manutenção"}
+              </Label>
               <Input
                 id="maintenance_date"
                 type="date"
@@ -191,6 +210,44 @@ export function AssetMaintenanceForm({
               )}
             </div>
 
+            {retroactiveMode && (
+              <div className="space-y-2">
+                <Label htmlFor="effective_maintenance_date">Data Real da Manutenção *</Label>
+                <Input
+                  id="effective_maintenance_date"
+                  type="date"
+                  value={effectiveMaintenanceDate}
+                  onChange={(e) => setEffectiveMaintenanceDate(e.target.value)}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Data em que a manutenção realmente ocorreu
+                </p>
+              </div>
+            )}
+
+            {!retroactiveMode && (
+              <div className="space-y-2">
+                <Label htmlFor="maintenance_type">Tipo de Manutenção</Label>
+                <Select
+                  defaultValue="preventiva"
+                  onValueChange={(value) =>
+                    setValue("maintenance_type", value as "preventiva" | "corretiva")
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="preventiva">Preventiva</SelectItem>
+                    <SelectItem value="corretiva">Corretiva</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          {retroactiveMode && (
             <div className="space-y-2">
               <Label htmlFor="maintenance_type">Tipo de Manutenção</Label>
               <Select
@@ -208,7 +265,7 @@ export function AssetMaintenanceForm({
                 </SelectContent>
               </Select>
             </div>
-          </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <HourmeterInput

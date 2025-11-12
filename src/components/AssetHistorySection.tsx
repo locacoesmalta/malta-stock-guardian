@@ -9,9 +9,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { usePatrimonioHistorico } from "@/hooks/usePatrimonioHistorico";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { History, Loader2 } from "lucide-react";
+import { History, Loader2, Clock } from "lucide-react";
 
 interface AssetHistorySectionProps {
   assetId: string;
@@ -103,7 +103,8 @@ export const AssetHistorySection = ({ assetId }: AssetHistorySectionProps) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Data/Hora</TableHead>
+              <TableHead>Data Real</TableHead>
+              <TableHead>Data de Registro</TableHead>
               <TableHead>Tipo de Evento</TableHead>
               <TableHead>Detalhes</TableHead>
               <TableHead>Usuário</TableHead>
@@ -113,9 +114,24 @@ export const AssetHistorySection = ({ assetId }: AssetHistorySectionProps) => {
             {historico.map((item) => (
               <TableRow key={item.historico_id}>
                 <TableCell className="whitespace-nowrap">
-                  {format(new Date(item.data_modificacao), "dd/MM/yyyy HH:mm", {
-                    locale: ptBR,
-                  })}
+                  {item.data_evento_real ? (
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3 w-3 text-amber-600" />
+                      <span>{format(parseISO(item.data_evento_real), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  <div className="flex items-center gap-2">
+                    <span>{format(parseISO(item.data_modificacao), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
+                    {item.registro_retroativo && (
+                      <Badge variant="outline" className="border-amber-500 text-amber-700 text-xs">
+                        Retroativo
+                      </Badge>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell className="font-medium">{item.tipo_evento}</TableCell>
                 <TableCell>{renderEventDetails(item)}</TableCell>
