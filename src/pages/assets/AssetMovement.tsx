@@ -75,6 +75,8 @@ export default function AssetMovement() {
   const [showScanner, setShowScanner] = useState(false);
   const [showDateConfirmDialog, setShowDateConfirmDialog] = useState(false);
   const [pendingSubmitData, setPendingSubmitData] = useState<any>(null);
+  const [showRentalEndedDialog, setShowRentalEndedDialog] = useState(false);
+  const [rentalEndedData, setRentalEndedData] = useState<any>(null);
   
 
   const { data: asset, isLoading } = useQuery({
@@ -379,6 +381,26 @@ export default function AssetMovement() {
   const onSubmit = async (data: any) => {
     if (!asset || !user) return;
 
+    // VALIDAÇÃO ESPECIAL: Locação com data de fim retroativa → Aguardando Laudo automático
+    if (movementType === "locacao" && data.rental_end_date) {
+      const endDate = new Date(data.rental_end_date);
+      endDate.setHours(0, 0, 0, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (endDate < today) {
+        // Locação JÁ ENCERROU - equipamento deve ir para aguardando_laudo
+        const enrichedData = {
+          ...data,
+          isRentalEnded: true,
+          rentalEndDateForHistory: data.rental_end_date,
+        };
+        setRentalEndedData(enrichedData);
+        setShowRentalEndedDialog(true);
+        return;
+      }
+    }
+
     // Verificar se a data é retroativa (> 30 dias) e mostrar confirmação
     const movementDate = new Date(
       data.movement_date || 
@@ -518,7 +540,7 @@ export default function AssetMovement() {
         };
 
       case "locacao":
-        return {
+        const locacaoPayload: any = {
           location_type: "locacao",
           rental_company: sanitizedData.rental_company || null,
           rental_work_site: sanitizedData.rental_work_site || null,
@@ -528,6 +550,14 @@ export default function AssetMovement() {
           equipment_observations: sanitizedData.equipment_observations || null,
           malta_collaborator: sanitizedData.malta_collaborator || null,
         };
+        
+        // Se locação já encerrou, mover automaticamente para aguardando_laudo
+        if (sanitizedData.isRentalEnded) {
+          locacaoPayload.location_type = "aguardando_laudo";
+          locacaoPayload.inspection_start_date = sanitizedData.rental_end_date;
+        }
+        
+        return locacaoPayload;
 
       case "aguardando_laudo":
         return {
@@ -746,6 +776,37 @@ export default function AssetMovement() {
       }
 
       console.log("✅ Asset atualizado com sucesso!");
+
+      // TRATAMENTO ESPECIAL: Locação encerrada → Aguardando Laudo
+      if (movementType === "locacao" && data.isRentalEnded && data.rentalEndDateForHistory) {
+        // Registrar 2 eventos com data real do fim da locação
+        await registrarEvento({
+          patId: asset.id,
+          codigoPat: asset.asset_code,
+          tipoEvento: "FIM DE LOCAÇÃO",
+          detalhesEvento: `Locação encerrada em ${format(parseISO(data.rentalEndDateForHistory), 'dd/MM/yyyy')}. Empresa: ${data.rental_company}. Obra: ${data.rental_work_site}`,
+          dataEventoReal: data.rentalEndDateForHistory,
+        });
+
+        await registrarEvento({
+          patId: asset.id,
+          codigoPat: asset.asset_code,
+          tipoEvento: "MOVIMENTAÇÃO AUTOMÁTICA",
+          detalhesEvento: `Equipamento movido automaticamente para Aguardando Laudo após fim de locação retroativa`,
+          campoAlterado: "location_type",
+          valorAntigo: "locacao",
+          valorNovo: "aguardando_laudo",
+          dataEventoReal: data.rentalEndDateForHistory,
+        });
+
+        queryClient.invalidateQueries({ queryKey: ["asset", id] });
+        queryClient.invalidateQueries({ queryKey: ["assets"] });
+        queryClient.invalidateQueries({ queryKey: ["patrimonio-historico", id] });
+
+        toast.success("Locação encerrada e equipamento movido para Aguardando Laudo");
+        navigate(`/assets/view/${id}`);
+        return;
+      }
 
       const locationLabels: Record<MovementType, string> = {
         deposito_malta: "Depósito Malta",
@@ -1884,6 +1945,50 @@ export default function AssetMovement() {
               }
             }}>
               Confirmar e Registrar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog informativo: Locação Encerrada → Aguardando Laudo */}
+      <AlertDialog open={showRentalEndedDialog} onOpenChange={setShowRentalEndedDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>🔄 Locação Encerrada - Laudo Obrigatório</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                A data de fim da locação <strong>({rentalEndedData?.rental_end_date && format(parseISO(rentalEndedData.rental_end_date), 'dd/MM/yyyy')})</strong> já passou.
+              </p>
+              <p className="text-amber-600 dark:text-amber-400 font-medium">
+                ⚠️ O equipamento será automaticamente movido para <strong>"Aguardando Laudo"</strong>.
+              </p>
+              <div className="bg-muted p-3 rounded-md">
+                <p className="text-sm font-semibold mb-2">📋 Próximos passos:</p>
+                <ol className="text-sm space-y-1 list-decimal list-inside">
+                  <li>Criar relatório de avarias/inspeção</li>
+                  <li>Definir destino final: Depósito, Manutenção ou Retorno para Obra</li>
+                </ol>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Todos os dados da locação serão preservados no histórico com a data real do encerramento.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setShowRentalEndedDialog(false);
+              setRentalEndedData(null);
+            }}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={async () => {
+              setShowRentalEndedDialog(false);
+              if (rentalEndedData) {
+                await processSubmit(rentalEndedData);
+                setRentalEndedData(null);
+              }
+            }}>
+              Confirmar e Mover para Laudo
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

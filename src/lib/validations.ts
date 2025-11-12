@@ -502,6 +502,20 @@ export const movementLocacaoSchema = z.object({
     message: "Justificativa é obrigatória para datas com mais de 7 dias no passado",
     path: ["retroactive_justification"],
   }
+).refine(
+  (data) => {
+    // Se data fim for preenchida, deve ser >= data início
+    if (data.rental_end_date && data.rental_start_date) {
+      const endDate = new Date(data.rental_end_date);
+      const startDate = new Date(data.rental_start_date);
+      return endDate >= startDate;
+    }
+    return true;
+  },
+  {
+    message: "Data de fim não pode ser anterior à data de início",
+    path: ["rental_end_date"],
+  }
 );
 
 // Movement Aguardando Laudo Schema
