@@ -7,6 +7,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAssetHistory } from "@/hooks/useAssetHistory";
 import { useAssetLifecycle } from "@/hooks/useAssetLifecycle";
 import {
+  validateMaintenanceArrivalDate,
+  validateRentalStartDate,
+  validateDateRange,
+  formatValidationError
+} from "@/lib/assetMovementValidation";
+import {
   postInspectionApproveSchema,
   movementManutencaoSchema,
   movementLocacaoSchema,
@@ -236,6 +242,37 @@ export default function PostInspection() {
     if (!asset) return;
 
     try {
+      // Validar data de entrada na manutenção
+      if (data.maintenance_arrival_date) {
+        const maintenanceValidation = validateMaintenanceArrivalDate(data.maintenance_arrival_date, {
+          created_at: asset.created_at,
+          effective_registration_date: asset.effective_registration_date,
+        });
+        
+        if (maintenanceValidation !== true) {
+          toast.error(formatValidationError(maintenanceValidation, asset.asset_code));
+          return;
+        }
+        
+        // Validar intervalo completo (entrada e saída)
+        if (data.maintenance_departure_date) {
+          const rangeValidation = validateDateRange(
+            data.maintenance_arrival_date,
+            data.maintenance_departure_date,
+            {
+              created_at: asset.created_at,
+              effective_registration_date: asset.effective_registration_date,
+            },
+            "manutenção"
+          );
+          
+          if (rangeValidation !== true) {
+            toast.error(formatValidationError(rangeValidation, asset.asset_code));
+            return;
+          }
+        }
+      }
+
       // Converter strings vazias em null
       const updateData: any = { ...data };
       if (updateData.maintenance_departure_date === "") {
@@ -283,6 +320,36 @@ export default function PostInspection() {
     if (!asset) return;
 
     try {
+      // Validar data de início de locação (retorno à obra)
+      if (data.rental_start_date) {
+        const rentalValidation = validateRentalStartDate(data.rental_start_date, {
+          created_at: asset.created_at,
+          effective_registration_date: asset.effective_registration_date,
+        });
+        
+        if (rentalValidation !== true) {
+          toast.error(formatValidationError(rentalValidation, asset.asset_code));
+          return;
+        }
+        
+        // Validar intervalo completo (início e fim)
+        if (data.rental_end_date) {
+          const rangeValidation = validateDateRange(
+            data.rental_start_date,
+            data.rental_end_date,
+            {
+              created_at: asset.created_at,
+              effective_registration_date: asset.effective_registration_date,
+            },
+            "locação"
+          );
+          
+          if (rangeValidation !== true) {
+            toast.error(formatValidationError(rangeValidation, asset.asset_code));
+            return;
+          }
+        }
+      }
       // Converter strings vazias em null
       const updateData: any = { ...data };
       if (updateData.rental_end_date === "") {
