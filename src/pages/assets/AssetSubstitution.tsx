@@ -214,7 +214,10 @@ export default function AssetSubstitution() {
       await registrarEvento({
         patId: asset.id,
         codigoPat: asset.asset_code,
-        tipoEvento: "SUBSTITUIÇÃO",
+        tipoEvento: "MOVIMENTAÇÃO",
+        campoAlterado: "location_type",
+        valorAntigo: inheritedData.location_type,
+        valorNovo: "aguardando_laudo",
         detalhesEvento: `Substituído pelo PAT ${substituteAsset.asset_code} em ${format(new Date(), 'dd/MM/yyyy')} e enviado para Aguardando Laudo. Estava em ${inheritedData.location_type === 'locacao' ? 'Locação' : 'Manutenção'} - ${locationInfo}. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Obs: ${data.decision_notes}` : ""}`,
       });
 
@@ -222,7 +225,10 @@ export default function AssetSubstitution() {
       await registrarEvento({
         patId: substituteAsset.id,
         codigoPat: substituteAsset.asset_code,
-        tipoEvento: "SUBSTITUIÇÃO",
+        tipoEvento: "MOVIMENTAÇÃO",
+        campoAlterado: "location_type",
+        valorAntigo: "deposito_malta",
+        valorNovo: inheritedData.location_type,
         detalhesEvento: `Substituiu o PAT ${asset.asset_code} em ${format(new Date(), 'dd/MM/yyyy')} e assumiu posição em ${inheritedData.location_type === 'locacao' ? 'Locação' : 'Manutenção'} - ${locationInfo}. Data de início ajustada para hoje (${format(new Date(), 'dd/MM/yyyy')}). Equipamento anterior foi para Aguardando Laudo. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Obs: ${data.decision_notes}` : ""}`,
       });
 
