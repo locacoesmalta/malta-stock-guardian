@@ -431,22 +431,39 @@ export const movementManutencaoSchema = z.object({
     .trim()
     .max(200, "Nome do colaborador deve ter no máximo 200 caracteres")
     .optional(),
-}).refine(
-  (data) => {
-    const movementDate = new Date(data.maintenance_arrival_date);
-    const today = new Date();
-    const daysDiff = Math.floor((today.getTime() - movementDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (daysDiff > 7 && !data.retroactive_justification) {
-      return false;
+})
+  // Validação 1: Data de saída não pode ser anterior à data de entrada
+  .refine(
+    (data) => {
+      if (data.maintenance_departure_date) {
+        const arrivalDate = new Date(data.maintenance_arrival_date);
+        const departureDate = new Date(data.maintenance_departure_date);
+        return departureDate >= arrivalDate;
+      }
+      return true;
+    },
+    {
+      message: "Data de saída não pode ser anterior à data de entrada na manutenção",
+      path: ["maintenance_departure_date"],
     }
-    return true;
-  },
-  {
-    message: "Justificativa é obrigatória para datas com mais de 7 dias no passado",
-    path: ["retroactive_justification"],
-  }
-);
+  )
+  // Validação 2: Justificativa obrigatória para datas retroativas (>7 dias)
+  .refine(
+    (data) => {
+      const movementDate = new Date(data.maintenance_arrival_date);
+      const today = new Date();
+      const daysDiff = Math.floor((today.getTime() - movementDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysDiff > 7 && !data.retroactive_justification) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Justificativa é obrigatória para datas com mais de 7 dias no passado",
+      path: ["retroactive_justification"],
+    }
+  );
 
 // Movement Locação Schema
 export const movementLocacaoSchema = z.object({
