@@ -390,15 +390,60 @@ export default function AssetMovement() {
     const daysDiff = Math.floor((today.getTime() - movementDate.getTime()) / (1000 * 60 * 60 * 24));
 
     // VALIDAÇÃO: data de movimento não pode ser anterior à entrada do equipamento
-    const assetEntryDate = new Date(asset.effective_registration_date || asset.created_at);
-    assetEntryDate.setHours(0, 0, 0, 0);
     movementDate.setHours(0, 0, 0, 0);
-
-    if (movementDate < assetEntryDate) {
-      toast.error(
-        `Data da movimentação (${format(movementDate, 'dd/MM/yyyy')}) não pode ser anterior à entrada do equipamento (${format(assetEntryDate, 'dd/MM/yyyy')})`
-      );
-      return;
+    
+    if (asset.effective_registration_date) {
+      // Se há data de entrada definida, validar contra ela
+      const assetEntryDate = new Date(asset.effective_registration_date);
+      assetEntryDate.setHours(0, 0, 0, 0);
+      
+      if (movementDate < assetEntryDate) {
+        toast.error(
+          `Data da movimentação (${format(movementDate, 'dd/MM/yyyy')}) não pode ser anterior à entrada registrada do equipamento (${format(assetEntryDate, 'dd/MM/yyyy')})`
+        );
+        return;
+      }
+    } else {
+      // Se não há data de entrada definida E a movimentação é anterior ao cadastro
+      const createdDate = new Date(asset.created_at);
+      createdDate.setHours(0, 0, 0, 0);
+      
+      if (movementDate < createdDate) {
+        console.log(`Movimentação retroativa detectada: ${format(movementDate, 'dd/MM/yyyy')} anterior ao cadastro ${format(createdDate, 'dd/MM/yyyy')}`);
+        
+        try {
+          // Atualizar effective_registration_date automaticamente
+          const { error: updateError } = await supabase
+            .from("assets")
+            .update({ 
+              effective_registration_date: format(movementDate, 'yyyy-MM-dd'),
+              retroactive_registration_notes: `Data de entrada ajustada automaticamente baseada em movimentação retroativa registrada em ${format(new Date(), 'dd/MM/yyyy HH:mm')}`
+            })
+            .eq("id", asset.id);
+          
+          if (updateError) {
+            console.error("Erro ao atualizar data de entrada:", updateError);
+            toast.error("Erro ao ajustar data de entrada do equipamento");
+            return;
+          }
+          
+          console.log("Data de entrada atualizada automaticamente para", format(movementDate, 'dd/MM/yyyy'));
+          
+          // Registrar no histórico
+          await registrarEvento({
+            patId: asset.id,
+            codigoPat: asset.asset_code,
+            tipoEvento: "AJUSTE AUTOMÁTICO",
+            detalhesEvento: `Data de entrada ajustada de ${format(createdDate, 'dd/MM/yyyy')} para ${format(movementDate, 'dd/MM/yyyy')} devido a movimentação retroativa`,
+          });
+          
+          toast.success("Data de entrada do equipamento ajustada automaticamente");
+        } catch (error) {
+          console.error("Erro ao processar ajuste automático:", error);
+          toast.error("Erro ao ajustar data de entrada");
+          return;
+        }
+      }
     }
 
     if (daysDiff > 30) {
