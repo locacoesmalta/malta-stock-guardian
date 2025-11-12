@@ -54,6 +54,7 @@ import { useRealtimeDuplicateDetection } from "@/hooks/useRealtimeDuplicateDetec
 import { RealtimeDuplicateAlert } from "@/components/RealtimeDuplicateAlert";
 import { normalizeOnChange } from "@/lib/inputNormalization";
 import { normalizeText } from "@/lib/textNormalization";
+import { RetroactiveRegistrationMode } from "@/components/RetroactiveRegistrationMode";
 
 // Schema para a etapa 1 (verificação do PAT)
 const patVerificationSchema = z.object({
@@ -73,6 +74,10 @@ const equipmentSchema = z.object({
   unit_value: z.number().nonnegative("Valor deve ser positivo").optional(),
   equipment_condition: z.enum(["NOVO", "USADO"]).optional(),
   comments: z.string().optional(),
+  // Campos retroativos
+  retroactive_enabled: z.boolean().optional(),
+  effective_registration_date: z.date().optional(),
+  retroactive_registration_notes: z.string().optional(),
 });
 
 type EquipmentFormData = z.infer<typeof equipmentSchema>;
@@ -88,6 +93,9 @@ export default function AssetRegister() {
   const [equipmentSearchValue, setEquipmentSearchValue] = useState("");
   const [manualFile, setManualFile] = useState<File | null>(null);
   const [drawingFile, setDrawingFile] = useState<File | null>(null);
+  const [retroactiveEnabled, setRetroactiveEnabled] = useState(false);
+  const [effectiveDate, setEffectiveDate] = useState<Date | undefined>(undefined);
+  const [retroactiveNotes, setRetroactiveNotes] = useState("");
 
   const { data: patVerification, isLoading: isVerifying } = useVerifyPAT(verifiedPAT);
   const { data: suggestions = [] } = useEquipmentSuggestions(equipmentSearchValue);
@@ -105,6 +113,9 @@ export default function AssetRegister() {
       supplier: "",
       unit_value: undefined,
       comments: "",
+      retroactive_enabled: false,
+      effective_registration_date: undefined,
+      retroactive_registration_notes: "",
     },
   });
 
@@ -231,6 +242,9 @@ export default function AssetRegister() {
       form.reset();
       setManualFile(null);
       setDrawingFile(null);
+      setRetroactiveEnabled(false);
+      setEffectiveDate(undefined);
+      setRetroactiveNotes("");
       if (verifiedPAT) {
         form.setValue("asset_code", verifiedPAT);
       }
@@ -271,6 +285,11 @@ export default function AssetRegister() {
         comments: data.comments || null,
         location_type: "deposito_malta", // Default para novo cadastro
         deposito_description: "Aguardando definição de localização",
+        // Campos retroativos
+        effective_registration_date: retroactiveEnabled && effectiveDate 
+          ? format(effectiveDate, "yyyy-MM-dd") 
+          : null,
+        retroactive_registration_notes: retroactiveEnabled ? retroactiveNotes : null,
       };
 
       await createAssetMutation.mutateAsync(assetData);
@@ -784,6 +803,18 @@ export default function AssetRegister() {
                     <FormMessage />
                   </FormItem>
                 )}
+               />
+
+              {/* Modo de Cadastro Retroativo */}
+              <RetroactiveRegistrationMode
+                enabled={retroactiveEnabled}
+                onEnabledChange={setRetroactiveEnabled}
+                effectiveDate={effectiveDate}
+                onEffectiveDateChange={setEffectiveDate}
+                purchaseDate={form.watch("purchase_date")}
+                onPurchaseDateChange={(date) => form.setValue("purchase_date", date)}
+                notes={retroactiveNotes}
+                onNotesChange={setRetroactiveNotes}
               />
 
               {/* Botões de Ação */}

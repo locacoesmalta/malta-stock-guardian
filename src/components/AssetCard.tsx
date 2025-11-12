@@ -1,6 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Package } from "lucide-react";
 import { useAvailablePartsByPAT } from "@/hooks/useAvailablePartsByPAT";
+import { RetroactiveBadge } from "@/components/RetroactiveBadge";
+import { differenceInDays } from "date-fns";
 
 interface AssetCardHeaderProps {
   assetCode: string;
@@ -8,6 +10,9 @@ interface AssetCardHeaderProps {
   maltaCollaborator?: string | null;
   locationLabel: string;
   locationVariant: "default" | "secondary" | "outline" | "destructive" | "warning";
+  effectiveRegistrationDate?: string | null;
+  createdAt?: string;
+  retroactiveRegistrationNotes?: string | null;
 }
 
 /**
@@ -19,8 +24,17 @@ export const AssetCardHeader = ({
   maltaCollaborator,
   locationLabel,
   locationVariant,
+  effectiveRegistrationDate,
+  createdAt,
+  retroactiveRegistrationNotes,
 }: AssetCardHeaderProps) => {
   const { data: availableParts = 0 } = useAvailablePartsByPAT(assetCode);
+
+  // Verificar se é cadastro retroativo (diferença > 30 dias)
+  const isRetroactive =
+    effectiveRegistrationDate &&
+    createdAt &&
+    differenceInDays(new Date(createdAt), new Date(effectiveRegistrationDate)) > 30;
 
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-3 mb-3">
@@ -32,15 +46,25 @@ export const AssetCardHeader = ({
             Responsável: {maltaCollaborator}
           </p>
         )}
-        {availableParts > 0 && (
-          <Badge
-            variant="outline"
-            className="mt-2 text-xs border-green-600 text-green-700 dark:text-green-400"
-          >
-            <Package className="h-3 w-3 mr-1" />
-            {availableParts} {availableParts === 1 ? "peça disponível" : "peças disponíveis"}
-          </Badge>
-        )}
+        <div className="flex flex-wrap gap-2 mt-2">
+          {availableParts > 0 && (
+            <Badge
+              variant="outline"
+              className="text-xs border-green-600 text-green-700 dark:text-green-400"
+            >
+              <Package className="h-3 w-3 mr-1" />
+              {availableParts} {availableParts === 1 ? "peça disponível" : "peças disponíveis"}
+            </Badge>
+          )}
+          {isRetroactive && (
+            <RetroactiveBadge
+              effectiveDate={effectiveRegistrationDate}
+              registrationDate={createdAt}
+              notes={retroactiveRegistrationNotes}
+              size="sm"
+            />
+          )}
+        </div>
       </div>
       <Badge variant={locationVariant} className="text-xs whitespace-nowrap flex-shrink-0">
         {locationLabel}

@@ -143,6 +143,7 @@ export type Database = {
           asset_id: string
           created_at: string
           current_hourmeter: number
+          effective_maintenance_date: string | null
           id: string
           labor_cost: number | null
           maintenance_date: string
@@ -161,6 +162,7 @@ export type Database = {
           asset_id: string
           created_at?: string
           current_hourmeter?: number
+          effective_maintenance_date?: string | null
           id?: string
           labor_cost?: number | null
           maintenance_date?: string
@@ -179,6 +181,7 @@ export type Database = {
           asset_id?: string
           created_at?: string
           current_hourmeter?: number
+          effective_maintenance_date?: string | null
           id?: string
           labor_cost?: number | null
           maintenance_date?: string
@@ -383,6 +386,7 @@ export type Database = {
           deleted_at: string | null
           deposito_description: string | null
           destination_after_maintenance: string | null
+          effective_registration_date: string | null
           equipment_condition: string | null
           equipment_name: string
           equipment_observations: string | null
@@ -415,6 +419,7 @@ export type Database = {
           rental_work_site: string | null
           replaced_by_asset_id: string | null
           replacement_reason: string | null
+          retroactive_registration_notes: string | null
           returns_to_work_site: boolean | null
           serial_number: string | null
           supplier: string | null
@@ -434,6 +439,7 @@ export type Database = {
           deleted_at?: string | null
           deposito_description?: string | null
           destination_after_maintenance?: string | null
+          effective_registration_date?: string | null
           equipment_condition?: string | null
           equipment_name: string
           equipment_observations?: string | null
@@ -466,6 +472,7 @@ export type Database = {
           rental_work_site?: string | null
           replaced_by_asset_id?: string | null
           replacement_reason?: string | null
+          retroactive_registration_notes?: string | null
           returns_to_work_site?: boolean | null
           serial_number?: string | null
           supplier?: string | null
@@ -485,6 +492,7 @@ export type Database = {
           deleted_at?: string | null
           deposito_description?: string | null
           destination_after_maintenance?: string | null
+          effective_registration_date?: string | null
           equipment_condition?: string | null
           equipment_name?: string
           equipment_observations?: string | null
@@ -517,6 +525,7 @@ export type Database = {
           rental_work_site?: string | null
           replaced_by_asset_id?: string | null
           replacement_reason?: string | null
+          retroactive_registration_notes?: string | null
           returns_to_work_site?: boolean | null
           serial_number?: string | null
           supplier?: string | null
@@ -1117,10 +1126,12 @@ export type Database = {
           campo_alterado: string | null
           codigo_pat: string
           created_at: string
+          data_evento_real: string | null
           data_modificacao: string
           detalhes_evento: string | null
           historico_id: string
           pat_id: string
+          registro_retroativo: boolean | null
           tipo_evento: string
           usuario_modificacao: string | null
           usuario_nome: string | null
@@ -1131,10 +1142,12 @@ export type Database = {
           campo_alterado?: string | null
           codigo_pat: string
           created_at?: string
+          data_evento_real?: string | null
           data_modificacao?: string
           detalhes_evento?: string | null
           historico_id?: string
           pat_id: string
+          registro_retroativo?: boolean | null
           tipo_evento?: string
           usuario_modificacao?: string | null
           usuario_nome?: string | null
@@ -1145,10 +1158,12 @@ export type Database = {
           campo_alterado?: string | null
           codigo_pat?: string
           created_at?: string
+          data_evento_real?: string | null
           data_modificacao?: string
           detalhes_evento?: string | null
           historico_id?: string
           pat_id?: string
+          registro_retroativo?: boolean | null
           tipo_evento?: string
           usuario_modificacao?: string | null
           usuario_nome?: string | null
@@ -2091,18 +2106,32 @@ export type Database = {
         }[]
       }
       normalize_text: { Args: { input_text: string }; Returns: string }
-      registrar_evento_patrimonio: {
-        Args: {
-          p_campo_alterado?: string
-          p_codigo_pat: string
-          p_detalhes_evento: string
-          p_pat_id: string
-          p_tipo_evento: string
-          p_valor_antigo?: string
-          p_valor_novo?: string
-        }
-        Returns: string
-      }
+      registrar_evento_patrimonio:
+        | {
+            Args: {
+              p_campo_alterado?: string
+              p_codigo_pat: string
+              p_detalhes_evento: string
+              p_pat_id: string
+              p_tipo_evento: string
+              p_valor_antigo?: string
+              p_valor_novo?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_campo_alterado?: string
+              p_codigo_pat: string
+              p_data_evento_real?: string
+              p_detalhes_evento: string
+              p_pat_id: string
+              p_tipo_evento: string
+              p_valor_antigo?: string
+              p_valor_novo?: string
+            }
+            Returns: string
+          }
       update_maintenance_status: { Args: never; Returns: undefined }
       verify_audit_log_integrity: {
         Args: { p_log_id: string }

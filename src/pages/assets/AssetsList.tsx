@@ -254,6 +254,9 @@ export default function AssetsList() {
                 maltaCollaborator={asset.malta_collaborator}
                 locationLabel={getLocationLabel(asset.location_type)}
                 locationVariant={getLocationVariant(asset.location_type)}
+                effectiveRegistrationDate={(asset as any).effective_registration_date}
+                createdAt={asset.created_at}
+                retroactiveRegistrationNotes={(asset as any).retroactive_registration_notes}
               />
 
               {asset.location_type === "deposito_malta" && asset.deposito_description && (
