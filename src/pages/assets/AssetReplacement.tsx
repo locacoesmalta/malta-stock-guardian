@@ -131,7 +131,7 @@ export default function AssetReplacement() {
         available_for_rental: asset.available_for_rental,
       };
 
-      // Atualizar equipamento ANTIGO - vai para MANUTENÇÃO
+      // Atualizar equipamento ANTIGO - vai para AGUARDANDO LAUDO
       const { error: oldAssetError } = await supabase
         .from("assets")
         .update({
@@ -139,7 +139,7 @@ export default function AssetReplacement() {
           replaced_by_asset_id: substituteAsset.id,
           replacement_reason: data.replacement_reason,
           available_for_rental: false,
-          location_type: "em_manutencao",
+          location_type: "aguardando_laudo",
           // MANTÉM dados de locação - não limpa o histórico
         })
         .eq("id", id);
@@ -167,7 +167,7 @@ export default function AssetReplacement() {
         patId: asset.id,
         codigoPat: asset.asset_code,
         tipoEvento: "SUBSTITUIÇÃO",
-        detalhesEvento: `Substituído pelo PAT ${substituteAsset.asset_code} e enviado para Manutenção. Estava em Locação - ${oldAssetData.rental_company} / ${oldAssetData.rental_work_site}. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Observação: ${data.decision_notes}` : ""}`,
+        detalhesEvento: `Substituído pelo PAT ${substituteAsset.asset_code} e enviado para Aguardando Laudo. Estava em Locação - ${oldAssetData.rental_company} / ${oldAssetData.rental_work_site}. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Observação: ${data.decision_notes}` : ""}`,
       });
 
       // Registrar evento no NOVO
@@ -175,7 +175,7 @@ export default function AssetReplacement() {
         patId: substituteAsset.id,
         codigoPat: substituteAsset.asset_code,
         tipoEvento: "SUBSTITUIÇÃO",
-        detalhesEvento: `Substituiu o PAT ${asset.asset_code} e foi para Locação - ${oldAssetData.rental_company} / ${oldAssetData.rental_work_site}. Equipamento anterior enviado para manutenção. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Observação: ${data.decision_notes}` : ""}`,
+        detalhesEvento: `Substituiu o PAT ${asset.asset_code} e foi para Locação - ${oldAssetData.rental_company} / ${oldAssetData.rental_work_site}. Equipamento anterior enviado para aguardando laudo. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Observação: ${data.decision_notes}` : ""}`,
       });
 
       queryClient.invalidateQueries({ queryKey: ["asset", id] });
