@@ -2106,32 +2106,19 @@ export type Database = {
         }[]
       }
       normalize_text: { Args: { input_text: string }; Returns: string }
-      registrar_evento_patrimonio:
-        | {
-            Args: {
-              p_campo_alterado?: string
-              p_codigo_pat: string
-              p_detalhes_evento: string
-              p_pat_id: string
-              p_tipo_evento: string
-              p_valor_antigo?: string
-              p_valor_novo?: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_campo_alterado?: string
-              p_codigo_pat: string
-              p_data_evento_real?: string
-              p_detalhes_evento: string
-              p_pat_id: string
-              p_tipo_evento: string
-              p_valor_antigo?: string
-              p_valor_novo?: string
-            }
-            Returns: string
-          }
+      registrar_evento_patrimonio: {
+        Args: {
+          p_campo_alterado?: string
+          p_codigo_pat: string
+          p_data_evento_real?: string
+          p_detalhes_evento: string
+          p_pat_id: string
+          p_tipo_evento: string
+          p_valor_antigo?: string
+          p_valor_novo?: string
+        }
+        Returns: string
+      }
       update_maintenance_status: { Args: never; Returns: undefined }
       verify_audit_log_integrity: {
         Args: { p_log_id: string }
