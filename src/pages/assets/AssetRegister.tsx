@@ -86,6 +86,26 @@ export default function AssetRegister() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { logError } = useErrorTracking();
+  
+  // Verificar se veio de um contexto de substituição
+  const [substitutionContext, setSubstitutionContext] = useState<any>(null);
+
+  useEffect(() => {
+    const contextStr = localStorage.getItem('substitution_context');
+    if (contextStr) {
+      try {
+        const context = JSON.parse(contextStr);
+        setSubstitutionContext(context);
+        toast({
+          title: "Cadastrando equipamento para substituição",
+          description: `Após o cadastro, você retornará ao fluxo de substituição do PAT ${context.original_asset_code}`,
+        });
+      } catch (err) {
+        console.error("Erro ao ler contexto de substituição:", err);
+      }
+    }
+  }, []);
+  
   const [step, setStep] = useState<1 | 2>(1);
   const [patInput, setPATInput] = useState("");
   const [verifiedPAT, setVerifiedPAT] = useState<string | null>(null);
@@ -293,8 +313,19 @@ export default function AssetRegister() {
       };
 
       await createAssetMutation.mutateAsync(assetData);
-      // Só navega se o cadastro foi bem-sucedido
-      navigate("/assets");
+      
+      // Verificar se veio de contexto de substituição
+      if (substitutionContext) {
+        localStorage.removeItem('substitution_context');
+        toast({
+          title: "Equipamento cadastrado!",
+          description: "Retornando para o fluxo de substituição...",
+        });
+        navigate(substitutionContext.return_to);
+      } else {
+        // Navegação normal
+        navigate("/assets");
+      }
     } catch (error: any) {
       console.error("Error submitting form:", error);
       

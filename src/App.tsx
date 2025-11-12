@@ -37,6 +37,7 @@ const AssetUnifiedHistory = lazy(() => import("./pages/assets/AssetUnifiedHistor
 const AssetsControlDashboard = lazy(() => import("./pages/assets/AssetsControlDashboard"));
 const PostInspection = lazy(() => import("./pages/assets/PostInspection"));
 const AssetReplacement = lazy(() => import("./pages/assets/AssetReplacement"));
+const AssetSubstitution = lazy(() => import("./pages/assets/AssetSubstitution"));
 const AssetsMissingData = lazy(() => import("./pages/assets/AssetsMissingData"));
 const FinancialForecast = lazy(() => import("./pages/admin/FinancialForecast"));
 const PredictivePurchases = lazy(() => import("./pages/admin/PredictivePurchases"));
@@ -328,7 +329,17 @@ const App = () => (
                 } 
               />
               <Route 
-                path="/assets/missing-data" 
+                path="/assets/substitution/:id" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_edit_assets">
+                      <AssetSubstitution />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/assets/missing-data"
                 element={
                   <ProtectedLayout>
                     <PermissionRoute permission="can_access_assets">

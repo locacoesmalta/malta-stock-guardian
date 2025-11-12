@@ -24,6 +24,7 @@ import { AssetMobilizationPartsSection } from "@/components/AssetMobilizationPar
 import { formatHourmeter } from "@/lib/hourmeterUtils";
 import { QuickFixManufacturerDialog } from "@/components/QuickFixManufacturerDialog";
 import { RetroactiveBadge } from "@/components/RetroactiveBadge";
+import { SubstitutionDecisionDialog } from "@/components/SubstitutionDecisionDialog";
 
 export default function AssetView() {
   const { id } = useParams();
@@ -32,6 +33,7 @@ export default function AssetView() {
   const { confirm, ConfirmDialog } = useConfirm();
   const [showScanner, setShowScanner] = useState(false);
   const [showManufacturerDialog, setShowManufacturerDialog] = useState(false);
+  const [showSubstitutionDialog, setShowSubstitutionDialog] = useState(false);
 
   const { data: asset, isLoading, error } = useQuery({
     queryKey: ["asset", id],
@@ -114,6 +116,16 @@ export default function AssetView() {
       console.error("Erro ao buscar patrimônio:", error);
       toast.error("Erro ao buscar patrimônio");
     }
+  };
+
+  const handleSubstitutionDecision = () => {
+    setShowSubstitutionDialog(false);
+    navigate(`/assets/substitution/${id}`);
+  };
+
+  const handleNormalMovement = () => {
+    setShowSubstitutionDialog(false);
+    navigate(`/assets/movement/${id}`);
   };
 
   const getLocationLabel = (locationType: string) => {
@@ -310,7 +322,7 @@ export default function AssetView() {
                 Registrar Decisão Pós-Laudo
               </Button>
             ) : (
-              <Button variant="outline" onClick={() => navigate(`/assets/movement/${id}`)} className="flex-1 sm:flex-none text-xs sm:text-sm">
+              <Button variant="outline" onClick={() => setShowSubstitutionDialog(true)} className="flex-1 sm:flex-none text-xs sm:text-sm">
                 <Move className="h-4 w-4 mr-2" />
                 Registrar Movimentação
               </Button>
@@ -341,6 +353,17 @@ export default function AssetView() {
           equipmentName={asset.equipment_name}
           open={showManufacturerDialog}
           onOpenChange={setShowManufacturerDialog}
+        />
+      )}
+
+      {/* Dialog de decisão de substituição */}
+      {showSubstitutionDialog && asset && (
+        <SubstitutionDecisionDialog
+          asset={asset}
+          open={showSubstitutionDialog}
+          onOpenChange={setShowSubstitutionDialog}
+          onSubstitution={handleSubstitutionDecision}
+          onNormalMovement={handleNormalMovement}
         />
       )}
 
