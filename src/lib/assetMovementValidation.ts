@@ -18,23 +18,51 @@ export const validateMovementDateAgainstCreation = (
   movementDate: string | Date,
   asset: AssetCreationInfo
 ): true | string => {
-  const movement = new Date(movementDate);
-  
-  // Usar effective_registration_date se disponível, senão usar created_at
-  const assetCreationDate = asset.effective_registration_date 
-    ? new Date(asset.effective_registration_date)
-    : new Date(asset.created_at);
-  
-  // Normalizar para comparar apenas datas (sem horas)
-  movement.setHours(0, 0, 0, 0);
-  assetCreationDate.setHours(0, 0, 0, 0);
-  
-  if (movement < assetCreationDate) {
-    const formattedCreationDate = assetCreationDate.toLocaleDateString('pt-BR');
-    return `Data de movimentação não pode ser anterior à entrada do equipamento no sistema (${formattedCreationDate})`;
+  try {
+    // Verificar se a data é válida
+    if (!movementDate) {
+      console.warn("[Validação] Data de movimentação não fornecida");
+      return true; // Permitir se não houver data (será validado por outros schemas)
+    }
+
+    const movement = new Date(movementDate);
+    
+    // Verificar se a conversão foi bem-sucedida
+    if (isNaN(movement.getTime())) {
+      console.error("[Validação] Data de movimentação inválida:", movementDate);
+      return "Data de movimentação inválida";
+    }
+    
+    // Usar effective_registration_date se disponível, senão usar created_at
+    const assetCreationDateString = asset.effective_registration_date || asset.created_at;
+    const assetCreationDate = new Date(assetCreationDateString);
+    
+    // Verificar se a data de criação é válida
+    if (isNaN(assetCreationDate.getTime())) {
+      console.error("[Validação] Data de criação do ativo inválida:", assetCreationDateString);
+      return true; // Permitir prosseguir se data de criação for inválida (não bloquear usuário)
+    }
+    
+    // Normalizar para comparar apenas datas (sem horas)
+    movement.setHours(0, 0, 0, 0);
+    assetCreationDate.setHours(0, 0, 0, 0);
+    
+    console.log("[Validação] Comparando datas:", {
+      movementDate: movement.toISOString(),
+      assetCreationDate: assetCreationDate.toISOString(),
+      isValid: movement >= assetCreationDate
+    });
+    
+    if (movement < assetCreationDate) {
+      const formattedCreationDate = assetCreationDate.toLocaleDateString('pt-BR');
+      return `Data de movimentação não pode ser anterior à entrada do equipamento no sistema (${formattedCreationDate})`;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("[Validação] Erro ao validar data:", error);
+    return true; // Em caso de erro, permitir prosseguir (não bloquear usuário)
   }
-  
-  return true;
 };
 
 /**
@@ -99,32 +127,49 @@ export const validateDateRange = (
   asset: AssetCreationInfo,
   fieldLabel: string = "operação"
 ): true | string => {
-  // Validar data de início
-  const startValidation = validateMovementDateAgainstCreation(startDate, asset);
-  if (startValidation !== true) {
-    return startValidation;
-  }
-  
-  // Se houver data de fim, validar também
-  if (endDate) {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    
-    start.setHours(0, 0, 0, 0);
-    end.setHours(0, 0, 0, 0);
-    
-    if (end < start) {
-      return `Data de fim da ${fieldLabel} não pode ser anterior à data de início`;
+  try {
+    console.log("[Validação Range] Iniciando validação de intervalo:", { startDate, endDate, fieldLabel });
+
+    // Validar data de início
+    const startValidation = validateMovementDateAgainstCreation(startDate, asset);
+    if (startValidation !== true) {
+      console.warn("[Validação Range] Data de início inválida:", startValidation);
+      return startValidation;
     }
     
-    // Validar data de fim contra criação do ativo
-    const endValidation = validateMovementDateAgainstCreation(endDate, asset);
-    if (endValidation !== true) {
-      return endValidation;
+    // Se houver data de fim, validar também
+    if (endDate && endDate !== "") {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      // Verificar se as datas são válidas
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        console.error("[Validação Range] Datas inválidas no intervalo");
+        return true; // Permitir prosseguir (será validado por outros schemas)
+      }
+      
+      start.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+      
+      if (end < start) {
+        console.warn("[Validação Range] Data de fim anterior à data de início");
+        return `Data de fim da ${fieldLabel} não pode ser anterior à data de início`;
+      }
+      
+      // Validar data de fim contra criação do ativo
+      const endValidation = validateMovementDateAgainstCreation(endDate, asset);
+      if (endValidation !== true) {
+        console.warn("[Validação Range] Data de fim inválida contra criação:", endValidation);
+        return endValidation;
+      }
     }
+    
+    console.log("[Validação Range] ✓ Intervalo válido");
+    return true;
+  } catch (error) {
+    console.error("[Validação Range] Erro ao validar intervalo:", error);
+    return true; // Em caso de erro, permitir prosseguir
   }
-  
-  return true;
 };
 
 /**

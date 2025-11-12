@@ -603,15 +603,24 @@ export default function AssetMovement() {
       console.log("partsReplaced state:", partsReplaced);
 
       // ===== VALIDAÇÕES DE DATA VS. CRIAÇÃO DO ATIVO =====
+      console.log("=== VALIDAÇÕES DE DATA ===");
+      console.log("Movement Type:", movementType);
+      console.log("Asset Creation:", {
+        created_at: asset.created_at,
+        effective_registration_date: asset.effective_registration_date
+      });
       
       // Validação para LOCAÇÃO
       if (movementType === "locacao" && data.rental_start_date) {
+        console.log("→ Validando locação:", data.rental_start_date);
+        
         const rentalValidation = validateRentalStartDate(data.rental_start_date, {
           created_at: asset.created_at,
           effective_registration_date: asset.effective_registration_date,
         });
         
         if (rentalValidation !== true) {
+          console.error("❌ Validação de locação falhou:", rentalValidation);
           toast.error(formatValidationError(rentalValidation, asset.asset_code));
           setIsUploading(false);
           return;
@@ -619,6 +628,8 @@ export default function AssetMovement() {
         
         // Validar intervalo completo (início e fim)
         if (data.rental_end_date) {
+          console.log("→ Validando intervalo de locação:", { start: data.rental_start_date, end: data.rental_end_date });
+          
           const rangeValidation = validateDateRange(
             data.rental_start_date,
             data.rental_end_date,
@@ -630,21 +641,27 @@ export default function AssetMovement() {
           );
           
           if (rangeValidation !== true) {
+            console.error("❌ Validação de intervalo falhou:", rangeValidation);
             toast.error(formatValidationError(rangeValidation, asset.asset_code));
             setIsUploading(false);
             return;
           }
         }
+        
+        console.log("✓ Validação de locação OK");
       }
       
       // Validação para MANUTENÇÃO
       if (movementType === "em_manutencao" && data.maintenance_arrival_date) {
+        console.log("→ Validando manutenção:", data.maintenance_arrival_date);
+        
         const maintenanceValidation = validateMaintenanceArrivalDate(data.maintenance_arrival_date, {
           created_at: asset.created_at,
           effective_registration_date: asset.effective_registration_date,
         });
         
         if (maintenanceValidation !== true) {
+          console.error("❌ Validação de manutenção falhou:", maintenanceValidation);
           toast.error(formatValidationError(maintenanceValidation, asset.asset_code));
           setIsUploading(false);
           return;
@@ -652,6 +669,8 @@ export default function AssetMovement() {
         
         // Validar intervalo completo (entrada e saída)
         if (data.maintenance_departure_date) {
+          console.log("→ Validando intervalo de manutenção:", { start: data.maintenance_arrival_date, end: data.maintenance_departure_date });
+          
           const rangeValidation = validateDateRange(
             data.maintenance_arrival_date,
             data.maintenance_departure_date,
@@ -663,26 +682,36 @@ export default function AssetMovement() {
           );
           
           if (rangeValidation !== true) {
+            console.error("❌ Validação de intervalo de manutenção falhou:", rangeValidation);
             toast.error(formatValidationError(rangeValidation, asset.asset_code));
             setIsUploading(false);
             return;
           }
         }
+        
+        console.log("✓ Validação de manutenção OK");
       }
       
       // Validação para DEPÓSITO e AGUARDANDO LAUDO
       if ((movementType === "deposito_malta" || movementType === "aguardando_laudo") && data.movement_date) {
+        console.log(`→ Validando ${movementType}:`, data.movement_date);
+        
         const movementValidation = validateGenericMovementDate(data.movement_date, {
           created_at: asset.created_at,
           effective_registration_date: asset.effective_registration_date,
         });
         
         if (movementValidation !== true) {
+          console.error(`❌ Validação de ${movementType} falhou:`, movementValidation);
           toast.error(formatValidationError(movementValidation, asset.asset_code));
           setIsUploading(false);
           return;
         }
+        
+        console.log(`✓ Validação de ${movementType} OK`);
       }
+      
+      console.log("=== TODAS VALIDAÇÕES DE DATA CONCLUÍDAS ===");
 
       // ===== PROCESSAMENTO NORMAL CONTINUA =====
 

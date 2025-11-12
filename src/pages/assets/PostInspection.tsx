@@ -244,18 +244,26 @@ export default function PostInspection() {
     try {
       // Validar data de entrada na manutenção
       if (data.maintenance_arrival_date) {
+        console.log("→ [PostInspection] Validando data de entrada em manutenção:", data.maintenance_arrival_date);
+        
         const maintenanceValidation = validateMaintenanceArrivalDate(data.maintenance_arrival_date, {
           created_at: asset.created_at,
           effective_registration_date: asset.effective_registration_date,
         });
         
         if (maintenanceValidation !== true) {
+          console.error("❌ [PostInspection] Validação de manutenção falhou:", maintenanceValidation);
           toast.error(formatValidationError(maintenanceValidation, asset.asset_code));
           return;
         }
         
         // Validar intervalo completo (entrada e saída)
         if (data.maintenance_departure_date) {
+          console.log("→ [PostInspection] Validando intervalo de manutenção:", { 
+            start: data.maintenance_arrival_date, 
+            end: data.maintenance_departure_date 
+          });
+          
           const rangeValidation = validateDateRange(
             data.maintenance_arrival_date,
             data.maintenance_departure_date,
@@ -267,10 +275,13 @@ export default function PostInspection() {
           );
           
           if (rangeValidation !== true) {
+            console.error("❌ [PostInspection] Validação de intervalo falhou:", rangeValidation);
             toast.error(formatValidationError(rangeValidation, asset.asset_code));
             return;
           }
         }
+        
+        console.log("✓ [PostInspection] Validações de manutenção OK");
       }
 
       // Converter strings vazias em null
@@ -322,18 +333,26 @@ export default function PostInspection() {
     try {
       // Validar data de início de locação (retorno à obra)
       if (data.rental_start_date) {
+        console.log("→ [PostInspection] Validando data de retorno à obra:", data.rental_start_date);
+        
         const rentalValidation = validateRentalStartDate(data.rental_start_date, {
           created_at: asset.created_at,
           effective_registration_date: asset.effective_registration_date,
         });
         
         if (rentalValidation !== true) {
+          console.error("❌ [PostInspection] Validação de retorno à obra falhou:", rentalValidation);
           toast.error(formatValidationError(rentalValidation, asset.asset_code));
           return;
         }
         
         // Validar intervalo completo (início e fim)
         if (data.rental_end_date) {
+          console.log("→ [PostInspection] Validando intervalo de locação:", { 
+            start: data.rental_start_date, 
+            end: data.rental_end_date 
+          });
+          
           const rangeValidation = validateDateRange(
             data.rental_start_date,
             data.rental_end_date,
@@ -345,11 +364,15 @@ export default function PostInspection() {
           );
           
           if (rangeValidation !== true) {
+            console.error("❌ [PostInspection] Validação de intervalo de locação falhou:", rangeValidation);
             toast.error(formatValidationError(rangeValidation, asset.asset_code));
             return;
           }
         }
+        
+        console.log("✓ [PostInspection] Validações de retorno à obra OK");
       }
+      
       // Converter strings vazias em null
       const updateData: any = { ...data };
       if (updateData.rental_end_date === "") {
