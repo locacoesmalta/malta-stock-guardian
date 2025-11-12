@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAssetHistory } from "@/hooks/useAssetHistory";
+import { useAssetLifecycle } from "@/hooks/useAssetLifecycle";
 import {
   postInspectionApproveSchema,
   movementManutencaoSchema,
@@ -31,6 +32,7 @@ export default function PostInspection() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { registrarEvento } = useAssetHistory();
+  const { saveLeaseCycle, saveMaintenanceCycle } = useAssetLifecycle();
   const [selectedDecision, setSelectedDecision] = useState<DecisionType>(null);
 
   const { data: asset, isLoading } = useQuery({
@@ -116,6 +118,66 @@ export default function PostInspection() {
     if (!asset) return;
 
     try {
+      // 1️⃣ BUSCAR DADOS ATUAIS DO ASSET ANTES DE LIMPAR
+      const { data: currentAsset, error: fetchError } = await supabase
+        .from("assets")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      let cycleNumber = 0;
+
+      // 2️⃣ SALVAR CICLO DE LOCAÇÃO (se houver dados)
+      if (currentAsset.rental_company || currentAsset.rental_work_site) {
+        console.log("🔄 Salvando ciclo de locação antes de aprovar para depósito...");
+        await saveLeaseCycle(currentAsset.id, currentAsset.asset_code, {
+          rental_company: currentAsset.rental_company,
+          rental_work_site: currentAsset.rental_work_site,
+          rental_start_date: currentAsset.rental_start_date,
+          rental_end_date: currentAsset.rental_end_date,
+          rental_contract_number: currentAsset.rental_contract_number,
+        });
+
+        // Buscar número do ciclo recém-criado
+        const { data: lastCycle } = await supabase
+          .from("asset_lifecycle_history")
+          .select("cycle_number")
+          .eq("asset_id", currentAsset.id)
+          .order("cycle_number", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        cycleNumber = lastCycle?.cycle_number || 0;
+        console.log(`✓ Ciclo de locação #${cycleNumber} salvo`);
+      }
+
+      // 3️⃣ SALVAR CICLO DE MANUTENÇÃO (se houver dados)
+      if (currentAsset.maintenance_company || currentAsset.maintenance_work_site) {
+        console.log("🔄 Salvando ciclo de manutenção antes de aprovar para depósito...");
+        await saveMaintenanceCycle(currentAsset.id, currentAsset.asset_code, {
+          maintenance_company: currentAsset.maintenance_company,
+          maintenance_work_site: currentAsset.maintenance_work_site,
+          maintenance_arrival_date: currentAsset.maintenance_arrival_date,
+          maintenance_departure_date: currentAsset.maintenance_departure_date,
+          maintenance_description: currentAsset.maintenance_description,
+        });
+
+        // Buscar número do ciclo recém-criado
+        const { data: lastCycle } = await supabase
+          .from("asset_lifecycle_history")
+          .select("cycle_number")
+          .eq("asset_id", currentAsset.id)
+          .order("cycle_number", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        cycleNumber = lastCycle?.cycle_number || 0;
+        console.log(`✓ Ciclo de manutenção #${cycleNumber} salvo`);
+      }
+
+      // 4️⃣ LIMPAR CAMPOS E MOVER PARA DEPÓSITO
       const { error } = await supabase
         .from("assets")
         .update({
@@ -137,11 +199,25 @@ export default function PostInspection() {
 
       if (error) throw error;
 
+      // 5️⃣ REGISTRAR EVENTO ENRIQUECIDO
+      const historicoDetalhes = [];
+      if (currentAsset.rental_company) historicoDetalhes.push(`Empresa: ${currentAsset.rental_company}`);
+      if (currentAsset.rental_work_site) historicoDetalhes.push(`Obra: ${currentAsset.rental_work_site}`);
+      if (currentAsset.rental_start_date && currentAsset.rental_end_date) {
+        const inicio = new Date(currentAsset.rental_start_date);
+        const fim = new Date(currentAsset.rental_end_date);
+        const dias = Math.ceil((fim.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24));
+        historicoDetalhes.push(`Duração: ${dias} dias`);
+      }
+      if (currentAsset.maintenance_company) historicoDetalhes.push(`Manutenção: ${currentAsset.maintenance_company}`);
+
       await registrarEvento({
         patId: asset.id,
         codigoPat: asset.asset_code,
         tipoEvento: "DECISÃO PÓS-LAUDO",
-        detalhesEvento: `Equipamento aprovado e disponibilizado para locação${data.decision_notes ? `. Observação: ${data.decision_notes}` : ""}`,
+        detalhesEvento: cycleNumber > 0
+          ? `Laudo aprovado. Ciclo #${cycleNumber} finalizado. ${historicoDetalhes.join(" | ")}. Equipamento disponível para nova locação.${data.decision_notes ? ` Observação: ${data.decision_notes}` : ""}`
+          : `Equipamento aprovado e disponibilizado para locação${data.decision_notes ? `. Observação: ${data.decision_notes}` : ""}`,
       });
 
       queryClient.invalidateQueries({ queryKey: ["asset", id] });
