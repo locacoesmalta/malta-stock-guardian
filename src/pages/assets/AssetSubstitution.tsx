@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAssetHistory } from "@/hooks/useAssetHistory";
+import { getTodayLocalDate } from "@/lib/dateUtils";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -140,16 +141,27 @@ export default function AssetSubstitution() {
     }
 
     try {
-      // Capturar dados do equipamento antigo para herança
+      // Preparar dados a serem herdados
+      // ✅ CORREÇÃO: Usar data ATUAL para o equipamento novo (evita erro de validação temporal)
+      const today = getTodayLocalDate();
+      
       const inheritedData = {
         location_type: asset.location_type,
         rental_company: asset.rental_company,
         rental_work_site: asset.rental_work_site,
-        rental_start_date: asset.rental_start_date,
+        
+        // ✅ Data de INÍCIO sempre é HOJE (equipamento assume posição agora)
+        rental_start_date: asset.location_type === 'locacao' ? today : null,
+        
+        // ✅ Data de FIM mantém a original (contrato continua)
         rental_end_date: asset.rental_end_date,
+        
         rental_contract_number: asset.rental_contract_number,
         maintenance_company: asset.maintenance_company,
         maintenance_work_site: asset.maintenance_work_site,
+        
+        // ✅ Data de chegada na manutenção também é HOJE
+        maintenance_arrival_date: asset.location_type === 'em_manutencao' ? today : null,
       };
 
       // 1. Atualizar equipamento ANTIGO → Aguardando Laudo
@@ -171,14 +183,23 @@ export default function AssetSubstitution() {
       const { error: newAssetError } = await supabase
         .from("assets")
         .update({
-          location_type: inheritedData.location_type, // Herda localização
+          location_type: inheritedData.location_type,
           rental_company: inheritedData.rental_company,
           rental_work_site: inheritedData.rental_work_site,
+          
+          // ✅ Data de início é HOJE (equipamento entra agora na obra)
           rental_start_date: inheritedData.rental_start_date,
+          
+          // ✅ Data de fim mantém a original (prazo do contrato)
           rental_end_date: inheritedData.rental_end_date,
+          
           rental_contract_number: inheritedData.rental_contract_number,
           maintenance_company: inheritedData.maintenance_company,
           maintenance_work_site: inheritedData.maintenance_work_site,
+          
+          // ✅ Data de chegada na manutenção é HOJE
+          maintenance_arrival_date: inheritedData.maintenance_arrival_date,
+          
           available_for_rental: true,
         })
         .eq("id", substituteAsset.id);
@@ -194,7 +215,7 @@ export default function AssetSubstitution() {
         patId: asset.id,
         codigoPat: asset.asset_code,
         tipoEvento: "SUBSTITUIÇÃO",
-        detalhesEvento: `Substituído pelo PAT ${substituteAsset.asset_code} e enviado para Aguardando Laudo. Estava em ${inheritedData.location_type === 'locacao' ? 'Locação' : 'Manutenção'} - ${locationInfo}. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Obs: ${data.decision_notes}` : ""}`,
+        detalhesEvento: `Substituído pelo PAT ${substituteAsset.asset_code} em ${format(new Date(), 'dd/MM/yyyy')} e enviado para Aguardando Laudo. Estava em ${inheritedData.location_type === 'locacao' ? 'Locação' : 'Manutenção'} - ${locationInfo}. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Obs: ${data.decision_notes}` : ""}`,
       });
 
       // 4. Registrar evento no NOVO
@@ -202,7 +223,7 @@ export default function AssetSubstitution() {
         patId: substituteAsset.id,
         codigoPat: substituteAsset.asset_code,
         tipoEvento: "SUBSTITUIÇÃO",
-        detalhesEvento: `Substituiu o PAT ${asset.asset_code} e assumiu posição em ${inheritedData.location_type === 'locacao' ? 'Locação' : 'Manutenção'} - ${locationInfo}. Equipamento anterior foi para Aguardando Laudo. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Obs: ${data.decision_notes}` : ""}`,
+        detalhesEvento: `Substituiu o PAT ${asset.asset_code} em ${format(new Date(), 'dd/MM/yyyy')} e assumiu posição em ${inheritedData.location_type === 'locacao' ? 'Locação' : 'Manutenção'} - ${locationInfo}. Data de início ajustada para hoje (${format(new Date(), 'dd/MM/yyyy')}). Equipamento anterior foi para Aguardando Laudo. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Obs: ${data.decision_notes}` : ""}`,
       });
 
       queryClient.invalidateQueries({ queryKey: ["asset", id] });
