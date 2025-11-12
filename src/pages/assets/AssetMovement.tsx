@@ -7,6 +7,7 @@ import { format, parseISO } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAssetHistory } from "@/hooks/useAssetHistory";
+import { useAssetLifecycle } from "@/hooks/useAssetLifecycle";
 import { QRScanner } from "@/components/QRScanner";
 import { RetroactiveDateWarning } from "@/components/RetroactiveDateWarning";
 import { formatPAT } from "@/lib/patUtils";
@@ -56,6 +57,7 @@ export default function AssetMovement() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { registrarEvento } = useAssetHistory();
+  const { saveLeaseCycle, saveMaintenanceCycle } = useAssetLifecycle();
   
   const [movementType, setMovementType] = useState<MovementType | null>(null);
   const [photoFile1, setPhotoFile1] = useState<File | null>(null);
@@ -729,20 +731,76 @@ export default function AssetMovement() {
       
       // Arquivar dados antigos antes de limpar (apenas para depósito)
       if (movementType === "deposito_malta") {
+        let cycleNumber = 0;
+        
+        // 1️⃣ SALVAR CICLO DE LOCAÇÃO (se houver dados)
+        if (asset.rental_company || asset.rental_work_site) {
+          console.log("🔄 Salvando ciclo de locação antes de limpar...");
+          await saveLeaseCycle(asset.id, asset.asset_code, {
+            rental_company: asset.rental_company,
+            rental_work_site: asset.rental_work_site,
+            rental_start_date: asset.rental_start_date,
+            rental_end_date: asset.rental_end_date,
+            rental_contract_number: asset.rental_contract_number,
+          });
+          
+          // Buscar número do ciclo recém-criado
+          const { data: lastCycle } = await supabase
+            .from("asset_lifecycle_history")
+            .select("cycle_number")
+            .eq("asset_id", asset.id)
+            .order("cycle_number", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          
+          cycleNumber = lastCycle?.cycle_number || 0;
+          console.log(`✓ Ciclo de locação #${cycleNumber} salvo`);
+        }
+        
+        // 2️⃣ SALVAR CICLO DE MANUTENÇÃO (se houver dados)
+        if (asset.maintenance_company || asset.maintenance_work_site) {
+          console.log("🔄 Salvando ciclo de manutenção antes de limpar...");
+          await saveMaintenanceCycle(asset.id, asset.asset_code, {
+            maintenance_company: asset.maintenance_company,
+            maintenance_work_site: asset.maintenance_work_site,
+            maintenance_arrival_date: asset.maintenance_arrival_date,
+            maintenance_departure_date: asset.maintenance_departure_date,
+            maintenance_description: asset.maintenance_description,
+          });
+          
+          // Buscar número do ciclo recém-criado
+          const { data: lastCycle } = await supabase
+            .from("asset_lifecycle_history")
+            .select("cycle_number")
+            .eq("asset_id", asset.id)
+            .order("cycle_number", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          
+          cycleNumber = lastCycle?.cycle_number || 0;
+          console.log(`✓ Ciclo de manutenção #${cycleNumber} salvo`);
+        }
+        
+        // 3️⃣ REGISTRAR EVENTO ENRIQUECIDO
         const historicoDetalhes = [];
-        if (asset.rental_company) historicoDetalhes.push(`Empresa Locação: ${asset.rental_company}`);
-        if (asset.rental_work_site) historicoDetalhes.push(`Obra Locação: ${asset.rental_work_site}`);
-        if (asset.rental_start_date) historicoDetalhes.push(`Data Início: ${asset.rental_start_date}`);
-        if (asset.rental_end_date) historicoDetalhes.push(`Data Fim: ${asset.rental_end_date}`);
-        if (asset.maintenance_company) historicoDetalhes.push(`Empresa Manutenção: ${asset.maintenance_company}`);
-        if (asset.maintenance_work_site) historicoDetalhes.push(`Obra Manutenção: ${asset.maintenance_work_site}`);
+        if (asset.rental_company) historicoDetalhes.push(`Empresa: ${asset.rental_company}`);
+        if (asset.rental_work_site) historicoDetalhes.push(`Obra: ${asset.rental_work_site}`);
+        if (asset.rental_start_date && asset.rental_end_date) {
+          const inicio = new Date(asset.rental_start_date);
+          const fim = new Date(asset.rental_end_date);
+          const dias = Math.ceil((fim.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24));
+          historicoDetalhes.push(`Duração: ${dias} dias`);
+        }
+        if (asset.maintenance_company) historicoDetalhes.push(`Manutenção: ${asset.maintenance_company}`);
         
         if (historicoDetalhes.length > 0) {
           await registrarEvento({
             patId: asset.id,
             codigoPat: asset.asset_code,
-            tipoEvento: "ARQUIVAMENTO",
-            detalhesEvento: `Dados arquivados antes do retorno ao Depósito Malta: ${historicoDetalhes.join(", ")}`,
+            tipoEvento: "CICLO ENCERRADO",
+            detalhesEvento: cycleNumber > 0 
+              ? `Ciclo #${cycleNumber} arquivado com sucesso. ${historicoDetalhes.join(" | ")}. Equipamento disponível para nova locação.`
+              : `Equipamento retornou ao Depósito Malta. ${historicoDetalhes.join(" | ")}.`,
           });
         }
       }
