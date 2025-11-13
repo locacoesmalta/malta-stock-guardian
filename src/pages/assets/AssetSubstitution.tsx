@@ -20,6 +20,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const substitutionSchema = z.object({
+  substitution_date: z.string().min(1, "Data de substituição é obrigatória"),
   replacement_reason: z.string().min(10, "Motivo deve ter pelo menos 10 caracteres"),
   decision_notes: z.string().optional(),
   replaced_by_asset_id: z.string().uuid().optional(),
@@ -54,6 +55,9 @@ export default function AssetSubstitution() {
 
   const form = useForm<SubstitutionFormData>({
     resolver: zodResolver(substitutionSchema),
+    defaultValues: {
+      substitution_date: getTodayLocalDate(),
+    },
   });
 
   const handleSearchSubstitute = async () => {
@@ -140,24 +144,37 @@ export default function AssetSubstitution() {
       return;
     }
 
+    const substitutionDate = data.substitution_date;
+    const substituteCreatedAt = new Date(substituteAsset.created_at).toISOString().split('T')[0];
+    const substituteEffectiveDate = substituteAsset.effective_registration_date || substituteCreatedAt;
+    
+    if (substitutionDate < substituteEffectiveDate) {
+      toast.error(`Data de substituição não pode ser anterior ao cadastro do equipamento substituto`);
+      return;
+    }
+
+    const today = getTodayLocalDate();
+    if (substitutionDate > today) {
+      toast.error("Data de substituição não pode ser futura");
+      return;
+    }
+
     try {
       console.log("🔄 Iniciando substituição...");
       console.log("📦 Equipamento ANTIGO:", { id: asset.id, code: asset.asset_code });
       console.log("📦 Equipamento NOVO:", { id: substituteAsset.id, code: substituteAsset.asset_code });
       
-      // Preparar dados a serem herdados
-      const today = getTodayLocalDate();
-      
       const inheritedData = {
         location_type: asset.location_type,
+        substitution_date: substitutionDate,
         rental_company: asset.rental_company,
         rental_work_site: asset.rental_work_site,
-        rental_start_date: asset.location_type === 'locacao' ? today : null,
+        rental_start_date: asset.location_type === 'locacao' ? substitutionDate : null,
         rental_end_date: asset.rental_end_date,
         rental_contract_number: asset.rental_contract_number,
         maintenance_company: asset.maintenance_company,
         maintenance_work_site: asset.maintenance_work_site,
-        maintenance_arrival_date: asset.location_type === 'em_manutencao' ? today : null,
+        maintenance_arrival_date: asset.location_type === 'em_manutencao' ? substitutionDate : null,
       };
       
       console.log("📋 Dados a serem herdados:", inheritedData);
@@ -187,6 +204,7 @@ export default function AssetSubstitution() {
       
       const updateData = {
         location_type: inheritedData.location_type,
+        substitution_date: inheritedData.substitution_date,
         rental_company: inheritedData.rental_company,
         rental_work_site: inheritedData.rental_work_site,
         rental_start_date: inheritedData.rental_start_date,
