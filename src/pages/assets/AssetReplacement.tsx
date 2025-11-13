@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAssetHistory } from "@/hooks/useAssetHistory";
+import { getTodayLocalDate } from "@/lib/dateUtils";
 import {
   assetReplacementSchema,
   type AssetReplacementFormData,
@@ -128,8 +129,14 @@ export default function AssetReplacement() {
         rental_start_date: asset.rental_start_date,
         rental_end_date: asset.rental_end_date,
         rental_contract_number: asset.rental_contract_number,
+        maintenance_company: asset.maintenance_company,
+        maintenance_work_site: asset.maintenance_work_site,
+        maintenance_arrival_date: asset.maintenance_arrival_date,
+        maintenance_departure_date: asset.maintenance_departure_date,
         available_for_rental: asset.available_for_rental,
       };
+
+      const today = getTodayLocalDate();
 
       // Atualizar equipamento ANTIGO - vai para AGUARDANDO LAUDO
       const { error: oldAssetError } = await supabase
@@ -146,28 +153,49 @@ export default function AssetReplacement() {
 
       if (oldAssetError) throw oldAssetError;
 
-      // Atualizar equipamento NOVO - assume posição do antigo em LOCAÇÃO
+      // Atualizar equipamento NOVO - HERDA o status do antigo
       const { error: newAssetError } = await supabase
         .from("assets")
         .update({
-          location_type: "locacao", // SEMPRE locacao (não copia do antigo)
-          rental_company: oldAssetData.rental_company, // Usa dados capturados
+          location_type: oldAssetData.location_type, // HERDA do equipamento antigo
+          rental_company: oldAssetData.rental_company,
           rental_work_site: oldAssetData.rental_work_site,
-          rental_start_date: oldAssetData.rental_start_date,
+          rental_start_date: oldAssetData.location_type === 'locacao' ? today : null,
           rental_end_date: oldAssetData.rental_end_date,
           rental_contract_number: oldAssetData.rental_contract_number,
-          available_for_rental: true, // Novo equipamento disponível
+          maintenance_company: oldAssetData.maintenance_company,
+          maintenance_work_site: oldAssetData.maintenance_work_site,
+          maintenance_arrival_date: oldAssetData.location_type === 'em_manutencao' ? today : null,
+          maintenance_departure_date: null,
+          available_for_rental: true,
         })
         .eq("id", substituteAsset.id);
 
       if (newAssetError) throw newAssetError;
+
+      // Determinar localização para os eventos
+      const locationInfo = oldAssetData.location_type === 'locacao' 
+        ? `Locação - ${oldAssetData.rental_company} / ${oldAssetData.rental_work_site}`
+        : oldAssetData.location_type === 'em_manutencao'
+        ? `Manutenção - ${oldAssetData.maintenance_company} / ${oldAssetData.maintenance_work_site}`
+        : oldAssetData.location_type === 'deposito_malta'
+        ? 'Depósito Malta'
+        : 'Aguardando Laudo';
+
+      const statusName = oldAssetData.location_type === 'locacao' 
+        ? 'Locação'
+        : oldAssetData.location_type === 'em_manutencao'
+        ? 'Manutenção'
+        : oldAssetData.location_type === 'deposito_malta'
+        ? 'Depósito Malta'
+        : 'Aguardando Laudo';
 
       // Registrar evento no ANTIGO
       await registrarEvento({
         patId: asset.id,
         codigoPat: asset.asset_code,
         tipoEvento: "SUBSTITUIÇÃO",
-        detalhesEvento: `Substituído pelo PAT ${substituteAsset.asset_code} e enviado para Aguardando Laudo. Estava em Locação - ${oldAssetData.rental_company} / ${oldAssetData.rental_work_site}. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Observação: ${data.decision_notes}` : ""}`,
+        detalhesEvento: `Substituído pelo PAT ${substituteAsset.asset_code} e enviado para Aguardando Laudo. Estava em ${locationInfo}. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Obs: ${data.decision_notes}` : ""}`,
       });
 
       // Registrar evento no NOVO
@@ -175,7 +203,7 @@ export default function AssetReplacement() {
         patId: substituteAsset.id,
         codigoPat: substituteAsset.asset_code,
         tipoEvento: "SUBSTITUIÇÃO",
-        detalhesEvento: `Substituiu o PAT ${asset.asset_code} e foi para Locação - ${oldAssetData.rental_company} / ${oldAssetData.rental_work_site}. Equipamento anterior enviado para aguardando laudo. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Observação: ${data.decision_notes}` : ""}`,
+        detalhesEvento: `Substituiu o PAT ${asset.asset_code} e assumiu sua posição em ${locationInfo}. Saiu do Depósito Malta para ${statusName}. Data de início ajustada para ${today.split('-').reverse().join('/')}. Equipamento anterior foi para Aguardando Laudo. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Obs: ${data.decision_notes}` : ""}`,
       });
 
       queryClient.invalidateQueries({ queryKey: ["asset", id] });
