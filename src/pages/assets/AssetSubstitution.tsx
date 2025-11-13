@@ -248,7 +248,8 @@ export default function AssetSubstitution() {
         campoAlterado: "location_type",
         valorAntigo: inheritedData.location_type,
         valorNovo: "aguardando_laudo",
-        detalhesEvento: `Substituído pelo PAT ${substituteAsset.asset_code} em ${format(new Date(), 'dd/MM/yyyy')} e enviado para Aguardando Laudo. Estava em ${inheritedData.location_type === 'locacao' ? 'Locação' : 'Manutenção'} - ${locationInfo}. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Obs: ${data.decision_notes}` : ""}`,
+        detalhesEvento: `Substituído pelo PAT ${substituteAsset.asset_code} em ${format(parseISO(substitutionDate), 'dd/MM/yyyy')} e enviado para Aguardando Laudo. Estava em ${inheritedData.location_type === 'locacao' ? 'Locação' : 'Manutenção'} - ${locationInfo}. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Obs: ${data.decision_notes}` : ""}`,
+        dataEventoReal: substitutionDate,
       });
 
       await registrarEvento({
@@ -258,7 +259,8 @@ export default function AssetSubstitution() {
         campoAlterado: "location_type",
         valorAntigo: "deposito_malta",
         valorNovo: inheritedData.location_type,
-        detalhesEvento: `Substituiu o PAT ${asset.asset_code} em ${format(new Date(), 'dd/MM/yyyy')} e assumiu posição em ${inheritedData.location_type === 'locacao' ? 'Locação' : 'Manutenção'} - ${locationInfo}. Data de início ajustada para hoje (${format(new Date(), 'dd/MM/yyyy')}). Equipamento anterior foi para Aguardando Laudo. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Obs: ${data.decision_notes}` : ""}`,
+        detalhesEvento: `Substituiu o PAT ${asset.asset_code} em ${format(parseISO(substitutionDate), 'dd/MM/yyyy')} e assumiu posição em ${inheritedData.location_type === 'locacao' ? 'Locação' : 'Manutenção'} - ${locationInfo}. Data de início ajustada para ${format(parseISO(substitutionDate), 'dd/MM/yyyy')}. Equipamento anterior foi para Aguardando Laudo. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Obs: ${data.decision_notes}` : ""}`,
+        dataEventoReal: substitutionDate,
       });
       
       console.log("✅ Eventos registrados com sucesso!");
@@ -388,6 +390,11 @@ export default function AssetSubstitution() {
                         <p><span className="font-medium">Modelo:</span> {substituteAsset.model}</p>
                       )}
                       <p><span className="font-medium">Status:</span> Depósito Malta ✓</p>
+                      <p><span className="font-medium">Cadastrado em:</span> {format(
+                        parseISO(substituteAsset.effective_registration_date || substituteAsset.created_at),
+                        'dd/MM/yyyy',
+                        { locale: ptBR }
+                      )}</p>
                     </div>
                   </AlertDescription>
                 </Alert>
@@ -454,6 +461,29 @@ export default function AssetSubstitution() {
                   </div>
                 </CardContent>
               </Card>
+            )}
+
+            {/* Campo de Data de Substituição */}
+            {substituteAsset && (
+              <div className="space-y-2">
+                <Label htmlFor="substitution_date">
+                  Data da Substituição *
+                </Label>
+                <Input
+                  id="substitution_date"
+                  type="date"
+                  {...form.register("substitution_date")}
+                  max={getTodayLocalDate()}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Data em que o equipamento <strong>{substituteAsset.asset_code}</strong> saiu do depósito para substituir o PAT {asset.asset_code}
+                </p>
+                {form.formState.errors.substitution_date && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.substitution_date.message}
+                  </p>
+                )}
+              </div>
             )}
 
             {/* Formulário de motivo */}

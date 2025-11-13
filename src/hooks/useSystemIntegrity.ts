@@ -104,7 +104,7 @@ export const useSystemIntegrity = () => {
   const assetsIntegrity = useQuery({
     queryKey: ["integrity-assets"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("check_assets_integrity");
+      const { data, error } = await supabase.rpc("check_assets_integrity" as any);
       if (error) throw error;
       return (data || []) as AssetIntegrityIssue[];
     },
@@ -114,7 +114,7 @@ export const useSystemIntegrity = () => {
   const withdrawalsIntegrity = useQuery({
     queryKey: ["integrity-withdrawals"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("check_withdrawals_integrity");
+      const { data, error } = await supabase.rpc("check_withdrawals_integrity" as any);
       if (error) throw error;
       return (data || []) as WithdrawalIntegrityIssue[];
     },
@@ -124,7 +124,7 @@ export const useSystemIntegrity = () => {
   const reportsIntegrity = useQuery({
     queryKey: ["integrity-reports"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("check_reports_integrity");
+      const { data, error } = await supabase.rpc("check_reports_integrity" as any);
       if (error) throw error;
       return (data || []) as ReportIntegrityIssue[];
     },
@@ -134,7 +134,7 @@ export const useSystemIntegrity = () => {
   const productsStockIntegrity = useQuery({
     queryKey: ["integrity-products-stock"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("check_products_stock_integrity");
+      const { data, error } = await supabase.rpc("check_products_stock_integrity" as any);
       if (error) throw error;
       return (data || []) as ProductStockIntegrityIssue[];
     },
