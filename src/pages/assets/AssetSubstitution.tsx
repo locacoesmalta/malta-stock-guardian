@@ -149,8 +149,10 @@ export default function AssetSubstitution() {
     const substituteEffectiveDate = substituteAsset.effective_registration_date || substituteCreatedAt;
     
     if (substitutionDate < substituteEffectiveDate) {
-      toast.error(`Data de substituição não pode ser anterior ao cadastro do equipamento substituto`);
-      return;
+      toast.warning(
+        `⚠️ Inconsistência temporal detectada: Data de substituição (${format(parseISO(substitutionDate), 'dd/MM/yyyy')}) é anterior ao cadastro do equipamento substituto (${format(parseISO(substituteEffectiveDate), 'dd/MM/yyyy')}). Registro será salvo para análise posterior.`,
+        { duration: 8000 }
+      );
     }
 
     const today = getTodayLocalDate();
@@ -259,7 +261,7 @@ export default function AssetSubstitution() {
         campoAlterado: "location_type",
         valorAntigo: "deposito_malta",
         valorNovo: inheritedData.location_type,
-        detalhesEvento: `Substituiu o PAT ${asset.asset_code} em ${format(parseISO(substitutionDate), 'dd/MM/yyyy')} e assumiu posição em ${inheritedData.location_type === 'locacao' ? 'Locação' : 'Manutenção'} - ${locationInfo}. Data de início ajustada para ${format(parseISO(substitutionDate), 'dd/MM/yyyy')}. Equipamento anterior foi para Aguardando Laudo. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Obs: ${data.decision_notes}` : ""}`,
+        detalhesEvento: `Substituiu o PAT ${asset.asset_code} em ${format(parseISO(substitutionDate), 'dd/MM/yyyy')} e assumiu posição em ${inheritedData.location_type === 'locacao' ? 'Locação' : 'Manutenção'} - ${locationInfo}. Data de início ajustada para ${format(parseISO(substitutionDate), 'dd/MM/yyyy')}. Equipamento anterior foi para Aguardando Laudo. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Obs: ${data.decision_notes}` : ""}${substitutionDate < substituteEffectiveDate ? ` ⚠️ INCONSISTÊNCIA TEMPORAL: Data de substituição anterior ao cadastro do equipamento (${format(parseISO(substituteEffectiveDate), 'dd/MM/yyyy')})` : ''}`,
         dataEventoReal: substitutionDate,
       });
       
