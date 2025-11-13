@@ -27,6 +27,10 @@ export default function SystemIntegrity() {
     productsIntegrity,
     sessionsIntegrity,
     auditLogsIntegrity,
+    assetsIntegrity,
+    withdrawalsIntegrity,
+    reportsIntegrity,
+    productsStockIntegrity,
     fixStaleSessions,
     fixDuplicateSessions,
     refetchAll,
@@ -36,7 +40,11 @@ export default function SystemIntegrity() {
   const totalIssues =
     productsIntegrity.count +
     sessionsIntegrity.count +
-    auditLogsIntegrity.count;
+    auditLogsIntegrity.count +
+    assetsIntegrity.count +
+    withdrawalsIntegrity.count +
+    reportsIntegrity.count +
+    productsStockIntegrity.count;
 
   const handleFixSessions = async () => {
     setIsFixing(true);
@@ -69,6 +77,10 @@ export default function SystemIntegrity() {
       products: productsIntegrity.data,
       sessions: sessionsIntegrity.data,
       audit_logs: auditLogsIntegrity.data,
+      assets: assetsIntegrity.data,
+      withdrawals: withdrawalsIntegrity.data,
+      reports: reportsIntegrity.data,
+      products_stock: productsStockIntegrity.data,
     };
 
     const blob = new Blob([JSON.stringify(report, null, 2)], {
@@ -136,7 +148,7 @@ export default function SystemIntegrity() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <div className="flex items-center justify-between p-4 border rounded-lg">
               <div className="flex items-center gap-3">
                 <Package className="h-8 w-8 text-muted-foreground" />
@@ -179,6 +191,66 @@ export default function SystemIntegrity() {
               </div>
               <Badge variant={auditLogsIntegrity.count === 0 ? "default" : "destructive"}>
                 {auditLogsIntegrity.count === 0 ? "OK" : "ATENÇÃO"}
+              </Badge>
+            </div>
+
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center gap-3">
+                <Package className="h-8 w-8 text-blue-500" />
+                <div>
+                  <p className="text-sm font-medium">Equipamentos</p>
+                  <p className="text-2xl font-bold">
+                    {assetsIntegrity.count}
+                  </p>
+                </div>
+              </div>
+              <Badge variant={assetsIntegrity.count === 0 ? "default" : "destructive"}>
+                {assetsIntegrity.count === 0 ? "OK" : "ATENÇÃO"}
+              </Badge>
+            </div>
+
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center gap-3">
+                <Package className="h-8 w-8 text-orange-500" />
+                <div>
+                  <p className="text-sm font-medium">Retiradas</p>
+                  <p className="text-2xl font-bold">
+                    {withdrawalsIntegrity.count}
+                  </p>
+                </div>
+              </div>
+              <Badge variant={withdrawalsIntegrity.count === 0 ? "default" : "destructive"}>
+                {withdrawalsIntegrity.count === 0 ? "OK" : "ATENÇÃO"}
+              </Badge>
+            </div>
+
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center gap-3">
+                <Shield className="h-8 w-8 text-purple-500" />
+                <div>
+                  <p className="text-sm font-medium">Relatórios</p>
+                  <p className="text-2xl font-bold">
+                    {reportsIntegrity.count}
+                  </p>
+                </div>
+              </div>
+              <Badge variant={reportsIntegrity.count === 0 ? "default" : "destructive"}>
+                {reportsIntegrity.count === 0 ? "OK" : "ATENÇÃO"}
+              </Badge>
+            </div>
+
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="h-8 w-8 text-yellow-500" />
+                <div>
+                  <p className="text-sm font-medium">Estoque</p>
+                  <p className="text-2xl font-bold">
+                    {productsStockIntegrity.count}
+                  </p>
+                </div>
+              </div>
+              <Badge variant={productsStockIntegrity.count === 0 ? "default" : "destructive"}>
+                {productsStockIntegrity.count === 0 ? "OK" : "ATENÇÃO"}
               </Badge>
             </div>
           </div>
@@ -312,6 +384,186 @@ export default function SystemIntegrity() {
                           </p>
                           <Badge variant="destructive" className="mt-1">
                             {log.issue_type}
+                          </Badge>
+                        </div>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                ))}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Equipamentos com Inconsistências */}
+      {assetsIntegrity.count > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-blue-500" />
+              Equipamentos com Inconsistências ({assetsIntegrity.count})
+            </CardTitle>
+            <CardDescription>
+              Equipamentos com problemas de location_type ou dados faltantes
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[400px]">
+              <div className="space-y-3">
+                {assetsIntegrity.data.map((asset: any) => (
+                  <Alert key={asset.asset_id}>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      <div className="space-y-2">
+                        <div>
+                          <p className="font-semibold">
+                            PAT {asset.asset_code} - {asset.equipment_name}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {asset.details}
+                          </p>
+                          <div className="flex gap-2 mt-2">
+                            <Badge variant="outline">{asset.location_type}</Badge>
+                            <Badge variant="destructive">{asset.issue_type}</Badge>
+                          </div>
+                        </div>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                ))}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Retiradas com Problemas */}
+      {withdrawalsIntegrity.count > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-orange-500" />
+              Retiradas com Problemas ({withdrawalsIntegrity.count})
+            </CardTitle>
+            <CardDescription>
+              Retiradas de material com produtos órfãos ou quantidades inválidas
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[400px]">
+              <div className="space-y-3">
+                {withdrawalsIntegrity.data.map((withdrawal: any) => (
+                  <Alert key={withdrawal.withdrawal_id}>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      <div className="space-y-2">
+                        <div>
+                          <p className="font-semibold">
+                            {withdrawal.product_code} - {withdrawal.product_name}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            PAT {withdrawal.equipment_code} • Qtd: {withdrawal.quantity}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Data: {format(new Date(withdrawal.withdrawal_date), "dd/MM/yyyy", { locale: ptBR })}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {withdrawal.details}
+                          </p>
+                          <Badge variant="destructive" className="mt-2">
+                            {withdrawal.issue_type}
+                          </Badge>
+                        </div>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                ))}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Relatórios com Problemas */}
+      {reportsIntegrity.count > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-purple-500" />
+              Relatórios com Problemas ({reportsIntegrity.count})
+            </CardTitle>
+            <CardDescription>
+              Relatórios sem peças ou com peças órfãs
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[400px]">
+              <div className="space-y-3">
+                {reportsIntegrity.data.map((report: any) => (
+                  <Alert key={report.report_id}>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      <div className="space-y-2">
+                        <div>
+                          <p className="font-semibold">
+                            PAT {report.equipment_code}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {report.company} • {report.work_site}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Data: {format(new Date(report.report_date), "dd/MM/yyyy", { locale: ptBR })}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {report.details}
+                          </p>
+                          <Badge variant="destructive" className="mt-2">
+                            {report.issue_type}
+                          </Badge>
+                        </div>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                ))}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Produtos com Problemas de Estoque */}
+      {productsStockIntegrity.count > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              Produtos com Problemas de Estoque ({productsStockIntegrity.count})
+            </CardTitle>
+            <CardDescription>
+              Produtos com estoque negativo ou abaixo do mínimo
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[400px]">
+              <div className="space-y-3">
+                {productsStockIntegrity.data.map((product: any) => (
+                  <Alert key={product.product_id}>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      <div className="space-y-2">
+                        <div>
+                          <p className="font-semibold">
+                            {product.product_code} - {product.product_name}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Estoque Atual: {product.current_quantity} • Mínimo: {product.min_quantity}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {product.details}
+                          </p>
+                          <Badge variant={product.issue_type === 'negative_stock' ? 'destructive' : 'secondary'} className="mt-2">
+                            {product.issue_type === 'negative_stock' ? 'ESTOQUE NEGATIVO' : 'ABAIXO DO MÍNIMO'}
                           </Badge>
                         </div>
                       </div>
