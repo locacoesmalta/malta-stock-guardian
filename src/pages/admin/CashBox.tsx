@@ -16,11 +16,11 @@ export default function CashBox() {
         return;
       }
 
-      const { data, error } = await supabase.rpc('can_user_view_financial_data', {
+      const { data, error } = await supabase.rpc('can_user_view_financial_data' as any, {
         _user_id: user.id
-      });
+      }) as { data: boolean | null; error: any };
 
-      if (!error) {
+      if (!error && typeof data === 'boolean') {
         setHasFinancialAccess(data);
       } else {
         setHasFinancialAccess(false);
