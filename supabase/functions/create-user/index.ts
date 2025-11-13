@@ -1,6 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0'
 import { corsHeaders } from '../_shared/cors.ts'
-import { sanitizeInput, validateEmail } from '../_shared/sanitization.ts'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -40,25 +39,11 @@ Deno.serve(async (req) => {
       throw new Error('Apenas o proprietário do sistema pode criar usuários')
     }
 
-    const body = await req.json()
-    
-    // Sanitizar inputs
-    const email = validateEmail(body.email)
-    const password = body.password
-    const full_name = sanitizeInput(body.full_name)
-    const permissions = body.permissions
+    const { email, password, full_name, permissions } = await req.json()
 
     // Validate input
-    if (!email) {
-      throw new Error('Email inválido')
-    }
-    
-    if (!password || !full_name) {
-      throw new Error('Password e nome completo são obrigatórios')
-    }
-    
-    if (full_name.length < 3 || full_name.length > 100) {
-      throw new Error('Nome deve ter entre 3 e 100 caracteres')
+    if (!email || !password || !full_name) {
+      throw new Error('Email, password e nome completo são obrigatórios')
     }
 
     if (password.length < 8) {

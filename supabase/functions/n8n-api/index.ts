@@ -1,7 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import { corsHeaders } from '../_shared/cors.ts';
-import { validateQueryParam, validateUUID } from '../_shared/sanitization.ts';
-import { checkRateLimit, getClientIP } from '../_shared/rateLimit.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -14,15 +12,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Rate limiting
-    const ip = getClientIP(req);
-    if (!checkRateLimit(ip, 30, 60000)) {
-      return new Response(
-        JSON.stringify({ error: 'Too many requests' }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     // Validate API Key
     const authHeader = req.headers.get('x-api-key');
     if (authHeader !== n8nApiKey) {
@@ -40,7 +29,7 @@ Deno.serve(async (req) => {
 
     // GET /products - Lista produtos com filtros
     if (endpoint === 'products' && req.method === 'GET') {
-      const searchTerm = validateQueryParam(url.searchParams.get('search'), 100) || '';
+      const searchTerm = url.searchParams.get('search') || '';
       const minStock = url.searchParams.get('min_stock');
       const lowStock = url.searchParams.get('low_stock') === 'true';
 
@@ -80,13 +69,6 @@ Deno.serve(async (req) => {
     // GET /products/:id - Busca produto específico
     if (endpoint?.startsWith('product-') && req.method === 'GET') {
       const productId = endpoint.replace('product-', '');
-      
-      if (!validateUUID(productId)) {
-        return new Response(
-          JSON.stringify({ error: 'Invalid product ID' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
       
       const { data, error } = await supabase
         .from('products')
