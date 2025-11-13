@@ -1,30 +1,36 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Search, QrCode, Building2, MapPin, FileText, Package } from "lucide-react";
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { formatInTimeZone } from "date-fns-tz";
+import { Plus, Search, QrCode, FileText } from "lucide-react";
+import { differenceInDays, parseISO } from "date-fns";
 import { useAssetsQuery } from "@/hooks/useAssetsQuery";
-import { DeadlineStatusBadge } from "@/components/DeadlineStatusBadge";
 import { BackButton } from "@/components/BackButton";
 import { useAssetDataMigration } from "@/hooks/useAssetDataMigration";
 import { AssetDataWarning } from "@/components/AssetDataWarning";
 import { EquipmentBrandSelector } from "@/components/EquipmentBrandSelector";
 import { EquipmentTypeSelector } from "@/components/EquipmentTypeSelector";
 import { EquipmentModelSelector } from "@/components/EquipmentModelSelector";
-import { AssetCardHeader } from "@/components/AssetCard";
+import { AssetStatusBar } from "@/components/assets/AssetStatusBar";
+import { AssetViewToggle } from "@/components/assets/AssetViewToggle";
+import { AssetKanbanView } from "@/components/assets/AssetKanbanView";
+import { AssetGridView } from "@/components/assets/AssetGridView";
+import { AssetUrgencyFilter } from "@/components/assets/AssetUrgencyFilter";
+import { AssetSummaryCard } from "@/components/assets/AssetSummaryCard";
+import { AssetStatusTabs } from "@/components/assets/AssetStatusTabs";
 
 export default function AssetsList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedManufacturer, setSelectedManufacturer] = useState("");
   const [selectedEquipmentType, setSelectedEquipmentType] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "kanban">("grid");
+  const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("all");
+  const [urgencyFilter, setUrgencyFilter] = useState<"all" | "attention" | "on-track">("all");
+  
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const { data: assets = [], isLoading, error } = useAssetsQuery();
@@ -32,46 +38,73 @@ export default function AssetsList() {
   // Sistema automático de migração de dados para equipamentos antigos
   const { isMigrating } = useAssetDataMigration();
 
+  // Atalhos de teclado
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      
+      switch (e.key) {
+        case "1":
+          setActiveTab("deposito_malta");
+          break;
+        case "2":
+          setActiveTab("em_manutencao");
+          break;
+        case "3":
+          setActiveTab("locacao");
+          break;
+        case "4":
+          setActiveTab("aguardando_laudo");
+          break;
+        case "g":
+        case "G":
+          setViewMode("grid");
+          break;
+        case "k":
+        case "K":
+          setViewMode("kanban");
+          break;
+        case "Escape":
+          setActiveStatusFilter(null);
+          setActiveTab("all");
+          setUrgencyFilter("all");
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, []);
+
   if (error) {
     toast.error("Erro ao carregar patrimônios");
   }
 
-  const getLocationLabel = (locationType: string) => {
-    switch (locationType) {
-      case "deposito_malta":
-        return "Depósito Malta";
-      case "liberado_locacao":
-        return "Liberado para Locação";
-      case "em_manutencao":
-        return "Em Manutenção";
-      case "locacao":
-        return "Locação";
-      case "aguardando_laudo":
-        return "Aguardando Laudo";
-      default:
-        return locationType;
+  // Calcular urgência de equipamentos
+  const getAssetUrgency = (asset: any): boolean => {
+    // Aguardando laudo > 6 dias
+    if (asset.location_type === "aguardando_laudo" && asset.inspection_start_date) {
+      const daysSince = differenceInDays(new Date(), parseISO(asset.inspection_start_date));
+      if (daysSince > 6) return true;
     }
-  };
+    
+    // Em manutenção > 30 dias
+    if (asset.location_type === "em_manutencao" && asset.maintenance_arrival_date) {
+      const daysSince = differenceInDays(new Date(), parseISO(asset.maintenance_arrival_date + "T00:00:00"));
+      if (daysSince > 30) return true;
+    }
 
-  const getLocationVariant = (locationType: string) => {
-    switch (locationType) {
-      case "deposito_malta":
-        return "secondary" as const;
-      case "liberado_locacao":
-        return "outline" as const;
-      case "em_manutencao":
-        return "destructive" as const;
-      case "locacao":
-        return "default" as const;
-      case "aguardando_laudo":
-        return "warning" as const;
-      default:
-        return "secondary" as const;
+    // Locação com contrato vencendo em 7 dias
+    if (asset.location_type === "locacao" && asset.rental_end_date) {
+      const daysUntil = differenceInDays(parseISO(asset.rental_end_date + "T00:00:00"), new Date());
+      if (daysUntil <= 7 && daysUntil >= 0) return true;
     }
+
+    return false;
   };
 
   // Filtro hierárquico com validação de fabricante
-  const filteredAssets = assets.filter((asset) => {
+  let filteredAssets = assets.filter((asset) => {
     // 1º FILTRO CRÍTICO: Verificar se tem fabricante (ocultar sem fabricante)
     if (!asset.manufacturer || asset.manufacturer.trim() === "") {
       return false;
@@ -106,6 +139,47 @@ export default function AssetsList() {
     return true;
   });
 
+  // Filtro por status (barra de contadores)
+  if (activeStatusFilter) {
+    filteredAssets = filteredAssets.filter((asset) => asset.location_type === activeStatusFilter);
+  }
+
+  // Filtro por tabs
+  if (activeTab !== "all") {
+    filteredAssets = filteredAssets.filter((asset) => asset.location_type === activeTab);
+  }
+
+  // Filtro por urgência
+  if (urgencyFilter === "attention") {
+    filteredAssets = filteredAssets.filter((asset) => getAssetUrgency(asset));
+  } else if (urgencyFilter === "on-track") {
+    filteredAssets = filteredAssets.filter((asset) => !getAssetUrgency(asset));
+  }
+
+  // Calcular estatísticas
+  const statusCounts = {
+    deposito_malta: assets.filter((a) => a.location_type === "deposito_malta" && a.manufacturer).length,
+    em_manutencao: assets.filter((a) => a.location_type === "em_manutencao" && a.manufacturer).length,
+    locacao: assets.filter((a) => a.location_type === "locacao" && a.manufacturer).length,
+    aguardando_laudo: assets.filter((a) => a.location_type === "aguardando_laudo" && a.manufacturer).length,
+  };
+
+  const urgentCount = assets.filter((a) => a.manufacturer && getAssetUrgency(a)).length;
+
+  const maintenanceAssets = assets.filter((a) => a.location_type === "em_manutencao" && a.maintenance_arrival_date);
+  const averageMaintenanceDays =
+    maintenanceAssets.length > 0
+      ? Math.round(
+          maintenanceAssets.reduce((sum, asset) => {
+            const days = differenceInDays(new Date(), parseISO(asset.maintenance_arrival_date + "T00:00:00"));
+            return sum + days;
+          }, 0) / maintenanceAssets.length
+        )
+      : 0;
+
+  const totalAssets = Object.values(statusCounts).reduce((a, b) => a + b, 0);
+  const rentalPercentage = totalAssets > 0 ? (statusCounts.locacao / totalAssets) * 100 : 0;
+
   if (isLoading || isMigrating) {
     return (
       <div className="container mx-auto p-4 md:p-6">
@@ -130,45 +204,74 @@ export default function AssetsList() {
                 Gerencie todos os equipamentos do patrimônio
               </p>
             </div>
-            <div className="flex gap-2 w-full sm:w-auto">
-            {isAdmin && (
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+              {isAdmin && (
+                <Button
+                  onClick={() => navigate("/assets/unified-history")}
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 sm:flex-none"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  <span className="hidden lg:inline">Histórico Unificado</span>
+                  <span className="lg:hidden">Histórico</span>
+                </Button>
+              )}
               <Button
-                onClick={() => navigate("/assets/unified-history")}
+                onClick={() => navigate("/assets/traceability")}
                 variant="outline"
+                size="sm"
                 className="flex-1 sm:flex-none"
               >
                 <FileText className="h-4 w-4 mr-2" />
-                Histórico Unificado
+                Rastreabilidade
               </Button>
-            )}
-            <Button
-              onClick={() => navigate("/assets/traceability")}
-              variant="outline"
-              className="flex-1 sm:flex-none"
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              Rastreabilidade
-            </Button>
-            <Button
-              onClick={() => navigate("/assets/scanner")}
-              variant="outline"
-              className="flex-1 sm:flex-none"
-            >
-              <QrCode className="h-4 w-4 mr-2" />
-              Scanner
-            </Button>
-            {isAdmin && (
               <Button
-                onClick={() => navigate("/assets/register")}
+                onClick={() => navigate("/assets/scanner")}
+                variant="outline"
+                size="sm"
                 className="flex-1 sm:flex-none"
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Cadastro de Equipamento
+                <QrCode className="h-4 w-4 mr-2" />
+                Scanner
               </Button>
-            )}
+              {isAdmin && (
+                <Button
+                  onClick={() => navigate("/assets/register")}
+                  size="sm"
+                  className="flex-1 sm:flex-none"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  <span className="hidden lg:inline">Cadastro de Equipamento</span>
+                  <span className="lg:hidden">Cadastrar</span>
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Card de Resumo Expansível */}
+      <AssetSummaryCard
+        statusCounts={statusCounts}
+        urgentCount={urgentCount}
+        averageMaintenanceDays={averageMaintenanceDays}
+        rentalPercentage={rentalPercentage}
+      />
+
+      {/* Barra de Status com Contadores */}
+      <AssetStatusBar
+        statusCounts={statusCounts}
+        activeFilter={activeStatusFilter}
+        onFilterChange={setActiveStatusFilter}
+      />
+
+      {/* Sistema de Tabs */}
+      <AssetStatusTabs
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        statusCounts={statusCounts}
+      />
 
       {/* Filtros Hierárquicos */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
@@ -224,8 +327,9 @@ export default function AssetsList() {
         </div>
       )}
 
-      {/* Campo de busca textual */}
-      <div className="relative mb-4">
+      {/* Barra de controles: Busca, Filtros e Toggle de Visualização */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
             placeholder="Buscar por código, equipamento, empresa ou obra..."
@@ -234,115 +338,20 @@ export default function AssetsList() {
             className="pl-10"
           />
         </div>
+        <AssetUrgencyFilter
+          value={urgencyFilter}
+          onChange={setUrgencyFilter}
+          urgentCount={urgentCount}
+        />
+        <AssetViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredAssets.length === 0 ? (
-          <div className="col-span-full text-center py-12">
-            <p className="text-muted-foreground">Nenhum patrimônio encontrado</p>
-          </div>
-        ) : (
-          filteredAssets.map((asset) => (
-            <Card
-              key={asset.id}
-              className="p-3 sm:p-4 cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => navigate(`/assets/view/${asset.id}`)}
-            >
-              <AssetCardHeader
-                assetCode={asset.asset_code}
-                equipmentName={asset.equipment_name}
-                maltaCollaborator={asset.malta_collaborator}
-                locationLabel={getLocationLabel(asset.location_type)}
-                locationVariant={getLocationVariant(asset.location_type)}
-                effectiveRegistrationDate={(asset as any).effective_registration_date}
-                createdAt={asset.created_at}
-                retroactiveRegistrationNotes={(asset as any).retroactive_registration_notes}
-              />
-
-              {asset.location_type === "deposito_malta" && asset.deposito_description && (
-                <div className="text-sm text-muted-foreground">
-                  <p>{asset.deposito_description}</p>
-                </div>
-              )}
-
-              {asset.location_type === "liberado_locacao" && (
-                <div className="text-sm text-muted-foreground">
-                  <p>{asset.available_for_rental ? "Disponível para locação" : "Indisponível"}</p>
-                </div>
-              )}
-
-              {asset.location_type === "em_manutencao" && (
-                <div className="space-y-2 text-xs sm:text-sm">
-                  {asset.maintenance_arrival_date && (
-                    <div className="mb-2 sm:mb-3">
-                      <Badge variant="destructive" className="text-xs sm:text-sm font-semibold">
-                        ⏱️ {(() => {
-                          const arrival = parseISO(asset.maintenance_arrival_date + "T00:00:00");
-                          const today = new Date();
-                          const diffTime = today.getTime() - arrival.getTime();
-                          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                          return `${diffDays} ${diffDays === 1 ? "dia" : "dias"} em manutenção`;
-                        })()}
-                      </Badge>
-                    </div>
-                  )}
-                  {asset.maintenance_company && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Building2 className="h-4 w-4 flex-shrink-0" />
-                      <span className="break-words">{asset.maintenance_company}</span>
-                    </div>
-                  )}
-                  {asset.maintenance_work_site && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <MapPin className="h-4 w-4 flex-shrink-0" />
-                      <span className="break-words">{asset.maintenance_work_site}</span>
-                    </div>
-                  )}
-                  {asset.maintenance_description && (
-                    <p className="text-xs text-muted-foreground mt-2 break-words">{asset.maintenance_description}</p>
-                  )}
-                  {asset.is_new_equipment !== undefined && (
-                    <Badge variant="outline" className="text-xs">
-                      {asset.is_new_equipment ? "Novo" : "Usado"}
-                    </Badge>
-                  )}
-                </div>
-              )}
-
-              {asset.location_type === "locacao" && (
-                <div className="space-y-2 text-xs sm:text-sm">
-                  {asset.rental_company && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Building2 className="h-4 w-4 flex-shrink-0" />
-                      <span className="break-words">{asset.rental_company}</span>
-                    </div>
-                  )}
-                  {asset.rental_work_site && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <MapPin className="h-4 w-4 flex-shrink-0" />
-                      <span className="break-words">{asset.rental_work_site}</span>
-                    </div>
-                  )}
-                  {asset.rental_start_date && (
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-xs mt-2 pt-2 border-t">
-                      <span className="whitespace-nowrap">Início: {format(parseISO(asset.rental_start_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}</span>
-                      {asset.rental_end_date && (
-                        <span className="whitespace-nowrap">Fim: {format(parseISO(asset.rental_end_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {asset.location_type === "aguardando_laudo" && asset.inspection_start_date && (
-                <div className="text-sm">
-                  <DeadlineStatusBadge inspectionStartDate={asset.inspection_start_date} />
-                </div>
-              )}
-            </Card>
-          ))
-        )}
-      </div>
+      {/* Renderização condicional: Grid ou Kanban */}
+      {viewMode === "grid" ? (
+        <AssetGridView assets={filteredAssets} />
+      ) : (
+        <AssetKanbanView assets={filteredAssets} />
+      )}
     </div>
   );
 }
