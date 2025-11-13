@@ -1,5 +1,6 @@
 import { Package, Eye, Edit, Trash, FilePlus, History, Building2, Plus, QrCode } from "lucide-react";
 import { ModulePermissionCard } from "./ModulePermissionCard";
+import { FinancialPermissionToggle } from "./FinancialPermissionToggle";
 import { useUserManagement } from "@/hooks/useUserManagement";
 
 interface UserPermissionsManagerProps {
@@ -43,8 +44,19 @@ export const UserPermissionsManager = ({
   const hasAllReportsPermissions = reportsPermissions.every((p) => permissions[p.key]);
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      <ModulePermissionCard
+    <div className="space-y-6">
+      {/* Permissão Financeira (Destaque) */}
+      <FinancialPermissionToggle
+        hasPermission={permissions.can_view_financial_data || false}
+        onToggle={(value) =>
+          updatePermission.mutate({ userId, permission: "can_view_financial_data", value })
+        }
+        disabled={isAdmin}
+      />
+
+      {/* Módulos de Permissões */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <ModulePermissionCard
         title="Controle de Estoque"
         icon={Package}
         permissions={stockPermissions}
@@ -100,6 +112,7 @@ export const UserPermissionsManager = ({
         }
         disabled={isAdmin}
       />
+      </div>
     </div>
   );
 };
