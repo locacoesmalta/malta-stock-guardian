@@ -29,6 +29,46 @@ interface AuditLogIntegrityIssue {
   issue_type: string;
 }
 
+interface AssetIntegrityIssue {
+  asset_id: string;
+  asset_code: string;
+  equipment_name: string;
+  location_type: string;
+  issue_type: string;
+  details: string;
+}
+
+interface WithdrawalIntegrityIssue {
+  withdrawal_id: string;
+  product_code: string;
+  product_name: string;
+  equipment_code: string;
+  quantity: number;
+  withdrawal_date: string;
+  issue_type: string;
+  details: string;
+}
+
+interface ReportIntegrityIssue {
+  report_id: string;
+  report_date: string;
+  equipment_code: string;
+  work_site: string;
+  company: string;
+  issue_type: string;
+  details: string;
+}
+
+interface ProductStockIntegrityIssue {
+  product_id: string;
+  product_code: string;
+  product_name: string;
+  current_quantity: number;
+  min_quantity: number;
+  issue_type: string;
+  details: string;
+}
+
 export const useSystemIntegrity = () => {
   // Verificar integridade de produtos
   const productsIntegrity = useQuery({
@@ -57,6 +97,46 @@ export const useSystemIntegrity = () => {
       const { data, error } = await supabase.rpc("check_audit_logs_integrity");
       if (error) throw error;
       return (data || []) as AuditLogIntegrityIssue[];
+    },
+  });
+
+  // Verificar integridade de assets
+  const assetsIntegrity = useQuery({
+    queryKey: ["integrity-assets"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("check_assets_integrity");
+      if (error) throw error;
+      return (data || []) as AssetIntegrityIssue[];
+    },
+  });
+
+  // Verificar integridade de retiradas
+  const withdrawalsIntegrity = useQuery({
+    queryKey: ["integrity-withdrawals"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("check_withdrawals_integrity");
+      if (error) throw error;
+      return (data || []) as WithdrawalIntegrityIssue[];
+    },
+  });
+
+  // Verificar integridade de relatórios
+  const reportsIntegrity = useQuery({
+    queryKey: ["integrity-reports"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("check_reports_integrity");
+      if (error) throw error;
+      return (data || []) as ReportIntegrityIssue[];
+    },
+  });
+
+  // Verificar integridade de estoque de produtos
+  const productsStockIntegrity = useQuery({
+    queryKey: ["integrity-products-stock"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("check_products_stock_integrity");
+      if (error) throw error;
+      return (data || []) as ProductStockIntegrityIssue[];
     },
   });
 
@@ -118,6 +198,10 @@ export const useSystemIntegrity = () => {
       productsIntegrity.refetch(),
       sessionsIntegrity.refetch(),
       auditLogsIntegrity.refetch(),
+      assetsIntegrity.refetch(),
+      withdrawalsIntegrity.refetch(),
+      reportsIntegrity.refetch(),
+      productsStockIntegrity.refetch(),
     ]);
   };
 
@@ -140,12 +224,40 @@ export const useSystemIntegrity = () => {
       error: auditLogsIntegrity.error,
       count: auditLogsIntegrity.data?.length || 0,
     },
+    assetsIntegrity: {
+      data: assetsIntegrity.data || [],
+      isLoading: assetsIntegrity.isLoading,
+      error: assetsIntegrity.error,
+      count: assetsIntegrity.data?.length || 0,
+    },
+    withdrawalsIntegrity: {
+      data: withdrawalsIntegrity.data || [],
+      isLoading: withdrawalsIntegrity.isLoading,
+      error: withdrawalsIntegrity.error,
+      count: withdrawalsIntegrity.data?.length || 0,
+    },
+    reportsIntegrity: {
+      data: reportsIntegrity.data || [],
+      isLoading: reportsIntegrity.isLoading,
+      error: reportsIntegrity.error,
+      count: reportsIntegrity.data?.length || 0,
+    },
+    productsStockIntegrity: {
+      data: productsStockIntegrity.data || [],
+      isLoading: productsStockIntegrity.isLoading,
+      error: productsStockIntegrity.error,
+      count: productsStockIntegrity.data?.length || 0,
+    },
     fixStaleSessions,
     fixDuplicateSessions,
     refetchAll,
     isLoading:
       productsIntegrity.isLoading ||
       sessionsIntegrity.isLoading ||
-      auditLogsIntegrity.isLoading,
+      auditLogsIntegrity.isLoading ||
+      assetsIntegrity.isLoading ||
+      withdrawalsIntegrity.isLoading ||
+      reportsIntegrity.isLoading ||
+      productsStockIntegrity.isLoading,
   };
 };
