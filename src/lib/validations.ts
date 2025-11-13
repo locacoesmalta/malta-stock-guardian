@@ -33,15 +33,21 @@ export const validateCPF = (cpf: string): boolean => {
 };
 
 // Product validation
+import { sanitizeText, containsXSSPatterns } from './inputSanitization';
+
 export const productSchema = z.object({
   code: z.string()
     .trim()
     .min(1, "Código é obrigatório")
-    .max(50, "Código deve ter no máximo 50 caracteres"),
+    .max(50, "Código deve ter no máximo 50 caracteres")
+    .transform(val => sanitizeText(val))
+    .refine(val => !containsXSSPatterns(val), "Entrada contém código malicioso"),
   name: z.string()
     .trim()
     .min(1, "Nome é obrigatório")
-    .max(200, "Nome deve ter no máximo 200 caracteres"),
+    .max(200, "Nome deve ter no máximo 200 caracteres")
+    .transform(val => sanitizeText(val))
+    .refine(val => !containsXSSPatterns(val), "Entrada contém código malicioso"),
   manufacturer: z.string()
     .trim()
     .max(200, "Fabricante deve ter no máximo 200 caracteres")
@@ -65,6 +71,7 @@ export const productSchema = z.object({
   comments: z.string()
     .trim()
     .max(1000, "Comentários devem ter no máximo 1000 caracteres")
+    .transform(val => sanitizeText(val || ''))
     .nullable()
     .optional()
     .or(z.literal("")),
