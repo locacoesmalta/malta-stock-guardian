@@ -731,12 +731,31 @@ export default function AssetMovement() {
           return;
         }
 
+        // CAPTURAR TODOS os dados do equipamento antigo ANTES de qualquer alteração
+        const oldAssetData = {
+          location_type: asset.location_type,
+          rental_company: asset.rental_company,
+          rental_work_site: asset.rental_work_site,
+          rental_start_date: asset.rental_start_date,
+          rental_end_date: asset.rental_end_date,
+          rental_contract_number: asset.rental_contract_number,
+          maintenance_company: asset.maintenance_company,
+          maintenance_work_site: asset.maintenance_work_site,
+          maintenance_arrival_date: asset.maintenance_arrival_date,
+          maintenance_departure_date: asset.maintenance_departure_date,
+          available_for_rental: asset.available_for_rental,
+        };
+
+        const today = getTodayLocalDate();
+
         console.log("Iniciando atualização do equipamento ANTIGO...");
         // Atualizar equipamento ANTIGO
         const oldAssetUpdate: any = {
           location_type: data.old_asset_destination,
           equipment_observations: data.equipment_observations || null,
           malta_collaborator: data.malta_collaborator || null,
+          was_replaced: true,
+          replaced_by_asset_id: substituteAsset.id,
         };
 
         console.log("Dados para equipamento antigo:", oldAssetUpdate);
@@ -754,12 +773,24 @@ export default function AssetMovement() {
         console.log("Equipamento antigo atualizado com sucesso!");
         console.log("Iniciando atualização do equipamento SUBSTITUTO...");
 
-        // Atualizar equipamento SUBSTITUTO (vai para locação)
+        // Atualizar equipamento SUBSTITUTO - HERDA o status do antigo
         const substituteUpdate: any = {
-          location_type: "locacao",
-          rental_company: data.rental_company,
-          rental_work_site: data.rental_work_site,
-          rental_start_date: data.movement_date || getTodayLocalDate(),
+          location_type: oldAssetData.location_type, // ✅ HERDA do equipamento antigo
+          
+          // Dados de LOCAÇÃO (só preenche se o status for locacao)
+          rental_company: oldAssetData.rental_company,
+          rental_work_site: oldAssetData.rental_work_site,
+          rental_start_date: oldAssetData.location_type === 'locacao' ? today : null,
+          rental_end_date: oldAssetData.rental_end_date,
+          rental_contract_number: oldAssetData.rental_contract_number,
+          
+          // Dados de MANUTENÇÃO (só preenche se o status for em_manutencao)
+          maintenance_company: oldAssetData.maintenance_company,
+          maintenance_work_site: oldAssetData.maintenance_work_site,
+          maintenance_arrival_date: oldAssetData.location_type === 'em_manutencao' ? today : null,
+          maintenance_departure_date: null,
+          
+          available_for_rental: true,
         };
 
         console.log("Dados para equipamento substituto:", substituteUpdate);
@@ -777,6 +808,23 @@ export default function AssetMovement() {
         console.log("Equipamento substituto atualizado com sucesso!");
         console.log("Registrando eventos no histórico...");
 
+        // Determinar localização para os eventos
+        const locationInfo = oldAssetData.location_type === 'locacao' 
+          ? `Locação - ${oldAssetData.rental_company} / ${oldAssetData.rental_work_site}`
+          : oldAssetData.location_type === 'em_manutencao'
+          ? `Manutenção - ${oldAssetData.maintenance_company} / ${oldAssetData.maintenance_work_site}`
+          : oldAssetData.location_type === 'deposito_malta'
+          ? 'Depósito Malta'
+          : 'Aguardando Laudo';
+
+        const statusName = oldAssetData.location_type === 'locacao' 
+          ? 'Locação'
+          : oldAssetData.location_type === 'em_manutencao'
+          ? 'Manutenção'
+          : oldAssetData.location_type === 'deposito_malta'
+          ? 'Depósito Malta'
+          : 'Aguardando Laudo';
+
         // Registrar eventos no histórico
         const destLabels: Record<string, string> = {
           aguardando_laudo: "Aguardando Laudo",
@@ -788,14 +836,14 @@ export default function AssetMovement() {
           patId: asset.id,
           codigoPat: asset.asset_code,
           tipoEvento: "SUBSTITUIÇÃO",
-          detalhesEvento: `Equipamento substituído por ${substituteAsset.asset_code}. Destino: ${destLabels[data.old_asset_destination]}. Observações: ${data.equipment_observations || "Nenhuma"}`,
+          detalhesEvento: `Substituído pelo PAT ${substituteAsset.asset_code} em ${format(new Date(), 'dd/MM/yyyy')} e enviado para ${destLabels[data.old_asset_destination]}. Estava em ${locationInfo}. Obs: ${data.equipment_observations || "Nenhuma"}`,
         });
 
         await registrarEvento({
           patId: substituteAsset.id,
           codigoPat: substituteAsset.asset_code,
           tipoEvento: "SUBSTITUIÇÃO",
-          detalhesEvento: `Equipamento enviado para substituir ${asset.asset_code} na obra ${data.rental_work_site} (${data.rental_company})`,
+          detalhesEvento: `Substituiu o PAT ${asset.asset_code} em ${format(new Date(), 'dd/MM/yyyy')} e assumiu posição em ${locationInfo}. Saiu do Depósito Malta para ${statusName}. Data de início ajustada para ${today.split('-').reverse().join('/')}. Equipamento anterior foi para ${destLabels[data.old_asset_destination]}. Motivo: ${data.replacement_reason || "Não informado"}${data.equipment_observations ? `. Obs: ${data.equipment_observations}` : ""}`,
         });
 
         console.log("Eventos registrados com sucesso!");
