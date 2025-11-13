@@ -141,30 +141,29 @@ export default function AssetSubstitution() {
     }
 
     try {
+      console.log("🔄 Iniciando substituição...");
+      console.log("📦 Equipamento ANTIGO:", { id: asset.id, code: asset.asset_code });
+      console.log("📦 Equipamento NOVO:", { id: substituteAsset.id, code: substituteAsset.asset_code });
+      
       // Preparar dados a serem herdados
-      // ✅ CORREÇÃO: Usar data ATUAL para o equipamento novo (evita erro de validação temporal)
       const today = getTodayLocalDate();
       
       const inheritedData = {
         location_type: asset.location_type,
         rental_company: asset.rental_company,
         rental_work_site: asset.rental_work_site,
-        
-        // ✅ Data de INÍCIO sempre é HOJE (equipamento assume posição agora)
         rental_start_date: asset.location_type === 'locacao' ? today : null,
-        
-        // ✅ Data de FIM mantém a original (contrato continua)
         rental_end_date: asset.rental_end_date,
-        
         rental_contract_number: asset.rental_contract_number,
         maintenance_company: asset.maintenance_company,
         maintenance_work_site: asset.maintenance_work_site,
-        
-        // ✅ Data de chegada na manutenção também é HOJE
         maintenance_arrival_date: asset.location_type === 'em_manutencao' ? today : null,
       };
+      
+      console.log("📋 Dados a serem herdados:", inheritedData);
 
       // 1. Atualizar equipamento ANTIGO → Aguardando Laudo
+      console.log("⏳ Atualizando equipamento ANTIGO para aguardando_laudo...");
       const { error: oldAssetError } = await supabase
         .from("assets")
         .update({
@@ -173,40 +172,53 @@ export default function AssetSubstitution() {
           replaced_by_asset_id: substituteAsset.id,
           replacement_reason: data.replacement_reason,
           available_for_rental: false,
-          // MANTÉM dados históricos (não limpa)
         })
         .eq("id", id);
 
-      if (oldAssetError) throw oldAssetError;
+      if (oldAssetError) {
+        console.error("❌ Erro ao atualizar equipamento ANTIGO:", oldAssetError);
+        throw oldAssetError;
+      }
+      console.log("✅ Equipamento ANTIGO atualizado com sucesso!");
 
       // 2. Atualizar equipamento NOVO → Herda localização e dados
-      const { error: newAssetError } = await supabase
+      console.log("⏳ Atualizando equipamento NOVO com dados herdados...");
+      console.log("🔑 ID do equipamento novo:", substituteAsset.id);
+      
+      const updateData = {
+        location_type: inheritedData.location_type,
+        rental_company: inheritedData.rental_company,
+        rental_work_site: inheritedData.rental_work_site,
+        rental_start_date: inheritedData.rental_start_date,
+        rental_end_date: inheritedData.rental_end_date,
+        rental_contract_number: inheritedData.rental_contract_number,
+        maintenance_company: inheritedData.maintenance_company,
+        maintenance_work_site: inheritedData.maintenance_work_site,
+        maintenance_arrival_date: inheritedData.maintenance_arrival_date,
+        available_for_rental: true,
+      };
+      
+      console.log("📝 Dados do UPDATE:", updateData);
+      
+      const { data: updateResult, error: newAssetError } = await supabase
         .from("assets")
-        .update({
-          location_type: inheritedData.location_type,
-          rental_company: inheritedData.rental_company,
-          rental_work_site: inheritedData.rental_work_site,
-          
-          // ✅ Data de início é HOJE (equipamento entra agora na obra)
-          rental_start_date: inheritedData.rental_start_date,
-          
-          // ✅ Data de fim mantém a original (prazo do contrato)
-          rental_end_date: inheritedData.rental_end_date,
-          
-          rental_contract_number: inheritedData.rental_contract_number,
-          maintenance_company: inheritedData.maintenance_company,
-          maintenance_work_site: inheritedData.maintenance_work_site,
-          
-          // ✅ Data de chegada na manutenção é HOJE
-          maintenance_arrival_date: inheritedData.maintenance_arrival_date,
-          
-          available_for_rental: true,
-        })
-        .eq("id", substituteAsset.id);
+        .update(updateData)
+        .eq("id", substituteAsset.id)
+        .select();
 
-      if (newAssetError) throw newAssetError;
+      if (newAssetError) {
+        console.error("❌ Erro ao atualizar equipamento NOVO:", newAssetError);
+        throw newAssetError;
+      }
+      
+      console.log("✅ Equipamento NOVO atualizado:", updateResult);
+      
+      if (!updateResult || updateResult.length === 0) {
+        throw new Error("Nenhum equipamento foi atualizado! Verifique se o ID está correto.");
+      }
 
-      // 3. Registrar evento no ANTIGO
+      // 3. Registrar eventos no histórico
+      console.log("⏳ Registrando eventos no histórico...");
       const locationInfo = inheritedData.location_type === 'locacao' 
         ? `${inheritedData.rental_company} / ${inheritedData.rental_work_site}`
         : `${inheritedData.maintenance_company} / ${inheritedData.maintenance_work_site}`;
@@ -221,7 +233,6 @@ export default function AssetSubstitution() {
         detalhesEvento: `Substituído pelo PAT ${substituteAsset.asset_code} em ${format(new Date(), 'dd/MM/yyyy')} e enviado para Aguardando Laudo. Estava em ${inheritedData.location_type === 'locacao' ? 'Locação' : 'Manutenção'} - ${locationInfo}. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Obs: ${data.decision_notes}` : ""}`,
       });
 
-      // 4. Registrar evento no NOVO
       await registrarEvento({
         patId: substituteAsset.id,
         codigoPat: substituteAsset.asset_code,
@@ -231,6 +242,8 @@ export default function AssetSubstitution() {
         valorNovo: inheritedData.location_type,
         detalhesEvento: `Substituiu o PAT ${asset.asset_code} em ${format(new Date(), 'dd/MM/yyyy')} e assumiu posição em ${inheritedData.location_type === 'locacao' ? 'Locação' : 'Manutenção'} - ${locationInfo}. Data de início ajustada para hoje (${format(new Date(), 'dd/MM/yyyy')}). Equipamento anterior foi para Aguardando Laudo. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Obs: ${data.decision_notes}` : ""}`,
       });
+      
+      console.log("✅ Eventos registrados com sucesso!");
 
       queryClient.invalidateQueries({ queryKey: ["asset", id] });
       queryClient.invalidateQueries({ queryKey: ["assets"] });
@@ -240,8 +253,8 @@ export default function AssetSubstitution() {
       toast.success(`Substituição concluída! ${asset.asset_code} → Laudo | ${substituteAsset.asset_code} → ${inheritedData.location_type === 'locacao' ? 'Locação' : 'Manutenção'}`);
       navigate(`/assets/view/${id}`);
     } catch (error) {
-      console.error("Erro ao registrar substituição:", error);
-      toast.error("Erro ao registrar substituição");
+      console.error("❌ Erro ao registrar substituição:", error);
+      toast.error(`Erro ao registrar substituição: ${error.message || 'Erro desconhecido'}`);
     }
   };
 
