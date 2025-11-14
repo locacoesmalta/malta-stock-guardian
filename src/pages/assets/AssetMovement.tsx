@@ -390,7 +390,9 @@ export default function AssetMovement() {
   const onSubmit = async (data: any) => {
     if (!asset || !user) return;
 
-    // VALIDAÇÃO ESPECIAL: Locação com data de fim retroativa → Aguardando Laudo automático
+    // 🎯 FASE 2: OPERADOR DECIDE - Locação com data de fim retroativa
+    // Sistema não decide automaticamente ir para aguardando_laudo
+    // Operador será perguntado depois através do diálogo de confirmação
     if (movementType === "locacao" && data.rental_end_date) {
       const endDate = new Date(data.rental_end_date);
       endDate.setHours(0, 0, 0, 0);
@@ -398,7 +400,7 @@ export default function AssetMovement() {
       today.setHours(0, 0, 0, 0);
       
       if (endDate < today) {
-        // Locação JÁ ENCERROU - equipamento deve ir para aguardando_laudo
+        // ✅ Perguntar ao operador o que fazer (não decidir automaticamente)
         const enrichedData = {
           ...data,
           isRentalEnded: true,
