@@ -27,6 +27,10 @@ interface SubstitutionDecisionDialogProps {
   onNormalMovement: () => void;
 }
 
+// 🎯 FASE 3: Este diálogo agora só define SE é substituição
+// A escolha de DESTINOS foi movida para AssetSubstitution.tsx
+// onde o operador tem controle total sobre onde cada equipamento vai
+
 const getLocationLabel = (locationType: string) => {
   switch (locationType) {
     case "deposito_malta": return "Depósito Malta";
