@@ -144,23 +144,34 @@ export default function AssetSubstitution() {
       return;
     }
 
-    const substitutionDate = data.substitution_date;
-    const substituteCreatedAt = new Date(substituteAsset.created_at).toISOString().split('T')[0];
-    const substituteEffectiveDate = substituteAsset.effective_registration_date || substituteCreatedAt;
+    // ✅ VALIDAÇÃO CORRETA:
+    // - Data de substituição pode ser ANTERIOR ao cadastro do equipamento substituto
+    //   (cenário: substituição física aconteceu antes do registro no sistema)
+    // - Data de substituição NÃO pode ser ANTERIOR ao cadastro do equipamento ORIGINAL
+    //   (impossível substituir antes do equipamento existir)
+    // - Data de substituição NÃO pode ser FUTURA
     
-    // 🔒 FASE 1.1: BLOQUEAR (não apenas avisar) datas inconsistentes
-    if (substitutionDate < substituteEffectiveDate) {
-      toast.error(
-        `❌ BLOQUEADO: Data de substituição (${format(parseISO(substitutionDate), 'dd/MM/yyyy')}) não pode ser anterior ao cadastro do equipamento substituto (${format(parseISO(substituteEffectiveDate), 'dd/MM/yyyy')}). Corrija a data para continuar.`,
-        { duration: 10000 }
-      );
-      return; // ✅ Bloqueia a operação
-    }
-
-    // 🔒 FASE 1.3: Bloquear datas futuras
+    const substitutionDate = data.substitution_date;
     const today = getTodayLocalDate();
+    
+    // 🔒 VALIDAÇÃO 1: Bloquear datas futuras
     if (substitutionDate > today) {
       toast.error("❌ Data de substituição não pode ser futura");
+      return;
+    }
+    
+    // 🔒 VALIDAÇÃO 2: Garantir que substituição não seja antes do cadastro do equipamento ORIGINAL
+    const originalAssetDate = asset.effective_registration_date || 
+                              new Date(asset.created_at).toISOString().split('T')[0];
+
+    if (substitutionDate < originalAssetDate) {
+      toast.error(
+        `❌ Data de substituição (${format(parseISO(substitutionDate), 'dd/MM/yyyy')}) ` +
+        `não pode ser anterior ao cadastro do equipamento original ${asset.asset_code} ` +
+        `(${format(parseISO(originalAssetDate), 'dd/MM/yyyy')}). ` +
+        `Ajuste a data para continuar.`,
+        { duration: 10000 }
+      );
       return;
     }
 
@@ -280,7 +291,7 @@ export default function AssetSubstitution() {
         campoAlterado: "location_type",
         valorAntigo: "deposito_malta",
         valorNovo: inheritedData.location_type,
-        detalhesEvento: `Substituiu o PAT ${asset.asset_code} em ${format(parseISO(substitutionDate), 'dd/MM/yyyy')} e assumiu posição em ${inheritedData.location_type === 'locacao' ? 'Locação' : 'Manutenção'} - ${locationInfo}. Data de início ajustada para ${format(parseISO(substitutionDate), 'dd/MM/yyyy')}. Equipamento anterior foi para Aguardando Laudo. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Obs: ${data.decision_notes}` : ""}${substitutionDate < substituteEffectiveDate ? ` ⚠️ INCONSISTÊNCIA TEMPORAL: Data de substituição anterior ao cadastro do equipamento (${format(parseISO(substituteEffectiveDate), 'dd/MM/yyyy')})` : ''}`,
+        detalhesEvento: `Substituiu o PAT ${asset.asset_code} em ${format(parseISO(substitutionDate), 'dd/MM/yyyy')} e assumiu posição em ${inheritedData.location_type === 'locacao' ? 'Locação' : 'Manutenção'} - ${locationInfo}. Data de início ajustada para ${format(parseISO(substitutionDate), 'dd/MM/yyyy')}. Equipamento anterior foi para Aguardando Laudo. Motivo: ${data.replacement_reason}${data.decision_notes ? `. Obs: ${data.decision_notes}` : ""}`,
         dataEventoReal: substitutionDate,
       });
       
