@@ -2006,6 +2006,15 @@ export type Database = {
       }
     }
     Functions: {
+      audit_security_definer_views: {
+        Args: never
+        Returns: {
+          recommendation: string
+          security_level: string
+          view_name: string
+          view_owner: string
+        }[]
+      }
       can_user_access_assets: { Args: { _user_id: string }; Returns: boolean }
       can_user_create_assets: { Args: { _user_id: string }; Returns: boolean }
       can_user_create_reports: { Args: { _user_id: string }; Returns: boolean }

@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSystemIntegrity } from "@/hooks/useSystemIntegrity";
+import { RLSHealthMonitor } from "@/components/admin/RLSHealthMonitor";
 import { 
   AlertTriangle, 
   CheckCircle2, 
@@ -126,6 +127,9 @@ export default function SystemIntegrity() {
           </Button>
         </div>
       </div>
+
+      {/* FASE 6: Monitoramento de Segurança RLS */}
+      <RLSHealthMonitor />
 
       {/* Resumo Geral */}
       <Card>

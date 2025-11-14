@@ -35,6 +35,21 @@ export const useCashBox = () => {
   const { data: openCashBox, isLoading: isLoadingCashBox } = useQuery({
     queryKey: ["open-cash-box"],
     queryFn: async () => {
+      // FASE 1B: Verificar permissão antes de fazer query
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data: permissions } = await supabase
+        .from("user_permissions")
+        .select("can_view_financial_data")
+        .eq("user_id", user.id)
+        .single();
+      
+      // Se não tem permissão, retornar null sem fazer query do caixa
+      if (!permissions?.can_view_financial_data) {
+        return null;
+      }
+
       const { data, error } = await supabase
         .from("cash_boxes")
         .select("*")
