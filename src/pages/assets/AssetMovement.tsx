@@ -749,6 +749,11 @@ export default function AssetMovement() {
         const today = getTodayLocalDate();
 
         console.log("Iniciando atualização do equipamento ANTIGO...");
+        
+        // 🔒 FASE 3: Trigger modificado para evitar duplicações
+        // O trigger log_asset_changes agora detecta operações programáticas
+        // e evita criar registros duplicados de "ALTERAÇÃO DE DADO"
+        
         // Atualizar equipamento ANTIGO
         const oldAssetUpdate: any = {
           location_type: "aguardando_laudo", // ✅ SEMPRE vai para Aguardando Laudo
@@ -756,6 +761,10 @@ export default function AssetMovement() {
           malta_collaborator: data.malta_collaborator || null,
           was_replaced: true,
           replaced_by_asset_id: substituteAsset.id,
+          replacement_reason: data.replacement_reason,
+          substitution_date: data.movement_date,
+          available_for_rental: false,
+          locked_for_manual_edit: true, // 🔒 FASE 2.2: Bloquear edições manuais
         };
 
         console.log("Dados para equipamento antigo:", oldAssetUpdate);

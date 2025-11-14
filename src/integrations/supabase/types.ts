@@ -395,6 +395,7 @@ export type Database = {
           inspection_start_date: string | null
           is_new_equipment: boolean | null
           location_type: string
+          locked_for_manual_edit: boolean | null
           maintenance_arrival_date: string | null
           maintenance_company: string | null
           maintenance_delay_observations: string | null
@@ -422,6 +423,7 @@ export type Database = {
           retroactive_registration_notes: string | null
           returns_to_work_site: boolean | null
           serial_number: string | null
+          substitution_date: string | null
           supplier: string | null
           unit_value: number | null
           updated_at: string
@@ -448,6 +450,7 @@ export type Database = {
           inspection_start_date?: string | null
           is_new_equipment?: boolean | null
           location_type: string
+          locked_for_manual_edit?: boolean | null
           maintenance_arrival_date?: string | null
           maintenance_company?: string | null
           maintenance_delay_observations?: string | null
@@ -475,6 +478,7 @@ export type Database = {
           retroactive_registration_notes?: string | null
           returns_to_work_site?: boolean | null
           serial_number?: string | null
+          substitution_date?: string | null
           supplier?: string | null
           unit_value?: number | null
           updated_at?: string
@@ -501,6 +505,7 @@ export type Database = {
           inspection_start_date?: string | null
           is_new_equipment?: boolean | null
           location_type?: string
+          locked_for_manual_edit?: boolean | null
           maintenance_arrival_date?: string | null
           maintenance_company?: string | null
           maintenance_delay_observations?: string | null
@@ -528,6 +533,7 @@ export type Database = {
           retroactive_registration_notes?: string | null
           returns_to_work_site?: boolean | null
           serial_number?: string | null
+          substitution_date?: string | null
           supplier?: string | null
           unit_value?: number | null
           updated_at?: string
@@ -557,6 +563,7 @@ export type Database = {
           new_data: Json | null
           old_data: Json | null
           record_id: string | null
+          signature: string | null
           table_name: string | null
           user_agent: string | null
           user_email: string
@@ -573,6 +580,7 @@ export type Database = {
           new_data?: Json | null
           old_data?: Json | null
           record_id?: string | null
+          signature?: string | null
           table_name?: string | null
           user_agent?: string | null
           user_email: string
@@ -589,6 +597,7 @@ export type Database = {
           new_data?: Json | null
           old_data?: Json | null
           record_id?: string | null
+          signature?: string | null
           table_name?: string | null
           user_agent?: string | null
           user_email?: string
@@ -835,6 +844,7 @@ export type Database = {
           receipt_type: string
           received_by: string
           received_by_cpf: string | null
+          received_by_cpf_encrypted: string | null
           received_by_malta: string | null
           signature: string | null
           updated_at: string
@@ -857,6 +867,7 @@ export type Database = {
           receipt_type: string
           received_by: string
           received_by_cpf?: string | null
+          received_by_cpf_encrypted?: string | null
           received_by_malta?: string | null
           signature?: string | null
           updated_at?: string
@@ -879,6 +890,7 @@ export type Database = {
           receipt_type?: string
           received_by?: string
           received_by_cpf?: string | null
+          received_by_cpf_encrypted?: string | null
           received_by_malta?: string | null
           signature?: string | null
           updated_at?: string
@@ -1384,6 +1396,38 @@ export type Database = {
         }
         Relationships: []
       }
+      receipt_access_logs: {
+        Row: {
+          access_type: string
+          accessed_at: string | null
+          id: string
+          receipt_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          access_type: string
+          accessed_at?: string | null
+          id?: string
+          receipt_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          access_type?: string
+          accessed_at?: string | null
+          id?: string
+          receipt_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipt_access_logs_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "equipment_receipts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rental_companies: {
         Row: {
           address: string | null
@@ -1681,6 +1725,7 @@ export type Database = {
           can_edit_products: boolean | null
           can_edit_reports: boolean | null
           can_scan_assets: boolean | null
+          can_view_financial_data: boolean | null
           can_view_products: boolean | null
           can_view_reports: boolean | null
           can_view_withdrawal_history: boolean | null
@@ -1705,6 +1750,7 @@ export type Database = {
           can_edit_products?: boolean | null
           can_edit_reports?: boolean | null
           can_scan_assets?: boolean | null
+          can_view_financial_data?: boolean | null
           can_view_products?: boolean | null
           can_view_reports?: boolean | null
           can_view_withdrawal_history?: boolean | null
@@ -1729,6 +1775,7 @@ export type Database = {
           can_edit_products?: boolean | null
           can_edit_reports?: boolean | null
           can_scan_assets?: boolean | null
+          can_view_financial_data?: boolean | null
           can_view_products?: boolean | null
           can_view_reports?: boolean | null
           can_view_withdrawal_history?: boolean | null
@@ -1822,6 +1869,47 @@ export type Database = {
       }
     }
     Views: {
+      audit_logs_integrity_status: {
+        Row: {
+          action: string | null
+          created_at: string | null
+          has_signature: boolean | null
+          id: string | null
+          integrity_status: string | null
+          table_name: string | null
+          user_email: string | null
+        }
+        Insert: {
+          action?: string | null
+          created_at?: string | null
+          has_signature?: never
+          id?: string | null
+          integrity_status?: never
+          table_name?: string | null
+          user_email?: string | null
+        }
+        Update: {
+          action?: string | null
+          created_at?: string | null
+          has_signature?: never
+          id?: string | null
+          integrity_status?: never
+          table_name?: string | null
+          user_email?: string | null
+        }
+        Relationships: []
+      }
+      v_asset_movement_inconsistencies: {
+        Row: {
+          asset_code: string | null
+          days_difference: number | null
+          equipment_name: string | null
+          inconsistency_type: string | null
+          registration_date: string | null
+          substitution_date: string | null
+        }
+        Relationships: []
+      }
       v_duplicate_equipment_names: {
         Row: {
           equipamento_normalizado: string | null
@@ -1931,8 +2019,23 @@ export type Database = {
       can_user_edit_assets: { Args: { _user_id: string }; Returns: boolean }
       can_user_edit_products: { Args: { _user_id: string }; Returns: boolean }
       can_user_edit_reports: { Args: { _user_id: string }; Returns: boolean }
+      can_user_view_financial_data: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       can_user_view_products: { Args: { _user_id: string }; Returns: boolean }
       can_user_view_reports: { Args: { _user_id: string }; Returns: boolean }
+      check_assets_integrity: {
+        Args: never
+        Returns: {
+          asset_code: string
+          asset_id: string
+          details: string
+          equipment_name: string
+          issue_type: string
+          location_type: string
+        }[]
+      }
       check_audit_logs_health: {
         Args: never
         Returns: {
@@ -1965,6 +2068,30 @@ export type Database = {
           product_name: string
         }[]
       }
+      check_products_stock_integrity: {
+        Args: never
+        Returns: {
+          current_quantity: number
+          details: string
+          issue_type: string
+          min_quantity: number
+          product_code: string
+          product_id: string
+          product_name: string
+        }[]
+      }
+      check_reports_integrity: {
+        Args: never
+        Returns: {
+          company: string
+          details: string
+          equipment_code: string
+          issue_type: string
+          report_date: string
+          report_id: string
+          work_site: string
+        }[]
+      }
       check_sessions_integrity: {
         Args: never
         Returns: {
@@ -1975,6 +2102,19 @@ export type Database = {
           session_id: string
           user_email: string
           user_name: string
+        }[]
+      }
+      check_withdrawals_integrity: {
+        Args: never
+        Returns: {
+          details: string
+          equipment_code: string
+          issue_type: string
+          product_code: string
+          product_name: string
+          quantity: number
+          withdrawal_date: string
+          withdrawal_id: string
         }[]
       }
       cleanup_inactive_sessions: { Args: never; Returns: undefined }
@@ -2094,6 +2234,7 @@ export type Database = {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
+      is_programmatic_operation: { Args: never; Returns: boolean }
       is_superuser: { Args: { _user_id: string }; Returns: boolean }
       is_system_owner: { Args: { _user_id: string }; Returns: boolean }
       is_user_active: { Args: { _user_id: string }; Returns: boolean }
@@ -2121,6 +2262,10 @@ export type Database = {
       }
       update_maintenance_status: { Args: never; Returns: undefined }
       verify_audit_log_integrity: {
+        Args: { p_log_id: string }
+        Returns: boolean
+      }
+      verify_audit_log_signature: {
         Args: { p_log_id: string }
         Returns: boolean
       }
