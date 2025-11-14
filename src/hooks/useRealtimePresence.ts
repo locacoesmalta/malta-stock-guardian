@@ -16,7 +16,13 @@ export const useRealtimePresence = ({ user, isEnabled }: UseRealtimePresenceOpti
 
   // Atualizar presença no banco de dados
   const updatePresence = async () => {
-    if (!user || !isEnabled) return;
+    // Validar que user e auth.uid() existem antes de tentar
+    if (!user || !user.id || !isEnabled) {
+      if (import.meta.env.DEV) {
+        console.warn('⚠️ [PRESENCE] updatePresence: user, user.id ou isEnabled não disponível');
+      }
+      return;
+    }
 
     try {
       const browserInfo = {
@@ -28,7 +34,7 @@ export const useRealtimePresence = ({ user, isEnabled }: UseRealtimePresenceOpti
       const presenceData = {
         user_id: user.id,
         user_email: user.email || '',
-        user_name: user.user_metadata?.full_name || '',
+        user_name: user.user_metadata?.full_name || user.email || 'Usuário',
         is_online: true,
         last_activity: new Date().toISOString(),
         session_id: sessionIdRef.current,
@@ -36,8 +42,15 @@ export const useRealtimePresence = ({ user, isEnabled }: UseRealtimePresenceOpti
         browser_info: browserInfo,
       };
 
-      // Usar upsert para evitar conflitos 409
-      // Se já existe um registro para este user_id+session_id, atualiza; senão, insere
+      if (import.meta.env.DEV) {
+        console.log('🔄 [PRESENCE] Atualizando presença:', {
+          user_id: presenceData.user_id,
+          session_id: presenceData.session_id,
+          route: presenceData.current_route,
+        });
+      }
+
+      // Usar upsert com constraint UNIQUE (user_id, session_id)
       const { data, error } = await supabase
         .from('user_presence')
         .upsert(presenceData, {
@@ -48,46 +61,54 @@ export const useRealtimePresence = ({ user, isEnabled }: UseRealtimePresenceOpti
         .single();
 
       if (error) {
-        // Se o upsert falhar por não ter constraint, tenta estratégia alternativa
-        if (error.code === '42P10' || error.message?.includes('duplicate')) {
-          // Buscar registro existente do usuário nesta sessão
-          const { data: existing } = await supabase
+        console.error('❌ [PRESENCE] Erro ao atualizar presença:', error);
+        
+        // Estratégia de fallback: buscar e atualizar manualmente
+        const { data: existing } = await supabase
+          .from('user_presence')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('session_id', sessionIdRef.current)
+          .maybeSingle();
+
+        if (existing?.id) {
+          // Atualizar registro existente
+          presenceIdRef.current = existing.id;
+          const { error: updateError } = await supabase
             .from('user_presence')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('session_id', sessionIdRef.current)
-            .single();
+            .update(presenceData)
+            .eq('id', existing.id);
 
-          if (existing?.id) {
-            // Atualizar registro existente
-            presenceIdRef.current = existing.id;
-            const { error: updateError } = await supabase
-              .from('user_presence')
-              .update(presenceData)
-              .eq('id', existing.id);
-
-            if (updateError) throw updateError;
-          } else {
-            // Tentar inserir novamente
-            const { data: inserted, error: insertError } = await supabase
-              .from('user_presence')
-              .insert(presenceData)
-              .select('id')
-              .single();
-
-            if (insertError) throw insertError;
-            presenceIdRef.current = inserted?.id || null;
+          if (updateError) {
+            console.error('❌ [PRESENCE] Erro no fallback UPDATE:', updateError);
+          } else if (import.meta.env.DEV) {
+            console.log('✅ [PRESENCE] Presença atualizada via fallback UPDATE');
           }
         } else {
-          throw error;
+          // Tentar inserir novamente
+          const { data: inserted, error: insertError } = await supabase
+            .from('user_presence')
+            .insert(presenceData)
+            .select('id')
+            .single();
+
+          if (insertError) {
+            console.error('❌ [PRESENCE] Erro no fallback INSERT:', insertError);
+          } else if (inserted?.id) {
+            presenceIdRef.current = inserted.id;
+            if (import.meta.env.DEV) {
+              console.log('✅ [PRESENCE] Presença inserida via fallback INSERT');
+            }
+          }
         }
-      } else {
-        presenceIdRef.current = data?.id || null;
+      } else if (data?.id) {
+        presenceIdRef.current = data.id;
+        if (import.meta.env.DEV) {
+          console.log('✅ [PRESENCE] Presença atualizada com sucesso');
+        }
       }
     } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error('[PRESENCE] Error updating presence:', error);
-      }
+      console.error('💥 [PRESENCE] Erro crítico em updatePresence:', error);
     }
   };
 

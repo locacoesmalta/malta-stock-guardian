@@ -2118,6 +2118,7 @@ export type Database = {
         }[]
       }
       cleanup_inactive_sessions: { Args: never; Returns: undefined }
+      cleanup_old_presence: { Args: never; Returns: undefined }
       create_report_with_parts: {
         Args: {
           p_company: string
