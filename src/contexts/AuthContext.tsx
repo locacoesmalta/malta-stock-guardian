@@ -28,6 +28,7 @@ interface UserPermissions {
   can_edit_assets: boolean;
   can_delete_assets: boolean;
   can_scan_assets: boolean;
+  can_view_financial_data: boolean;
   must_change_password?: boolean;
 }
 
@@ -219,6 +220,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 can_edit_assets: true,
                 can_delete_assets: true,
                 can_scan_assets: true,
+                can_view_financial_data: true,
               });
               setIsActive(true);
             }
