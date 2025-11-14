@@ -1,14 +1,16 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useIdleTimeout } from "@/hooks/useIdleTimeout";
 import { useVersionCheck } from "@/hooks/useVersionCheck";
 import { useRealtimePresence } from "@/hooks/useRealtimePresence";
+import { useSessionHealth } from "@/hooks/useSessionHealth";
 import { IdleWarningDialog } from "@/components/IdleWarningDialog";
 import { UpdateAvailableDialog } from "@/components/UpdateAvailableDialog";
 import { setStoredVersion, APP_VERSION } from "@/lib/appVersion";
 import { toast } from "@/hooks/use-toast";
+import { logger } from "@/lib/logger";
 
 interface UserPermissions {
   is_active: boolean;
@@ -70,6 +72,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         if (!mounted) return;
         
+        // FASE 1: Limpar sessões antigas deste usuário ao fazer login
+        if (session?.user) {
+          logger.auth('User logged in, cleaning old sessions', { userId: session.user.id });
+          
+          // Deletar sessões antigas (>24h) deste usuário
+          await supabase
+            .from('user_presence')
+            .delete()
+            .eq('user_id', session.user.id)
+            .lt('updated_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+        }
+        
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -87,7 +101,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
       
-      console.log('[AUTH] onAuthStateChange triggered', { event, userId: session?.user?.id });
+      logger.auth('Auth state changed', { event, userId: session?.user?.id });
       
       // Apenas operações síncronas aqui
       setSession(session);
@@ -114,28 +128,62 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  // Keep-alive: Refresh session a cada 5 minutos para manter usuário online
+  // FASE 2: Keep-alive otimizado com lock e BroadcastChannel
+  const refreshLockRef = useRef<boolean>(false);
+  const authChannelRef = useRef<BroadcastChannel | null>(null);
+
   useEffect(() => {
     if (!session) return;
 
+    // Criar BroadcastChannel para sincronizar entre abas
+    authChannelRef.current = new BroadcastChannel('malta_auth');
+    
+    // Escutar refreshes de outras abas
+    authChannelRef.current.onmessage = (event) => {
+      if (event.data.type === 'SESSION_REFRESHED') {
+        logger.session('Session updated by another tab');
+        setSession(event.data.session);
+        setUser(event.data.session.user);
+      }
+    };
+
     const keepAlive = setInterval(async () => {
+      // Evitar refreshes simultâneos
+      if (refreshLockRef.current) {
+        logger.session('Refresh already in progress, skipping...');
+        return;
+      }
+      
+      refreshLockRef.current = true;
+      
       try {
         const { data, error } = await supabase.auth.refreshSession();
         if (error) {
-          console.error('[AUTH] Error refreshing session:', error);
+          logger.error('Error refreshing session', error);
           return;
         }
         if (data.session) {
-          console.log('[AUTH] Session refreshed successfully');
+          logger.session('Session refreshed successfully');
           setSession(data.session);
           setUser(data.session.user);
+          
+          // Notificar outras abas
+          authChannelRef.current?.postMessage({
+            type: 'SESSION_REFRESHED',
+            session: data.session,
+          });
         }
       } catch (error) {
-        console.error('[AUTH] Keep-alive error:', error);
+        logger.error('Keep-alive error', error);
+      } finally {
+        refreshLockRef.current = false;
       }
     }, 5 * 60 * 1000); // 5 minutos
 
-    return () => clearInterval(keepAlive);
+    return () => {
+      clearInterval(keepAlive);
+      authChannelRef.current?.close();
+    };
   }, [session]);
 
   const checkAdminStatus = async (userId: string) => {
@@ -244,6 +292,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
+      logger.auth('User signing out', { userId: user?.id });
+      
+      // FASE 1: Deletar TODAS as sessões do usuário ao fazer logout
+      if (user?.id) {
+        await supabase
+          .from('user_presence')
+          .delete()
+          .eq('user_id', user.id);
+      }
+      
       // Limpar localStorage (manter apenas app_version)
       const currentVersion = localStorage.getItem('app_version');
       localStorage.clear();
@@ -257,16 +315,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Limpar estados
       setUser(null);
       setSession(null);
-    setIsAdmin(false);
-    setIsSuperuser(false);
-    setIsActive(false);
-    setIsSystemOwner(false);
-    setPermissions(null);
+      setIsAdmin(false);
+      setIsSuperuser(false);
+      setIsActive(false);
+      setIsSystemOwner(false);
+      setPermissions(null);
       
       // Navegar para login
       navigate("/auth");
     } catch (error) {
-      console.error('[AUTH] Error during sign out:', error);
+      logger.error('Error during sign out', error);
       // Mesmo com erro, navegar para login
       navigate("/auth");
     }
@@ -313,6 +371,62 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     user,
     isEnabled: !!user && !loading,
   });
+
+  // FASE 3: Health check de sessão
+  const { isHealthy } = useSessionHealth({
+    session,
+    user,
+    isEnabled: !!user && !loading,
+  });
+
+  // FASE 3: Logout automático se sessão corrompida
+  useEffect(() => {
+    if (!isHealthy && user) {
+      logger.error('Corrupted session detected, forcing logout', { userId: user.id });
+      toast({
+        title: "Sessão Corrompida",
+        description: "Sua sessão expirou. Redirecionando para login...",
+        variant: "destructive",
+      });
+      signOut();
+    }
+  }, [isHealthy, user]);
+
+  // FASE 4: Recarregar permissões ao atualizar
+  useEffect(() => {
+    if (!user) return;
+    
+    logger.permission('Subscribing to permission updates', { userId: user.id });
+    
+    const channel = supabase
+      .channel('permissions_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'user_permissions',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          logger.permission('Permissions updated, reloading...', payload.new);
+          
+          // Atualizar permissões em memória
+          setPermissions(payload.new as UserPermissions);
+          setIsActive(payload.new.is_active);
+          
+          toast({
+            title: "Permissões Atualizadas",
+            description: "Suas permissões foram modificadas por um administrador.",
+          });
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{ user, session, isAdmin, isSuperuser, isActive, isSystemOwner, permissions, loading, signOut }}>
