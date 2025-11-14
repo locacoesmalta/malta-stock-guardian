@@ -1,6 +1,24 @@
 /**
- * Validações adicionais para movimentação de ativos
- * Estas validações verificam datas contra a data de criação do ativo
+ * ⚠️ IMPORTANTE: VALIDAÇÕES DE DATA - PRINCÍPIO DE RETROATIVIDADE
+ * 
+ * Este módulo valida datas de movimentações de ativos.
+ * 
+ * REGRAS FUNDAMENTAIS:
+ * 
+ * 1. ✅ PERMITIR retroatividade:
+ *    - Eventos físicos podem ocorrer ANTES do cadastro no sistema
+ *    - Exemplo: Movimentação em 10/11, cadastro em 14/11 → VÁLIDO
+ * 
+ * 2. ❌ BLOQUEAR apenas datas FUTURAS:
+ *    - Não podemos prever o futuro
+ *    - Exemplo: Movimentação amanhã → INVÁLIDO
+ * 
+ * 3. ⚠️ AVISAR sobre retroatividade (mas não bloquear):
+ *    - Confirmação do operador é suficiente
+ *    - Sistema obedece ao operador
+ * 
+ * NÃO validar contra `created_at` ou `effective_registration_date`
+ * porque essas são datas de SISTEMA, não de eventos FÍSICOS.
  */
 
 interface AssetCreationInfo {
@@ -9,9 +27,9 @@ interface AssetCreationInfo {
 }
 
 /**
- * Valida se uma data de movimentação não é anterior à criação do ativo
+ * Valida se uma data de movimentação não é futura
  * @param movementDate - Data da movimentação (ISO string ou Date)
- * @param asset - Informações do ativo (created_at e effective_registration_date)
+ * @param asset - Informações do ativo (usado para contexto, não para validação)
  * @returns true se válido, string com mensagem de erro se inválido
  */
 export const validateMovementDateAgainstCreation = (
@@ -33,30 +51,23 @@ export const validateMovementDateAgainstCreation = (
       return "Data de movimentação inválida";
     }
     
-    // Usar effective_registration_date se disponível, senão usar created_at
-    const assetCreationDateString = asset.effective_registration_date || asset.created_at;
-    const assetCreationDate = new Date(assetCreationDateString);
-    
-    // Verificar se a data de criação é válida
-    if (isNaN(assetCreationDate.getTime())) {
-      console.error("[Validação] Data de criação do ativo inválida:", assetCreationDateString);
-      return true; // Permitir prosseguir se data de criação for inválida (não bloquear usuário)
-    }
-    
-    // Normalizar para comparar apenas datas (sem horas)
+    // ✅ NOVA VALIDAÇÃO: Apenas bloquear datas FUTURAS
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     movement.setHours(0, 0, 0, 0);
-    assetCreationDate.setHours(0, 0, 0, 0);
     
-    console.log("[Validação] Comparando datas:", {
-      movementDate: movement.toISOString(),
-      assetCreationDate: assetCreationDate.toISOString(),
-      isValid: movement >= assetCreationDate
-    });
-    
-    if (movement < assetCreationDate) {
-      const formattedCreationDate = assetCreationDate.toLocaleDateString('pt-BR');
-      return `Data de movimentação não pode ser anterior à entrada do equipamento no sistema (${formattedCreationDate})`;
+    if (movement > today) {
+      console.warn("[Validação] Data de movimentação futura bloqueada:", movement.toISOString());
+      return "Data de movimentação não pode ser futura";
     }
+    
+    // ✅ PERMITIR retroatividade - sistema não deve bloquear
+    // Eventos físicos podem ocorrer antes do cadastro no sistema
+    console.log("[Validação] ✓ Data válida:", {
+      movementDate: movement.toISOString(),
+      today: today.toISOString(),
+      isRetroactive: movement < today
+    });
     
     return true;
   } catch (error) {
@@ -103,23 +114,25 @@ export const validatePurchaseDate = (
   asset: AssetCreationInfo
 ): true | string => {
   const purchase = new Date(purchaseDate);
-  const assetCreation = asset.effective_registration_date 
-    ? new Date(asset.effective_registration_date)
-    : new Date(asset.created_at);
+  const today = new Date();
   
   // Normalizar
   purchase.setHours(0, 0, 0, 0);
-  assetCreation.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
   
-  if (purchase > assetCreation) {
-    return "Data de compra não pode ser posterior à entrada do equipamento no sistema";
+  // ✅ Apenas bloquear datas futuras
+  if (purchase > today) {
+    return "Data de compra não pode ser futura";
   }
   
+  // ✅ Permitir qualquer data passada (retroatividade legítima)
   return true;
 };
 
 /**
- * Valida intervalo de datas (início e fim) contra criação do ativo
+ * Valida intervalo de datas (início e fim)
+ * - Garante que data de fim não seja anterior à data de início
+ * - Garante que ambas as datas não sejam futuras
  */
 export const validateDateRange = (
   startDate: string,
@@ -130,7 +143,7 @@ export const validateDateRange = (
   try {
     console.log("[Validação Range] Iniciando validação de intervalo:", { startDate, endDate, fieldLabel });
 
-    // Validar data de início
+    // Validar data de início (bloqueia apenas futuros)
     const startValidation = validateMovementDateAgainstCreation(startDate, asset);
     if (startValidation !== true) {
       console.warn("[Validação Range] Data de início inválida:", startValidation);
@@ -151,15 +164,16 @@ export const validateDateRange = (
       start.setHours(0, 0, 0, 0);
       end.setHours(0, 0, 0, 0);
       
+      // ✅ Validar que fim não é anterior ao início
       if (end < start) {
         console.warn("[Validação Range] Data de fim anterior à data de início");
         return `Data de fim da ${fieldLabel} não pode ser anterior à data de início`;
       }
       
-      // Validar data de fim contra criação do ativo
+      // ✅ Validar data de fim (bloqueia apenas futuros)
       const endValidation = validateMovementDateAgainstCreation(endDate, asset);
       if (endValidation !== true) {
-        console.warn("[Validação Range] Data de fim inválida contra criação:", endValidation);
+        console.warn("[Validação Range] Data de fim inválida:", endValidation);
         return endValidation;
       }
     }
