@@ -485,6 +485,24 @@ export function AppSidebar() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <SidebarMenuButton asChild>
+                        <NavLink to="/admin/session-health" className={getNavCls} onClick={handleNavClick}>
+                          <Activity className="h-4 w-4" />
+                          <span>Saúde das Sessões</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    {!open && (
+                      <TooltipContent side="right" className="font-normal">
+                        Saúde das Sessões
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton asChild>
                         <NavLink to="/admin/settings" className={getNavCls} onClick={handleNavClick}>
                           <Settings className="h-4 w-4" />
                           <span>Configurações</span>

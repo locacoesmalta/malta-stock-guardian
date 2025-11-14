@@ -2236,6 +2236,7 @@ export type Database = {
           equipment_count: number
         }[]
       }
+      get_session_health_stats: { Args: never; Returns: Json }
       get_total_hourmeter: { Args: { p_asset_id: string }; Returns: number }
       get_user_welcome_data: { Args: { p_user_id: string }; Returns: Json }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
