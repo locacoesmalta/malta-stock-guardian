@@ -751,7 +751,7 @@ export default function AssetMovement() {
         console.log("Iniciando atualização do equipamento ANTIGO...");
         // Atualizar equipamento ANTIGO
         const oldAssetUpdate: any = {
-          location_type: data.old_asset_destination,
+          location_type: "aguardando_laudo", // ✅ SEMPRE vai para Aguardando Laudo
           equipment_observations: data.equipment_observations || null,
           malta_collaborator: data.malta_collaborator || null,
           was_replaced: true,
@@ -780,14 +780,14 @@ export default function AssetMovement() {
           // Dados de LOCAÇÃO (só preenche se o status for locacao)
           rental_company: oldAssetData.rental_company,
           rental_work_site: oldAssetData.rental_work_site,
-          rental_start_date: oldAssetData.location_type === 'locacao' ? today : null,
+          rental_start_date: oldAssetData.location_type === 'locacao' ? data.movement_date : null, // ✅ Usa data configurável
           rental_end_date: oldAssetData.rental_end_date,
           rental_contract_number: oldAssetData.rental_contract_number,
           
           // Dados de MANUTENÇÃO (só preenche se o status for em_manutencao)
           maintenance_company: oldAssetData.maintenance_company,
           maintenance_work_site: oldAssetData.maintenance_work_site,
-          maintenance_arrival_date: oldAssetData.location_type === 'em_manutencao' ? today : null,
+          maintenance_arrival_date: oldAssetData.location_type === 'em_manutencao' ? data.movement_date : null, // ✅ Usa data configurável
           maintenance_departure_date: null,
           
           available_for_rental: true,
@@ -825,25 +825,23 @@ export default function AssetMovement() {
           ? 'Depósito Malta'
           : 'Aguardando Laudo';
 
-        // Registrar eventos no histórico
-        const destLabels: Record<string, string> = {
-          aguardando_laudo: "Aguardando Laudo",
-          em_manutencao: "Manutenção",
-          deposito_malta: "Depósito Malta",
-        };
+        // Registrar eventos no histórico com data configurável
+        const movementDateFormatted = data.movement_date.split('-').reverse().join('/');
 
         await registrarEvento({
           patId: asset.id,
           codigoPat: asset.asset_code,
           tipoEvento: "SUBSTITUIÇÃO",
-          detalhesEvento: `Substituído pelo PAT ${substituteAsset.asset_code} em ${format(new Date(), 'dd/MM/yyyy')} e enviado para ${destLabels[data.old_asset_destination]}. Estava em ${locationInfo}. Obs: ${data.equipment_observations || "Nenhuma"}`,
+          detalhesEvento: `Substituído pelo PAT ${substituteAsset.asset_code} em ${movementDateFormatted} e enviado para Aguardando Laudo. Estava em ${locationInfo}. Obs: ${data.equipment_observations || "Nenhuma"}`,
+          dataEventoReal: `${data.movement_date}T12:00:00Z`, // ✅ Usa data configurável
         });
 
         await registrarEvento({
           patId: substituteAsset.id,
           codigoPat: substituteAsset.asset_code,
           tipoEvento: "SUBSTITUIÇÃO",
-          detalhesEvento: `Substituiu o PAT ${asset.asset_code} em ${format(new Date(), 'dd/MM/yyyy')} e assumiu posição em ${locationInfo}. Saiu do Depósito Malta para ${statusName}. Data de início ajustada para ${today.split('-').reverse().join('/')}. Equipamento anterior foi para ${destLabels[data.old_asset_destination]}. Motivo: ${data.replacement_reason || "Não informado"}${data.equipment_observations ? `. Obs: ${data.equipment_observations}` : ""}`,
+          detalhesEvento: `Substituiu o PAT ${asset.asset_code} em ${movementDateFormatted} e assumiu posição em ${locationInfo}. Saiu do Depósito Malta para ${statusName}. Data de início: ${movementDateFormatted}. Equipamento anterior foi para Aguardando Laudo. Motivo: ${data.replacement_reason || "Não informado"}${data.equipment_observations ? `. Obs: ${data.equipment_observations}` : ""}`,
+          dataEventoReal: `${data.movement_date}T12:00:00Z`, // ✅ Usa data configurável
         });
 
         console.log("Eventos registrados com sucesso!");
