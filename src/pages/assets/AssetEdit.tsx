@@ -13,10 +13,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, AlertCircle } from "lucide-react";
 import { useRealtimeDuplicateDetection } from "@/hooks/useRealtimeDuplicateDetection";
 import { RealtimeDuplicateAlert } from "@/components/RealtimeDuplicateAlert";
 import { normalizeText } from "@/lib/textNormalization";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function AssetEdit() {
   const { id } = useParams();
@@ -84,6 +85,15 @@ export default function AssetEdit() {
   const onSubmit = async (data: AssetEditFormData) => {
     if (!asset || !user) return;
 
+    // 🔒 FASE 2.1: Bloquear edição se equipamento foi substituído
+    if (asset.was_replaced || asset.locked_for_manual_edit) {
+      toast.error(
+        "❌ Este equipamento não pode ser editado porque foi substituído. " +
+        "Edições de equipamentos substituídos são bloqueadas para manter a integridade do histórico."
+      );
+      return;
+    }
+
     try {
       // Preparar dados para atualização, convertendo strings vazias em null
       const updateData: any = { ...data };
@@ -137,6 +147,23 @@ export default function AssetEdit() {
           <p className="text-muted-foreground">{asset.equipment_name} - PAT: {asset.asset_code}</p>
         </div>
       </div>
+
+      {/* 🔒 FASE 2.1: Aviso de bloqueio para equipamentos substituídos */}
+      {(asset.was_replaced || asset.locked_for_manual_edit) && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Equipamento Bloqueado para Edição</AlertTitle>
+          <AlertDescription>
+            Este equipamento foi substituído e não pode mais ser editado. 
+            Isso garante a integridade do histórico de movimentações e substituições.
+            {asset.replaced_by_asset_id && (
+              <p className="mt-2">
+                Equipamento substituto: <strong>{asset.replaced_by_asset_id}</strong>
+              </p>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Card>
         <CardHeader>

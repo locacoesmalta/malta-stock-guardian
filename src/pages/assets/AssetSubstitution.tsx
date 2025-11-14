@@ -148,17 +148,35 @@ export default function AssetSubstitution() {
     const substituteCreatedAt = new Date(substituteAsset.created_at).toISOString().split('T')[0];
     const substituteEffectiveDate = substituteAsset.effective_registration_date || substituteCreatedAt;
     
+    // 🔒 FASE 1.1: BLOQUEAR (não apenas avisar) datas inconsistentes
     if (substitutionDate < substituteEffectiveDate) {
-      toast.warning(
-        `⚠️ Inconsistência temporal detectada: Data de substituição (${format(parseISO(substitutionDate), 'dd/MM/yyyy')}) é anterior ao cadastro do equipamento substituto (${format(parseISO(substituteEffectiveDate), 'dd/MM/yyyy')}). Registro será salvo para análise posterior.`,
-        { duration: 8000 }
+      toast.error(
+        `❌ BLOQUEADO: Data de substituição (${format(parseISO(substitutionDate), 'dd/MM/yyyy')}) não pode ser anterior ao cadastro do equipamento substituto (${format(parseISO(substituteEffectiveDate), 'dd/MM/yyyy')}). Corrija a data para continuar.`,
+        { duration: 10000 }
       );
+      return; // ✅ Bloqueia a operação
     }
 
+    // 🔒 FASE 1.3: Bloquear datas futuras
     const today = getTodayLocalDate();
     if (substitutionDate > today) {
-      toast.error("Data de substituição não pode ser futura");
+      toast.error("❌ Data de substituição não pode ser futura");
       return;
+    }
+
+    // 📅 FASE 4.1: Aviso de retroatividade
+    if (substitutionDate < today) {
+      const confirmRetroactive = window.confirm(
+        `⚠️ MOVIMENTAÇÃO RETROATIVA DETECTADA\n\n` +
+        `Data da substituição: ${format(parseISO(substitutionDate), 'dd/MM/yyyy')}\n` +
+        `Data de hoje: ${format(new Date(), 'dd/MM/yyyy')}\n\n` +
+        `Esta operação será registrada com a data ${format(parseISO(substitutionDate), 'dd/MM/yyyy')}, mas está sendo executada hoje.\n\n` +
+        `Deseja continuar?`
+      );
+      
+      if (!confirmRetroactive) {
+        return;
+      }
     }
 
     try {
@@ -191,6 +209,7 @@ export default function AssetSubstitution() {
           replaced_by_asset_id: substituteAsset.id,
           replacement_reason: data.replacement_reason,
           available_for_rental: false,
+          locked_for_manual_edit: true, // 🔒 FASE 2.2: Bloquear edições manuais
         })
         .eq("id", id);
 
