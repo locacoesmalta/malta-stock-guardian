@@ -10,6 +10,7 @@ import { StockTrendChart } from "@/components/dashboard/StockTrendChart";
 import { LowStockAlerts } from "@/components/dashboard/LowStockAlerts";
 import { MaintenanceStatusChart } from "@/components/dashboard/MaintenanceStatusChart";
 import { DataNormalizationCard } from "@/components/dashboard/DataNormalizationCard";
+import { ActionableDashboard } from "@/components/dashboard/ActionableDashboard";
 
 const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -40,6 +41,9 @@ const Dashboard = () => {
           Visão geral do estoque Malta Locações
         </p>
       </div>
+
+      {/* Ações Pendentes - ONDA 1 */}
+      <ActionableDashboard />
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 sm:gap-4">
         <Card>

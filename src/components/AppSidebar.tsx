@@ -100,9 +100,15 @@ export function AppSidebar() {
   // RELATÓRIOS
   const reportsMenuItems = [
     {
+      path: "/reports/quick",
+      icon: FileText,
+      label: "⚡ Relatório Rápido",
+      show: permissions.can_create_reports || isAdmin,
+    },
+    {
       path: "/reports/new",
       icon: FileText,
-      label: "Novo Relatório",
+      label: "Novo Relatório Completo",
       show: permissions.can_create_reports || isAdmin,
     },
     {
