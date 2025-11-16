@@ -503,6 +503,24 @@ export function AppSidebar() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <SidebarMenuButton asChild>
+                        <NavLink to="/admin/edge-functions-health" className={getNavCls} onClick={handleNavClick}>
+                          <Activity className="h-4 w-4" />
+                          <span>Edge Functions</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    {!open && (
+                      <TooltipContent side="right" className="font-normal">
+                        Saúde das Edge Functions
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton asChild>
                         <NavLink to="/admin/settings" className={getNavCls} onClick={handleNavClick}>
                           <Settings className="h-4 w-4" />
                           <span>Configurações</span>

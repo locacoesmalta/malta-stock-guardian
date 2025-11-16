@@ -43,13 +43,14 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
     setLoading(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      // ✅ FASE 4: Usar helper com retry automático
+      const { invokeFunctionWithRetry } = await import("@/lib/edgeFunctionHelper");
       
-      if (!session) {
-        throw new Error("Não autenticado");
-      }
-
-      const response = await supabase.functions.invoke('create-user', {
+      const result = await invokeFunctionWithRetry({
+        functionName: 'create-user',
+        maxRetries: 3,
+        retryDelay: 1000,
+        requiresAuth: true,
         body: {
           email: formData.email,
           password: formData.password,
@@ -76,13 +77,9 @@ export function AddUserDialog({ onUserAdded }: AddUserDialogProps) {
         }
       });
 
-      // Check for errors in response body
-      if (response.data?.error) {
-        throw new Error(response.data.error);
-      }
-
-      if (response.error) {
-        throw new Error(response.error.message || "Erro ao criar usuário");
+      // ✅ Helper já valida erros automaticamente
+      if (result?.error) {
+        throw new Error(result.error);
       }
 
       toast.success("Usuário criado com sucesso!");

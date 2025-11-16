@@ -43,23 +43,49 @@ Deno.serve(async (req) => {
 
     // Validate input
     if (!email || !password || !full_name) {
-      throw new Error('Email, password e nome completo são obrigatórios')
+      return new Response(
+        JSON.stringify({ error: 'Email, password e nome completo são obrigatórios' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // ✅ FASE 3: Validar email duplicado ANTES de criar
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
+    const emailExists = existingUsers.users.some(u => u.email?.toLowerCase() === email.toLowerCase())
+    
+    if (emailExists) {
+      return new Response(
+        JSON.stringify({ error: 'Email já está em uso', code: 'EMAIL_EXISTS' }),
+        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     if (password.length < 8) {
-      throw new Error('A senha deve ter pelo menos 8 caracteres')
+      return new Response(
+        JSON.stringify({ error: 'A senha deve ter pelo menos 8 caracteres' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     if (!/[A-Z]/.test(password)) {
-      throw new Error('A senha deve conter pelo menos uma letra maiúscula')
+      return new Response(
+        JSON.stringify({ error: 'A senha deve conter pelo menos uma letra maiúscula' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     if (!/[a-z]/.test(password)) {
-      throw new Error('A senha deve conter pelo menos uma letra minúscula')
+      return new Response(
+        JSON.stringify({ error: 'A senha deve conter pelo menos uma letra minúscula' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     if (!/[0-9]/.test(password)) {
-      throw new Error('A senha deve conter pelo menos um número')
+      return new Response(
+        JSON.stringify({ error: 'A senha deve conter pelo menos um número' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     // Create user
@@ -73,11 +99,32 @@ Deno.serve(async (req) => {
     })
 
     if (createError) {
-      throw createError
+      // ✅ FASE 3: Tratamento específico de erros do Supabase Auth
+      let errorMessage = createError.message
+      let statusCode = 500
+      
+      if (errorMessage.includes('already registered') || errorMessage.includes('User already registered')) {
+        errorMessage = 'Email já está registrado'
+        statusCode = 409
+      } else if (errorMessage.includes('invalid email') || errorMessage.includes('Email format invalid')) {
+        errorMessage = 'Email inválido'
+        statusCode = 400
+      } else if (errorMessage.includes('password')) {
+        errorMessage = 'Senha inválida: ' + errorMessage
+        statusCode = 400
+      }
+      
+      return new Response(
+        JSON.stringify({ error: errorMessage }),
+        { status: statusCode, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     if (!newUser.user) {
-      throw new Error('Erro ao criar usuário')
+      return new Response(
+        JSON.stringify({ error: 'Erro ao criar usuário' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     // Wait for trigger to create initial permission record
@@ -122,12 +169,18 @@ Deno.serve(async (req) => {
       },
     )
   } catch (error) {
+    console.error('Erro ao criar usuário:', error)
+    
+    // ✅ SEMPRE retornar JSON estruturado, nunca string pura
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ 
+        error: errorMessage,
+        stack: Deno.env.get('DENO_ENV') === 'development' ? (error as Error).stack : undefined
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+        status: 500,
       },
     )
   }
