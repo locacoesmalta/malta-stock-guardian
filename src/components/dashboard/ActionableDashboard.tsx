@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,16 @@ import {
   FileText,
   TrendingDown,
   ArrowRight,
+  Filter,
+  ArrowUpDown,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { formatPAT } from "@/lib/patUtils";
 
 interface ActionableItem {
@@ -27,6 +37,8 @@ interface ActionableItem {
 
 export const ActionableDashboard = () => {
   const navigate = useNavigate();
+  const [urgencyFilter, setUrgencyFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("urgency");
 
   // Buscar peças pendentes (sem relatório)
   const { data: pendingParts = [] } = useQuery({
@@ -169,17 +181,77 @@ export const ActionableDashboard = () => {
     }
   };
 
+  // Filtrar e ordenar ações
+  const filteredAndSortedActions = actions
+    .filter((action) => {
+      if (urgencyFilter === "all") return true;
+      return action.urgency === urgencyFilter;
+    })
+    .sort((a, b) => {
+      if (sortBy === "urgency") {
+        const urgencyOrder = { high: 0, medium: 1, low: 2 };
+        const urgencyDiff =
+          urgencyOrder[a.urgency as keyof typeof urgencyOrder] -
+          urgencyOrder[b.urgency as keyof typeof urgencyOrder];
+        if (urgencyDiff !== 0) return urgencyDiff;
+        return b.count - a.count;
+      }
+      if (sortBy === "count") {
+        return b.count - a.count;
+      }
+      if (sortBy === "title") {
+        return a.title.localeCompare(b.title);
+      }
+      return 0;
+    });
+
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-2xl font-bold">Ações Pendentes</h2>
-        <p className="text-muted-foreground">
-          Itens que requerem sua atenção imediata
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold">Ações Pendentes</h2>
+          <p className="text-muted-foreground">
+            Itens que requerem sua atenção imediata
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
+            <SelectTrigger className="w-[180px]">
+              <Filter className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Filtrar por urgência" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas urgências</SelectItem>
+              <SelectItem value="high">Alta urgência</SelectItem>
+              <SelectItem value="medium">Média urgência</SelectItem>
+              <SelectItem value="low">Baixa urgência</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[180px]">
+              <ArrowUpDown className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Ordenar por" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="urgency">Por urgência</SelectItem>
+              <SelectItem value="count">Por quantidade</SelectItem>
+              <SelectItem value="title">Por título (A-Z)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {actions.map((action) => {
+      {filteredAndSortedActions.length === 0 ? (
+        <Card className="p-8 text-center">
+          <p className="text-muted-foreground">
+            Nenhuma ação pendente com os filtros selecionados
+          </p>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filteredAndSortedActions.map((action) => {
           const Icon = action.icon;
           return (
             <Card
@@ -239,9 +311,10 @@ export const ActionableDashboard = () => {
                 )}
               </CardContent>
             </Card>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
