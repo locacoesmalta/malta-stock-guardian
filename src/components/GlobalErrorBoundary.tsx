@@ -24,30 +24,28 @@ class GlobalErrorBoundary extends Component<Props, State> {
     return { hasError: true, error, errorInfo: null };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  async componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("GlobalErrorBoundary caught an error:", error, errorInfo);
     
     this.setState({ errorInfo });
 
-    // Log error to backend
-    fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/error-logger`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        errorCode: "REACT_ERROR_BOUNDARY",
-        errorType: "runtime_error",
-        message: error.message,
-        stack: error.stack,
-        additionalData: {
+    // ✅ CORRIGIDO: Usar logger existente ao invés de chamar Edge Function inexistente
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      
+      await supabase.from('error_logs').insert({
+        error_code: "REACT_ERROR_BOUNDARY",
+        error_type: "runtime_error",
+        error_message: error.message,
+        error_stack: error.stack,
+        page_route: window.location.pathname,
+        additional_data: {
           componentStack: errorInfo.componentStack,
-          route: window.location.pathname,
         },
-      }),
-    }).catch((err) => {
+      });
+    } catch (err) {
       console.error("Failed to log error:", err);
-    });
+    }
   }
 
   handleReset = () => {

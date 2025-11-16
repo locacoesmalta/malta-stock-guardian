@@ -5,6 +5,26 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const n8nApiKey = Deno.env.get('N8N_API_KEY')!;
 
+// ✅ FASE 6: Rate limiting por IP
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+
+const checkRateLimit = (clientIp: string, maxRequests: number = 100, windowMs: number = 60000): boolean => {
+  const now = Date.now();
+  const record = rateLimitStore.get(clientIp);
+  
+  if (!record || now > record.resetAt) {
+    rateLimitStore.set(clientIp, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+  
+  if (record.count >= maxRequests) {
+    return false;
+  }
+  
+  record.count++;
+  return true;
+};
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -12,6 +32,16 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // ✅ FASE 6: Verificar rate limit
+    const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+    
+    if (!checkRateLimit(clientIp, 100, 60000)) { // 100 req/min
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded. Try again later.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Validate API Key
     const authHeader = req.headers.get('x-api-key');
     if (authHeader !== n8nApiKey) {

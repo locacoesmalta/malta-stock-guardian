@@ -70,18 +70,23 @@ export function ResetPasswordDialog({ userId, userEmail, onPasswordReset }: Rese
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('reset-user-password', {
+      // ✅ FASE 4: Usar helper com retry automático
+      const { invokeFunctionWithRetry } = await import("@/lib/edgeFunctionHelper");
+      
+      const result = await invokeFunctionWithRetry({
+        functionName: 'reset-user-password',
         body: {
           user_id: userId,
           new_password: newPassword,
           force_change_password: forceChange,
         },
+        maxRetries: 3,
+        retryDelay: 1000,
+        requiresAuth: true,
       });
 
-      if (error) throw error;
-
-      if (data.error) {
-        toast.error(data.error);
+      if (result?.error) {
+        toast.error(result.error);
         return;
       }
 
@@ -96,7 +101,15 @@ export function ResetPasswordDialog({ userId, userEmail, onPasswordReset }: Rese
       }
     } catch (error: any) {
       console.error("Erro ao redefinir senha:", error);
-      toast.error("Erro ao redefinir senha: " + (error.message || "Erro desconhecido"));
+      
+      // ✅ FASE 2: Tratamento específico por tipo de erro
+      if (error.message?.includes("Failed to fetch") || error.message?.includes("NetworkError")) {
+        toast.error("Erro de conexão. Verifique sua internet.");
+      } else if (error.message?.includes("SESSÃO_EXPIRADA") || error.message?.includes("NÃO_AUTORIZADO")) {
+        toast.error("Sessão expirada. Faça login novamente.");
+      } else {
+        toast.error("Erro ao redefinir senha: " + (error.message || "Erro desconhecido"));
+      }
     } finally {
       setLoading(false);
     }
