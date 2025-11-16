@@ -2180,6 +2180,16 @@ export type Database = {
         }
         Returns: string
       }
+      get_asset_last_context: {
+        Args: { p_equipment_code: string }
+        Returns: {
+          last_company: string
+          last_technician: string
+          last_work_site: string
+          pending_parts_count: number
+          top_products: Json
+        }[]
+      }
       get_assets_missing_manufacturer: {
         Args: never
         Returns: {

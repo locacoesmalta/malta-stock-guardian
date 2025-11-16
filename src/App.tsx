@@ -60,6 +60,7 @@ const ActiveSessions = lazy(() => import("./pages/admin/ActiveSessions"));
 const SystemIntegrity = lazy(() => import("./pages/admin/SystemIntegrity"));
 const SessionHealth = lazy(() => import("./pages/admin/SessionHealth"));
 const EdgeFunctionsHealth = lazy(() => import("./pages/admin/EdgeFunctionsHealth"));
+const QuickReport = lazy(() => import("./pages/reports/QuickReport"));
 
 const queryClient = new QueryClient();
 
@@ -165,6 +166,16 @@ const App = () => (
                   <ProtectedLayout>
                     <PermissionRoute permission="can_create_reports">
                       <NewReport />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/reports/quick" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_create_reports">
+                      <QuickReport />
                     </PermissionRoute>
                   </ProtectedLayout>
                 } 
