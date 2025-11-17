@@ -1,15 +1,16 @@
 import { AlertCircle, Calendar } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { getNowInBelem, parseLocalDate, getDaysDifference } from "@/lib/dateUtils";
 
 interface RetroactiveDateWarningProps {
   selectedDate: string;
 }
 
 export function RetroactiveDateWarning({ selectedDate }: RetroactiveDateWarningProps) {
-  const movementDate = new Date(selectedDate);
-  const today = new Date();
-  const daysDiff = Math.floor((today.getTime() - movementDate.getTime()) / (1000 * 60 * 60 * 24));
+  const movementDate = parseLocalDate(selectedDate);
+  const today = getNowInBelem();
+  const daysDiff = getDaysDifference(today, movementDate);
 
   if (daysDiff <= 0) return null;
 

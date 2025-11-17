@@ -1,6 +1,5 @@
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { formatDateTimeBR } from "@/lib/dateUtils";
 
 interface WelcomeHeaderProps {
   greeting: string;
@@ -22,8 +21,7 @@ const WelcomeHeader = ({ greeting, userName, userEmail, lastLoginAt, loginCount 
     if (!lastLoginAt) return "Este é seu primeiro acesso!";
     
     try {
-      const date = new Date(lastLoginAt);
-      return format(date, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+      return formatDateTimeBR(lastLoginAt);
     } catch {
       return "Data indisponível";
     }

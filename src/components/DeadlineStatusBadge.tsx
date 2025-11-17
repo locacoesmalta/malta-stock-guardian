@@ -1,19 +1,16 @@
 import { Badge } from "@/components/ui/badge";
-import { differenceInDays, parseISO } from "date-fns";
-import { toZonedTime } from "date-fns-tz";
 import { Clock, AlertCircle } from "lucide-react";
+import { getNowInBelem, parseLocalDate, getDaysDifference } from "@/lib/dateUtils";
 
 interface DeadlineStatusBadgeProps {
   inspectionStartDate: string;
 }
 
 export function DeadlineStatusBadge({ inspectionStartDate }: DeadlineStatusBadgeProps) {
-  const BELEM_TIMEZONE = "America/Belem";
-  
-  // Converter para o timezone de Belém - PA
-  const inspectionStart = toZonedTime(parseISO(inspectionStartDate), BELEM_TIMEZONE);
-  const today = toZonedTime(new Date(), BELEM_TIMEZONE);
-  const daysSinceInspection = differenceInDays(today, inspectionStart);
+  // Usar funções centralizadas do dateUtils
+  const inspectionStart = parseLocalDate(inspectionStartDate);
+  const today = getNowInBelem();
+  const daysSinceInspection = getDaysDifference(today, inspectionStart);
 
   // Prazo de 6 dias para devolução do laudo
   const isOverdue = daysSinceInspection > 6;
