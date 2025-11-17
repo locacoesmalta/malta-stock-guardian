@@ -161,6 +161,27 @@ export function getDaysDifference(dateLeft: string | Date, dateRight: string | D
 }
 
 /**
+ * ⚠️ FUNÇÃO SEGURA: Formata YYYY-MM-DD para DD/MM/YYYY sem conversão UTC
+ * USE ESTA FUNÇÃO para exibir datas salvas no banco de dados
+ * 
+ * Evita bug de `new Date("YYYY-MM-DD")` que interpreta como UTC e perde 1 dia no timezone America/Belem
+ * 
+ * @param dateString - Data no formato YYYY-MM-DD
+ * @returns string no formato DD/MM/YYYY
+ * 
+ * @example
+ * formatBRFromYYYYMMDD("2025-11-04") // "04/11/2025"
+ * 
+ * // Uso em exibição:
+ * <p>Data: {formatBRFromYYYYMMDD(report.report_date)}</p> // ✅ Correto
+ */
+export function formatBRFromYYYYMMDD(dateString: string): string {
+  if (!dateString) return "";
+  const [year, month, day] = dateString.split("-");
+  return `${day}/${month}/${year}`;
+}
+
+/**
  * ⚠️ FUNÇÃO CRÍTICA: Converte data de input (YYYY-MM-DD) considerando timezone de Belém
  * USE ESTA FUNÇÃO ao enviar datas de formulários para o banco de dados
  * 

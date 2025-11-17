@@ -11,6 +11,7 @@ import { ptBR } from "date-fns/locale";
 import { BackButton } from "@/components/BackButton";
 import { useReportsWithTraceability } from "@/hooks/useReportsWithTraceability";
 import { ReportPartsTraceability } from "@/components/ReportPartsTraceability";
+import { formatBRFromYYYYMMDD } from "@/lib/dateUtils";
 
 const ReportsList = () => {
   const navigate = useNavigate();
@@ -62,7 +63,7 @@ const ReportsList = () => {
           <tr style="background: #f0fdf4;">
             <td colspan="5" style="padding: 8px; border: 1px solid #ddd; font-size: 12px;">
               <strong>Rastreabilidade:</strong> 
-              Retirada em ${format(new Date(part.material_withdrawals!.withdrawal_date), "dd/MM/yyyy")} - 
+              Retirada em ${formatBRFromYYYYMMDD(part.material_withdrawals!.withdrawal_date)} - 
               Obra: ${part.material_withdrawals!.work_site} - 
               Empresa: ${part.material_withdrawals!.company}
               ${part.material_withdrawals!.withdrawal_reason ? ` - ${part.material_withdrawals!.withdrawal_reason}` : ''}
@@ -95,12 +96,12 @@ const ReportsList = () => {
           <h1>Malta Locações - Relatório de Manutenção</h1>
           
           <div class="info-grid">
-            <div class="info-item"><strong>Código PAT:</strong> ${report.equipment_code}</div>
+          <div class="info-item"><strong>Código PAT:</strong> ${report.equipment_code}</div>
             <div class="info-item"><strong>Equipamento:</strong> ${report.equipment_name || 'N/A'}</div>
             <div class="info-item"><strong>Obra:</strong> ${report.work_site}</div>
             <div class="info-item"><strong>Empresa:</strong> ${report.company}</div>
             <div class="info-item"><strong>Funcionário:</strong> ${report.technician_name}</div>
-            <div class="info-item"><strong>Data:</strong> ${format(new Date(report.report_date), "dd/MM/yyyy", { locale: ptBR })}</div>
+            <div class="info-item"><strong>Data:</strong> ${formatBRFromYYYYMMDD(report.report_date)}</div>
           </div>
 
           <div style="margin: 20px 0;">
@@ -261,7 +262,7 @@ const ReportsList = () => {
                           <div className="text-sm text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              {format(new Date(report.report_date), "dd/MM/yyyy")}
+                              {formatBRFromYYYYMMDD(report.report_date)}
                             </span>
                             <span>Obra: {report.work_site}</span>
                             <span>Empresa: {report.company}</span>
