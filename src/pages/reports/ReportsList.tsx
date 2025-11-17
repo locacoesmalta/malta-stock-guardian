@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Printer, Search, ChevronDown, ChevronUp, Link as LinkIcon, Package } from "lucide-react";
+import { Calendar, Printer, Search, ChevronDown, ChevronUp, Link as LinkIcon, Package, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { BackButton } from "@/components/BackButton";
@@ -275,6 +275,17 @@ const ReportsList = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/reports/edit/${report.id}`);
+                            }}
+                            title="Editar este relatório"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
                           <Button
                             variant="outline"
                             size="sm"
