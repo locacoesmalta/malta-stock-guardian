@@ -67,6 +67,26 @@ const Products = () => {
       return count || 0;
     },
   });
+
+  // Contar produtos não catalogados usados no mês atual
+  const { data: nonCatalogedCount = 0 } = useQuery({
+    queryKey: ["non-cataloged-products-count"],
+    queryFn: async () => {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const { count, error } = await supabase
+        .from("material_withdrawals")
+        .select("*", { count: "exact", head: true })
+        .eq("product_id", "00000000-0000-0000-0000-000000000001")
+        .gte("withdrawal_date", startOfMonth.toISOString());
+      
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
   const [open, setOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -678,6 +698,18 @@ const Products = () => {
                 <AlertTriangle className="h-4 w-4 mr-2" />
                 {productsWithoutCompatibility} produtos sem compatibilidade - Configurar agora
               </Button>
+            )}
+            
+            {/* Card de Produtos Não Catalogados */}
+            {nonCatalogedCount > 0 && (
+              <Alert className="mt-3 border-blue-500/50 bg-blue-50 dark:bg-blue-950/20">
+                <AlertTriangle className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-blue-700 dark:text-blue-300">
+                  <span className="font-medium">{nonCatalogedCount} retiradas de "Produto Não Catalogado"</span> foram registradas este mês.
+                  <br />
+                  <span className="text-sm">Cadastre esses produtos para melhor controle de estoque.</span>
+                </AlertDescription>
+              </Alert>
             )}
           </div>
           <div className="flex flex-wrap gap-2 w-full sm:w-auto">

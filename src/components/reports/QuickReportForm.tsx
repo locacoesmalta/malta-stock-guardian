@@ -444,32 +444,52 @@ export const QuickReportForm = ({ initialPat, onComplete }: QuickReportFormProps
               </Alert>
             ) : (
               <div className="space-y-2">
-                {withdrawals.map((w) => (
-                  <div
-                    key={w.id}
-                    className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-accent"
-                    onClick={() => {
-                      setSelectedParts((prev) =>
-                        prev.includes(w.id)
-                          ? prev.filter((id) => id !== w.id)
-                          : [...prev, w.id]
-                      );
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedParts.includes(w.id)}
-                      onChange={() => {}}
-                      className="h-4 w-4"
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium">{w.products.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {w.products.code} • Qtd: {w.remaining_quantity}
+                {withdrawals.map((w) => {
+                  const isNonCataloged = w.withdrawal_reason?.startsWith("[PRODUTO NÃO CATALOGADO]");
+                  const customDescription = isNonCataloged 
+                    ? w.withdrawal_reason?.replace("[PRODUTO NÃO CATALOGADO] ", "") 
+                    : null;
+
+                  return (
+                    <div
+                      key={w.id}
+                      className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-accent"
+                      onClick={() => {
+                        setSelectedParts((prev) =>
+                          prev.includes(w.id)
+                            ? prev.filter((id) => id !== w.id)
+                            : [...prev, w.id]
+                        );
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedParts.includes(w.id)}
+                        onChange={() => {}}
+                        className="h-4 w-4"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="font-medium">{w.products.name}</div>
+                          {isNonCataloged && (
+                            <Badge variant="outline" className="text-xs">
+                              Não Catalogado
+                            </Badge>
+                          )}
+                        </div>
+                        {isNonCataloged ? (
+                          <div className="text-sm text-muted-foreground">
+                            <span className="font-medium">Descrição:</span> {customDescription} • Qtd: {w.remaining_quantity}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-muted-foreground">
+                            {w.products.code} • Qtd: {w.remaining_quantity}
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
