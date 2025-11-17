@@ -3,9 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, X, Plus, Edit } from "lucide-react";
+import { Upload, X, Plus, Edit, Loader2 } from "lucide-react";
 import { PhotoEditor } from "./PhotoEditor";
+import { toast } from "sonner";
 import type { ProcessedImageResult } from "@/lib/imageProcessing";
+import { urlToFile } from "@/lib/imageProcessing";
 
 interface PhotoData {
   file: File | null;
@@ -42,6 +44,42 @@ export const ReportPhotoUploader = ({
     preview: string;
     isAdditional: boolean;
   } | null>(null);
+  const [loadingPhotoForEdit, setLoadingPhotoForEdit] = useState<number | null>(null);
+
+  const handleEditPhoto = async (index: number, isAdditional: boolean = false) => {
+    const photoList = isAdditional ? additionalPhotos : photos;
+    const photo = photoList[index];
+    
+    // Se foto já tem File, abre editor direto
+    if (photo.file) {
+      setEditingPhoto({
+        index,
+        file: photo.file,
+        preview: photo.preview,
+        isAdditional,
+      });
+      return;
+    }
+    
+    // Se foto só tem URL (foto antiga), converte para File
+    if (photo.preview && !photo.file) {
+      setLoadingPhotoForEdit(isAdditional ? index + 1000 : index); // +1000 para diferenciar additional
+      try {
+        const file = await urlToFile(photo.preview, `photo-${index + 1}.jpg`);
+        setEditingPhoto({
+          index,
+          file,
+          preview: photo.preview,
+          isAdditional,
+        });
+      } catch (error) {
+        console.error('Erro ao carregar foto:', error);
+        toast.error("Erro ao carregar foto para edição");
+      } finally {
+        setLoadingPhotoForEdit(null);
+      }
+    }
+  };
 
   const handleSaveEdit = (index: number, result: ProcessedImageResult) => {
     // Criar novo File a partir do blob processado
@@ -99,16 +137,14 @@ export const ReportPhotoUploader = ({
                           variant="secondary"
                           size="icon"
                           className="opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() =>
-                            setEditingPhoto({
-                              index,
-                              file: photo.file,
-                              preview: photo.preview,
-                              isAdditional: false,
-                            })
-                          }
+                          onClick={() => handleEditPhoto(index, false)}
+                          disabled={loadingPhotoForEdit === index}
                         >
-                          <Edit className="h-4 w-4" />
+                          {loadingPhotoForEdit === index ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Edit className="h-4 w-4" />
+                          )}
                         </Button>
                         <Button
                           type="button"
@@ -170,22 +206,20 @@ export const ReportPhotoUploader = ({
                           className="w-full h-40 object-cover rounded-lg"
                         />
                         <div className="absolute top-2 right-2 flex gap-1">
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="icon"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() =>
-                              setEditingPhoto({
-                                index,
-                                file: photo.file,
-                                preview: photo.preview,
-                                isAdditional: true,
-                              })
-                            }
-                          >
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="icon"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleEditPhoto(index, true)}
+                          disabled={loadingPhotoForEdit === index + 1000}
+                        >
+                          {loadingPhotoForEdit === index + 1000 ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
                             <Edit className="h-4 w-4" />
-                          </Button>
+                          )}
+                        </Button>
                           <Button
                             type="button"
                             variant="destructive"

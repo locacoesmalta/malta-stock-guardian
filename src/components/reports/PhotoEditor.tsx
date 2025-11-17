@@ -157,6 +157,11 @@ export const PhotoEditor = ({
         },
       };
 
+      // Adicionar metadata como propriedades do File para acesso em ReportEdit
+      Object.assign(currentFile, {
+        processingApplied: true,
+      });
+
       onSaveEdit(photoIndex, result);
       toast.success('Edições salvas!');
       onOpenChange(false);
