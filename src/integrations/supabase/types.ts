@@ -1613,27 +1613,57 @@ export type Database = {
       report_photos: {
         Row: {
           created_at: string
+          flip_horizontal: boolean | null
+          flip_vertical: boolean | null
           id: string
+          original_height: number | null
+          original_size_bytes: number | null
+          original_width: number | null
           photo_comment: string
           photo_order: number
           photo_url: string
+          processed_height: number | null
+          processed_size_bytes: number | null
+          processed_width: number | null
+          processing_applied: boolean | null
           report_id: string
+          rotation_applied: number | null
         }
         Insert: {
           created_at?: string
+          flip_horizontal?: boolean | null
+          flip_vertical?: boolean | null
           id?: string
+          original_height?: number | null
+          original_size_bytes?: number | null
+          original_width?: number | null
           photo_comment: string
           photo_order: number
           photo_url: string
+          processed_height?: number | null
+          processed_size_bytes?: number | null
+          processed_width?: number | null
+          processing_applied?: boolean | null
           report_id: string
+          rotation_applied?: number | null
         }
         Update: {
           created_at?: string
+          flip_horizontal?: boolean | null
+          flip_vertical?: boolean | null
           id?: string
+          original_height?: number | null
+          original_size_bytes?: number | null
+          original_width?: number | null
           photo_comment?: string
           photo_order?: number
           photo_url?: string
+          processed_height?: number | null
+          processed_size_bytes?: number | null
+          processed_width?: number | null
+          processing_applied?: boolean | null
           report_id?: string
+          rotation_applied?: number | null
         }
         Relationships: [
           {
