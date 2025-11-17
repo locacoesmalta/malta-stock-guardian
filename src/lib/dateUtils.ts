@@ -159,3 +159,37 @@ export function getDaysDifference(dateLeft: string | Date, dateRight: string | D
   
   return differenceInDays(zonedLeft, zonedRight);
 }
+
+/**
+ * ⚠️ FUNÇÃO CRÍTICA: Converte data de input (YYYY-MM-DD) considerando timezone de Belém
+ * USE ESTA FUNÇÃO ao enviar datas de formulários para o banco de dados
+ * 
+ * Resolve o problema de datas sendo salvas com 1 dia a menos devido a conversão UTC incorreta
+ * 
+ * @param dateString - Data no formato YYYY-MM-DD do input HTML
+ * @returns string no formato YYYY-MM-DD interpretado como data de Belém
+ * 
+ * @example
+ * parseInputDateToBelem("2025-11-04") // "2025-11-04" (garantido timezone correto)
+ * 
+ * // Uso em envio de dados:
+ * const { data } = await supabase.from("reports").insert({
+ *   report_date: parseInputDateToBelem(formData.report_date), // ✅ Correto
+ * });
+ */
+export function parseInputDateToBelem(dateString: string): string {
+  if (!dateString) return dateString;
+  
+  // Input HTML date retorna "YYYY-MM-DD"
+  // Precisamos garantir que seja interpretado como data de Belém
+  const [year, month, day] = dateString.split('-').map(Number);
+  
+  // Criar data explicitamente no timezone de Belém (meio-dia para evitar edge cases)
+  const belemDate = toZonedTime(
+    new Date(year, month - 1, day, 12, 0, 0),
+    BELEM_TIMEZONE
+  );
+  
+  // Retornar apenas a data no formato ISO (YYYY-MM-DD)
+  return format(belemDate, 'yyyy-MM-dd');
+}

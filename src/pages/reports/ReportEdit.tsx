@@ -10,7 +10,7 @@ import { useWithdrawalsByPAT } from "@/hooks/useWithdrawalsByPAT";
 import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
 import { formatPAT } from "@/lib/patUtils";
 import { BackButton } from "@/components/BackButton";
-import { getTodayLocalDate } from "@/lib/dateUtils";
+import { getTodayLocalDate, parseInputDateToBelem } from "@/lib/dateUtils";
 import { ReportEquipmentSelector } from "@/components/reports/ReportEquipmentSelector";
 import { ReportPartsManager } from "@/components/reports/ReportPartsManager";
 import { ReportPhotoUploader } from "@/components/reports/ReportPhotoUploader";
@@ -279,7 +279,7 @@ const ReportEdit = () => {
           work_site: formData.work_site,
           company: formData.company,
           technician_name: formData.technician_name,
-          report_date: formData.report_date,
+          report_date: parseInputDateToBelem(formData.report_date),
           service_comments: formData.service_comments,
           considerations: formData.considerations,
           observations: formData.observations,
