@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatPAT } from "@/lib/patUtils";
-import { getTodayLocalDate } from "@/lib/dateUtils";
+import { getTodayLocalDate, parseInputDateToBelem } from "@/lib/dateUtils";
 import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
 import { useWithdrawalsByPAT } from "@/hooks/useWithdrawalsByPAT";
 import { useSmartAutofill } from "@/hooks/useSmartAutofill";
@@ -174,7 +174,7 @@ export const QuickReportForm = ({ initialPat, onComplete }: QuickReportFormProps
           company: formData.company,
           work_site: formData.work_site,
           technician_name: formData.technician_name,
-          report_date: formData.report_date,
+          report_date: parseInputDateToBelem(formData.report_date),
           service_comments: formData.service_comments,
           created_by: user.id,
         })
