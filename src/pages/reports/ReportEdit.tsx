@@ -337,6 +337,17 @@ const ReportEdit = () => {
 
           // Upload nova foto se houver
           if (photo.file) {
+            // Se tem existingUrl, é foto antiga editada - deletar antiga do storage
+            if (photo.existingUrl) {
+              const { error: deleteError } = await supabase.storage
+                .from("report-photos")
+                .remove([photo.existingUrl]);
+              
+              if (deleteError) {
+                console.warn('Erro ao deletar foto antiga:', deleteError);
+              }
+            }
+
             const fileName = `${id}_${Date.now()}_${photoOrder}.${photo.file.name.split('.').pop()}`;
             const { error: uploadError } = await supabase.storage
               .from("report-photos")

@@ -274,6 +274,16 @@ export function formatFileSize(bytes: number): string {
 }
 
 /**
+ * Converte URL de imagem para File object
+ * Necessário para editar fotos antigas que só têm URL
+ */
+export async function urlToFile(url: string, filename: string): Promise<File> {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  return new File([blob], filename, { type: blob.type });
+}
+
+/**
  * Calcula percentual de redução de tamanho
  */
 export function calculateSizeReduction(originalSize: number, processedSize: number): number {
