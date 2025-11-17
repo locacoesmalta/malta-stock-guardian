@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, X, Plus } from "lucide-react";
+import { Upload, X, Plus, Edit } from "lucide-react";
+import { PhotoEditor } from "./PhotoEditor";
+import type { ProcessedImageResult } from "@/lib/imageProcessing";
 
 interface PhotoData {
   file: File | null;
@@ -33,6 +36,28 @@ export const ReportPhotoUploader = ({
   onRemoveAdditionalPhoto,
   onAddAdditionalPhoto,
 }: ReportPhotoUploaderProps) => {
+  const [editingPhoto, setEditingPhoto] = useState<{
+    index: number;
+    file: File | null;
+    preview: string;
+    isAdditional: boolean;
+  } | null>(null);
+
+  const handleSaveEdit = (index: number, result: ProcessedImageResult) => {
+    // Criar novo File a partir do blob processado
+    const newFile = new File([result.blob], `photo_${index + 1}.jpg`, {
+      type: result.blob.type,
+    });
+
+    if (editingPhoto?.isAdditional) {
+      onAdditionalPhotoChange(index, newFile);
+    } else {
+      onPhotoChange(index, newFile);
+    }
+
+    setEditingPhoto(null);
+  };
+
   return (
     <>
       <Card>
@@ -62,21 +87,38 @@ export const ReportPhotoUploader = ({
                       />
                     </label>
                   ) : (
-                    <div className="relative">
+                    <div className="relative group">
                       <img
                         src={photo.preview}
                         alt={`Preview ${index + 1}`}
                         className="w-full h-40 object-cover rounded-lg"
                       />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-2 right-2"
-                        onClick={() => onRemovePhoto(index)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                      <div className="absolute top-2 right-2 flex gap-1">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="icon"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() =>
+                            setEditingPhoto({
+                              index,
+                              file: photo.file,
+                              preview: photo.preview,
+                              isAdditional: false,
+                            })
+                          }
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => onRemovePhoto(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   )}
                   <Textarea
@@ -121,21 +163,38 @@ export const ReportPhotoUploader = ({
                         />
                       </label>
                     ) : (
-                      <div className="relative">
+                      <div className="relative group">
                         <img
                           src={photo.preview}
                           alt={`Additional Preview ${index + 1}`}
                           className="w-full h-40 object-cover rounded-lg"
                         />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-2 right-2"
-                          onClick={() => onRemoveAdditionalPhoto(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                        <div className="absolute top-2 right-2 flex gap-1">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="icon"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() =>
+                              setEditingPhoto({
+                                index,
+                                file: photo.file,
+                                preview: photo.preview,
+                                isAdditional: true,
+                              })
+                            }
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            onClick={() => onRemoveAdditionalPhoto(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     )}
                     <Textarea
@@ -162,6 +221,18 @@ export const ReportPhotoUploader = ({
         <Plus className="mr-2 h-4 w-4" />
         Adicionar Foto Adicional
       </Button>
+
+      {/* Photo Editor Modal */}
+      {editingPhoto && (
+        <PhotoEditor
+          open={!!editingPhoto}
+          onOpenChange={(open) => !open && setEditingPhoto(null)}
+          photoFile={editingPhoto.file}
+          photoPreview={editingPhoto.preview}
+          photoIndex={editingPhoto.index}
+          onSaveEdit={handleSaveEdit}
+        />
+      )}
     </>
   );
 };
