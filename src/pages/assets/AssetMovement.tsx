@@ -420,21 +420,29 @@ export default function AssetMovement() {
       getTodayLocalDate()
     );
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    movementDate.setHours(0, 0, 0, 0);
+
+    // ✅ BLOQUEIO ÚNICO: Data não pode ser futura
+    if (movementDate > today) {
+      toast.error("❌ Data da movimentação não pode ser futura");
+      return;
+    }
+
     const daysDiff = Math.floor((today.getTime() - movementDate.getTime()) / (1000 * 60 * 60 * 24));
 
-    // VALIDAÇÃO: data de movimento não pode ser anterior à entrada do equipamento
-    movementDate.setHours(0, 0, 0, 0);
-    
+    // ⚠️ AVISO: Movimentação retroativa (NÃO bloqueia mais)
     if (asset.effective_registration_date) {
-      // Se há data de entrada definida, validar contra ela
       const assetEntryDate = new Date(asset.effective_registration_date);
       assetEntryDate.setHours(0, 0, 0, 0);
       
       if (movementDate < assetEntryDate) {
-        toast.error(
-          `Data da movimentação (${format(movementDate, 'dd/MM/yyyy')}) não pode ser anterior à entrada registrada do equipamento (${format(assetEntryDate, 'dd/MM/yyyy')})`
+        const retroDays = Math.floor((assetEntryDate.getTime() - movementDate.getTime()) / (1000 * 60 * 60 * 24));
+        toast.info(
+          `⚠️ Movimentação retroativa: Data da movimentação é ${retroDays} dias anterior ao cadastro. ` +
+          `Isso será registrado no histórico para rastreabilidade.`,
+          { duration: 5000 }
         );
-        return;
       }
     } else {
       // Se não há data de entrada definida E a movimentação é anterior ao cadastro
