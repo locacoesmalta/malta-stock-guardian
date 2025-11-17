@@ -21,6 +21,7 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatBRFromYYYYMMDD } from "@/lib/dateUtils";
 
 export default function SystemIntegrity() {
   const [isFixing, setIsFixing] = useState(false);
@@ -470,7 +471,7 @@ export default function SystemIntegrity() {
                             PAT {withdrawal.equipment_code} • Qtd: {withdrawal.quantity}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            Data: {format(new Date(withdrawal.withdrawal_date), "dd/MM/yyyy", { locale: ptBR })}
+                            Data: {formatBRFromYYYYMMDD(withdrawal.withdrawal_date)}
                           </p>
                           <p className="text-sm text-muted-foreground mt-1">
                             {withdrawal.details}
@@ -517,7 +518,7 @@ export default function SystemIntegrity() {
                             {report.company} • {report.work_site}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            Data: {format(new Date(report.report_date), "dd/MM/yyyy", { locale: ptBR })}
+                            Data: {formatBRFromYYYYMMDD(report.report_date)}
                           </p>
                           <p className="text-sm text-muted-foreground mt-1">
                             {report.details}
