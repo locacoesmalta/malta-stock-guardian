@@ -26,7 +26,9 @@ import { getTodayLocalDate } from "@/lib/dateUtils";
 import { useWithdrawalsByPAT } from "@/hooks/useWithdrawalsByPAT";
 import { PendingWithdrawalsAlert } from "@/components/PendingWithdrawalsAlert";
 import { RetroactiveDateWarning } from "@/components/RetroactiveDateWarning";
+import { NonCatalogedProductDialog } from "@/components/NonCatalogedProductDialog";
 
+const NON_CATALOGED_PRODUCT_ID = "00000000-0000-0000-0000-000000000001";
 
 interface WithdrawalItem {
   product_id: string;
@@ -34,6 +36,8 @@ interface WithdrawalItem {
   productName: string;
   productCode: string;
   availableQuantity: number;
+  isNonCataloged?: boolean;
+  customDescription?: string;
 }
 
 const MaterialWithdrawal = () => {
@@ -58,6 +62,7 @@ const MaterialWithdrawal = () => {
   const [principalCollaborator, setPrincipalCollaborator] = useState("");
   const [additionalCollaborators, setAdditionalCollaborators] = useState<string[]>([]);
   const [showCollaborators, setShowCollaborators] = useState(false);
+  const [showNonCatalogedDialog, setShowNonCatalogedDialog] = useState(false);
 
   // Estados para controle de ciclo de vida
   const [lifecycleDecision, setLifecycleDecision] = useState<"pending" | "keep" | "new">("keep");
@@ -159,6 +164,19 @@ const MaterialWithdrawal = () => {
       productCode: "",
       availableQuantity: 0
     }]);
+  };
+
+  const addNonCatalogedItem = (description: string, quantity: number) => {
+    setItems([...items, {
+      product_id: NON_CATALOGED_PRODUCT_ID,
+      quantity,
+      productName: "Produto Não Catalogado",
+      productCode: "NAO-CATALOGADO",
+      availableQuantity: 9999, // Sem limite de estoque
+      isNonCataloged: true,
+      customDescription: description,
+    }]);
+    toast.success("Produto não catalogado adicionado!");
   };
 
   const removeItem = (index: number) => {
@@ -267,9 +285,10 @@ const MaterialWithdrawal = () => {
       return;
     }
 
-    // Validate each item
+    // Validate each item (skip stock validation for non-cataloged products)
     const invalidItems = items.filter(
-      item => !item.product_id || item.quantity <= 0 || item.quantity > item.availableQuantity
+      item => !item.product_id || item.quantity <= 0 || 
+      (!item.isNonCataloged && item.quantity > item.availableQuantity)
     );
 
     if (invalidItems.length > 0) {
@@ -310,7 +329,10 @@ const MaterialWithdrawal = () => {
         product_id: item.product_id,
         quantity: item.quantity,
         withdrawn_by: user?.id,
-        withdrawal_reason: withdrawalReason || (isSaleWithdrawal ? "VENDA" : null),
+        // For non-cataloged products, store custom description in withdrawal_reason
+        withdrawal_reason: item.isNonCataloged 
+          ? `[PRODUTO NÃO CATALOGADO] ${item.customDescription}` 
+          : (withdrawalReason || (isSaleWithdrawal ? "VENDA" : null)),
         withdrawal_date: withdrawalDate,
         equipment_code: isSaleWithdrawal ? "VENDA" : formattedPAT,
         work_site: workSite,
@@ -617,16 +639,29 @@ const MaterialWithdrawal = () => {
         <Card>
           <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <CardTitle className="text-base sm:text-lg">Produtos</CardTitle>
-            <Button 
-              type="button" 
-              onClick={addItem} 
-              size="sm" 
-              className="w-full sm:w-auto text-xs sm:text-sm"
-              disabled={lifecycleDecision === "pending"}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Produto
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <Button 
+                type="button" 
+                onClick={addItem} 
+                size="sm" 
+                className="w-full sm:w-auto text-xs sm:text-sm"
+                disabled={lifecycleDecision === "pending"}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Produto
+              </Button>
+              <Button 
+                type="button" 
+                onClick={() => setShowNonCatalogedDialog(true)}
+                size="sm" 
+                variant="outline"
+                className="w-full sm:w-auto text-xs sm:text-sm"
+                disabled={lifecycleDecision === "pending"}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Produto Não Catalogado
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {lifecycleDecision === "pending" && (
@@ -673,14 +708,24 @@ const MaterialWithdrawal = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-xs sm:text-sm">Produto *</Label>
-                      <ProductSelector
-                        products={availableProducts}
-                        value={item.product_id}
-                        onValueChange={(value) => updateItem(index, "product_id", value)}
-                        showStock={true}
-                        required={true}
-                        showCompatibility={!isSaleWithdrawal && !!equipment}
-                      />
+                      {item.isNonCataloged ? (
+                        <div className="border rounded-md p-3 bg-muted">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant="secondary">Não Catalogado</Badge>
+                          </div>
+                          <p className="text-sm font-medium">{item.productName}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{item.customDescription}</p>
+                        </div>
+                      ) : (
+                        <ProductSelector
+                          products={availableProducts}
+                          value={item.product_id}
+                          onValueChange={(value) => updateItem(index, "product_id", value)}
+                          showStock={true}
+                          required={true}
+                          showCompatibility={!isSaleWithdrawal && !!equipment}
+                        />
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -714,7 +759,7 @@ const MaterialWithdrawal = () => {
                           <Plus className="h-4 w-4" />
                         </Button>
                       </div>
-                      {item.product_id && (
+                      {item.product_id && !item.isNonCataloged && (
                         <div className="space-y-1">
                           <p className="text-xs text-muted-foreground">
                             Estoque atual: {item.availableQuantity}
@@ -723,6 +768,11 @@ const MaterialWithdrawal = () => {
                             Após retirada: {item.availableQuantity - item.quantity}
                           </p>
                         </div>
+                      )}
+                      {item.isNonCataloged && (
+                        <p className="text-xs text-muted-foreground">
+                          Sem controle de estoque
+                        </p>
                       )}
                     </div>
                   </div>
@@ -746,6 +796,12 @@ const MaterialWithdrawal = () => {
           </Button>
         </div>
       </form>
+
+      <NonCatalogedProductDialog
+        open={showNonCatalogedDialog}
+        onOpenChange={setShowNonCatalogedDialog}
+        onConfirm={addNonCatalogedItem}
+      />
 
       <ConfirmDialog />
     </div>

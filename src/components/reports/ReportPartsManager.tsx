@@ -12,6 +12,8 @@ interface ReportPart {
   productName: string;
   productCode: string;
   purchasePrice: number | null;
+  customDescription?: string; // For non-cataloged products
+  isNonCataloged?: boolean;
 }
 
 interface ReportPartsManagerProps {
@@ -62,13 +64,28 @@ export const ReportPartsManager = ({
                 className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 border rounded-lg bg-muted/30"
               >
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm truncate">{part.productName}</div>
-                  <div className="text-xs text-muted-foreground">
-                    Código: {part.productCode}
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="font-medium text-sm truncate">{part.productName}</div>
+                    {part.isNonCataloged && (
+                      <Badge variant="outline" className="text-xs">
+                        Não Catalogado
+                      </Badge>
+                    )}
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    Quantidade retirada: {part.quantity_withdrawn}
-                  </div>
+                  {part.isNonCataloged ? (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      <span className="font-medium">Descrição:</span> {part.customDescription}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-xs text-muted-foreground">
+                        Código: {part.productCode}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Quantidade retirada: {part.quantity_withdrawn}
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2">
