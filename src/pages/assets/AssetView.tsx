@@ -120,7 +120,7 @@ export default function AssetView() {
 
   const handleSubstitutionDecision = () => {
     setShowSubstitutionDialog(false);
-    navigate(`/assets/substitution/${id}`);
+    navigate(`/assets/substitution?assetId=${id}`);
   };
 
   const handleNormalMovement = () => {
