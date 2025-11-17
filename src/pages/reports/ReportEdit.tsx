@@ -26,6 +26,7 @@ interface ReportPart {
   productName: string;
   productCode: string;
   purchasePrice: number | null;
+  isNonCataloged?: boolean;
 }
 
 interface PhotoData {
@@ -101,6 +102,7 @@ const ReportEdit = () => {
           productName: part.products?.name || "",
           productCode: part.products?.code || "",
           purchasePrice: part.products?.purchase_price || null,
+          isNonCataloged: part.product_id === '00000000-0000-0000-0000-000000000001',
         }));
         setParts(existingParts);
       }
@@ -145,6 +147,7 @@ const ReportEdit = () => {
           productName: w.products?.name || "",
           productCode: w.products?.code || "",
           purchasePrice: w.products?.purchase_price || null,
+          isNonCataloged: w.product_id === '00000000-0000-0000-0000-000000000001',
         }));
 
       if (newParts.length > 0) {
@@ -161,7 +164,8 @@ const ReportEdit = () => {
       return;
     }
 
-    if (newQuantity > part.quantity_withdrawn) {
+    // Produtos não catalogados não têm limite de quantidade (apenas informativos)
+    if (!part.isNonCataloged && newQuantity > part.quantity_withdrawn) {
       toast.error(
         `Quantidade não pode exceder ${part.quantity_withdrawn} (total disponível)!`
       );
