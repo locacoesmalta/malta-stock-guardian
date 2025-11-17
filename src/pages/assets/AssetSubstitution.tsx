@@ -114,24 +114,24 @@ export default function AssetSubstitution() {
     const substitutionDate = new Date(dateStr);
     const today = new Date(getTodayLocalDate());
 
-    // ❌ BLOQUEIO 1: Data não pode ser futura
+    // ✅ BLOQUEIO ÚNICO: Data não pode ser futura
     if (substitutionDate > today) {
       toast.error("❌ Data de substituição não pode ser futura");
       return false;
     }
 
-    // ❌ BLOQUEIO 2: Data não pode ser anterior ao cadastro do equipamento original
+    // ⚠️ AVISO: Substituição retroativa (NÃO bloqueia)
     const originalAssetDate = asset.effective_registration_date 
       ? new Date(asset.effective_registration_date) 
       : new Date(asset.created_at);
 
     if (substitutionDate < originalAssetDate) {
-      const formattedOriginalDate = format(originalAssetDate, "dd/MM/yyyy");
-      toast.error(
-        `❌ Data de substituição (${format(substitutionDate, "dd/MM/yyyy")}) não pode ser anterior ` +
-        `ao cadastro do equipamento original (${formattedOriginalDate})`
+      const daysDiff = Math.floor((originalAssetDate.getTime() - substitutionDate.getTime()) / (1000 * 60 * 60 * 24));
+      toast.info(
+        `⚠️ Substituição retroativa: Data da substituição é ${daysDiff} dias anterior ao cadastro. ` +
+        `Isso será registrado no histórico para rastreabilidade.`,
+        { duration: 5000 }
       );
-      return false;
     }
 
     return true;
