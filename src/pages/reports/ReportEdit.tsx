@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useReportDetails } from "@/hooks/useReportDetails";
 import { useWithdrawalsByPAT } from "@/hooks/useWithdrawalsByPAT";
+import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
 import { formatPAT } from "@/lib/patUtils";
 import { BackButton } from "@/components/BackButton";
 import { getTodayLocalDate } from "@/lib/dateUtils";
@@ -61,6 +62,11 @@ const ReportEdit = () => {
     Array(6).fill(null).map(() => ({ file: null, preview: "", comment: "" }))
   );
   const [additionalPhotos, setAdditionalPhotos] = useState<PhotoData[]>([]);
+
+  // Buscar informações do equipamento pelo PAT
+  const { data: equipment, isLoading: loadingEquipment } = useEquipmentByPAT(
+    formData.equipment_code
+  );
 
   // Buscar retiradas disponíveis para o PAT
   const { data: withdrawals = [], isLoading: loadingWithdrawals } = useWithdrawalsByPAT(
@@ -428,8 +434,8 @@ const ReportEdit = () => {
                   setFormData({ ...formData, equipment_code: formatted });
                 }
               }}
-              equipment={null}
-              loadingEquipment={loadingWithdrawals}
+              equipment={equipment}
+              loadingEquipment={loadingEquipment}
             />
 
             {/* Campos do Relatório */}
@@ -443,7 +449,7 @@ const ReportEdit = () => {
               observations={formData.observations}
               receiver={formData.receiver}
               responsible={formData.responsible}
-              equipment={null}
+              equipment={equipment}
               onCompanyChange={(value) => setFormData({ ...formData, company: value })}
               onWorkSiteChange={(value) => setFormData({ ...formData, work_site: value })}
               onTechnicianNameChange={(value) => setFormData({ ...formData, technician_name: value })}
