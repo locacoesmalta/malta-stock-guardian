@@ -11,7 +11,7 @@ import { useWithdrawalsByPAT } from "@/hooks/useWithdrawalsByPAT";
 import { useEquipmentFormAutofill } from "@/hooks/useEquipmentFormAutofill";
 import { formatPAT } from "@/lib/patUtils";
 import { BackButton } from "@/components/BackButton";
-import { getTodayLocalDate } from "@/lib/dateUtils";
+import { getTodayLocalDate, parseInputDateToBelem } from "@/lib/dateUtils";
 import { ReportEquipmentSelector } from "@/components/reports/ReportEquipmentSelector";
 import { ReportPartsManager } from "@/components/reports/ReportPartsManager";
 import { ReportPhotoUploader } from "@/components/reports/ReportPhotoUploader";
@@ -287,7 +287,7 @@ const NewReport = () => {
           p_work_site: formData.work_site,
           p_company: formData.company,
           p_technician_name: formData.technician_name,
-          p_report_date: formData.report_date,
+          p_report_date: parseInputDateToBelem(formData.report_date),
           p_service_comments: formData.service_comments,
           p_considerations: formData.considerations || null,
           p_observations: formData.observations || null,
