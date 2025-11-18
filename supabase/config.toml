@@ -8,6 +8,3 @@ verify_jwt = false
 
 [functions.cleanup-stale-sessions]
 verify_jwt = false
-
-[functions.create-user]
-verify_jwt = false
