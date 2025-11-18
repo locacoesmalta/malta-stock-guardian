@@ -16,7 +16,6 @@ export function AppHeader() {
             src="/malta-logo.webp" 
             alt="Malta Locações" 
             className="h-8 w-8 md:h-10 md:w-10 lg:h-12 lg:w-12 object-contain"
-            fetchPriority="high"
           />
           <span className="hidden sm:inline-block font-semibold text-sm md:text-base lg:text-lg truncate">
             Malta Locações
