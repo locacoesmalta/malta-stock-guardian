@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import "@/styles/report-print.css";
@@ -17,6 +20,7 @@ import { ReportPartsManager } from "@/components/reports/ReportPartsManager";
 import { ReportPhotoUploader } from "@/components/reports/ReportPhotoUploader";
 import { ReportFormFields } from "@/components/reports/ReportFormFields";
 import { DuplicateReportWarning } from "@/components/DuplicateReportWarning";
+import { Wrench, Plus, Trash2 } from "lucide-react";
 
 interface ReportPart {
   withdrawal_id: string;
@@ -32,6 +36,11 @@ interface PhotoData {
   file: File | null;
   preview: string;
   comment: string;
+}
+
+interface ExternalService {
+  description: string;
+  value: number;
 }
 
 const NewReport = () => {
@@ -61,6 +70,12 @@ const NewReport = () => {
     Array(6).fill(null).map(() => ({ file: null, preview: "", comment: "" }))
   );
   const [additionalPhotos, setAdditionalPhotos] = useState<PhotoData[]>([]);
+  const [hasExternalServices, setHasExternalServices] = useState(false);
+  const [externalServices, setExternalServices] = useState<ExternalService[]>([]);
+  const [currentService, setCurrentService] = useState<ExternalService>({ 
+    description: "", 
+    value: 0 
+  });
 
   // Buscar informações do equipamento pelo PAT
   const { data: equipment, isLoading: loadingEquipment } = useEquipmentByPAT(formData.equipment_code);
@@ -113,6 +128,41 @@ const NewReport = () => {
     const updatedParts = [...parts];
     updatedParts[index].quantity_used = newQuantity;
     setParts(updatedParts);
+  };
+
+  const addExternalService = () => {
+    const trimmedDesc = currentService.description.trim();
+    
+    if (!trimmedDesc) {
+      toast.error("Digite a descrição do serviço externo");
+      return;
+    }
+    
+    if (trimmedDesc.length > 500) {
+      toast.error("Descrição muito longa (máximo 500 caracteres)");
+      return;
+    }
+    
+    if (currentService.value <= 0) {
+      toast.error("O valor deve ser maior que zero");
+      return;
+    }
+    
+    setExternalServices([...externalServices, { 
+      description: trimmedDesc, 
+      value: currentService.value 
+    }]);
+    setCurrentService({ description: "", value: 0 });
+    toast.success("Serviço externo adicionado!");
+  };
+
+  const removeExternalService = (index: number) => {
+    setExternalServices(externalServices.filter((_, i) => i !== index));
+    toast.info("Serviço removido");
+  };
+
+  const getTotalServicesValue = () => {
+    return externalServices.reduce((sum, s) => sum + s.value, 0);
   };
 
   // Cleanup preview URLs on unmount
@@ -279,6 +329,11 @@ const NewReport = () => {
         withdrawal_id: part.withdrawal_id,
       }));
 
+      const servicesJson = externalServices.map(s => ({
+        description: s.description,
+        value: s.value
+      }));
+
       const { data: reportId, error: reportError } = await supabase.rpc(
         'create_report_with_parts',
         {
@@ -295,6 +350,7 @@ const NewReport = () => {
           p_responsible: formData.responsible || null,
           p_created_by: user?.id,
           p_parts: partsJson,
+          p_external_services: servicesJson,
         }
       );
 
@@ -424,6 +480,138 @@ const NewReport = () => {
           onUpdateQuantity={updatePartQuantity}
           loadingWithdrawals={loadingWithdrawals}
         />
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Wrench className="h-5 w-5" />
+              Serviços Externos
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Registre serviços realizados por terceiros (soldagem, pintura, etc.)
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-4">
+              <Label className="text-base font-medium">Teve serviços externos?</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={hasExternalServices ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setHasExternalServices(true)}
+                >
+                  Sim
+                </Button>
+                <Button
+                  type="button"
+                  variant={!hasExternalServices ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setHasExternalServices(false);
+                    setExternalServices([]);
+                    setCurrentService({ description: "", value: 0 });
+                  }}
+                >
+                  Não
+                </Button>
+              </div>
+            </div>
+
+            {hasExternalServices && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-slate-50">
+                  <div className="space-y-2">
+                    <Label htmlFor="service-desc">
+                      Descrição do Serviço *
+                      <span className="text-xs text-muted-foreground ml-2">
+                        ({currentService.description.length}/500)
+                      </span>
+                    </Label>
+                    <Textarea
+                      id="service-desc"
+                      placeholder="Ex: Soldagem estrutural do chassi, pintura completa, troca de componente elétrico..."
+                      value={currentService.description}
+                      onChange={(e) => setCurrentService({
+                        ...currentService, 
+                        description: e.target.value.slice(0, 500)
+                      })}
+                      rows={3}
+                      className="resize-none"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="service-value">Valor do Serviço (R$) *</Label>
+                    <Input
+                      id="service-value"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0,00"
+                      value={currentService.value || ""}
+                      onChange={(e) => setCurrentService({
+                        ...currentService, 
+                        value: parseFloat(e.target.value) || 0
+                      })}
+                    />
+                    <Button
+                      type="button"
+                      onClick={addExternalService}
+                      className="w-full mt-2"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Adicionar Serviço
+                    </Button>
+                  </div>
+                </div>
+
+                {externalServices.length > 0 && (
+                  <div className="space-y-3">
+                    <Label className="text-base font-medium">
+                      Serviços Registrados ({externalServices.length})
+                    </Label>
+                    <div className="space-y-2">
+                      {externalServices.map((service, index) => (
+                        <div 
+                          key={index} 
+                          className="flex items-start justify-between p-3 border rounded-lg bg-white hover:bg-slate-50 transition-colors"
+                        >
+                          <div className="flex-1 space-y-1">
+                            <p className="font-medium text-sm">{service.description}</p>
+                            <p className="text-lg text-green-600 font-bold">
+                              R$ {service.value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeExternalService(index)}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-semibold text-blue-900">
+                          Total de Serviços Externos:
+                        </span>
+                        <span className="text-xl font-bold text-blue-700">
+                          R$ {getTotalServicesValue().toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
 
         <ReportPhotoUploader
           photos={photos}
