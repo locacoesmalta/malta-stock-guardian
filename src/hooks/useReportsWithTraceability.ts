@@ -31,6 +31,13 @@ interface ReportWithTraceability {
   technician_name: string;
   service_comments: string;
   report_parts: ReportPartWithTraceability[];
+  report_external_services?: Array<{
+    id: string;
+    service_description: string;
+    service_value: number;
+    created_at: string;
+    created_by: string;
+  }>;
   report_photos: Array<{
     photo_url: string;
     photo_comment: string;
@@ -52,7 +59,7 @@ export const useReportsWithTraceability = (options?: UseReportsWithTraceabilityO
     queryFn: async (): Promise<ReportWithTraceability[]> => {
       let query = supabase
         .from("reports")
-        .select(`
+      .select(`
           id,
           report_date,
           equipment_code,
@@ -75,6 +82,13 @@ export const useReportsWithTraceability = (options?: UseReportsWithTraceabilityO
               company,
               withdrawn_by
             )
+          ),
+          report_external_services(
+            id,
+            service_description,
+            service_value,
+            created_at,
+            created_by
           ),
           report_photos(photo_url, photo_comment, photo_order)
         `)

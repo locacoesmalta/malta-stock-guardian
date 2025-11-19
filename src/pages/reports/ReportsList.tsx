@@ -38,10 +38,16 @@ const ReportsList = () => {
 
     const sortedPhotos = [...report.report_photos].sort((a, b) => a.photo_order - b.photo_order);
 
-    const totalCost = report.report_parts.reduce((sum, part) => {
+    const partsCost = report.report_parts.reduce((sum, part) => {
       const price = part.products.purchase_price || 0;
       return sum + (price * part.quantity_used);
     }, 0);
+
+    const servicesCost = (report.report_external_services || []).reduce((sum, service) => {
+      return sum + parseFloat(service.service_value.toString());
+    }, 0);
+
+    const totalCost = partsCost + servicesCost;
 
     const partsTable = report.report_parts.map((part) => {
       const unitPrice = part.products.purchase_price || 0;
@@ -72,6 +78,33 @@ const ReportsList = () => {
         ` : ''}
       `;
     }).join('');
+
+    const servicesTable = (report.report_external_services || []).map((service, idx) => `
+      <tr style="background: linear-gradient(to right, #fff7ed, #ffffff);">
+        <td colspan="2" style="padding: 12px; border: 1px solid #e5e7eb;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 18px;">🔧</span>
+            <div>
+              <strong style="color: #c2410c; font-size: 14px;">Serviço Externo #${idx + 1}</strong>
+              <p style="margin: 4px 0 0 0; color: #374151; font-size: 13px;">
+                ${service.service_description}
+              </p>
+            </div>
+          </div>
+        </td>
+        <td style="padding: 12px; border: 1px solid #e5e7eb; text-align: center; color: #9ca3af;">
+          -
+        </td>
+        <td style="padding: 12px; border: 1px solid #e5e7eb; text-align: right; color: #9ca3af;">
+          -
+        </td>
+        <td style="padding: 12px; border: 1px solid #e5e7eb; text-align: right; font-weight: bold; color: #c2410c; font-size: 15px;">
+          R$ ${parseFloat(service.service_value.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </td>
+      </tr>
+    `).join('');
+
+    const allRows = partsTable + servicesTable;
 
     printWindow.document.write(`
       <html>
@@ -109,26 +142,32 @@ const ReportsList = () => {
             <p>${report.service_comments}</p>
           </div>
 
-          <h2>Peças Utilizadas</h2>
+          <h2>Peças Utilizadas e Serviços Externos</h2>
           <table class="parts-table">
             <thead>
               <tr>
                 <th>Código</th>
-                <th>Peça</th>
+                <th>Descrição</th>
                 <th>Quantidade</th>
                 <th style="text-align: right;">Preço Unit.</th>
                 <th style="text-align: right;">Custo Total</th>
               </tr>
             </thead>
             <tbody>
-              ${partsTable}
+              ${allRows}
             </tbody>
-            <tfoot>
-              <tr style="background: #f3f4f6; font-weight: bold;">
-                <td colspan="4" style="padding: 10px; border: 1px solid #ddd; text-align: right;">CUSTO TOTAL:</td>
-                <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">R$ ${totalCost.toFixed(2)}</td>
-              </tr>
-            </tfoot>
+            ${allRows ? `
+              <tfoot>
+                <tr style="background: #f3f4f6; font-weight: bold; font-size: 16px;">
+                  <td colspan="4" style="padding: 14px; border: 2px solid #3b82f6; text-align: right; color: #1f2937;">
+                    TOTAL GERAL (Peças + Serviços):
+                  </td>
+                  <td style="padding: 14px; border: 2px solid #3b82f6; text-align: right; color: #1e40af; font-size: 18px;">
+                    R$ ${totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                </tr>
+              </tfoot>
+            ` : ''}
           </table>
 
           <h2>Fotos do Serviço</h2>
@@ -241,10 +280,17 @@ const ReportsList = () => {
             <div className="space-y-3">
               {reports.map((report) => {
                 const isExpanded = expandedReportId === report.id;
-                const totalCost = report.report_parts.reduce((sum, part) => {
+                
+                const partsCost = report.report_parts.reduce((sum, part) => {
                   const price = part.products.purchase_price || 0;
                   return sum + (price * part.quantity_used);
                 }, 0);
+
+                const servicesCost = (report.report_external_services || []).reduce((sum, service) => {
+                  return sum + parseFloat(service.service_value.toString());
+                }, 0);
+
+                const totalCost = partsCost + servicesCost;
 
                 return (
                   <div
@@ -328,6 +374,43 @@ const ReportsList = () => {
                         </div>
 
                         <ReportPartsTraceability parts={report.report_parts} />
+
+                        {report.report_external_services && report.report_external_services.length > 0 && (
+                          <div className="space-y-2">
+                            <h4 className="font-semibold text-orange-700 flex items-center gap-2 text-sm">
+                              🔧 Serviços Externos
+                            </h4>
+                            <div className="space-y-2">
+                              {report.report_external_services.map((service, idx) => (
+                                <div key={service.id} className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                                  <div className="flex justify-between items-start">
+                                    <div className="flex-1">
+                                      <p className="text-sm font-semibold text-orange-900">
+                                        Serviço #{idx + 1}
+                                      </p>
+                                      <p className="text-sm text-gray-700 mt-1">
+                                        {service.service_description}
+                                      </p>
+                                    </div>
+                                    <span className="text-lg font-bold text-orange-600 ml-4">
+                                      R$ {parseFloat(service.service_value.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                              <div className="p-3 bg-orange-100 border-2 border-orange-300 rounded-lg">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm font-bold text-orange-900">
+                                    Subtotal Serviços:
+                                  </span>
+                                  <span className="text-lg font-bold text-orange-700">
+                                    R$ {servicesCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
 
                         <div className="border-t pt-3">
                           <div className="font-medium text-sm mb-2">Comentários do Serviço:</div>
