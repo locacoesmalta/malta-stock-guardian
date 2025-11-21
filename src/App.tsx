@@ -62,6 +62,7 @@ const SystemIntegrity = lazy(() => import("./pages/admin/SystemIntegrity"));
 const SessionHealth = lazy(() => import("./pages/admin/SessionHealth"));
 const EdgeFunctionsHealth = lazy(() => import("./pages/admin/EdgeFunctionsHealth"));
 const QuickReport = lazy(() => import("./pages/reports/QuickReport"));
+const UserActivities = lazy(() => import("./pages/admin/UserActivities"));
 
 const queryClient = new QueryClient();
 
@@ -467,6 +468,7 @@ const App = () => (
               <Route path="/reports/parts-consumption" element={<ProtectedLayout><AdminRoute><PartsConsumptionReport /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/users" element={<ProtectedLayout><OwnerOnlyRoute><Users /></OwnerOnlyRoute></ProtectedLayout>} />
               <Route path="/admin/logs" element={<ProtectedLayout><AdminRoute><AuditLogs /></AdminRoute></ProtectedLayout>} />
+              <Route path="/admin/user-activities" element={<ProtectedLayout><AdminRoute><UserActivities /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/error-logs" element={<ProtectedLayout><AdminRoute><ErrorLogs /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/active-sessions" element={<ProtectedLayout><AdminRoute><ActiveSessions /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/system-integrity" element={<ProtectedLayout><AdminRoute><SystemIntegrity /></AdminRoute></ProtectedLayout>} />
