@@ -496,7 +496,7 @@ export default function PostInspection() {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(`/assets/replacement/${id}`)}>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(`/assets/substitution?assetId=${id}`)}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <RefreshCw className="h-5 w-5 text-purple-500" />
