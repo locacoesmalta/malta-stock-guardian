@@ -33,6 +33,7 @@ export default function SystemIntegrity() {
     withdrawalsIntegrity,
     reportsIntegrity,
     productsStockIntegrity,
+    productsOrphanIntegrity,
     fixStaleSessions,
     fixDuplicateSessions,
     refetchAll,
@@ -46,7 +47,8 @@ export default function SystemIntegrity() {
     assetsIntegrity.count +
     withdrawalsIntegrity.count +
     reportsIntegrity.count +
-    productsStockIntegrity.count;
+    productsStockIntegrity.count +
+    productsOrphanIntegrity.count;
 
   const handleFixSessions = async () => {
     setIsFixing(true);
@@ -83,6 +85,7 @@ export default function SystemIntegrity() {
       withdrawals: withdrawalsIntegrity.data,
       reports: reportsIntegrity.data,
       products_stock: productsStockIntegrity.data,
+      products_orphan: productsOrphanIntegrity.data,
     };
 
     const blob = new Blob([JSON.stringify(report, null, 2)], {
@@ -256,6 +259,21 @@ export default function SystemIntegrity() {
               </div>
               <Badge variant={productsStockIntegrity.count === 0 ? "default" : "destructive"}>
                 {productsStockIntegrity.count === 0 ? "OK" : "ATENÇÃO"}
+              </Badge>
+            </div>
+
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="h-8 w-8 text-red-500" />
+                <div>
+                  <p className="text-sm font-medium">Órfãos</p>
+                  <p className="text-2xl font-bold">
+                    {productsOrphanIntegrity.count}
+                  </p>
+                </div>
+              </div>
+              <Badge variant={productsOrphanIntegrity.count === 0 ? "default" : "destructive"}>
+                {productsOrphanIntegrity.count === 0 ? "OK" : "CRÍTICO"}
               </Badge>
             </div>
           </div>
@@ -570,6 +588,61 @@ export default function SystemIntegrity() {
                           <Badge variant={product.issue_type === 'negative_stock' ? 'destructive' : 'secondary'} className="mt-2">
                             {product.issue_type === 'negative_stock' ? 'ESTOQUE NEGATIVO' : 'ABAIXO DO MÍNIMO'}
                           </Badge>
+                        </div>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                ))}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* FASE 1: Referências Órfãs de Produtos */}
+      {productsOrphanIntegrity.count > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Referências Órfãs de Produtos ({productsOrphanIntegrity.count})
+            </CardTitle>
+            <CardDescription>
+              Produtos deletados ainda referenciados em retiradas, relatórios e manutenções
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Alert variant="destructive" className="mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>CRÍTICO:</strong> Referências órfãs comprometem a rastreabilidade do sistema e podem causar erros graves.
+                Contate o administrador imediatamente para resolver estas inconsistências.
+              </AlertDescription>
+            </Alert>
+            <ScrollArea className="h-[400px]">
+              <div className="space-y-3">
+                {productsOrphanIntegrity.data.map((item: any) => (
+                  <Alert key={item.reference_id} variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      <div className="space-y-2">
+                        <div>
+                          <p className="font-semibold">
+                            {item.product_code} - {item.product_name}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {item.details}
+                          </p>
+                          <div className="flex gap-2 mt-2">
+                            <Badge variant="outline">
+                              {item.reference_type === 'material_withdrawal' && 'Retirada'}
+                              {item.reference_type === 'report_part' && 'Relatório'}
+                              {item.reference_type === 'asset_mobilization_part' && 'Mobilização'}
+                              {item.reference_type === 'asset_maintenance_part' && 'Manutenção'}
+                              {item.reference_type === 'asset_spare_part' && 'Peça Reserva'}
+                            </Badge>
+                            <Badge variant="destructive">{item.issue_type}</Badge>
+                          </div>
                         </div>
                       </div>
                     </AlertDescription>

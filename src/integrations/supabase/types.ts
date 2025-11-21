@@ -2143,6 +2143,17 @@ export type Database = {
           product_name: string
         }[]
       }
+      check_products_orphan_references: {
+        Args: never
+        Returns: {
+          details: string
+          issue_type: string
+          product_code: string
+          product_name: string
+          reference_id: string
+          reference_type: string
+        }[]
+      }
       check_products_stock_integrity: {
         Args: never
         Returns: {
@@ -2177,9 +2188,13 @@ export type Database = {
       check_withdrawals_integrity: {
         Args: never
         Returns: {
+          details: string
           equipment_code: string
           issue_type: string
+          product_code: string
           product_name: string
+          quantity: number
+          withdrawal_date: string
           withdrawal_id: string
         }[]
       }
