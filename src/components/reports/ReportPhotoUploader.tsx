@@ -100,7 +100,7 @@ export const ReportPhotoUploader = ({
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Fotos (6 obrigatórias) *</CardTitle>
+          <CardTitle>Fotos (4 obrigatórias) *</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
