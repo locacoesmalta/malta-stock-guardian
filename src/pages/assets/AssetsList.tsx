@@ -8,7 +8,6 @@ import { Plus, Search, QrCode, FileText } from "lucide-react";
 import { differenceInDays, parseISO } from "date-fns";
 import { useAssetsQuery } from "@/hooks/useAssetsQuery";
 import { BackButton } from "@/components/BackButton";
-import { useAssetDataMigration } from "@/hooks/useAssetDataMigration";
 import { AssetDataWarning } from "@/components/AssetDataWarning";
 import { EquipmentBrandSelector } from "@/components/EquipmentBrandSelector";
 import { EquipmentTypeSelector } from "@/components/EquipmentTypeSelector";
@@ -34,9 +33,6 @@ export default function AssetsList() {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const { data: assets = [], isLoading, error } = useAssetsQuery();
-  
-  // Sistema automático de migração de dados para equipamentos antigos
-  const { isMigrating } = useAssetDataMigration();
 
   // Atalhos de teclado
   useEffect(() => {
@@ -180,10 +176,10 @@ export default function AssetsList() {
   const totalAssets = Object.values(statusCounts).reduce((a, b) => a + b, 0);
   const rentalPercentage = totalAssets > 0 ? (statusCounts.locacao / totalAssets) * 100 : 0;
 
-  if (isLoading || isMigrating) {
+  if (isLoading) {
     return (
       <div className="container mx-auto p-4 md:p-6">
-        <p>{isMigrating ? "Atualizando sistema..." : "Carregando..."}</p>
+        <p>Carregando...</p>
       </div>
     );
   }
