@@ -7,7 +7,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSystemIntegrity } from "@/hooks/useSystemIntegrity";
 import { RLSHealthMonitor } from "@/components/admin/RLSHealthMonitor";
-import { 
+import { ManualDataMigration } from "@/components/admin/ManualDataMigration";
+import {
   AlertTriangle, 
   CheckCircle2, 
   Package, 
@@ -134,6 +135,9 @@ export default function SystemIntegrity() {
 
       {/* FASE 6: Monitoramento de Segurança RLS */}
       <RLSHealthMonitor />
+
+      {/* Correção Manual de Dados */}
+      <ManualDataMigration />
 
       {/* Resumo Geral */}
       <Card>
