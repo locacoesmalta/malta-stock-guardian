@@ -1040,6 +1040,7 @@ export type Database = {
           id: string
           is_archived: boolean | null
           lifecycle_cycle: number | null
+          negative_stock_reason: string | null
           product_id: string
           quantity: number
           used_in_report_id: string | null
@@ -1055,6 +1056,7 @@ export type Database = {
           id?: string
           is_archived?: boolean | null
           lifecycle_cycle?: number | null
+          negative_stock_reason?: string | null
           product_id: string
           quantity: number
           used_in_report_id?: string | null
@@ -1070,6 +1072,7 @@ export type Database = {
           id?: string
           is_archived?: boolean | null
           lifecycle_cycle?: number | null
+          negative_stock_reason?: string | null
           product_id?: string
           quantity?: number
           used_in_report_id?: string | null

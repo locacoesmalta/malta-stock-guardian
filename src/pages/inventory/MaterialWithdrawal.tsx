@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { Minus, Plus, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Minus, Plus, Trash2, CheckCircle2, AlertCircle, AlertTriangle } from "lucide-react";
 import { ProductSelector } from "@/components/ProductSelector";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useProducts } from "@/hooks/useProducts";
@@ -17,7 +17,7 @@ import { withdrawalSchema } from "@/lib/schemas";
 import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
 import { useEquipmentFormAutofill } from "@/hooks/useEquipmentFormAutofill";
 import { formatPAT } from "@/lib/patUtils";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { WithdrawalCollaboratorsManager } from "@/components/WithdrawalCollaboratorsManager";
 import { BackButton } from "@/components/BackButton";
 import { useQuery } from "@tanstack/react-query";
@@ -27,6 +27,8 @@ import { useWithdrawalsByPAT } from "@/hooks/useWithdrawalsByPAT";
 import { PendingWithdrawalsAlert } from "@/components/PendingWithdrawalsAlert";
 import { RetroactiveDateWarning } from "@/components/RetroactiveDateWarning";
 import { NonCatalogedProductDialog } from "@/components/NonCatalogedProductDialog";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 const NON_CATALOGED_PRODUCT_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -67,6 +69,7 @@ const MaterialWithdrawal = () => {
   // Estados para controle de ciclo de vida
   const [lifecycleDecision, setLifecycleDecision] = useState<"pending" | "keep" | "new">("keep");
   const [currentCycle, setCurrentCycle] = useState(1);
+  const [negativeStockReasons, setNegativeStockReasons] = useState<Record<number, string>>({});
 
   // Buscar informações do equipamento pelo PAT
   const { data: equipment, isLoading: loadingEquipment } = useEquipmentByPAT(equipmentCode);
@@ -285,15 +288,33 @@ const MaterialWithdrawal = () => {
       return;
     }
 
-    // Validate each item (skip stock validation for non-cataloged products)
+    // Validate each item (permitir estoque negativo agora)
     const invalidItems = items.filter(
-      item => !item.product_id || item.quantity <= 0 || 
-      (!item.isNonCataloged && item.quantity > item.availableQuantity)
+      item => !item.product_id || item.quantity <= 0
     );
 
     if (invalidItems.length > 0) {
-      toast.error("Verifique os itens: quantidades inválidas ou superiores ao estoque disponível!");
+      toast.error("Verifique os itens: produto ou quantidade inválida!");
       return;
+    }
+
+    // ✅ NOVO: Validar justificativa para estoque negativo
+    const itemsWithNegativeStock = items
+      .map((item, index) => ({ item, index }))
+      .filter(({ item }) => 
+        !item.isNonCataloged && 
+        (item.availableQuantity - item.quantity) < 0
+      );
+
+    if (itemsWithNegativeStock.length > 0) {
+      const missingReasons = itemsWithNegativeStock.filter(
+        ({ index }) => !negativeStockReasons[index]?.trim()
+      );
+      
+      if (missingReasons.length > 0) {
+        toast.error("Justificativa obrigatória para itens com estoque negativo!");
+        return;
+      }
     }
 
     // Validate with Zod
@@ -325,7 +346,7 @@ const MaterialWithdrawal = () => {
 
     setLoading(true);
     try {
-      const withdrawals = items.map(item => ({
+      const withdrawals = items.map((item, index) => ({
         product_id: item.product_id,
         quantity: item.quantity,
         withdrawn_by: user?.id,
@@ -333,6 +354,10 @@ const MaterialWithdrawal = () => {
         withdrawal_reason: item.isNonCataloged 
           ? `[PRODUTO NÃO CATALOGADO] ${item.customDescription}` 
           : (withdrawalReason || (isSaleWithdrawal ? "VENDA" : null)),
+        // ✅ NOVO: Adicionar justificativa de estoque negativo
+        negative_stock_reason: (!item.isNonCataloged && (item.availableQuantity - item.quantity) < 0)
+          ? negativeStockReasons[index]
+          : null,
         withdrawal_date: withdrawalDate,
         equipment_code: isSaleWithdrawal ? "VENDA" : formattedPAT,
         work_site: workSite,
@@ -743,7 +768,6 @@ const MaterialWithdrawal = () => {
                         <Input
                           type="number"
                           min="1"
-                          max={item.availableQuantity}
                           value={item.quantity}
                           onChange={(e) => updateItem(index, "quantity", Number(e.target.value))}
                           className="text-center text-sm"
@@ -753,7 +777,7 @@ const MaterialWithdrawal = () => {
                           type="button"
                           variant="outline"
                           size="icon"
-                          onClick={() => updateItem(index, "quantity", Math.min(item.availableQuantity, item.quantity + 1))}
+                          onClick={() => updateItem(index, "quantity", item.quantity + 1)}
                           className="flex-shrink-0"
                         >
                           <Plus className="h-4 w-4" />
@@ -764,9 +788,48 @@ const MaterialWithdrawal = () => {
                           <p className="text-xs text-muted-foreground">
                             Estoque atual: {item.availableQuantity}
                           </p>
-                          <p className="text-xs font-medium text-warning">
+                          <p className={cn(
+                            "text-xs font-medium",
+                            (item.availableQuantity - item.quantity) < 0 
+                              ? "text-destructive" 
+                              : "text-warning"
+                          )}>
                             Após retirada: {item.availableQuantity - item.quantity}
                           </p>
+                          
+                          {/* ✅ NOVO: Alerta de estoque negativo */}
+                          {(item.availableQuantity - item.quantity) < 0 && (
+                            <>
+                              <Alert variant="destructive" className="mt-2">
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertTitle>Estoque ficará NEGATIVO</AlertTitle>
+                                <AlertDescription className="text-xs">
+                                  Este produto não tem estoque suficiente. Informe o motivo da movimentação retroativa abaixo.
+                                </AlertDescription>
+                              </Alert>
+                              
+                              {/* ✅ Campo de justificativa obrigatória */}
+                              <div className="mt-3">
+                                <Label htmlFor={`negative-reason-${index}`} className="text-xs font-medium text-destructive">
+                                  Justificativa Obrigatória *
+                                </Label>
+                                <Textarea
+                                  id={`negative-reason-${index}`}
+                                  placeholder="Ex: Movimentação retroativa referente a manutenção realizada em [data]. PAT [código]. Peças utilizadas mas não registradas no sistema."
+                                  value={negativeStockReasons[index] || ""}
+                                  onChange={(e) => setNegativeStockReasons({
+                                    ...negativeStockReasons,
+                                    [index]: e.target.value
+                                  })}
+                                  className="mt-1 text-xs min-h-[80px]"
+                                  required
+                                />
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Esta justificativa será registrada no histórico e vinculada ao PAT <strong>{equipmentCode || "N/A"}</strong>
+                                </p>
+                              </div>
+                            </>
+                          )}
                         </div>
                       )}
                       {item.isNonCataloged && (

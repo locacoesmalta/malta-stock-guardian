@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle, Package, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ListLoader } from "@/components/LoadingStates";
@@ -24,9 +25,21 @@ const fetchLowStockProducts = async (): Promise<LowStockProduct[]> => {
 
   if (error) throw error;
   
-  // Filtrar produtos com estoque baixo ou zerado no client
-  const lowStock = (data || []).filter(p => p.quantity <= p.min_quantity);
+  // Filtrar produtos com estoque baixo ou zerado (mas não negativos) no client
+  const lowStock = (data || []).filter(p => p.quantity <= p.min_quantity && p.quantity >= 0);
   return lowStock.slice(0, 10);
+};
+
+const fetchNegativeStockProducts = async (): Promise<LowStockProduct[]> => {
+  const { data, error } = await supabase
+    .from("products")
+    .select("id, code, name, quantity, min_quantity")
+    .is("deleted_at", null)
+    .lt("quantity", 0)
+    .order("quantity", { ascending: true });
+
+  if (error) throw error;
+  return data || [];
 };
 
 export const LowStockAlerts = () => {
@@ -34,6 +47,11 @@ export const LowStockAlerts = () => {
   const { data: lowStockProducts, isLoading } = useQuery({
     queryKey: ["low-stock-alerts"],
     queryFn: fetchLowStockProducts,
+  });
+
+  const { data: negativeStockProducts = [] } = useQuery({
+    queryKey: ["negative-stock-alerts"],
+    queryFn: fetchNegativeStockProducts,
   });
 
   if (isLoading) {
@@ -62,6 +80,11 @@ export const LowStockAlerts = () => {
               Alertas de Estoque
             </CardTitle>
             <CardDescription>
+              {negativeStockProducts.length > 0 && (
+                <span className="text-destructive font-semibold">
+                  {negativeStockProducts.length} negativo(s) • {" "}
+                </span>
+              )}
               {criticalProducts.length} sem estoque, {lowProducts.length} estoque baixo
             </CardDescription>
           </div>
@@ -76,6 +99,33 @@ export const LowStockAlerts = () => {
         </div>
       </CardHeader>
       <CardContent>
+        {/* ✅ NOVO: Seção de produtos com estoque NEGATIVO */}
+        {negativeStockProducts.length > 0 && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <CardTitle className="text-base mb-2">
+              ⚠️ {negativeStockProducts.length} Produto(s) com Estoque NEGATIVO
+            </CardTitle>
+            <CardDescription className="text-destructive-foreground">
+              <ul className="mt-2 space-y-1 text-xs">
+                {negativeStockProducts.map(product => (
+                  <li key={product.id} className="flex items-center justify-between">
+                    <span>
+                      <strong>{product.name}</strong> ({product.code})
+                    </span>
+                    <Badge variant="destructive" className="animate-pulse ml-2">
+                      {product.quantity} un
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs mt-3 opacity-90">
+                💡 Produtos negativos indicam movimentações retroativas registradas no sistema.
+              </p>
+            </CardDescription>
+          </Alert>
+        )}
+        
         {lowStockProducts && lowStockProducts.length > 0 ? (
           <div className="space-y-3">
             {lowStockProducts.map((product) => {
