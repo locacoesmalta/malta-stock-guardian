@@ -67,7 +67,7 @@ const NewReport = () => {
   });
   const [parts, setParts] = useState<ReportPart[]>([]);
   const [photos, setPhotos] = useState<PhotoData[]>(
-    Array(6).fill(null).map(() => ({ file: null, preview: "", comment: "" }))
+    Array(4).fill(null).map(() => ({ file: null, preview: "", comment: "" }))
   );
   const [additionalPhotos, setAdditionalPhotos] = useState<PhotoData[]>([]);
   const [hasExternalServices, setHasExternalServices] = useState(false);
@@ -290,14 +290,14 @@ const NewReport = () => {
     }
 
     const uploadedPhotosCount = photos.filter((p) => p.file).length;
-    if (uploadedPhotosCount !== 6) {
-      toast.error("É obrigatório anexar 6 fotos!");
+    if (uploadedPhotosCount !== 4) {
+      toast.error("É obrigatório anexar 4 fotos!");
       return;
     }
 
     const hasEmptyComments = photos.some((p) => p.file && !p.comment.trim());
     if (hasEmptyComments) {
-      toast.error("Todas as 6 fotos obrigatórias devem ter comentários!");
+      toast.error("Todas as 4 fotos obrigatórias devem ter comentários!");
       return;
     }
 
