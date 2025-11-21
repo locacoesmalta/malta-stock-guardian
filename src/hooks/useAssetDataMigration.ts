@@ -190,6 +190,11 @@ export const useAssetDataMigration = () => {
    * MIGRAÇÃO 3: Substitutos presos em "aguardando_laudo"
    * Corrige equipamentos substitutos que deveriam estar em locação
    * mas ficaram em aguardando_laudo após substituição
+   * 
+   * MELHORIAS:
+   * - Logs detalhados para debugging
+   * - Registro automático no histórico
+   * - Tratamento robusto de erros
    */
   const migrateSubstitutesStuckInAguardandoLaudo = async (): Promise<MigrationResult> => {
     const result: MigrationResult = {
@@ -200,62 +205,111 @@ export const useAssetDataMigration = () => {
     };
 
     try {
+      console.log("🔍 Iniciando migração: Substitutos presos em aguardando_laudo...");
+
       // Buscar equipamentos que:
       // 1. Estão em aguardando_laudo
       // 2. NÃO têm dados de locação ainda
       // 3. NÃO foram substituídos (são os substitutos)
       const { data: substituteAssets, error: fetchError } = await supabase
         .from("assets")
-        .select("id, asset_code, location_type, rental_company, was_replaced")
+        .select("id, asset_code, location_type, rental_company, was_replaced, substitution_date")
         .eq("location_type", "aguardando_laudo")
         .is("rental_company", null)
         .eq("was_replaced", false);
 
-      if (fetchError) throw fetchError;
-      if (!substituteAssets || substituteAssets.length === 0) return result;
+      if (fetchError) {
+        console.error("❌ Erro ao buscar substitutos:", fetchError);
+        throw fetchError;
+      }
+
+      console.log(`📊 Encontrados ${substituteAssets?.length || 0} equipamentos em aguardando_laudo sem dados de locação`);
+
+      if (!substituteAssets || substituteAssets.length === 0) {
+        console.log("✅ Nenhum equipamento necessita correção");
+        return result;
+      }
 
       // Para cada equipamento, verificar se ele substituiu outro que tinha dados de locação
       for (const substitute of substituteAssets) {
         try {
+          console.log(`🔄 Verificando PAT ${substitute.asset_code}...`);
+
           // Buscar o equipamento antigo que este substituiu
-          const { data: oldAssets, error: oldError } = await supabase
+          const { data: oldAsset, error: oldError } = await supabase
             .from("assets")
-            .select("rental_company, rental_work_site, rental_start_date, rental_end_date, rental_contract_number, substitution_date")
+            .select("id, asset_code, rental_company, rental_work_site, rental_start_date, rental_end_date, rental_contract_number, substitution_date")
             .eq("replaced_by_asset_id", substitute.id)
             .eq("was_replaced", true)
             .maybeSingle();
 
-          if (oldError) throw oldError;
-          if (!oldAssets) continue;
+          if (oldError) {
+            console.error(`❌ Erro ao buscar equipamento antigo para PAT ${substitute.asset_code}:`, oldError);
+            throw oldError;
+          }
+
+          if (!oldAsset) {
+            console.log(`⚠️ PAT ${substitute.asset_code}: Não encontrado equipamento antigo relacionado`);
+            continue;
+          }
+
+          console.log(`🔗 PAT ${substitute.asset_code} substituiu PAT ${oldAsset.asset_code}`);
 
           // Se o equipamento antigo tinha informações de locação, o substituto deveria estar em locação
-          if (oldAssets.rental_company && oldAssets.rental_work_site) {
+          if (oldAsset.rental_company && oldAsset.rental_work_site) {
+            console.log(`🎯 PAT ${oldAsset.asset_code} estava em locação: ${oldAsset.rental_company} - ${oldAsset.rental_work_site}`);
+
+            const rentalStartDate = substitute.substitution_date || oldAsset.substitution_date || oldAsset.rental_start_date;
+
             const { error: updateError } = await supabase
               .from("assets")
               .update({
                 location_type: "locacao",
-                rental_company: oldAssets.rental_company,
-                rental_work_site: oldAssets.rental_work_site,
-                rental_start_date: oldAssets.substitution_date || oldAssets.rental_start_date,
-                rental_end_date: oldAssets.rental_end_date,
-                rental_contract_number: oldAssets.rental_contract_number,
+                rental_company: oldAsset.rental_company,
+                rental_work_site: oldAsset.rental_work_site,
+                rental_start_date: rentalStartDate,
+                rental_end_date: oldAsset.rental_end_date,
+                rental_contract_number: oldAsset.rental_contract_number,
+                updated_at: new Date().toISOString(),
               })
               .eq("id", substitute.id);
 
-            if (updateError) throw updateError;
+            if (updateError) {
+              console.error(`❌ Erro ao atualizar PAT ${substitute.asset_code}:`, updateError);
+              throw updateError;
+            }
+
+            // Registrar no histórico
+            await supabase.rpc("registrar_evento_patrimonio", {
+              p_pat_id: substitute.id,
+              p_codigo_pat: substitute.asset_code,
+              p_tipo_evento: "CORREÇÃO AUTOMÁTICA",
+              p_detalhes_evento: `Status corrigido automaticamente: equipamento substituiu PAT ${oldAsset.asset_code} que estava em locação (${oldAsset.rental_company} - ${oldAsset.rental_work_site}). O substituto deveria ter herdado automaticamente o status de locação.`,
+              p_campo_alterado: "location_type",
+              p_valor_antigo: "aguardando_laudo",
+              p_valor_novo: "locacao",
+              p_data_evento_real: rentalStartDate,
+            });
 
             result.migratedCount++;
-            console.log(`✅ PAT ${substitute.asset_code}: Corrigido de aguardando_laudo → locação (${oldAssets.rental_company} - ${oldAssets.rental_work_site})`);
+            console.log(`✅ PAT ${substitute.asset_code}: Corrigido de aguardando_laudo → locação (${oldAsset.rental_company} - ${oldAsset.rental_work_site})`);
+          } else {
+            console.log(`⚠️ PAT ${oldAsset.asset_code} não tinha dados de locação completos`);
           }
         } catch (error) {
           result.failedCount++;
-          result.errors.push(`PAT ${substitute.asset_code}: ${error.message}`);
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          result.errors.push(`PAT ${substitute.asset_code}: ${errorMsg}`);
           console.error(`❌ Erro ao migrar PAT ${substitute.asset_code}:`, error);
         }
       }
+
+      console.log(`📈 Migração concluída: ${result.migratedCount} corrigidos, ${result.failedCount} falharam`);
     } catch (error) {
       result.success = false;
-      result.errors.push(`Erro geral na migração: ${error.message}`);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      result.errors.push(`Erro geral na migração: ${errorMsg}`);
+      console.error("❌ Erro geral na migração de substitutos:", error);
     }
 
     return result;
