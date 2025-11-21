@@ -69,6 +69,15 @@ interface ProductStockIntegrityIssue {
   details: string;
 }
 
+interface ProductOrphanIssue {
+  reference_type: string;
+  reference_id: string;
+  product_code: string;
+  product_name: string;
+  issue_type: string;
+  details: string;
+}
+
 export const useSystemIntegrity = () => {
   // Verificar integridade de produtos
   const productsIntegrity = useQuery({
@@ -140,6 +149,16 @@ export const useSystemIntegrity = () => {
     },
   });
 
+  // FASE 1: Verificar referências órfãs de produtos
+  const productsOrphanIntegrity = useQuery({
+    queryKey: ["integrity-products-orphan"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("check_products_orphan_references" as any);
+      if (error) throw error;
+      return (data || []) as ProductOrphanIssue[];
+    },
+  });
+
   // Função para corrigir sessões órfãs (marcar como offline)
   const fixStaleSessions = async () => {
     const staleDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
@@ -202,6 +221,7 @@ export const useSystemIntegrity = () => {
       withdrawalsIntegrity.refetch(),
       reportsIntegrity.refetch(),
       productsStockIntegrity.refetch(),
+      productsOrphanIntegrity.refetch(),
     ]);
   };
 
@@ -248,6 +268,12 @@ export const useSystemIntegrity = () => {
       error: productsStockIntegrity.error,
       count: productsStockIntegrity.data?.length || 0,
     },
+    productsOrphanIntegrity: {
+      data: productsOrphanIntegrity.data || [],
+      isLoading: productsOrphanIntegrity.isLoading,
+      error: productsOrphanIntegrity.error,
+      count: productsOrphanIntegrity.data?.length || 0,
+    },
     fixStaleSessions,
     fixDuplicateSessions,
     refetchAll,
@@ -258,6 +284,7 @@ export const useSystemIntegrity = () => {
       assetsIntegrity.isLoading ||
       withdrawalsIntegrity.isLoading ||
       reportsIntegrity.isLoading ||
-      productsStockIntegrity.isLoading,
+      productsStockIntegrity.isLoading ||
+      productsOrphanIntegrity.isLoading,
   };
 };
