@@ -34,11 +34,13 @@ export const useUserActivityDetails = (options: UseUserActivityDetailsOptions) =
         return [];
       }
 
-      // Construir query base
+      // Construir query base - apenas atividades de usuário real
       let query = supabase
         .from("audit_logs")
         .select("*")
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .neq("action", "AUTO_NORMALIZATION")
+        .neq("table_name", "system");
 
       // Aplicar filtros de data
       if (startDate) {

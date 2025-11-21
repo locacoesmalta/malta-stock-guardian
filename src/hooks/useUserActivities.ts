@@ -30,10 +30,13 @@ export const useUserActivities = (options: UseUserActivitiesOptions = {}) => {
   return useQuery({
     queryKey: ["user_activities", startDate, endDate],
     queryFn: async () => {
-      // Construir query base
+      // Construir query base - apenas usuários reais (não sistema)
       let query = supabase
         .from("audit_logs")
-        .select("user_id, user_email, user_name, action, created_at");
+        .select("user_id, user_email, user_name, action, created_at")
+        .not("user_id", "is", null)
+        .neq("action", "AUTO_NORMALIZATION")
+        .neq("table_name", "system");
 
       // Aplicar filtros de data
       if (startDate) {
