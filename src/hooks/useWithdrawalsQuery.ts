@@ -7,6 +7,7 @@ interface Withdrawal {
   quantity: number;
   withdrawal_date: string;
   withdrawal_reason: string | null;
+  negative_stock_reason: string | null;
   withdrawn_by: string;
   created_at: string;
   equipment_code: string;

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Search, FileText, FileEdit } from "lucide-react";
+import { Search, FileText, FileEdit, AlertTriangle } from "lucide-react";
 import { useWithdrawalsQuery } from "@/hooks/useWithdrawalsQuery";
 import { formatPAT } from "@/lib/patUtils";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -323,6 +323,20 @@ const WithdrawalHistory = () => {
                           <span className="font-medium">Motivo:</span> {withdrawal.withdrawal_reason}
                         </div>
                       )}
+                      
+                      {/* ✅ NOVO: Mostrar justificativa de estoque negativo */}
+                      {(withdrawal as any).negative_stock_reason && (
+                        <div className="mt-2 p-2 bg-destructive/10 border border-destructive/20 rounded">
+                          <p className="text-xs font-medium text-destructive flex items-center gap-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            Estoque Negativo - Justificativa:
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {(withdrawal as any).negative_stock_reason}
+                          </p>
+                        </div>
+                      )}
+                      
                       {unitCost > 0 && (
                         <div className="text-xs sm:text-sm font-medium text-primary">
                           Custo Total: {new Intl.NumberFormat('pt-BR', {
