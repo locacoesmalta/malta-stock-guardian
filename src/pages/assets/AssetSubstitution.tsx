@@ -241,20 +241,29 @@ export default function AssetSubstitution() {
       // Herança ou destino escolhido pelo OPERADOR
       // ============================================
 
+      // 🎯 Determinar localização efetiva para herança
+      // Se o equipamento está em "aguardando_laudo" mas tem dados de locação,
+      // trata como se estivesse em "locacao" para fins de herança
+      const effectiveOriginalLocation =
+        asset.location_type === "aguardando_laudo" && asset.rental_company
+          ? "locacao"
+          : asset.location_type;
+
       const newAssetData: any = {
         updated_at: new Date().toISOString(),
       };
 
       if (data.new_asset_inherits_position) {
-        // ✅ OPERADOR DECIDIU: Herdar posição do antigo
-        newAssetData.location_type = asset.location_type;
+        // ✅ OPERADOR DECIDIU: Herdar posição do antigo (usando localização efetiva)
+        newAssetData.location_type = effectiveOriginalLocation;
         
         // Herdar dados específicos do local
-        if (asset.location_type === "locacao") {
+        if (effectiveOriginalLocation === "locacao") {
           newAssetData.rental_company = asset.rental_company;
           newAssetData.rental_work_site = asset.rental_work_site;
           newAssetData.rental_start_date = data.substitution_date;
-        } else if (asset.location_type === "em_manutencao") {
+          newAssetData.rental_contract_number = asset.rental_contract_number;
+        } else if (effectiveOriginalLocation === "em_manutencao") {
           newAssetData.maintenance_company = asset.maintenance_company;
           newAssetData.maintenance_work_site = asset.maintenance_work_site;
           newAssetData.maintenance_arrival_date = data.substitution_date;
@@ -309,10 +318,12 @@ export default function AssetSubstitution() {
         dataEventoReal: data.substitution_date,
       });
 
-      // Evento do equipamento NOVO
+      // Evento do equipamento NOVO (usando localização efetiva)
+      const inheritedLocationLabel = getLocationLabel(effectiveOriginalLocation);
+      
       const newAssetDetails = data.new_asset_inherits_position
         ? `Substituiu PAT ${asset.asset_code} em ${format(new Date(data.substitution_date), "dd/MM/yyyy")}. ` +
-          `Herdou posição: ${getLocationLabel(asset.location_type)} conforme decisão do operador.`
+          `Herdou posição: ${inheritedLocationLabel} conforme decisão do operador.`
         : `Substituiu PAT ${asset.asset_code} em ${format(new Date(data.substitution_date), "dd/MM/yyyy")}. ` +
           `Movido para ${getLocationLabel(data.new_asset_destination!)} conforme decisão do operador.`;
 
@@ -322,7 +333,7 @@ export default function AssetSubstitution() {
         tipoEvento: "SUBSTITUIÇÃO",
         campoAlterado: "location_type",
         valorAntigo: "deposito_malta",
-        valorNovo: data.new_asset_inherits_position ? asset.location_type : data.new_asset_destination!,
+        valorNovo: data.new_asset_inherits_position ? effectiveOriginalLocation : data.new_asset_destination!,
         detalhesEvento: newAssetDetails,
         dataEventoReal: data.substitution_date,
       });
