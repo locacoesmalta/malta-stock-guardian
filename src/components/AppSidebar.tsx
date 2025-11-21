@@ -437,6 +437,24 @@ export function AppSidebar() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <SidebarMenuButton asChild>
+                        <NavLink to="/admin/user-activities" className={getNavCls} onClick={handleNavClick}>
+                          <Users className="h-4 w-4" />
+                          <span>Atividades dos Usuários</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    {!open && (
+                      <TooltipContent side="right" className="font-normal">
+                        Atividades dos Usuários
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton asChild>
                         <NavLink to="/admin/error-logs" className={getNavCls} onClick={handleNavClick}>
                           <AlertTriangle className="h-4 w-4" />
                           <span>Central de Erros</span>
