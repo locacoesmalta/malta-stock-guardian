@@ -100,14 +100,20 @@ const MaterialWithdrawal = () => {
     enabled: !!equipment && !isSaleWithdrawal,
   });
 
-  // Selecionar lista de produtos: compatíveis se houver equipamento, todos se for venda
-  // Fallback para todos os produtos se não houver compatíveis (permite buscar peças antigas/incompatíveis)
+  // CRÍTICO: SEMPRE mostrar TODOS os produtos, independente de estoque ou compatibilidade
+  // Produtos compatíveis aparecem primeiro, mas usuário pode buscar qualquer produto
+  // Sistema permite retirada com estoque 0/negativo desde que haja justificativa
+  const compatibleList = equipment && !isSaleWithdrawal && compatibleProducts ? compatibleProducts : [];
+  const compatibleIds = new Set(compatibleList.map(p => p.id));
+  const mergedProducts = [
+    ...compatibleList,
+    ...products.filter(p => !compatibleIds.has(p.id))
+  ];
+  
   const availableProducts =
     isSaleWithdrawal || !equipment
       ? products
-      : (compatibleProducts && compatibleProducts.length > 0
-          ? compatibleProducts
-          : products);
+      : mergedProducts;
 
   // Controlar decisão de ciclo de vida quando detectar peças pendentes
   useEffect(() => {
@@ -703,16 +709,16 @@ const MaterialWithdrawal = () => {
                 </AlertDescription>
               </Alert>
             )}
-            {!isSaleWithdrawal && equipment && compatibleProducts && (
+            {!isSaleWithdrawal && equipment && compatibleProducts && compatibleProducts.length > 0 && (
               <Alert className="border-blue-500/50 bg-blue-50 dark:bg-blue-950/20">
                 <CheckCircle2 className="h-4 w-4 text-blue-600" />
                 <AlertDescription className="text-xs flex items-center gap-2 flex-wrap">
-                  <span>Mostrando apenas peças compatíveis com:</span>
+                  <span>{compatibleProducts.length} peça(s) compatível(is) com</span>
                   <Badge variant="outline" className="font-mono">
                     {equipment.manufacturer} {equipment.equipment_name} {equipment.model}
                   </Badge>
                   <span className="text-muted-foreground">
-                    ({compatibleProducts.length} peças encontradas)
+                    exibida(s) primeiro. Você pode buscar qualquer produto por código ou nome.
                   </span>
                 </AlertDescription>
               </Alert>
