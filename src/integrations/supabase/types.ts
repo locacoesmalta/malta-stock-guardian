@@ -2105,9 +2105,7 @@ export type Database = {
           asset_code: string
           asset_id: string
           details: string
-          equipment_name: string
           issue_type: string
-          location_type: string
         }[]
       }
       check_audit_logs_health: {
@@ -2146,9 +2144,7 @@ export type Database = {
         Args: never
         Returns: {
           current_quantity: number
-          details: string
           issue_type: string
-          min_quantity: number
           product_code: string
           product_id: string
           product_name: string
@@ -2157,13 +2153,10 @@ export type Database = {
       check_reports_integrity: {
         Args: never
         Returns: {
-          company: string
-          details: string
           equipment_code: string
           issue_type: string
           report_date: string
           report_id: string
-          work_site: string
         }[]
       }
       check_sessions_integrity: {
@@ -2181,13 +2174,9 @@ export type Database = {
       check_withdrawals_integrity: {
         Args: never
         Returns: {
-          details: string
           equipment_code: string
           issue_type: string
-          product_code: string
           product_name: string
-          quantity: number
-          withdrawal_date: string
           withdrawal_id: string
         }[]
       }
