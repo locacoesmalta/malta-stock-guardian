@@ -168,7 +168,7 @@ const MaterialWithdrawal = () => {
   const addItem = () => {
     setItems([...items, {
       product_id: "",
-      quantity: 1,
+      quantity: 0,
       productName: "",
       productCode: "",
       availableQuantity: 0
