@@ -101,7 +101,13 @@ const MaterialWithdrawal = () => {
   });
 
   // Selecionar lista de produtos: compatíveis se houver equipamento, todos se for venda
-  const availableProducts = isSaleWithdrawal ? products : (compatibleProducts || products);
+  // Fallback para todos os produtos se não houver compatíveis (permite buscar peças antigas/incompatíveis)
+  const availableProducts =
+    isSaleWithdrawal || !equipment
+      ? products
+      : (compatibleProducts && compatibleProducts.length > 0
+          ? compatibleProducts
+          : products);
 
   // Controlar decisão de ciclo de vida quando detectar peças pendentes
   useEffect(() => {
