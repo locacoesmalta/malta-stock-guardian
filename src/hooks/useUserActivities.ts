@@ -1,6 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { useEffect } from "react";
+import { toast } from "@/hooks/use-toast";
 
 export interface UserActivitySummary {
   user_id: string;
@@ -26,6 +28,39 @@ interface UseUserActivitiesOptions {
  */
 export const useUserActivities = (options: UseUserActivitiesOptions = {}) => {
   const { startDate, endDate } = options;
+  const queryClient = useQueryClient();
+
+  // Setup realtime subscription for audit_logs
+  useEffect(() => {
+    const channel = supabase
+      .channel('audit_logs_realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'audit_logs'
+        },
+        (payload) => {
+          console.log('🔴 Nova atividade detectada em tempo real:', payload);
+          
+          // Invalidar cache para forçar refetch
+          queryClient.invalidateQueries({ queryKey: ["user_activities", startDate, endDate] });
+          
+          // Mostrar notificação
+          toast({
+            title: "🔴 Nova atividade detectada",
+            description: "Os dados foram atualizados automaticamente",
+            duration: 3000,
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [startDate, endDate, queryClient]);
 
   return useQuery({
     queryKey: ["user_activities", startDate, endDate],
