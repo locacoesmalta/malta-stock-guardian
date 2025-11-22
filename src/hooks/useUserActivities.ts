@@ -21,13 +21,14 @@ export interface UserActivitySummary {
 interface UseUserActivitiesOptions {
   startDate?: Date;
   endDate?: Date;
+  actionTypes?: ('INSERT' | 'UPDATE' | 'DELETE')[];
 }
 
 /**
  * Hook para buscar resumo de atividades agrupadas por usuário
  */
 export const useUserActivities = (options: UseUserActivitiesOptions = {}) => {
-  const { startDate, endDate } = options;
+  const { startDate, endDate, actionTypes } = options;
   const queryClient = useQueryClient();
 
   // Setup realtime subscription for audit_logs
@@ -45,7 +46,7 @@ export const useUserActivities = (options: UseUserActivitiesOptions = {}) => {
           console.log('🔴 Nova atividade detectada em tempo real:', payload);
           
           // Invalidar cache para forçar refetch
-          queryClient.invalidateQueries({ queryKey: ["user_activities", startDate, endDate] });
+          queryClient.invalidateQueries({ queryKey: ["user_activities"] });
           
           // Mostrar notificação
           toast({
@@ -63,7 +64,7 @@ export const useUserActivities = (options: UseUserActivitiesOptions = {}) => {
   }, [startDate, endDate, queryClient]);
 
   return useQuery({
-    queryKey: ["user_activities", startDate, endDate],
+    queryKey: ["user_activities", startDate, endDate, actionTypes],
     queryFn: async () => {
       // Construir query base - apenas usuários reais (não sistema)
       let query = supabase
@@ -82,6 +83,11 @@ export const useUserActivities = (options: UseUserActivitiesOptions = {}) => {
       if (endDate) {
         const endStr = format(endDate, "yyyy-MM-dd 23:59:59");
         query = query.lte("created_at", endStr);
+      }
+
+      // Aplicar filtro de tipos de ação
+      if (actionTypes && actionTypes.length > 0) {
+        query = query.in("action", actionTypes);
       }
 
       // Ordenar por data decrescente
