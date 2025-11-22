@@ -87,9 +87,14 @@ export default function UserActivities() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Atividades dos Usuários</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold tracking-tight">Atividades dos Usuários</h1>
+                <Badge variant="outline" className="animate-pulse bg-red-500/10 text-red-600 border-red-500/30">
+                  🔴 Ao Vivo
+                </Badge>
+              </div>
               <p className="text-muted-foreground">
-                Acompanhe o que cada usuário fez no sistema
+                Acompanhe o que cada usuário fez no sistema em tempo real
               </p>
             </div>
           </div>
