@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useUserActivities } from "@/hooks/useUserActivities";
 import { UserActivityDetails } from "@/components/admin/UserActivityDetails";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 export default function UserActivities() {
   const navigate = useNavigate();
@@ -17,10 +18,14 @@ export default function UserActivities() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUserData, setSelectedUserData] = useState<{ email: string; name: string | null } | null>(null);
+  const [selectedActions, setSelectedActions] = useState<('INSERT' | 'UPDATE' | 'DELETE')[]>([
+    'INSERT', 'UPDATE', 'DELETE'
+  ]);
 
   const { data: userActivities = [], isLoading } = useUserActivities({
     startDate,
     endDate,
+    actionTypes: selectedActions.length > 0 ? selectedActions : undefined,
   });
 
   // Filtrar usuários por termo de busca
@@ -36,6 +41,23 @@ export default function UserActivities() {
   const totalActions = filteredUsers.reduce((sum, user) => sum + user.total_actions, 0);
   const totalUsers = filteredUsers.length;
   const mostActiveUser = filteredUsers[0]; // Já está ordenado por total_actions
+  
+  // Calcular totais por tipo de ação
+  const totalInserts = filteredUsers.reduce((sum, user) => sum + (user.actions_breakdown.INSERT || 0), 0);
+  const totalUpdates = filteredUsers.reduce((sum, user) => sum + (user.actions_breakdown.UPDATE || 0), 0);
+  const totalDeletes = filteredUsers.reduce((sum, user) => sum + (user.actions_breakdown.DELETE || 0), 0);
+
+  // Alternar tipo de ação no filtro
+  const toggleAction = (action: 'INSERT' | 'UPDATE' | 'DELETE') => {
+    setSelectedActions(prev => {
+      // Impedir desmarcar todos (mínimo 1 ativo)
+      if (prev.includes(action) && prev.length === 1) return prev;
+      
+      return prev.includes(action)
+        ? prev.filter(a => a !== action)
+        : [...prev, action];
+    });
+  };
 
   // Função para obter indicador de atividade
   const getActivityIndicator = (lastActivity: string) => {
@@ -105,10 +127,96 @@ export default function UserActivities() {
         </Button>
       </div>
 
-      {/* Filtros */}
+      {/* Filtros de Tipo de Ação */}
       <Card>
         <CardHeader>
-          <CardTitle>Filtros</CardTitle>
+          <CardTitle>🔍 Filtrar por Tipo de Ação</CardTitle>
+          <CardDescription>Clique nos badges para ativar/desativar filtros</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            <Badge 
+              variant={selectedActions.includes('INSERT') ? 'default' : 'outline'}
+              className="cursor-pointer hover:scale-105 transition-transform text-sm py-1.5 px-3"
+              onClick={() => toggleAction('INSERT')}
+            >
+              ➕ Criações ({totalInserts})
+            </Badge>
+            <Badge 
+              variant={selectedActions.includes('UPDATE') ? 'default' : 'outline'}
+              className="cursor-pointer hover:scale-105 transition-transform text-sm py-1.5 px-3"
+              onClick={() => toggleAction('UPDATE')}
+            >
+              ✏️ Edições ({totalUpdates})
+            </Badge>
+            <Badge 
+              variant={selectedActions.includes('DELETE') ? 'default' : 'outline'}
+              className="cursor-pointer hover:scale-105 transition-transform text-sm py-1.5 px-3"
+              onClick={() => toggleAction('DELETE')}
+            >
+              🗑️ Exclusões ({totalDeletes})
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Distribuição de Ações */}
+      <Card>
+        <CardHeader>
+          <CardTitle>📊 Distribuição de Ações no Período</CardTitle>
+          <CardDescription>Proporção de cada tipo de ação</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <div className="flex justify-between mb-2">
+                <span className="text-sm font-medium">➕ Criações</span>
+                <span className="font-bold text-green-600">{totalInserts}</span>
+              </div>
+              <Progress 
+                value={totalActions > 0 ? (totalInserts / totalActions) * 100 : 0} 
+                className="h-2 [&>div]:bg-green-500"
+              />
+              <span className="text-xs text-muted-foreground mt-1 block">
+                {totalActions > 0 ? ((totalInserts / totalActions) * 100).toFixed(1) : 0}% do total
+              </span>
+            </div>
+
+            <div>
+              <div className="flex justify-between mb-2">
+                <span className="text-sm font-medium">✏️ Edições</span>
+                <span className="font-bold text-blue-600">{totalUpdates}</span>
+              </div>
+              <Progress 
+                value={totalActions > 0 ? (totalUpdates / totalActions) * 100 : 0} 
+                className="h-2 [&>div]:bg-blue-500"
+              />
+              <span className="text-xs text-muted-foreground mt-1 block">
+                {totalActions > 0 ? ((totalUpdates / totalActions) * 100).toFixed(1) : 0}% do total
+              </span>
+            </div>
+
+            <div>
+              <div className="flex justify-between mb-2">
+                <span className="text-sm font-medium">🗑️ Exclusões</span>
+                <span className="font-bold text-red-600">{totalDeletes}</span>
+              </div>
+              <Progress 
+                value={totalActions > 0 ? (totalDeletes / totalActions) * 100 : 0} 
+                className="h-2 [&>div]:bg-red-500"
+              />
+              <span className="text-xs text-muted-foreground mt-1 block">
+                {totalActions > 0 ? ((totalDeletes / totalActions) * 100).toFixed(1) : 0}% do total
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Filtros de Data e Busca */}
+      <Card>
+        <CardHeader>
+          <CardTitle>📅 Filtros de Período e Busca</CardTitle>
           <CardDescription>Ajuste o período e busque por usuário</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -231,8 +339,22 @@ export default function UserActivities() {
                             Há {Math.round((new Date().getTime() - new Date(user.last_activity).getTime()) / (1000 * 60 * 60))}h
                           </Badge>
                         </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          Criações: {user.actions_breakdown.INSERT} • Edições: {user.actions_breakdown.UPDATE} • Exclusões: {user.actions_breakdown.DELETE}
+                        <div className="flex gap-2 mt-2 flex-wrap">
+                          {user.actions_breakdown.INSERT > 0 && (
+                            <Badge className="bg-green-50 text-green-700 border-green-200">
+                              ➕ {user.actions_breakdown.INSERT}
+                            </Badge>
+                          )}
+                          {user.actions_breakdown.UPDATE > 0 && (
+                            <Badge className="bg-blue-50 text-blue-700 border-blue-200">
+                              ✏️ {user.actions_breakdown.UPDATE}
+                            </Badge>
+                          )}
+                          {user.actions_breakdown.DELETE > 0 && (
+                            <Badge className="bg-red-50 text-red-700 border-red-200">
+                              🗑️ {user.actions_breakdown.DELETE}
+                            </Badge>
+                          )}
                         </div>
                       </div>
                       <Button
