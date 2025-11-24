@@ -27,15 +27,15 @@ export function IntegrityProblemCard({
   const [showNotesInput, setShowNotesInput] = useState(false);
 
   const getProblemIdentifier = () => {
-    if (problemType === "products") return problem.id;
+    if (problemType === "products") return problem.product_id;
     if (problemType === "sessions") return `${problem.user_email}_${problem.last_activity}`;
-    if (problemType === "audit") return problem.id;
-    if (problemType === "assets") return problem.id;
-    if (problemType === "withdrawals") return problem.id;
-    if (problemType === "reports") return problem.id;
-    if (problemType === "stock") return problem.id;
-    if (problemType === "orphans") return problem.id;
-    return problem.id;
+    if (problemType === "audit") return problem.log_id;
+    if (problemType === "assets") return problem.asset_id;
+    if (problemType === "withdrawals") return problem.withdrawal_id;
+    if (problemType === "reports") return problem.report_id;
+    if (problemType === "stock") return problem.product_id;
+    if (problemType === "orphans") return problem.reference_id;
+    return problem.product_id || problem.id;
   };
 
   const getProblemTitle = () => {

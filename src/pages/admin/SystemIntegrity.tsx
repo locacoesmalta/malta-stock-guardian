@@ -9,6 +9,7 @@ import { IntegrityDetailModal } from "@/components/admin/IntegrityDetailModal";
 import { IntegrityResolutionHistory } from "@/components/admin/IntegrityResolutionHistory";
 import { RLSHealthMonitor } from "@/components/admin/RLSHealthMonitor";
 import { ManualDataMigration } from "@/components/admin/ManualDataMigration";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -21,12 +22,14 @@ import {
   TrendingUp,
   AlertCircle,
   Clock,
+  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 
 export default function SystemIntegrity() {
+  const { isSystemOwner } = useAuth();
   const [selectedTab, setSelectedTab] = useState<"pendentes" | "historico">("pendentes");
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedProblem, setSelectedProblem] = useState<any>(null);
@@ -138,6 +141,23 @@ export default function SystemIntegrity() {
     URL.revokeObjectURL(url);
     toast.success("Relatório exportado!");
   };
+
+  // Validação de acesso: apenas system owner
+  if (!isSystemOwner) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Card className="max-w-md">
+          <CardContent className="pt-6 text-center">
+            <XCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Acesso Negado</h3>
+            <p className="text-muted-foreground">
+              Apenas o proprietário do sistema pode acessar a Central de Integridade.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -262,7 +282,7 @@ export default function SystemIntegrity() {
                   <CardContent className="space-y-3">
                     {productsIntegrity.data.map((product: any) => (
                       <IntegrityProblemCard
-                        key={product.product_id}
+                        key={`products-${product.product_id}`}
                         problem={product}
                         problemType="products"
                         onResolve={handleResolve}
@@ -433,7 +453,7 @@ export default function SystemIntegrity() {
                   <CardContent className="space-y-3">
                     {productsStockIntegrity.data.map((stock: any) => (
                       <IntegrityProblemCard
-                        key={stock.product_id}
+                        key={`stock-${stock.product_id}`}
                         problem={stock}
                         problemType="stock"
                         onResolve={handleResolve}
