@@ -40,8 +40,8 @@ export function IntegrityProblemCard({
 
   const getProblemTitle = () => {
     if (problemType === "products") {
-      if (problem.negative_stock) return `Estoque Negativo: ${problem.code} (${problem.quantity})`;
-      if (problem.missing_adjustments) return `Sem Histórico: ${problem.code}`;
+      if (problem.negative_stock) return `Estoque Negativo: ${problem.product_code} (${problem.current_quantity})`;
+      if (problem.missing_adjustments) return `Sem Histórico: ${problem.product_code}`;
     }
     if (problemType === "sessions") {
       if (problem.is_duplicate) return `Sessão Duplicada: ${problem.user_email}`;
@@ -83,7 +83,7 @@ export function IntegrityProblemCard({
               <div className="flex-1 space-y-1">
                 <p className="text-sm font-medium">{getProblemTitle()}</p>
                 <p className="text-xs text-muted-foreground line-clamp-1">
-                  {problemType === "products" && `Nome: ${problem.name}`}
+                  {problemType === "products" && `Nome: ${problem.product_name}`}
                   {problemType === "sessions" && `Última atividade: ${new Date(problem.last_activity).toLocaleString()}`}
                   {problemType === "audit" && `Usuário: ${problem.user_email}`}
                 </p>
@@ -100,8 +100,8 @@ export function IntegrityProblemCard({
           <div className="pl-7 space-y-2 text-sm text-muted-foreground">
             {problemType === "products" && (
               <>
-                <p>• Código: {problem.code}</p>
-                <p>• Quantidade: {problem.quantity}</p>
+                <p>• Código: {problem.product_code}</p>
+                <p>• Quantidade: {problem.current_quantity}</p>
                 {problem.negative_stock && <p className="text-destructive">• Estoque negativo detectado</p>}
                 {problem.missing_adjustments && <p className="text-amber-500">• Sem histórico de ajustes</p>}
               </>

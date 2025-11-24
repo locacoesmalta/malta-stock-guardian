@@ -67,16 +67,16 @@ export function IntegrityDetailModal({
               <div className="space-y-3">
                 <div>
                   <h4 className="text-sm font-medium mb-1">Código</h4>
-                  <p className="text-sm text-muted-foreground">{problem.code}</p>
+                  <p className="text-sm text-muted-foreground">{problem.product_code}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium mb-1">Nome</h4>
-                  <p className="text-sm text-muted-foreground">{problem.name}</p>
+                  <p className="text-sm text-muted-foreground">{problem.product_name}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium mb-1">Quantidade Atual</h4>
-                  <p className={`text-sm font-mono ${problem.quantity < 0 ? 'text-destructive' : 'text-foreground'}`}>
-                    {problem.quantity}
+                  <p className={`text-sm font-mono ${problem.current_quantity < 0 ? 'text-destructive' : 'text-foreground'}`}>
+                    {problem.current_quantity}
                   </p>
                 </div>
                 {problem.negative_stock && (
