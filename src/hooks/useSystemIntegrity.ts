@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface ProductIntegrityIssue {
   product_id: string;
@@ -159,6 +160,22 @@ export const useSystemIntegrity = () => {
     },
   });
 
+  // Query para buscar resoluções
+  const resolutionsQuery = useQuery({
+    queryKey: ["integrity-resolutions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("system_integrity_resolutions")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const queryClient = useQueryClient();
+
   // Função para corrigir sessões órfãs (marcar como offline)
   const fixStaleSessions = async () => {
     const staleDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
@@ -225,6 +242,65 @@ export const useSystemIntegrity = () => {
     ]);
   };
 
+  // Mutation para resolver problema
+  const resolveProblemMutation = useMutation({
+    mutationFn: async ({ problemType, problemId, notes }: { problemType: string; problemId: string; notes?: string }) => {
+      const { data, error } = await supabase.rpc("mark_integrity_problem_resolved", {
+        p_problem_type: problemType,
+        p_problem_identifier: problemId,
+        p_notes: notes || null,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["integrity-resolutions"] });
+      toast.success("Problema marcado como resolvido");
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao resolver problema: ${error.message}`);
+    },
+  });
+
+  // Mutation para ignorar problema
+  const ignoreProblemMutation = useMutation({
+    mutationFn: async ({ problemType, problemId, notes }: { problemType: string; problemId: string; notes?: string }) => {
+      const { data, error } = await supabase.rpc("mark_integrity_problem_ignored", {
+        p_problem_type: problemType,
+        p_problem_identifier: problemId,
+        p_notes: notes || null,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["integrity-resolutions"] });
+      toast.success("Problema marcado como ignorado");
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao ignorar problema: ${error.message}`);
+    },
+  });
+
+  // Mutation para reabrir problema
+  const reopenProblemMutation = useMutation({
+    mutationFn: async ({ problemType, problemId }: { problemType: string; problemId: string }) => {
+      const { data, error } = await supabase.rpc("mark_integrity_problem_pending", {
+        p_problem_type: problemType,
+        p_problem_identifier: problemId,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["integrity-resolutions"] });
+      toast.success("Problema reaberto");
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao reabrir problema: ${error.message}`);
+    },
+  });
+
   return {
     productsIntegrity: {
       data: productsIntegrity.data || [],
@@ -274,9 +350,13 @@ export const useSystemIntegrity = () => {
       error: productsOrphanIntegrity.error,
       count: productsOrphanIntegrity.data?.length || 0,
     },
+    resolutions: resolutionsQuery.data || [],
     fixStaleSessions,
     fixDuplicateSessions,
     refetchAll,
+    resolveProblem: resolveProblemMutation.mutateAsync,
+    ignoreProblem: ignoreProblemMutation.mutateAsync,
+    reopenProblem: reopenProblemMutation.mutateAsync,
     isLoading:
       productsIntegrity.isLoading ||
       sessionsIntegrity.isLoading ||

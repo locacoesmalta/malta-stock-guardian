@@ -2,30 +2,36 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSystemIntegrity } from "@/hooks/useSystemIntegrity";
+import { IntegrityProblemCard } from "@/components/admin/IntegrityProblemCard";
+import { IntegrityDetailModal } from "@/components/admin/IntegrityDetailModal";
+import { IntegrityResolutionHistory } from "@/components/admin/IntegrityResolutionHistory";
 import { RLSHealthMonitor } from "@/components/admin/RLSHealthMonitor";
 import { ManualDataMigration } from "@/components/admin/ManualDataMigration";
 import {
-  AlertTriangle, 
-  CheckCircle2, 
-  Package, 
-  Users, 
+  AlertTriangle,
+  CheckCircle2,
+  Package,
+  Users,
   Shield,
   RefreshCw,
   Download,
-  Wrench,
-  Loader2
+  Loader2,
+  TrendingUp,
+  AlertCircle,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { formatBRFromYYYYMMDD } from "@/lib/dateUtils";
+import { Separator } from "@/components/ui/separator";
 
 export default function SystemIntegrity() {
-  const [isFixing, setIsFixing] = useState(false);
+  const [selectedTab, setSelectedTab] = useState<"pendentes" | "historico">("pendentes");
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedProblem, setSelectedProblem] = useState<any>(null);
+  const [selectedProblemType, setSelectedProblemType] = useState<string>("");
+
   const {
     productsIntegrity,
     sessionsIntegrity,
@@ -35,13 +41,15 @@ export default function SystemIntegrity() {
     reportsIntegrity,
     productsStockIntegrity,
     productsOrphanIntegrity,
-    fixStaleSessions,
-    fixDuplicateSessions,
+    resolutions,
     refetchAll,
+    resolveProblem,
+    ignoreProblem,
+    reopenProblem,
     isLoading,
   } = useSystemIntegrity();
 
-  const totalIssues =
+  const totalPending =
     productsIntegrity.count +
     sessionsIntegrity.count +
     auditLogsIntegrity.count +
@@ -51,17 +59,44 @@ export default function SystemIntegrity() {
     productsStockIntegrity.count +
     productsOrphanIntegrity.count;
 
-  const handleFixSessions = async () => {
-    setIsFixing(true);
+  const totalResolved = resolutions.filter((r) => r.status === "resolved").length;
+  const totalIgnored = resolutions.filter((r) => r.status === "ignored").length;
+
+  // Helper para verificar status de resolução
+  const getResolutionStatus = (problemType: string, problemId: string): "pending" | "resolved" | "ignored" => {
+    const resolution = resolutions.find(
+      (r) => r.problem_type === problemType && r.problem_identifier === problemId
+    );
+    return (resolution?.status as "pending" | "resolved" | "ignored") || "pending";
+  };
+
+  const handleViewDetails = (problem: any, problemType: string) => {
+    setSelectedProblem(problem);
+    setSelectedProblemType(problemType);
+    setDetailModalOpen(true);
+  };
+
+  const handleResolve = async (problemId: string, notes?: string) => {
     try {
-      await fixStaleSessions();
-      await fixDuplicateSessions();
-      toast.success("Sessões corrigidas com sucesso!");
+      await resolveProblem({ problemType: selectedProblemType || "products", problemId, notes });
     } catch (error) {
-      console.error("Erro ao corrigir sessões:", error);
-      toast.error("Erro ao corrigir sessões");
-    } finally {
-      setIsFixing(false);
+      console.error("Erro ao resolver:", error);
+    }
+  };
+
+  const handleIgnore = async (problemId: string, notes?: string) => {
+    try {
+      await ignoreProblem({ problemType: selectedProblemType || "products", problemId, notes });
+    } catch (error) {
+      console.error("Erro ao ignorar:", error);
+    }
+  };
+
+  const handleReopen = async (problemType: string, problemId: string) => {
+    try {
+      await reopenProblem({ problemType, problemId });
+    } catch (error) {
+      console.error("Erro ao reabrir:", error);
     }
   };
 
@@ -78,7 +113,9 @@ export default function SystemIntegrity() {
   const handleExportReport = () => {
     const report = {
       timestamp: new Date().toISOString(),
-      total_issues: totalIssues,
+      total_pending: totalPending,
+      total_resolved: totalResolved,
+      total_ignored: totalIgnored,
       products: productsIntegrity.data,
       sessions: sessionsIntegrity.data,
       audit_logs: auditLogsIntegrity.data,
@@ -87,6 +124,7 @@ export default function SystemIntegrity() {
       reports: reportsIntegrity.data,
       products_stock: productsStockIntegrity.data,
       products_orphan: productsOrphanIntegrity.data,
+      resolutions: resolutions,
     };
 
     const blob = new Blob([JSON.stringify(report, null, 2)], {
@@ -114,11 +152,12 @@ export default function SystemIntegrity() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Integridade do Sistema</h1>
+          <h1 className="text-3xl font-bold">🎯 Central de Comando - Integridade</h1>
           <p className="text-muted-foreground mt-1">
-            Verificação e correção de inconsistências
+            Gestão interativa de problemas do sistema
           </p>
         </div>
         <div className="flex gap-2">
@@ -133,545 +172,324 @@ export default function SystemIntegrity() {
         </div>
       </div>
 
-      {/* FASE 6: Monitoramento de Segurança RLS */}
+      {/* Dashboard de Prioridades */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <AlertCircle className="h-5 w-5 text-destructive" />
+              Crítico
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-destructive">{totalPending}</p>
+            <p className="text-sm text-muted-foreground mt-1">Problemas pendentes</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-green-500/50 bg-green-500/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
+              Resolvido
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-green-500">{totalResolved}</p>
+            <p className="text-sm text-muted-foreground mt-1">Problemas corrigidos</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-muted">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Clock className="h-5 w-5 text-muted-foreground" />
+              Ignorado
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-muted-foreground">{totalIgnored}</p>
+            <p className="text-sm text-muted-foreground mt-1">Problemas ignorados</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Monitoramento de Segurança RLS */}
       <RLSHealthMonitor />
 
       {/* Correção Manual de Dados */}
       <ManualDataMigration />
 
-      {/* Resumo Geral */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {totalIssues === 0 ? (
-              <>
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
-                Sistema Íntegro
-              </>
-            ) : (
-              <>
-                <AlertTriangle className="h-5 w-5 text-yellow-500" />
-                {totalIssues} Problema{totalIssues !== 1 ? "s" : ""} Detectado{totalIssues !== 1 ? "s" : ""}
-              </>
-            )}
-          </CardTitle>
-          <CardDescription>
-            Verificação automática de dados, sessões e auditoria
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center gap-3">
-                <Package className="h-8 w-8 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">Produtos</p>
-                  <p className="text-2xl font-bold">
-                    {productsIntegrity.count}
-                  </p>
-                </div>
-              </div>
-              <Badge variant={productsIntegrity.count === 0 ? "default" : "destructive"}>
-                {productsIntegrity.count === 0 ? "OK" : "ATENÇÃO"}
-              </Badge>
-            </div>
+      <Separator />
 
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center gap-3">
-                <Users className="h-8 w-8 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">Sessões</p>
-                  <p className="text-2xl font-bold">
-                    {sessionsIntegrity.count}
-                  </p>
-                </div>
-              </div>
-              <Badge variant={sessionsIntegrity.count === 0 ? "default" : "destructive"}>
-                {sessionsIntegrity.count === 0 ? "OK" : "ATENÇÃO"}
-              </Badge>
-            </div>
+      {/* Abas: Pendentes vs Histórico */}
+      <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as any)}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="pendentes">
+            Problemas Pendentes ({totalPending})
+          </TabsTrigger>
+          <TabsTrigger value="historico">
+            Histórico de Resoluções ({totalResolved + totalIgnored})
+          </TabsTrigger>
+        </TabsList>
 
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center gap-3">
-                <Shield className="h-8 w-8 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">Auditoria</p>
-                  <p className="text-2xl font-bold">
-                    {auditLogsIntegrity.count}
-                  </p>
-                </div>
-              </div>
-              <Badge variant={auditLogsIntegrity.count === 0 ? "default" : "destructive"}>
-                {auditLogsIntegrity.count === 0 ? "OK" : "ATENÇÃO"}
-              </Badge>
-            </div>
+        {/* Aba: Problemas Pendentes */}
+        <TabsContent value="pendentes" className="space-y-6 mt-6">
+          {totalPending === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">✅ Sistema Íntegro</h3>
+                <p className="text-muted-foreground">
+                  Nenhum problema detectado. Todos os sistemas operando normalmente.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Produtos */}
+              {productsIntegrity.count > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Package className="h-5 w-5" />
+                      Produtos ({productsIntegrity.count})
+                    </CardTitle>
+                    <CardDescription>
+                      Produtos com estoque negativo ou sem histórico de ajustes
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {productsIntegrity.data.map((product: any) => (
+                      <IntegrityProblemCard
+                        key={product.product_id}
+                        problem={product}
+                        problemType="products"
+                        onResolve={handleResolve}
+                        onIgnore={handleIgnore}
+                        onViewDetails={handleViewDetails}
+                        resolutionStatus={getResolutionStatus("products", product.product_id)}
+                      />
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
 
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center gap-3">
-                <Package className="h-8 w-8 text-blue-500" />
-                <div>
-                  <p className="text-sm font-medium">Equipamentos</p>
-                  <p className="text-2xl font-bold">
-                    {assetsIntegrity.count}
-                  </p>
-                </div>
-              </div>
-              <Badge variant={assetsIntegrity.count === 0 ? "default" : "destructive"}>
-                {assetsIntegrity.count === 0 ? "OK" : "ATENÇÃO"}
-              </Badge>
-            </div>
+              {/* Sessões */}
+              {sessionsIntegrity.count > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Sessões ({sessionsIntegrity.count})
+                    </CardTitle>
+                    <CardDescription>
+                      Sessões duplicadas ou obsoletas detectadas
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {sessionsIntegrity.data.map((session: any) => (
+                      <IntegrityProblemCard
+                        key={session.session_id}
+                        problem={session}
+                        problemType="sessions"
+                        onResolve={handleResolve}
+                        onIgnore={handleIgnore}
+                        onViewDetails={handleViewDetails}
+                        resolutionStatus={getResolutionStatus(
+                          "sessions",
+                          `${session.user_email}_${session.last_activity}`
+                        )}
+                      />
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
 
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center gap-3">
-                <Package className="h-8 w-8 text-orange-500" />
-                <div>
-                  <p className="text-sm font-medium">Retiradas</p>
-                  <p className="text-2xl font-bold">
-                    {withdrawalsIntegrity.count}
-                  </p>
-                </div>
-              </div>
-              <Badge variant={withdrawalsIntegrity.count === 0 ? "default" : "destructive"}>
-                {withdrawalsIntegrity.count === 0 ? "OK" : "ATENÇÃO"}
-              </Badge>
-            </div>
+              {/* Logs de Auditoria */}
+              {auditLogsIntegrity.count > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      Logs de Auditoria ({auditLogsIntegrity.count})
+                    </CardTitle>
+                    <CardDescription>
+                      Logs com problemas de integridade ou assinatura
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {auditLogsIntegrity.data.map((log: any) => (
+                      <IntegrityProblemCard
+                        key={log.log_id}
+                        problem={log}
+                        problemType="audit"
+                        onResolve={handleResolve}
+                        onIgnore={handleIgnore}
+                        onViewDetails={handleViewDetails}
+                        resolutionStatus={getResolutionStatus("audit", log.log_id)}
+                      />
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
 
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center gap-3">
-                <Shield className="h-8 w-8 text-purple-500" />
-                <div>
-                  <p className="text-sm font-medium">Relatórios</p>
-                  <p className="text-2xl font-bold">
-                    {reportsIntegrity.count}
-                  </p>
-                </div>
-              </div>
-              <Badge variant={reportsIntegrity.count === 0 ? "default" : "destructive"}>
-                {reportsIntegrity.count === 0 ? "OK" : "ATENÇÃO"}
-              </Badge>
-            </div>
+              {/* Equipamentos */}
+              {assetsIntegrity.count > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Package className="h-5 w-5 text-blue-500" />
+                      Equipamentos ({assetsIntegrity.count})
+                    </CardTitle>
+                    <CardDescription>
+                      Equipamentos com inconsistências de localização ou dados
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {assetsIntegrity.data.map((asset: any) => (
+                      <IntegrityProblemCard
+                        key={asset.asset_id}
+                        problem={asset}
+                        problemType="assets"
+                        onResolve={handleResolve}
+                        onIgnore={handleIgnore}
+                        onViewDetails={handleViewDetails}
+                        resolutionStatus={getResolutionStatus("assets", asset.asset_id)}
+                      />
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
 
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="h-8 w-8 text-yellow-500" />
-                <div>
-                  <p className="text-sm font-medium">Estoque</p>
-                  <p className="text-2xl font-bold">
-                    {productsStockIntegrity.count}
-                  </p>
-                </div>
-              </div>
-              <Badge variant={productsStockIntegrity.count === 0 ? "default" : "destructive"}>
-                {productsStockIntegrity.count === 0 ? "OK" : "ATENÇÃO"}
-              </Badge>
-            </div>
+              {/* Retiradas */}
+              {withdrawalsIntegrity.count > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-orange-500" />
+                      Retiradas ({withdrawalsIntegrity.count})
+                    </CardTitle>
+                    <CardDescription>
+                      Retiradas de material com inconsistências
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {withdrawalsIntegrity.data.map((withdrawal: any) => (
+                      <IntegrityProblemCard
+                        key={withdrawal.withdrawal_id}
+                        problem={withdrawal}
+                        problemType="withdrawals"
+                        onResolve={handleResolve}
+                        onIgnore={handleIgnore}
+                        onViewDetails={handleViewDetails}
+                        resolutionStatus={getResolutionStatus("withdrawals", withdrawal.withdrawal_id)}
+                      />
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
 
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="h-8 w-8 text-red-500" />
-                <div>
-                  <p className="text-sm font-medium">Órfãos</p>
-                  <p className="text-2xl font-bold">
-                    {productsOrphanIntegrity.count}
-                  </p>
-                </div>
-              </div>
-              <Badge variant={productsOrphanIntegrity.count === 0 ? "default" : "destructive"}>
-                {productsOrphanIntegrity.count === 0 ? "OK" : "CRÍTICO"}
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+              {/* Relatórios */}
+              {reportsIntegrity.count > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Shield className="h-5 w-5 text-purple-500" />
+                      Relatórios ({reportsIntegrity.count})
+                    </CardTitle>
+                    <CardDescription>
+                      Relatórios com inconsistências detectadas
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {reportsIntegrity.data.map((report: any) => (
+                      <IntegrityProblemCard
+                        key={report.report_id}
+                        problem={report}
+                        problemType="reports"
+                        onResolve={handleResolve}
+                        onIgnore={handleIgnore}
+                        onViewDetails={handleViewDetails}
+                        resolutionStatus={getResolutionStatus("reports", report.report_id)}
+                      />
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
 
-      {/* Produtos com Problemas */}
-      {productsIntegrity.count > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Produtos com Inconsistências
-            </CardTitle>
-            <CardDescription>
-              {productsIntegrity.count} produto{productsIntegrity.count !== 1 ? "s" : ""} necessitam atenção
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[300px]">
-              <div className="space-y-2">
-                {productsIntegrity.data.map((product) => (
-                  <Alert key={product.product_id}>
-                    <AlertDescription className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <p className="font-medium">{product.product_name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Código: {product.product_code} • Qtd: {product.current_quantity}
-                        </p>
-                        <Badge variant="outline" className="mt-1">
-                          {product.issue_type}
-                        </Badge>
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                ))}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      )}
+              {/* Estoque */}
+              {productsStockIntegrity.count > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                      Estoque ({productsStockIntegrity.count})
+                    </CardTitle>
+                    <CardDescription>
+                      Produtos com estoque abaixo do mínimo
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {productsStockIntegrity.data.map((stock: any) => (
+                      <IntegrityProblemCard
+                        key={stock.product_id}
+                        problem={stock}
+                        problemType="stock"
+                        onResolve={handleResolve}
+                        onIgnore={handleIgnore}
+                        onViewDetails={handleViewDetails}
+                        resolutionStatus={getResolutionStatus("stock", stock.product_id)}
+                      />
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
 
-      {/* Sessões com Problemas */}
-      {sessionsIntegrity.count > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Sessões Anômalas
-            </CardTitle>
-            <CardDescription className="flex items-center justify-between">
-              <span>{sessionsIntegrity.count} sessão{sessionsIntegrity.count !== 1 ? "ões" : ""} com problemas</span>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleFixSessions}
-                disabled={isFixing}
-              >
-                {isFixing ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Wrench className="h-4 w-4 mr-2" />
-                )}
-                Corrigir Automaticamente
-              </Button>
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[300px]">
-              <div className="space-y-2">
-                {sessionsIntegrity.data.map((session) => (
-                  <Alert key={session.session_id}>
-                    <AlertDescription>
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <p className="font-medium">{session.user_name || session.user_email}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Última atividade: {format(new Date(session.last_activity), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                          </p>
-                          <div className="flex gap-2 mt-1">
-                            <Badge variant="outline">{session.issue_type}</Badge>
-                            {session.session_count > 1 && (
-                              <Badge variant="secondary">
-                                {session.session_count} sessões ativas
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                ))}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      )}
+              {/* Órfãos */}
+              {productsOrphanIntegrity.count > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-red-500" />
+                      Referências Órfãs ({productsOrphanIntegrity.count})
+                    </CardTitle>
+                    <CardDescription>
+                      Produtos referenciados que não existem mais
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {productsOrphanIntegrity.data.map((orphan: any) => (
+                      <IntegrityProblemCard
+                        key={orphan.reference_id}
+                        problem={orphan}
+                        problemType="orphans"
+                        onResolve={handleResolve}
+                        onIgnore={handleIgnore}
+                        onViewDetails={handleViewDetails}
+                        resolutionStatus={getResolutionStatus("orphans", orphan.reference_id)}
+                      />
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
+        </TabsContent>
 
-      {/* Logs de Auditoria com Problemas */}
-      {auditLogsIntegrity.count > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Logs de Auditoria com Problemas
-            </CardTitle>
-            <CardDescription>
-              {auditLogsIntegrity.count} log{auditLogsIntegrity.count !== 1 ? "s" : ""} com problemas de integridade
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Alert variant="destructive" className="mb-4">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                Logs sem hash ou órfãos podem indicar problemas de segurança ou migração incompleta.
-                Entre em contato com o administrador do sistema.
-              </AlertDescription>
-            </Alert>
-            <ScrollArea className="h-[300px]">
-              <div className="space-y-2">
-                {auditLogsIntegrity.data.map((log) => (
-                  <Alert key={log.log_id}>
-                    <AlertDescription>
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <p className="font-medium">
-                            {log.action} em {log.table_name}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Usuário: {log.user_email} • {format(new Date(log.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                          </p>
-                          <Badge variant="destructive" className="mt-1">
-                            {log.issue_type}
-                          </Badge>
-                        </div>
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                ))}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      )}
+        {/* Aba: Histórico de Resoluções */}
+        <TabsContent value="historico" className="mt-6">
+          <IntegrityResolutionHistory resolutions={resolutions} onReopen={handleReopen} />
+        </TabsContent>
+      </Tabs>
 
-      {/* Equipamentos com Inconsistências */}
-      {assetsIntegrity.count > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5 text-blue-500" />
-              Equipamentos com Inconsistências ({assetsIntegrity.count})
-            </CardTitle>
-            <CardDescription>
-              Equipamentos com problemas de location_type ou dados faltantes
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[400px]">
-              <div className="space-y-3">
-                {assetsIntegrity.data.map((asset: any) => (
-                  <Alert key={asset.asset_id}>
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      <div className="space-y-2">
-                        <div>
-                          <p className="font-semibold">
-                            PAT {asset.asset_code} - {asset.equipment_name}
-                          </p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {asset.details}
-                          </p>
-                          <div className="flex gap-2 mt-2">
-                            <Badge variant="outline">{asset.location_type}</Badge>
-                            <Badge variant="destructive">{asset.issue_type}</Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                ))}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Retiradas com Problemas */}
-      {withdrawalsIntegrity.count > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5 text-orange-500" />
-              Retiradas com Problemas ({withdrawalsIntegrity.count})
-            </CardTitle>
-            <CardDescription>
-              Retiradas de material com produtos órfãos ou quantidades inválidas
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[400px]">
-              <div className="space-y-3">
-                {withdrawalsIntegrity.data.map((withdrawal: any) => (
-                  <Alert key={withdrawal.withdrawal_id}>
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      <div className="space-y-2">
-                        <div>
-                          <p className="font-semibold">
-                            {withdrawal.product_code} - {withdrawal.product_name}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            PAT {withdrawal.equipment_code} • Qtd: {withdrawal.quantity}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Data: {formatBRFromYYYYMMDD(withdrawal.withdrawal_date)}
-                          </p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {withdrawal.details}
-                          </p>
-                          <Badge variant="destructive" className="mt-2">
-                            {withdrawal.issue_type}
-                          </Badge>
-                        </div>
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                ))}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Relatórios com Problemas */}
-      {reportsIntegrity.count > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-purple-500" />
-              Relatórios com Problemas ({reportsIntegrity.count})
-            </CardTitle>
-            <CardDescription>
-              Relatórios sem peças ou com peças órfãs
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[400px]">
-              <div className="space-y-3">
-                {reportsIntegrity.data.map((report: any) => (
-                  <Alert key={report.report_id}>
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      <div className="space-y-2">
-                        <div>
-                          <p className="font-semibold">
-                            PAT {report.equipment_code}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {report.company} • {report.work_site}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Data: {formatBRFromYYYYMMDD(report.report_date)}
-                          </p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {report.details}
-                          </p>
-                          <Badge variant="destructive" className="mt-2">
-                            {report.issue_type}
-                          </Badge>
-                        </div>
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                ))}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Produtos com Problemas de Estoque */}
-      {productsStockIntegrity.count > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-yellow-500" />
-              Produtos com Problemas de Estoque ({productsStockIntegrity.count})
-            </CardTitle>
-            <CardDescription>
-              Produtos com estoque negativo ou abaixo do mínimo
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[400px]">
-              <div className="space-y-3">
-                {productsStockIntegrity.data.map((product: any) => (
-                  <Alert key={product.product_id}>
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      <div className="space-y-2">
-                        <div>
-                          <p className="font-semibold">
-                            {product.product_code} - {product.product_name}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Estoque Atual: {product.current_quantity} • Mínimo: {product.min_quantity}
-                          </p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {product.details}
-                          </p>
-                          <Badge variant={product.issue_type === 'negative_stock' ? 'destructive' : 'secondary'} className="mt-2">
-                            {product.issue_type === 'negative_stock' ? 'ESTOQUE NEGATIVO' : 'ABAIXO DO MÍNIMO'}
-                          </Badge>
-                        </div>
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                ))}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* FASE 1: Referências Órfãs de Produtos */}
-      {productsOrphanIntegrity.count > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
-              Referências Órfãs de Produtos ({productsOrphanIntegrity.count})
-            </CardTitle>
-            <CardDescription>
-              Produtos deletados ainda referenciados em retiradas, relatórios e manutenções
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Alert variant="destructive" className="mb-4">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                <strong>CRÍTICO:</strong> Referências órfãs comprometem a rastreabilidade do sistema e podem causar erros graves.
-                Contate o administrador imediatamente para resolver estas inconsistências.
-              </AlertDescription>
-            </Alert>
-            <ScrollArea className="h-[400px]">
-              <div className="space-y-3">
-                {productsOrphanIntegrity.data.map((item: any) => (
-                  <Alert key={item.reference_id} variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      <div className="space-y-2">
-                        <div>
-                          <p className="font-semibold">
-                            {item.product_code} - {item.product_name}
-                          </p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {item.details}
-                          </p>
-                          <div className="flex gap-2 mt-2">
-                            <Badge variant="outline">
-                              {item.reference_type === 'material_withdrawal' && 'Retirada'}
-                              {item.reference_type === 'report_part' && 'Relatório'}
-                              {item.reference_type === 'asset_mobilization_part' && 'Mobilização'}
-                              {item.reference_type === 'asset_maintenance_part' && 'Manutenção'}
-                              {item.reference_type === 'asset_spare_part' && 'Peça Reserva'}
-                            </Badge>
-                            <Badge variant="destructive">{item.issue_type}</Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                ))}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Mensagem quando tudo está OK */}
-      {totalIssues === 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-8">
-              <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Sistema Íntegro</h3>
-              <p className="text-muted-foreground">
-                Nenhum problema de integridade foi detectado. Todas as verificações passaram com sucesso.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Modal de Detalhes */}
+      <IntegrityDetailModal
+        open={detailModalOpen}
+        onOpenChange={setDetailModalOpen}
+        problem={selectedProblem}
+        problemType={selectedProblemType}
+      />
     </div>
   );
 }
