@@ -1778,6 +1778,45 @@ export type Database = {
           },
         ]
       }
+      system_integrity_resolutions: {
+        Row: {
+          created_at: string | null
+          id: string
+          priority: string | null
+          problem_identifier: string
+          problem_type: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          priority?: string | null
+          problem_identifier: string
+          problem_type: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          priority?: string | null
+          problem_identifier?: string
+          problem_type?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_permissions: {
         Row: {
           can_access_admin: boolean | null
@@ -2351,6 +2390,26 @@ export type Database = {
       is_superuser: { Args: { _user_id: string }; Returns: boolean }
       is_system_owner: { Args: { _user_id: string }; Returns: boolean }
       is_user_active: { Args: { _user_id: string }; Returns: boolean }
+      mark_integrity_problem_ignored: {
+        Args: {
+          p_notes?: string
+          p_problem_identifier: string
+          p_problem_type: string
+        }
+        Returns: string
+      }
+      mark_integrity_problem_pending: {
+        Args: { p_problem_identifier: string; p_problem_type: string }
+        Returns: string
+      }
+      mark_integrity_problem_resolved: {
+        Args: {
+          p_notes?: string
+          p_problem_identifier: string
+          p_problem_type: string
+        }
+        Returns: string
+      }
       normalize_all_data: {
         Args: never
         Returns: {
