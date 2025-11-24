@@ -910,6 +910,51 @@ export type Database = {
           },
         ]
       }
+      equipment_rental_catalog: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          daily_rate_15: number | null
+          daily_rate_30: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          price_15_days: number | null
+          price_30_days: number | null
+          special_rules: string | null
+          unit: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          daily_rate_15?: number | null
+          daily_rate_30?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price_15_days?: number | null
+          price_30_days?: number | null
+          special_rules?: string | null
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          daily_rate_15?: number | null
+          daily_rate_30?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price_15_days?: number | null
+          price_30_days?: number | null
+          special_rules?: string | null
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       error_logs: {
         Row: {
           additional_data: Json | null

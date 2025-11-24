@@ -108,8 +108,87 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const url = new URL(req.url);
+  const pathParts = url.pathname.split('/').filter(Boolean);
+  const endpoint = pathParts[pathParts.length - 1];
+
+  // ========== GET /catalog - Endpoint público para catálogo de equipamentos ==========
+  if (endpoint === 'catalog' && req.method === 'GET') {
+    try {
+      console.log('📋 Fetching equipment rental catalog...');
+
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+      // Buscar catálogo
+      const { data: catalog, error: catalogError } = await supabase
+        .from('equipment_rental_catalog')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+
+      if (catalogError) {
+        console.error('Error fetching catalog:', catalogError);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Failed to fetch catalog',
+            details: catalogError.message 
+          }),
+          { 
+            status: 500, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+
+      // Calcular quantidade disponível para cada tipo de equipamento
+      const catalogWithQuantity = await Promise.all(
+        (catalog || []).map(async (item) => {
+          const { count } = await supabase
+            .from('assets')
+            .select('*', { count: 'exact', head: true })
+            .eq('equipment_name', item.name)
+            .is('deleted_at', null)
+            .or('location_type.eq.deposito_malta,available_for_rental.eq.true');
+
+          return {
+            ...item,
+            available_quantity: count || 0
+          };
+        })
+      );
+
+      console.log(`✅ Catalog fetched: ${catalogWithQuantity.length} items`);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: catalogWithQuantity,
+          total: catalogWithQuantity.length
+        }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    } catch (error) {
+      console.error('Error in catalog endpoint:', error);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Internal server error',
+          details: (error as Error).message 
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+  }
+
   try {
-    // Rate limiting
+    // Rate limiting para operações de escrita
     const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
     
     if (!checkRateLimit(clientIp, 50, 60000)) { // 50 req/min para operações de escrita
@@ -119,7 +198,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Validate API Key
+    // Validate API Key para operações de escrita
     const authHeader = req.headers.get('x-api-key');
     if (authHeader !== n8nApiKey) {
       return new Response(
@@ -129,9 +208,6 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const url = new URL(req.url);
-    const pathParts = url.pathname.split('/').filter(Boolean);
-    const endpoint = pathParts[pathParts.length - 1];
     const action = pathParts[pathParts.length - 2] || endpoint;
 
     console.log(`Sync Assets API - Action: ${action}, Method: ${req.method}`);
