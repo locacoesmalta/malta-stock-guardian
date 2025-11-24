@@ -27,9 +27,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ArrowLeft, Check, Wrench, Building2, RefreshCw } from "lucide-react";
+import { ArrowLeft, Check, Wrench, Building2, RefreshCw, AlertTriangle } from "lucide-react";
 import { DeadlineStatusBadge } from "@/components/DeadlineStatusBadge";
 import { getTodayLocalDate } from "@/lib/dateUtils";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type DecisionType = "approve" | "maintenance" | "return" | "replace" | null;
 
@@ -66,6 +67,20 @@ export default function PostInspection() {
   const returnForm = useForm<MovementLocacaoFormData>({
     resolver: zodResolver(movementLocacaoSchema),
   });
+
+  // Calcular dias retroativos para Manutenção
+  const maintenanceArrivalDate = maintenanceForm.watch("maintenance_arrival_date");
+  const maintenanceDaysAgo = maintenanceArrivalDate 
+    ? Math.floor((new Date().getTime() - new Date(maintenanceArrivalDate).getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
+  const isMaintenanceRetroactive = maintenanceDaysAgo > 7;
+
+  // Calcular dias retroativos para Retorno à Obra
+  const rentalStartDate = returnForm.watch("rental_start_date");
+  const rentalDaysAgo = rentalStartDate
+    ? Math.floor((new Date().getTime() - new Date(rentalStartDate).getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
+  const isRentalRetroactive = rentalDaysAgo > 7;
 
   // Auto-preencher empresa e obra ao selecionar manutenção
   useEffect(() => {
@@ -585,7 +600,14 @@ export default function PostInspection() {
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="maintenance_arrival_date">Data de Chegada *</Label>
+                      <Label htmlFor="maintenance_arrival_date">
+                        Data de Chegada *
+                        {isMaintenanceRetroactive && (
+                          <Badge variant="destructive" className="ml-2">
+                            ⚠️ {maintenanceDaysAgo} dias atrás
+                          </Badge>
+                        )}
+                      </Label>
                       <Input
                         id="maintenance_arrival_date"
                         type="date"
@@ -612,6 +634,36 @@ export default function PostInspection() {
                       />
                     </div>
                   </div>
+
+                  {isMaintenanceRetroactive && (
+                    <>
+                      <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription>
+                          Esta data está <strong>{maintenanceDaysAgo} dias no passado</strong>. 
+                          Para manter a rastreabilidade do sistema, você deve justificar este registro retroativo.
+                        </AlertDescription>
+                      </Alert>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="retroactive_justification_maintenance">
+                          Justificativa para Registro Retroativo *
+                        </Label>
+                        <Textarea
+                          id="retroactive_justification_maintenance"
+                          placeholder="Explique o motivo do registro com data passada (obrigatório para datas com mais de 7 dias)..."
+                          {...maintenanceForm.register("retroactive_justification")}
+                          className="min-h-[100px]"
+                        />
+                        {maintenanceForm.formState.errors.retroactive_justification && (
+                          <p className="text-sm text-destructive">
+                            {maintenanceForm.formState.errors.retroactive_justification.message}
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  )}
+
                   <div className="space-y-2">
                     <Label htmlFor="maintenance_description">Descrição *</Label>
                     <Textarea
@@ -681,7 +733,14 @@ export default function PostInspection() {
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="rental_start_date">Data Início *</Label>
+                      <Label htmlFor="rental_start_date">
+                        Data Início *
+                        {isRentalRetroactive && (
+                          <Badge variant="destructive" className="ml-2">
+                            ⚠️ {rentalDaysAgo} dias atrás
+                          </Badge>
+                        )}
+                      </Label>
                       <Input
                         id="rental_start_date"
                         type="date"
@@ -708,6 +767,36 @@ export default function PostInspection() {
                       />
                     </div>
                   </div>
+
+                  {isRentalRetroactive && (
+                    <>
+                      <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription>
+                          Esta data está <strong>{rentalDaysAgo} dias no passado</strong>. 
+                          Para manter a rastreabilidade do sistema, você deve justificar este registro retroativo.
+                        </AlertDescription>
+                      </Alert>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="retroactive_justification_rental">
+                          Justificativa para Registro Retroativo *
+                        </Label>
+                        <Textarea
+                          id="retroactive_justification_rental"
+                          placeholder="Explique o motivo do registro com data passada (obrigatório para datas com mais de 7 dias)..."
+                          {...returnForm.register("retroactive_justification")}
+                          className="min-h-[100px]"
+                        />
+                        {returnForm.formState.errors.retroactive_justification && (
+                          <p className="text-sm text-destructive">
+                            {returnForm.formState.errors.retroactive_justification.message}
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  )}
+
                   <div className="space-y-2">
                     <Label htmlFor="equipment_observations">Observações</Label>
                     <Textarea
