@@ -420,6 +420,7 @@ export type Database = {
           rental_work_site: string | null
           replaced_by_asset_id: string | null
           replacement_reason: string | null
+          retroactive_justification: string | null
           retroactive_registration_notes: string | null
           returns_to_work_site: boolean | null
           serial_number: string | null
@@ -475,6 +476,7 @@ export type Database = {
           rental_work_site?: string | null
           replaced_by_asset_id?: string | null
           replacement_reason?: string | null
+          retroactive_justification?: string | null
           retroactive_registration_notes?: string | null
           returns_to_work_site?: boolean | null
           serial_number?: string | null
@@ -530,6 +532,7 @@ export type Database = {
           rental_work_site?: string | null
           replaced_by_asset_id?: string | null
           replacement_reason?: string | null
+          retroactive_justification?: string | null
           retroactive_registration_notes?: string | null
           returns_to_work_site?: boolean | null
           serial_number?: string | null
