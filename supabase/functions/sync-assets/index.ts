@@ -199,7 +199,7 @@ Deno.serve(async (req) => {
       // Query base: equipamentos no Depósito Malta (disponíveis)
       let query = supabase
         .from('assets')
-        .select('equipment_name, asset_code')
+        .select('equipment_name, asset_code, manufacturer')
         .eq('location_type', 'deposito_malta')
         .is('deleted_at', null)
         .order('equipment_name');
