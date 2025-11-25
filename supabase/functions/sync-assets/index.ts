@@ -187,6 +187,74 @@ Deno.serve(async (req) => {
     }
   }
 
+  // ========== GET /availability - Endpoint público para equipamentos disponíveis ==========
+  if (endpoint === 'availability' && req.method === 'GET') {
+    try {
+      console.log('📦 Fetching available equipment for rental...');
+
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      const url = new URL(req.url);
+      const nameFilter = url.searchParams.get('name');
+
+      // Query base: equipamentos no Depósito Malta (disponíveis)
+      let query = supabase
+        .from('assets')
+        .select('equipment_name, asset_code')
+        .eq('location_type', 'deposito_malta')
+        .is('deleted_at', null)
+        .order('equipment_name');
+
+      // Filtro opcional por nome (busca parcial case-insensitive)
+      if (nameFilter) {
+        query = query.ilike('equipment_name', `%${nameFilter}%`);
+      }
+
+      const { data: availableAssets, error: queryError } = await query;
+
+      if (queryError) {
+        console.error('Error fetching available equipment:', queryError);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Failed to fetch available equipment',
+            details: queryError.message 
+          }),
+          { 
+            status: 500, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+
+      console.log(`✅ Available equipment fetched: ${availableAssets?.length || 0} items`);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: availableAssets || [],
+          total: availableAssets?.length || 0
+        }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    } catch (error) {
+      console.error('Error in availability endpoint:', error);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Internal server error',
+          details: (error as Error).message 
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+  }
+
   try {
     // Rate limiting para operações de escrita
     const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
