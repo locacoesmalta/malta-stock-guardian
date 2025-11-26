@@ -264,27 +264,33 @@ serve(async (req) => {
 
     // GET /status - Status da sincronização
     if (path === '/status' && req.method === 'GET') {
-      // Buscar contagem de registros em ambos os bancos
+      // Buscar contagem de registros em ambos os bancos (TODAS as 38 tabelas)
       const counts: any = {};
       
-      for (const tableName of SYNC_ORDER.slice(0, 10)) { // Primeiras 10 tabelas como exemplo
+      for (const tableName of SYNC_ORDER) {
         try {
           const { count: internalCount } = await internalClient
             .from(tableName)
             .select('*', { count: 'exact', head: true });
           
-          const { count: externalCount } = await externalClient
+          const { count: externalCount, error: externalError } = await externalClient
             .from(tableName)
             .select('*', { count: 'exact', head: true });
           
           counts[tableName] = {
             internal: internalCount || 0,
-            external: externalCount || 0,
-            synced: internalCount === externalCount,
+            external: externalError ? -1 : (externalCount || 0), // -1 indica erro
+            synced: !externalError && internalCount === externalCount,
+            error: externalError?.message || undefined, // Captura erro específico
           };
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
-          counts[tableName] = { error: errorMessage };
+          counts[tableName] = { 
+            internal: 0, 
+            external: -1, 
+            synced: false,
+            error: errorMessage 
+          };
         }
       }
       
@@ -294,6 +300,43 @@ serve(async (req) => {
           total_tables: SYNC_ORDER.length,
           sample_counts: counts,
           sync_order: SYNC_ORDER,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // GET /diagnose - Verificar se tabelas existem no banco externo
+    if (path === '/diagnose' && req.method === 'GET') {
+      console.log('[Sync] Iniciando diagnóstico de tabelas...');
+      const diagnostics = [];
+      
+      for (const tableName of SYNC_ORDER) {
+        try {
+          const { error } = await externalClient.from(tableName).select('*').limit(1);
+          diagnostics.push({
+            table: tableName,
+            exists: !error,
+            error: error?.message || null
+          });
+        } catch (e) {
+          const errorMessage = e instanceof Error ? e.message : String(e);
+          diagnostics.push({
+            table: tableName,
+            exists: false,
+            error: errorMessage
+          });
+        }
+      }
+      
+      const missingTables = diagnostics.filter(d => !d.exists);
+      
+      return new Response(
+        JSON.stringify({
+          success: true,
+          total_tables: SYNC_ORDER.length,
+          existing_tables: diagnostics.filter(d => d.exists).length,
+          missing_tables: missingTables.length,
+          diagnostics,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -377,7 +420,8 @@ serve(async (req) => {
         available_endpoints: [
           'POST /full - Sincronização completa',
           'POST /table/:name - Sincronizar tabela específica',
-          'GET /status - Status da sincronização',
+          'GET /status - Status da sincronização (todas as 38 tabelas)',
+          'GET /diagnose - Diagnóstico de tabelas no banco externo',
           'POST /incremental - Sincronização incremental (body: {since: "2025-01-01T00:00:00Z"})',
         ]
       }),

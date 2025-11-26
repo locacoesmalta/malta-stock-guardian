@@ -3,7 +3,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Database, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { RefreshCw, Database, CheckCircle2, Clock, AlertCircle, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -249,7 +249,12 @@ export default function ExternalSync() {
                   >
                     <div className="flex items-center gap-3">
                       <div className="font-medium">{table.table}</div>
-                      {table.synced ? (
+                      {table.error ? (
+                        <Badge variant="destructive">
+                          <XCircle className="mr-1 h-3 w-3" />
+                          Erro: {table.error}
+                        </Badge>
+                      ) : table.synced ? (
                         <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                           <CheckCircle2 className="mr-1 h-3 w-3" />
                           Sincronizado
@@ -268,7 +273,7 @@ export default function ExternalSync() {
                       </div>
                       <div>
                         <span className="text-muted-foreground">Externo:</span>{" "}
-                        <span className="font-medium">{table.external}</span>
+                        <span className="font-medium">{table.external === -1 ? 'Erro' : table.external}</span>
                       </div>
                     </div>
                   </div>
