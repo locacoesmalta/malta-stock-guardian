@@ -63,6 +63,7 @@ const SessionHealth = lazy(() => import("./pages/admin/SessionHealth"));
 const EdgeFunctionsHealth = lazy(() => import("./pages/admin/EdgeFunctionsHealth"));
 const QuickReport = lazy(() => import("./pages/reports/QuickReport"));
 const UserActivities = lazy(() => import("./pages/admin/UserActivities"));
+const ExternalSync = lazy(() => import("./pages/admin/ExternalSync"));
 
 const queryClient = new QueryClient();
 
@@ -474,6 +475,7 @@ const App = () => (
               <Route path="/admin/system-integrity" element={<ProtectedLayout><AdminRoute><SystemIntegrity /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/session-health" element={<ProtectedLayout><AdminRoute><SessionHealth /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/edge-functions-health" element={<ProtectedLayout><AdminRoute><EdgeFunctionsHealth /></AdminRoute></ProtectedLayout>} />
+              <Route path="/admin/external-sync" element={<ProtectedLayout><OwnerOnlyRoute><ExternalSync /></OwnerOnlyRoute></ProtectedLayout>} />
               <Route path="/admin/settings" element={<ProtectedLayout><AdminRoute><Settings /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/data-normalization" element={<ProtectedLayout><AdminRoute><DataNormalization /></AdminRoute></ProtectedLayout>} />
               <Route path="*" element={<NotFound />} />

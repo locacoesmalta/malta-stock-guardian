@@ -1,4 +1,4 @@
-import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3, ClipboardList, TrendingUp, Building2, Wallet, FileCheck, FileBarChart, MessageSquare, AlertTriangle, ShoppingCart, Activity, CheckCircle2, type LucideIcon } from "lucide-react";
+import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3, ClipboardList, TrendingUp, Building2, Wallet, FileCheck, FileBarChart, MessageSquare, AlertTriangle, ShoppingCart, Activity, CheckCircle2, Database, type LucideIcon } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -536,6 +536,24 @@ export function AppSidebar() {
                     {!open && (
                       <TooltipContent side="right" className="font-normal">
                         Saúde das Edge Functions
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton asChild>
+                        <NavLink to="/admin/external-sync" className={getNavCls} onClick={handleNavClick}>
+                          <Database className="h-4 w-4" />
+                          <span>Sincronização Externa</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    {!open && (
+                      <TooltipContent side="right" className="font-normal">
+                        Sincronização Externa
                       </TooltipContent>
                     )}
                   </Tooltip>
