@@ -607,10 +607,23 @@ export default function AssetMovement() {
         };
 
       case "retorno_obra":
-        // Retorno para obra NÃO altera location_type
+        // Retorno para obra ALTERA para locação (equipamento volta para obra e continua locado)
         return {
+          location_type: "locacao",
+          rental_company: sanitizedData.rental_company || null,
+          rental_work_site: sanitizedData.rental_work_site || null,
+          rental_start_date: sanitizedData.movement_date || getTodayLocalDate(),
+          rental_end_date: null,
+          rental_contract_number: null,
           equipment_observations: sanitizedData.equipment_observations || null,
           malta_collaborator: sanitizedData.malta_collaborator || null,
+          // Limpar dados de manutenção (não está mais em manutenção)
+          maintenance_company: null,
+          maintenance_work_site: null,
+          maintenance_description: null,
+          maintenance_arrival_date: null,
+          maintenance_departure_date: null,
+          maintenance_delay_observations: null,
         };
 
       case "substituicao":
@@ -1103,6 +1116,9 @@ export default function AssetMovement() {
           codigoPat: asset.asset_code,
           tipoEvento: "RETORNO PARA OBRA",
           detalhesEvento,
+          campoAlterado: "location_type",
+          valorAntigo: asset.location_type,
+          valorNovo: "locacao",
         });
       } else {
         await registrarEvento({
