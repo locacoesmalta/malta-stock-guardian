@@ -127,12 +127,19 @@ export default function AssetMovement() {
     let workSite = "";
     
     if (asset.location_type === "locacao") {
+      // Equipamento em locação - usa dados de rental
       company = asset.rental_company || "";
       workSite = asset.rental_work_site || "";
     } else if (asset.location_type === "em_manutencao") {
+      // Equipamento em manutenção - usa dados de maintenance
       company = asset.maintenance_company || "";
       workSite = asset.maintenance_work_site || "";
+    } else if (asset.location_type === "aguardando_laudo") {
+      // Equipamento aguardando laudo - mantém dados de rental do período anterior
+      company = asset.rental_company || "";
+      workSite = asset.rental_work_site || "";
     }
+    // Para "deposito_malta" - retorna vazio (não está associado a ninguém)
     
     return { company, workSite };
   };
