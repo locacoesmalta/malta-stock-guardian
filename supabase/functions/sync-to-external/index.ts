@@ -76,6 +76,11 @@ const SYNC_ORDER = [
   'system_integrity_resolutions',
 ];
 
+// Mapeamento de tabelas com chave primária diferente de 'id'
+const PRIMARY_KEY_MAP: Record<string, string> = {
+  'patrimonio_historico': 'historico_id',
+};
+
 interface SyncStats {
   table: string;
   records_synced: number;
@@ -111,11 +116,14 @@ async function syncTable(tableName: string): Promise<SyncStats> {
     
     console.log(`[Sync] ${tableName}: ${internalData.length} registros encontrados`);
     
-    // Deletar dados existentes na tabela externa
+    // Obter nome da coluna da chave primária para esta tabela
+    const pkColumn = PRIMARY_KEY_MAP[tableName] || 'id';
+    
+    // Deletar dados existentes na tabela externa usando a PK correta
     const { error: deleteError } = await externalClient
       .from(tableName)
       .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+      .neq(pkColumn, '00000000-0000-0000-0000-000000000000'); // Delete all
     
     if (deleteError) {
       console.warn(`[Sync] Aviso ao limpar ${tableName}: ${deleteError.message}`);
