@@ -30,9 +30,22 @@ export default function ExternalSync() {
   const { data: statusData, isLoading: statusLoading, refetch } = useQuery({
     queryKey: ['external-sync-status'],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke<SyncStatusResponse>('sync-to-external/status');
-      if (error) throw error;
-      return data;
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-to-external/status`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+        }
+      );
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao buscar status');
+      }
+      
+      return response.json() as Promise<SyncStatusResponse>;
     },
     refetchInterval: 30000, // Atualiza a cada 30s
   });
