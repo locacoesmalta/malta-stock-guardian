@@ -168,7 +168,8 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const path = url.pathname.replace('/sync-to-external', '');
+    // Extract path after the function name (handles /functions/v1/sync-to-external/xxx)
+    const path = url.pathname.split('/sync-to-external')[1] || '/';
 
     // POST /full - Sincronização completa
     if (path === '/full' && req.method === 'POST') {
