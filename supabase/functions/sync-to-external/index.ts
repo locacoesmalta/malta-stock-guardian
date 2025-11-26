@@ -1,0 +1,358 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { corsHeaders } from "../_shared/cors.ts";
+
+const INTERNAL_SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const INTERNAL_SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const EXTERNAL_SUPABASE_URL = Deno.env.get('EXTERNAL_SUPABASE_URL')!;
+const EXTERNAL_SUPABASE_SERVICE_KEY = Deno.env.get('EXTERNAL_SUPABASE_SERVICE_KEY')!;
+
+// Cliente interno (source)
+const internalClient = createClient(INTERNAL_SUPABASE_URL, INTERNAL_SUPABASE_SERVICE_KEY);
+
+// Cliente externo (destination)
+const externalClient = createClient(EXTERNAL_SUPABASE_URL, EXTERNAL_SUPABASE_SERVICE_KEY);
+
+// Ordem de sincronização respeitando dependências
+const SYNC_ORDER = [
+  // Base - sem dependências
+  'profiles',
+  'equipment_rental_catalog',
+  
+  // Dependem de profiles
+  'user_roles',
+  'user_permissions',
+  'user_presence',
+  
+  // Base para outros
+  'products',
+  'rental_companies',
+  
+  // Dependem de products/assets
+  'assets',
+  'product_purchases',
+  'product_stock_adjustments',
+  
+  // Dependem de assets
+  'asset_collaborators',
+  'asset_lifecycle_history',
+  'asset_maintenances',
+  'asset_maintenance_parts',
+  'asset_mobilization_expenses',
+  'asset_mobilization_parts',
+  'asset_spare_parts',
+  'equipment_receipts',
+  'equipment_receipt_items',
+  
+  // Dependem de rental_companies
+  'rental_equipment',
+  
+  // Reports e relacionados
+  'reports',
+  'report_parts',
+  'report_photos',
+  'report_external_services',
+  
+  // Material withdrawals
+  'material_withdrawals',
+  'material_withdrawal_collaborators',
+  
+  // Chat
+  'conversations',
+  'conversation_participants',
+  'chat_groups',
+  'group_permissions',
+  'messages',
+  
+  // Financeiro
+  'cash_boxes',
+  'cash_box_transactions',
+  
+  // Audit (sempre por último)
+  'patrimonio_historico',
+  'audit_logs',
+  'error_logs',
+  'receipt_access_logs',
+  'system_integrity_resolutions',
+];
+
+interface SyncStats {
+  table: string;
+  records_synced: number;
+  success: boolean;
+  error?: string;
+  duration_ms: number;
+}
+
+async function syncTable(tableName: string): Promise<SyncStats> {
+  const startTime = Date.now();
+  
+  try {
+    console.log(`[Sync] Iniciando sincronização da tabela: ${tableName}`);
+    
+    // Buscar todos os dados da tabela interna
+    const { data: internalData, error: fetchError } = await internalClient
+      .from(tableName)
+      .select('*');
+    
+    if (fetchError) {
+      throw new Error(`Erro ao buscar dados de ${tableName}: ${fetchError.message}`);
+    }
+    
+    if (!internalData || internalData.length === 0) {
+      console.log(`[Sync] Tabela ${tableName} vazia, pulando...`);
+      return {
+        table: tableName,
+        records_synced: 0,
+        success: true,
+        duration_ms: Date.now() - startTime,
+      };
+    }
+    
+    console.log(`[Sync] ${tableName}: ${internalData.length} registros encontrados`);
+    
+    // Deletar dados existentes na tabela externa
+    const { error: deleteError } = await externalClient
+      .from(tableName)
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+    
+    if (deleteError) {
+      console.warn(`[Sync] Aviso ao limpar ${tableName}: ${deleteError.message}`);
+    }
+    
+    // Inserir dados em lotes de 1000 registros
+    const batchSize = 1000;
+    let totalSynced = 0;
+    
+    for (let i = 0; i < internalData.length; i += batchSize) {
+      const batch = internalData.slice(i, i + batchSize);
+      
+      const { error: insertError } = await externalClient
+        .from(tableName)
+        .insert(batch);
+      
+      if (insertError) {
+        throw new Error(`Erro ao inserir dados em ${tableName}: ${insertError.message}`);
+      }
+      
+      totalSynced += batch.length;
+      console.log(`[Sync] ${tableName}: ${totalSynced}/${internalData.length} registros sincronizados`);
+    }
+    
+    return {
+      table: tableName,
+      records_synced: totalSynced,
+      success: true,
+      duration_ms: Date.now() - startTime,
+    };
+    
+  } catch (error) {
+    console.error(`[Sync] Erro em ${tableName}:`, error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return {
+      table: tableName,
+      records_synced: 0,
+      success: false,
+      error: errorMessage,
+      duration_ms: Date.now() - startTime,
+    };
+  }
+}
+
+serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const url = new URL(req.url);
+    const path = url.pathname.replace('/sync-to-external', '');
+
+    // POST /full - Sincronização completa
+    if (path === '/full' && req.method === 'POST') {
+      console.log('[Sync] Iniciando sincronização completa de 39 tabelas...');
+      const startTime = Date.now();
+      
+      const results: SyncStats[] = [];
+      
+      for (const tableName of SYNC_ORDER) {
+        const stats = await syncTable(tableName);
+        results.push(stats);
+      }
+      
+      const totalDuration = Date.now() - startTime;
+      const successCount = results.filter(r => r.success).length;
+      const totalRecords = results.reduce((sum, r) => sum + r.records_synced, 0);
+      
+      console.log(`[Sync] Sincronização completa finalizada: ${successCount}/${results.length} tabelas`);
+      
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: `Sincronização completa: ${successCount}/${results.length} tabelas`,
+          total_records_synced: totalRecords,
+          total_duration_ms: totalDuration,
+          tables: results,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // POST /table/:name - Sincronização de tabela específica
+    if (path.startsWith('/table/') && req.method === 'POST') {
+      const tableName = path.replace('/table/', '');
+      
+      if (!SYNC_ORDER.includes(tableName)) {
+        return new Response(
+          JSON.stringify({ error: `Tabela '${tableName}' não encontrada na configuração de sincronização` }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      const stats = await syncTable(tableName);
+      
+      return new Response(
+        JSON.stringify({
+          success: stats.success,
+          table: stats,
+        }),
+        { 
+          status: stats.success ? 200 : 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // GET /status - Status da sincronização
+    if (path === '/status' && req.method === 'GET') {
+      // Buscar contagem de registros em ambos os bancos
+      const counts: any = {};
+      
+      for (const tableName of SYNC_ORDER.slice(0, 10)) { // Primeiras 10 tabelas como exemplo
+        try {
+          const { count: internalCount } = await internalClient
+            .from(tableName)
+            .select('*', { count: 'exact', head: true });
+          
+          const { count: externalCount } = await externalClient
+            .from(tableName)
+            .select('*', { count: 'exact', head: true });
+          
+          counts[tableName] = {
+            internal: internalCount || 0,
+            external: externalCount || 0,
+            synced: internalCount === externalCount,
+          };
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          counts[tableName] = { error: errorMessage };
+        }
+      }
+      
+      return new Response(
+        JSON.stringify({
+          success: true,
+          total_tables: SYNC_ORDER.length,
+          sample_counts: counts,
+          sync_order: SYNC_ORDER,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // POST /incremental - Sincronização incremental (dados novos/alterados)
+    if (path === '/incremental' && req.method === 'POST') {
+      const { since } = await req.json();
+      
+      if (!since) {
+        return new Response(
+          JSON.stringify({ error: "Parâmetro 'since' (timestamp) é obrigatório" }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      console.log(`[Sync] Sincronização incremental desde: ${since}`);
+      const results: SyncStats[] = [];
+      
+      for (const tableName of SYNC_ORDER) {
+        const startTime = Date.now();
+        
+        try {
+          // Buscar apenas registros novos/alterados
+          const { data: newData, error: fetchError } = await internalClient
+            .from(tableName)
+            .select('*')
+            .or(`created_at.gte.${since},updated_at.gte.${since}`);
+          
+          if (fetchError || !newData || newData.length === 0) {
+            results.push({
+              table: tableName,
+              records_synced: 0,
+              success: true,
+              duration_ms: Date.now() - startTime,
+            });
+            continue;
+          }
+          
+          // Upsert (insert ou update)
+          const { error: upsertError } = await externalClient
+            .from(tableName)
+            .upsert(newData);
+          
+          results.push({
+            table: tableName,
+            records_synced: newData.length,
+            success: !upsertError,
+            error: upsertError?.message,
+            duration_ms: Date.now() - startTime,
+          });
+          
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          results.push({
+            table: tableName,
+            records_synced: 0,
+            success: false,
+            error: errorMessage,
+            duration_ms: Date.now() - startTime,
+          });
+        }
+      }
+      
+      const totalRecords = results.reduce((sum, r) => sum + r.records_synced, 0);
+      
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: `Sincronização incremental: ${totalRecords} registros atualizados`,
+          tables: results,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Endpoint não encontrado
+    return new Response(
+      JSON.stringify({ 
+        error: 'Endpoint não encontrado',
+        available_endpoints: [
+          'POST /full - Sincronização completa',
+          'POST /table/:name - Sincronizar tabela específica',
+          'GET /status - Status da sincronização',
+          'POST /incremental - Sincronização incremental (body: {since: "2025-01-01T00:00:00Z"})',
+        ]
+      }),
+      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error) {
+    console.error('[Sync] Erro:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});
