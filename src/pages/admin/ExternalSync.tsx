@@ -13,12 +13,15 @@ interface SyncStatus {
   internal: number;
   external: number;
   synced: boolean;
-  table: string;
+  error?: string;
 }
 
 interface SyncStatusResponse {
-  status: SyncStatus[];
-  timestamp: string;
+  success: boolean;
+  total_tables: number;
+  sample_counts: Record<string, SyncStatus>;
+  sync_order: string[];
+  timestamp?: string;
 }
 
 export default function ExternalSync() {
@@ -104,10 +107,18 @@ export default function ExternalSync() {
     },
   });
 
-  const totalInternal = statusData?.status.reduce((sum, t) => sum + t.internal, 0) || 0;
-  const totalExternal = statusData?.status.reduce((sum, t) => sum + t.external, 0) || 0;
-  const syncedTables = statusData?.status.filter(t => t.synced).length || 0;
-  const totalTables = statusData?.status.length || 0;
+  // Transformar sample_counts em array para exibição
+  const tablesList = statusData?.sample_counts 
+    ? Object.entries(statusData.sample_counts).map(([table, data]) => ({
+        table,
+        ...data
+      }))
+    : [];
+
+  const totalInternal = tablesList.reduce((sum, t) => sum + t.internal, 0);
+  const totalExternal = tablesList.reduce((sum, t) => sum + t.external, 0);
+  const syncedTables = tablesList.filter(t => t.synced).length;
+  const totalTables = statusData?.total_tables || tablesList.length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -159,7 +170,11 @@ export default function ExternalSync() {
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-sm">{lastSyncTime || "Nunca"}</div>
+              <div className="text-sm">
+                {statusData?.timestamp 
+                  ? new Date(statusData.timestamp).toLocaleString('pt-BR')
+                  : lastSyncTime || "Nunca"}
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -227,7 +242,7 @@ export default function ExternalSync() {
               </div>
             ) : (
               <div className="space-y-2">
-                {statusData?.status.map((table) => (
+                {tablesList.map((table) => (
                   <div
                     key={table.table}
                     className="flex items-center justify-between p-3 border rounded-lg"
