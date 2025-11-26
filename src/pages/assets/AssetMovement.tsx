@@ -121,6 +121,22 @@ export default function AssetMovement() {
     }
   }, [asset, movementType]);
 
+  // Função auxiliar para determinar empresa e obra baseado no location_type
+  const getAssetCompanyAndWorkSite = (asset: any) => {
+    let company = "";
+    let workSite = "";
+    
+    if (asset.location_type === "locacao") {
+      company = asset.rental_company || "";
+      workSite = asset.rental_work_site || "";
+    } else if (asset.location_type === "em_manutencao") {
+      company = asset.maintenance_company || "";
+      workSite = asset.maintenance_work_site || "";
+    }
+    
+    return { company, workSite };
+  };
+
   const getSchema = () => {
     switch (movementType) {
       case "deposito_malta": return movementDepositoSchema;
@@ -138,9 +154,11 @@ export default function AssetMovement() {
 
   // Preencher automaticamente empresa e obra para retorno_obra
   useEffect(() => {
-    if (asset && movementType === "retorno_obra" && asset.rental_company && asset.rental_work_site) {
-      form.setValue("rental_company", asset.rental_company);
-      form.setValue("rental_work_site", asset.rental_work_site);
+    if (asset && movementType === "retorno_obra") {
+      const { company, workSite } = getAssetCompanyAndWorkSite(asset);
+      
+      if (company) form.setValue("rental_company", company);
+      if (workSite) form.setValue("rental_work_site", workSite);
     }
   }, [asset, movementType, form]);
 
@@ -310,9 +328,11 @@ export default function AssetMovement() {
       form.reset({ movement_date: getTodayLocalDate() });
     }
     if (movementType === "retorno_obra" && asset) {
+      const { company, workSite } = getAssetCompanyAndWorkSite(asset);
+      
       form.reset({ 
-        rental_company: asset.rental_company || "",
-        rental_work_site: asset.rental_work_site || "",
+        rental_company: company,
+        rental_work_site: workSite,
         movement_date: getTodayLocalDate() 
       });
     }
