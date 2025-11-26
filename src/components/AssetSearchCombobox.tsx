@@ -62,10 +62,10 @@ export const AssetSearchCombobox = ({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0 z-50 bg-popover" align="start">
+      <PopoverContent className="w-[500px] p-0 z-50 bg-popover" align="start">
         <Command>
           <CommandInput placeholder="Digite para buscar..." />
-          <CommandList>
+          <CommandList className="max-h-[350px]">
             <CommandEmpty>Nenhum equipamento encontrado.</CommandEmpty>
             <CommandGroup>
               {assets.map((asset) => (
@@ -83,8 +83,11 @@ export const AssetSearchCombobox = ({
                       value === asset.id ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  <div className="flex-1 truncate">
-                    <span className="font-medium">{asset.asset_code}</span> - {asset.equipment_name}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm">{asset.asset_code}</div>
+                    <div className="text-sm text-muted-foreground whitespace-normal break-words">
+                      {asset.equipment_name}
+                    </div>
                   </div>
                 </CommandItem>
               ))}
