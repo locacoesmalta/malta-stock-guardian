@@ -796,6 +796,14 @@ export default function AssetMovement() {
           available_for_rental: asset.available_for_rental,
         };
 
+        // 🎯 Determinar localização EFETIVA para herança
+        // Se equipamento está em "aguardando_laudo" mas tem dados de locação,
+        // trata como se estivesse em "locacao" para fins de herança
+        const effectiveOriginalLocation =
+          oldAssetData.location_type === "aguardando_laudo" && oldAssetData.rental_company
+            ? "locacao"
+            : oldAssetData.location_type;
+
         const today = getTodayLocalDate();
 
         console.log("Iniciando atualização do equipamento ANTIGO...");
@@ -832,25 +840,36 @@ export default function AssetMovement() {
         console.log("Equipamento antigo atualizado com sucesso!");
         console.log("Iniciando atualização do equipamento SUBSTITUTO...");
 
-        // Atualizar equipamento SUBSTITUTO - HERDA o status do antigo
+        // Atualizar equipamento SUBSTITUTO - HERDA o status efetivo do antigo
         const substituteUpdate: any = {
-          location_type: oldAssetData.location_type, // ✅ HERDA do equipamento antigo
-          
-          // Dados de LOCAÇÃO (só preenche se o status for locacao)
-          rental_company: oldAssetData.rental_company,
-          rental_work_site: oldAssetData.rental_work_site,
-          rental_start_date: oldAssetData.location_type === 'locacao' ? data.movement_date : null, // ✅ Usa data configurável
-          rental_end_date: oldAssetData.rental_end_date,
-          rental_contract_number: oldAssetData.rental_contract_number,
-          
-          // Dados de MANUTENÇÃO (só preenche se o status for em_manutencao)
-          maintenance_company: oldAssetData.maintenance_company,
-          maintenance_work_site: oldAssetData.maintenance_work_site,
-          maintenance_arrival_date: oldAssetData.location_type === 'em_manutencao' ? data.movement_date : null, // ✅ Usa data configurável
-          maintenance_departure_date: null,
-          
+          location_type: effectiveOriginalLocation, // ✅ Usa location_type EFETIVO
           available_for_rental: true,
         };
+
+        // Herdar APENAS campos relevantes para o location_type efetivo
+        if (effectiveOriginalLocation === "locacao") {
+          substituteUpdate.rental_company = oldAssetData.rental_company;
+          substituteUpdate.rental_work_site = oldAssetData.rental_work_site;
+          substituteUpdate.rental_start_date = data.movement_date;
+          substituteUpdate.rental_end_date = oldAssetData.rental_end_date;
+          substituteUpdate.rental_contract_number = oldAssetData.rental_contract_number;
+          // Limpar campos de manutenção
+          substituteUpdate.maintenance_company = null;
+          substituteUpdate.maintenance_work_site = null;
+          substituteUpdate.maintenance_arrival_date = null;
+          substituteUpdate.maintenance_departure_date = null;
+        } else if (effectiveOriginalLocation === "em_manutencao") {
+          substituteUpdate.maintenance_company = oldAssetData.maintenance_company;
+          substituteUpdate.maintenance_work_site = oldAssetData.maintenance_work_site;
+          substituteUpdate.maintenance_arrival_date = data.movement_date;
+          substituteUpdate.maintenance_departure_date = null;
+          // Limpar campos de locação
+          substituteUpdate.rental_company = null;
+          substituteUpdate.rental_work_site = null;
+          substituteUpdate.rental_start_date = null;
+          substituteUpdate.rental_end_date = null;
+          substituteUpdate.rental_contract_number = null;
+        }
 
         console.log("Dados para equipamento substituto:", substituteUpdate);
 
@@ -867,20 +886,20 @@ export default function AssetMovement() {
         console.log("Equipamento substituto atualizado com sucesso!");
         console.log("Registrando eventos no histórico...");
 
-        // Determinar localização para os eventos
-        const locationInfo = oldAssetData.location_type === 'locacao' 
+        // Determinar localização para os eventos usando o location_type EFETIVO
+        const locationInfo = effectiveOriginalLocation === 'locacao' 
           ? `Locação - ${oldAssetData.rental_company} / ${oldAssetData.rental_work_site}`
-          : oldAssetData.location_type === 'em_manutencao'
+          : effectiveOriginalLocation === 'em_manutencao'
           ? `Manutenção - ${oldAssetData.maintenance_company} / ${oldAssetData.maintenance_work_site}`
-          : oldAssetData.location_type === 'deposito_malta'
+          : effectiveOriginalLocation === 'deposito_malta'
           ? 'Depósito Malta'
           : 'Aguardando Laudo';
 
-        const statusName = oldAssetData.location_type === 'locacao' 
+        const statusName = effectiveOriginalLocation === 'locacao' 
           ? 'Locação'
-          : oldAssetData.location_type === 'em_manutencao'
+          : effectiveOriginalLocation === 'em_manutencao'
           ? 'Manutenção'
-          : oldAssetData.location_type === 'deposito_malta'
+          : effectiveOriginalLocation === 'deposito_malta'
           ? 'Depósito Malta'
           : 'Aguardando Laudo';
 
@@ -900,6 +919,9 @@ export default function AssetMovement() {
           codigoPat: substituteAsset.asset_code,
           tipoEvento: "SUBSTITUIÇÃO",
           detalhesEvento: `Substituiu o PAT ${asset.asset_code} em ${movementDateFormatted} e assumiu posição em ${locationInfo}. Saiu do Depósito Malta para ${statusName}. Data de início: ${movementDateFormatted}. Equipamento anterior foi para Aguardando Laudo. Motivo: ${data.replacement_reason || "Não informado"}${data.equipment_observations ? `. Obs: ${data.equipment_observations}` : ""}`,
+          campoAlterado: "location_type",
+          valorAntigo: "deposito_malta",
+          valorNovo: effectiveOriginalLocation,
           dataEventoReal: `${data.movement_date}T12:00:00Z`, // ✅ Usa data configurável
         });
 
