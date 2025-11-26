@@ -100,14 +100,14 @@ export const ProductSearchCombobox = ({
           </div>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0 z-50 bg-popover" align="start">
+      <PopoverContent className="w-[500px] p-0 z-50 bg-popover" align="start">
         <Command shouldFilter={false}>
           <CommandInput 
             placeholder="Digite o código ou nome do produto..." 
             value={searchValue}
             onValueChange={setSearchValue}
           />
-          <CommandList>
+          <CommandList className="max-h-[350px]">
             {filteredProducts.length === 0 ? (
               <CommandEmpty>
                 {searchValue.length === 0 
@@ -132,11 +132,14 @@ export const ProductSearchCombobox = ({
                         value === product.id ? "opacity-100" : "opacity-0"
                       )}
                     />
-                    <div className="flex-1 flex items-center justify-between gap-2">
-                      <div className="flex-1 truncate">
-                        <span className="font-medium">{product.code}</span> - {product.name}
+                    <div className="flex-1 flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm">{product.code}</div>
+                        <div className="text-sm text-muted-foreground whitespace-normal break-words">
+                          {product.name}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-2 shrink-0 mt-1">
                         {showCompatibility && (
                           <>
                             {product.is_universal ? (
