@@ -89,20 +89,48 @@ interface SyncStats {
   duration_ms: number;
 }
 
+// Função para buscar TODOS os registros com paginação automática
+async function fetchAllRecords(client: any, tableName: string): Promise<any[]> {
+  const PAGE_SIZE = 1000;
+  const pkColumn = PRIMARY_KEY_MAP[tableName] || 'id';
+  let allData: any[] = [];
+  let offset = 0;
+  let hasMore = true;
+  
+  console.log(`[Sync] ${tableName}: Iniciando busca paginada...`);
+  
+  while (hasMore) {
+    const { data, error } = await client
+      .from(tableName)
+      .select('*')
+      .range(offset, offset + PAGE_SIZE - 1)
+      .order(pkColumn);
+    
+    if (error) {
+      throw new Error(`Erro ao buscar ${tableName} (offset ${offset}): ${error.message}`);
+    }
+    
+    if (data && data.length > 0) {
+      allData = [...allData, ...data];
+      console.log(`[Sync] ${tableName}: ${allData.length} registros carregados...`);
+      offset += PAGE_SIZE;
+      hasMore = data.length === PAGE_SIZE; // Se retornou menos que PAGE_SIZE, acabou
+    } else {
+      hasMore = false;
+    }
+  }
+  
+  return allData;
+}
+
 async function syncTable(tableName: string): Promise<SyncStats> {
   const startTime = Date.now();
   
   try {
     console.log(`[Sync] Iniciando sincronização da tabela: ${tableName}`);
     
-    // Buscar todos os dados da tabela interna
-    const { data: internalData, error: fetchError } = await internalClient
-      .from(tableName)
-      .select('*');
-    
-    if (fetchError) {
-      throw new Error(`Erro ao buscar dados de ${tableName}: ${fetchError.message}`);
-    }
+    // Buscar TODOS os dados da tabela interna com paginação
+    const internalData = await fetchAllRecords(internalClient, tableName);
     
     if (!internalData || internalData.length === 0) {
       console.log(`[Sync] Tabela ${tableName} vazia, pulando...`);
@@ -114,7 +142,7 @@ async function syncTable(tableName: string): Promise<SyncStats> {
       };
     }
     
-    console.log(`[Sync] ${tableName}: ${internalData.length} registros encontrados`);
+    console.log(`[Sync] ${tableName}: ${internalData.length} registros encontrados (busca paginada concluída)`);
     
     // Obter nome da coluna da chave primária para esta tabela
     const pkColumn = PRIMARY_KEY_MAP[tableName] || 'id';
