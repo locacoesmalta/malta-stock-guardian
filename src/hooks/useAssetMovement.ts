@@ -55,7 +55,6 @@ export const useAssetMovement = () => {
         updateData.rental_company = movementData.rental_company;
         updateData.rental_work_site = movementData.rental_work_site;
         updateData.rental_start_date = movementData.rental_start_date;
-        updateData.available_for_rental = true;
       } else if (toStatus === "em_manutencao") {
         updateData.maintenance_company = movementData.maintenance_company;
         updateData.maintenance_work_site = movementData.maintenance_work_site;
@@ -63,7 +62,6 @@ export const useAssetMovement = () => {
         updateData.maintenance_arrival_date = movementData.maintenance_arrival_date;
       } else if (toStatus === "deposito_malta") {
         updateData.deposito_description = movementData.deposito_description;
-        updateData.available_for_rental = false;
       } else if (toStatus === "aguardando_laudo") {
         updateData.inspection_start_date = new Date().toISOString();
       }

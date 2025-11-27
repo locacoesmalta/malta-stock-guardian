@@ -203,7 +203,6 @@ export default function PostInspection() {
         .from("assets")
         .update({
           location_type: "deposito_malta",
-          available_for_rental: true,
           inspection_start_date: null,
           // Limpar campos de outros status
           rental_company: null,
@@ -309,7 +308,6 @@ export default function PostInspection() {
         .from("assets")
         .update({
           location_type: "em_manutencao",
-          available_for_rental: false,
           inspection_start_date: null,
           ...updateData,
           // Limpar campos de outros status
@@ -398,7 +396,6 @@ export default function PostInspection() {
         .from("assets")
         .update({
           location_type: "locacao",
-          available_for_rental: false,
           inspection_start_date: null,
           ...updateData,
           // Limpar campos de outros status
