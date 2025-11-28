@@ -148,7 +148,15 @@ export const useUserActivities = (options: UseUserActivitiesOptions = {}) => {
       for (const [userId, summary] of userMap.entries()) {
         const userLogs = data.filter((log) => (log.user_id || "unknown") === userId);
         const uniqueDays = new Set(
-          userLogs.map((log) => format(new Date(log.created_at), "yyyy-MM-dd"))
+          userLogs.map((log) => {
+            try {
+              const date = new Date(log.created_at);
+              if (isNaN(date.getTime())) return 'invalid-date';
+              return format(date, "yyyy-MM-dd");
+            } catch {
+              return 'invalid-date';
+            }
+          })
         );
         summary.days_active = uniqueDays.size;
       }
