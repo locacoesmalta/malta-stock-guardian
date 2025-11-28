@@ -1,12 +1,25 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
+interface ErrorContext {
+  acao?: string; // Ex: "Movimentando equipamento", "Criando relatório"
+  categoria?: "MOVIMENTACAO" | "ESTOQUE" | "RELATORIO" | "ADMIN" | "AUTH" | "SISTEMA";
+  entidade?: {
+    tipo: string; // Ex: "asset", "product", "report"
+    id?: string;
+    codigo?: string; // Ex: PAT "0234"
+  };
+  dadoProblematico?: Record<string, any>; // Campo/valor que causou erro
+  descricaoAmigavel?: string; // Mensagem clara para usuário entender
+}
+
 interface ErrorTrackingData {
   errorCode: string;
   errorType: string;
   message: string;
   stack?: string;
   additionalData?: Record<string, any>;
+  contexto?: ErrorContext;
 }
 
 interface ErrorLogPayload {
@@ -169,6 +182,7 @@ export const useErrorTracking = () => {
     message,
     stack,
     additionalData = {},
+    contexto,
   }: ErrorTrackingData): Promise<string | null> => {
     try {
       const currentRoute = window.location.pathname;
@@ -209,12 +223,22 @@ export const useErrorTracking = () => {
         severityLevel,
       });
 
-      // Combinar dados adicionais com informações do navegador
+      // Combinar dados adicionais com informações do navegador e contexto
       const fullAdditionalData = {
         ...additionalData,
         ...browserInfo,
         screen_resolution: `${window.screen.width}x${window.screen.height}`,
         viewport: `${window.innerWidth}x${window.innerHeight}`,
+        // Adicionar contexto se fornecido
+        ...(contexto && {
+          contexto_acao: contexto.acao,
+          categoria: contexto.categoria,
+          entidade_tipo: contexto.entidade?.tipo,
+          entidade_id: contexto.entidade?.id,
+          entidade_codigo: contexto.entidade?.codigo,
+          dado_problematico: contexto.dadoProblematico,
+          descricao_amigavel: contexto.descricaoAmigavel,
+        }),
       };
 
       // Inserir no banco de dados
