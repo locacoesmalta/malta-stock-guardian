@@ -15,7 +15,6 @@ interface ReceiptWebhookData {
   receipt_date: string;
   operation_nature?: string;
   received_by: string;
-  received_by_cpf: string;
   whatsapp?: string;
   malta_operator: string;
   received_by_malta?: string;
@@ -137,10 +136,6 @@ export const generateReceiptPDF = async (data: ReceiptWebhookData): Promise<Blob
   pdf.text(data.received_by, margin + 30, y);
 
   pdf.setFont("helvetica", "bold");
-  pdf.text("CPF: ", pageWidth / 2 + 10, y);
-  pdf.setFont("helvetica", "normal");
-  pdf.text(data.received_by_cpf, pageWidth / 2 + 23, y);
-
   y += 7;
 
   if (data.whatsapp) {
@@ -219,7 +214,6 @@ export const generateReceiptPDF = async (data: ReceiptWebhookData): Promise<Blob
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9);
   pdf.text(data.received_by, margin + 40, y, { align: "center" });
-  pdf.text(`CPF: ${data.received_by_cpf}`, margin + 40, y + 5, { align: "center" });
 
   // SEÇÃO DE FOTOS (se houver)
   const itemsWithPhotos = data.items.filter(item => (item as any).photos && (item as any).photos.length > 0);
@@ -306,7 +300,6 @@ export const sendReceiptToWebhook = async (
         data: receiptData.receipt_date,
         natureza_operacao: receiptData.operation_nature || "",
         recebido_por: receiptData.received_by,
-        cpf: receiptData.received_by_cpf,
         whatsapp: formatWhatsAppForWebhook(receiptData.whatsapp),
         responsavel_malta: receiptData.malta_operator,
         recebido_por_malta: receiptData.received_by_malta || "",

@@ -25,7 +25,6 @@ interface ReceiptWebhookPayload {
   data: string;
   natureza_operacao: string;
   recebido_por: string;
-  cpf: string;
   whatsapp: string;
   responsavel_malta: string;
   recebido_por_malta: string;
