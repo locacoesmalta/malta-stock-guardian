@@ -42,18 +42,23 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Validate API Key
-    const authHeader = req.headers.get('x-api-key');
-    if (authHeader !== n8nApiKey) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized - Invalid API Key' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const url = new URL(req.url);
     const endpoint = url.pathname.split('/').pop();
+
+    // ⚠️ TEMPORARY: Allow public access to /daily-report for N8N testing
+    const isPublicEndpoint = endpoint === 'daily-report';
+
+    // Validate API Key (skip for public endpoints)
+    if (!isPublicEndpoint) {
+      const authHeader = req.headers.get('x-api-key');
+      if (authHeader !== n8nApiKey) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized - Invalid API Key' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
     console.log(`N8N API - Endpoint: ${endpoint}`);
 

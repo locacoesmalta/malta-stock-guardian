@@ -2480,6 +2480,7 @@ export type Database = {
         }
         Returns: string
       }
+      send_daily_equipment_report: { Args: never; Returns: undefined }
       update_maintenance_status: { Args: never; Returns: undefined }
       verify_audit_log_integrity: {
         Args: { p_log_id: string }
