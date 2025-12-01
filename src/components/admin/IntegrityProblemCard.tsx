@@ -41,21 +41,23 @@ export function IntegrityProblemCard({
   const getCompactSummary = () => {
     if (problemType === "products") {
       const name = problem.product_name?.substring(0, 30) || "Produto";
-      if (problem.negative_stock) {
+      if (problem.current_quantity < 0) {
         return `🔴 ${problem.product_code} · ${name} · ${problem.current_quantity} un → Ajustar estoque`;
       }
-      if (problem.missing_adjustments) {
-        return `⚠️ ${problem.product_code} · ${name} · Sem ajustes → Registrar entrada`;
+      if (!problem.has_adjustment_history || problem.issue_type?.includes("sem histórico")) {
+        return `⚠️ ${problem.product_code} · ${name} · Sem histórico → Registrar entrada`;
       }
+      return `⚠️ ${problem.product_code} · ${name} · ${problem.issue_type || "Verificar"} → Corrigir`;
     }
     if (problemType === "sessions") {
-      if (problem.is_duplicate) {
-        return `👥 ${problem.user_email} · Sessões duplicadas → Limpar`;
+      if (problem.session_count > 1 || problem.issue_type?.toLowerCase().includes("duplica")) {
+        return `👥 ${problem.user_email} · ${problem.session_count} sessões → Limpar`;
       }
-      if (problem.is_stale) {
+      if (problem.issue_type?.toLowerCase().includes("inativ") || problem.issue_type?.toLowerCase().includes("órfã")) {
         const hours = Math.floor((Date.now() - new Date(problem.last_activity).getTime()) / (1000 * 60 * 60));
         return `⏰ ${problem.user_email} · Inativo há ${hours}h → Encerrar`;
       }
+      return `⚠️ ${problem.user_email} · ${problem.issue_type || "Sessão com problema"} → Verificar`;
     }
     if (problemType === "audit") {
       return `📋 ${problem.action} · ${problem.user_email} · Log sem integridade → Verificar`;
@@ -76,7 +78,7 @@ export function IntegrityProblemCard({
     if (problemType === "orphans") {
       return `🔍 ${problem.code} · ${problem.name?.substring(0, 25)} · Produto órfão → Vincular`;
     }
-    return "⚠️ Problema detectado";
+    return `⚠️ ${problem.issue_type || "Problema detectado"} → Verificar`;
   };
 
   const getStatusIcon = () => {
