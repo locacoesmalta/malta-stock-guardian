@@ -8,30 +8,35 @@ export function AppHeader() {
 
   return (
     <header className="group fixed top-0 left-0 right-0 z-50 h-14 md:h-16 lg:h-20 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-full items-center justify-between px-3 sm:px-4 md:px-6">
-        {/* Left: Menu toggle - sempre visível */}
-        <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+      <div className="flex h-full items-center px-3 sm:px-4 md:px-6">
+        {/* Left: Logo e Menu Toggle */}
+        <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-shrink-0">
           <SidebarTrigger className="flex-shrink-0" />
           <img 
             src="/malta-logo.webp" 
             alt="Malta Locações" 
             className="h-8 w-8 md:h-10 md:w-10 lg:h-12 lg:w-12 object-contain"
           />
-          <span className="hidden sm:inline-block font-semibold text-sm md:text-base lg:text-lg truncate">
+          <span className="hidden sm:inline-block font-semibold text-sm md:text-base lg:text-lg whitespace-nowrap">
             Malta Locações
           </span>
         </div>
 
-        {/* Right: User info + Logout - visível sempre no mobile/tablet, só no hover no desktop */}
-        <div className="flex items-center gap-2 md:gap-3 md:opacity-0 md:group-hover:opacity-100 md:transition-opacity md:duration-300">
-          <span className="hidden md:inline-block text-xs md:text-sm lg:text-base text-muted-foreground truncate max-w-[200px] lg:max-w-[300px]">
+        {/* Center: Espaço central (pode ser usado para navegação futura) */}
+        <div className="flex-1 flex items-center justify-center px-4">
+          {/* Espaço reservado para menu principal se necessário */}
+        </div>
+
+        {/* Right: Ações do Usuário */}
+        <div className="flex items-center gap-2 md:gap-3 flex-shrink-0 md:opacity-0 md:group-hover:opacity-100 md:transition-opacity md:duration-300">
+          <span className="hidden md:inline-block text-xs md:text-sm lg:text-base text-muted-foreground truncate max-w-[150px] lg:max-w-[200px]">
             {user?.email}
           </span>
           <Button
             variant="ghost"
             size="icon"
             onClick={signOut}
-            className="flex-shrink-0 md:h-10 md:w-10 lg:h-12 lg:w-12"
+            className="flex-shrink-0 h-9 w-9 md:h-10 md:w-10 lg:h-12 lg:w-12"
             title="Sair"
           >
             <LogOut className="h-4 w-4 md:h-5 md:w-5 lg:h-6 lg:w-6" />
