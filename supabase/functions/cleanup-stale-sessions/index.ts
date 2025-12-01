@@ -12,6 +12,18 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // 🔒 SECURITY: Validate API Key
+    const apiKey = Deno.env.get('N8N_API_KEY');
+    const authHeader = req.headers.get('x-api-key');
+    
+    if (!apiKey || authHeader !== apiKey) {
+      console.error('[CLEANUP] Unauthorized access attempt');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Invalid or missing API Key' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log('[CLEANUP] Starting stale sessions cleanup...');
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
