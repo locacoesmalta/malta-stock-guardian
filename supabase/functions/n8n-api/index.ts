@@ -431,6 +431,74 @@ Deno.serve(async (req) => {
       );
     }
 
+    // GET /daily-report - Relatório diário de equipamentos disponíveis para locação
+    if (endpoint === 'daily-report' && req.method === 'GET') {
+      console.log('Generating daily availability report...');
+
+      // Buscar TODOS os equipamentos disponíveis (depósito Malta)
+      const { data: assets, error: assetsError } = await supabase
+        .from('assets')
+        .select('equipment_name, asset_code')
+        .eq('location_type', 'deposito_malta')
+        .is('deleted_at', null)
+        .order('equipment_name');
+
+      if (assetsError) throw assetsError;
+
+      // Buscar totais por status para resumo
+      const { data: allAssets, error: summaryError } = await supabase
+        .from('assets')
+        .select('location_type')
+        .is('deleted_at', null);
+
+      if (summaryError) throw summaryError;
+
+      // Normalizar e agrupar equipamentos por tipo
+      const equipmentMap = new Map<string, number>();
+      
+      (assets || []).forEach(asset => {
+        // Normalizar: UPPERCASE, trim, remover espaços múltiplos
+        const normalized = asset.equipment_name
+          ?.toUpperCase()
+          .trim()
+          .replace(/\s+/g, ' ') || 'SEM NOME';
+        
+        equipmentMap.set(normalized, (equipmentMap.get(normalized) || 0) + 1);
+      });
+
+      // Converter para array e ordenar alfabeticamente
+      const availableEquipment = Array.from(equipmentMap.entries())
+        .map(([name, quantity]) => ({ name, quantity }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      // Calcular resumo geral
+      const summary = {
+        total: allAssets?.length || 0,
+        deposito_malta: assets?.length || 0,
+        locacao: allAssets?.filter(a => a.location_type === 'locacao').length || 0,
+        em_manutencao: allAssets?.filter(a => a.location_type === 'em_manutencao').length || 0,
+        aguardando_laudo: allAssets?.filter(a => a.location_type === 'aguardando_laudo').length || 0,
+      };
+
+      const reportData = {
+        report_type: 'daily_availability',
+        report_date: new Date().toISOString(),
+        phone: '+5591996280080',
+        webhook_url: 'https://webhook.7arrows.pro/webhook/diamalta',
+        summary,
+        total_equipment: assets?.length || 0,
+        total_types: availableEquipment.length,
+        available_equipment: availableEquipment,
+      };
+
+      console.log(`Daily report generated: ${availableEquipment.length} types, ${assets?.length} units`);
+
+      return new Response(
+        JSON.stringify({ success: true, data: reportData }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Endpoint não encontrado
     return new Response(
       JSON.stringify({ 
@@ -453,6 +521,9 @@ Deno.serve(async (req) => {
           ],
           withdrawals: [
             'GET /withdrawals - Histórico de retiradas (params: work_site, company, equipment_code, product_id, start_date, end_date, limit)',
+          ],
+          reports: [
+            'GET /daily-report - Relatório diário de equipamentos disponíveis para locação (7h automático)',
           ]
         },
         authentication: 'Include header: x-api-key: YOUR_N8N_API_KEY'

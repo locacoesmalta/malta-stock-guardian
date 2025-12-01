@@ -163,6 +163,83 @@ GET https://lybclzqgvnlphltjlmwg.supabase.co/functions/v1/n8n-api/stock-summary
 
 ---
 
+### 6. Relatório Diário de Equipamentos Disponíveis
+**Endpoint:** `GET /daily-report`
+
+**Descrição:** Retorna lista completa de equipamentos disponíveis para locação (depósito Malta), agrupados por tipo com quantidades. Executado automaticamente às 7h da manhã via pg_cron.
+
+**Exemplo:**
+```
+GET https://lybclzqgvnlphltjlmwg.supabase.co/functions/v1/n8n-api/daily-report
+```
+
+**Resposta:**
+```json
+{
+  "success": true,
+  "data": {
+    "report_type": "daily_availability",
+    "report_date": "2025-12-01T10:00:00Z",
+    "phone": "+5591996280080",
+    "webhook_url": "https://webhook.7arrows.pro/webhook/diamalta",
+    "summary": {
+      "total": 527,
+      "deposito_malta": 403,
+      "locacao": 118,
+      "em_manutencao": 4,
+      "aguardando_laudo": 2
+    },
+    "total_equipment": 403,
+    "total_types": 71,
+    "available_equipment": [
+      { "name": "BETONEIRA 400L", "quantity": 5 },
+      { "name": "MARTELETE 23 KG", "quantity": 31 },
+      { "name": "GERADOR 9000 KVA", "quantity": 23 }
+    ]
+  }
+}
+```
+
+**Agendamento Automático:**
+```sql
+-- Executado automaticamente às 7h (10:00 UTC = 07:00 BRT)
+-- O pg_cron chama o endpoint e envia os dados para o webhook N8N
+```
+
+**Webhook N8N:** `https://webhook.7arrows.pro/webhook/diamalta`
+
+**Formato da Mensagem WhatsApp:**
+```
+📋 *RELATÓRIO DIÁRIO - EQUIPAMENTOS DISPONÍVEIS*
+📅 01/12/2025 às 07:00
+
+━━━━━━━━━━━━━━━━━━━━━━
+📊 *RESUMO GERAL*
+━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Depósito Malta: 403 unidades
+🔧 Em Manutenção: 4 unidades
+📦 Em Locação: 118 unidades
+⏳ Aguardando Laudo: 2 unidades
+📍 Total no Sistema: 527 unidades
+
+━━━━━━━━━━━━━━━━━━━━━━
+🏗️ *EQUIPAMENTOS DISPONÍVEIS PARA LOCAÇÃO*
+━━━━━━━━━━━━━━━━━━━━━━
+
+BETONEIRA 400L - 5 unidades
+GERADOR 9000 KVA - 23 unidades
+MARTELETE 23 KG - 31 unidades
+...
+(todos os 71 tipos listados)
+
+━━━━━━━━━━━━━━━━━━━━━━
+Total de tipos disponíveis: 71
+Total de unidades: 403
+```
+
+---
+
 ## 🔧 Configuração no N8N
 
 ### Passo 1: Criar Workflow
