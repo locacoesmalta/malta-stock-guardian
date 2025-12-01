@@ -203,14 +203,48 @@ serve(async (req) => {
   }
 
   try {
-    // 🔒 SECURITY: Validate API Key
-    const apiKey = Deno.env.get('N8N_API_KEY');
-    const authHeader = req.headers.get('x-api-key');
+    // 🔒 SECURITY: Validate Authentication (API Key OR Bearer Token)
+    let isAuthorized = false;
     
-    if (!apiKey || authHeader !== apiKey) {
+    // Method 1: API Key (for external integrations like N8N)
+    const apiKey = Deno.env.get('N8N_API_KEY');
+    const apiKeyHeader = req.headers.get('x-api-key');
+    
+    if (apiKey && apiKeyHeader === apiKey) {
+      isAuthorized = true;
+      console.log('[Sync] Authenticated via API Key');
+    }
+    
+    // Method 2: Bearer Token (for frontend admin/owner)
+    if (!isAuthorized) {
+      const bearerHeader = req.headers.get('Authorization');
+      
+      if (bearerHeader?.startsWith('Bearer ')) {
+        const token = bearerHeader.replace('Bearer ', '');
+        
+        try {
+          const { data: { user }, error } = await internalClient.auth.getUser(token);
+          
+          if (user && !error) {
+            // Check if user is system owner
+            const { data: isOwner, error: ownerError } = await internalClient
+              .rpc('is_system_owner', { user_id: user.id });
+            
+            if (!ownerError && isOwner) {
+              isAuthorized = true;
+              console.log(`[Sync] Authenticated as system owner: ${user.email}`);
+            }
+          }
+        } catch (e) {
+          console.error('[Sync] Bearer token validation error:', e);
+        }
+      }
+    }
+    
+    if (!isAuthorized) {
       console.error('[Sync] Unauthorized access attempt');
       return new Response(
-        JSON.stringify({ error: 'Unauthorized - Invalid or missing API Key' }),
+        JSON.stringify({ error: 'Unauthorized - Invalid or missing credentials' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
