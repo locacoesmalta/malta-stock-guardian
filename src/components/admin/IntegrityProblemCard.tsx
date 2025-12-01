@@ -40,14 +40,17 @@ export function IntegrityProblemCard({
 
   const getCompactSummary = () => {
     if (problemType === "products") {
-      const name = problem.product_name?.substring(0, 30) || "Produto";
+      const name = problem.product_name?.substring(0, 25) || "Produto";
+      const creator = problem.created_by_name ? ` (${problem.created_by_name.split(' ')[0]})` : "";
+      const qty = Math.abs(problem.current_quantity);
+      
       if (problem.current_quantity < 0) {
-        return `🔴 ${problem.product_code} · ${name} · ${problem.current_quantity} un → Ajustar estoque`;
+        return `🔴 ${problem.product_code} · ${name}${creator} · ${qty}un no vermelho → Corrigir estoque`;
       }
       if (!problem.has_adjustment_history || problem.issue_type?.includes("sem histórico")) {
-        return `⚠️ ${problem.product_code} · ${name} · Sem histórico → Registrar entrada`;
+        return `⚠️ ${problem.product_code} · ${name}${creator} · ${qty}un sem origem → Registrar entrada`;
       }
-      return `⚠️ ${problem.product_code} · ${name} · ${problem.issue_type || "Verificar"} → Corrigir`;
+      return `⚠️ ${problem.product_code} · ${name}${creator} · ${problem.issue_type || "Verificar"} → Corrigir`;
     }
     if (problemType === "sessions") {
       if (problem.session_count > 1 || problem.issue_type?.toLowerCase().includes("duplica")) {

@@ -2222,6 +2222,8 @@ export type Database = {
       check_products_integrity: {
         Args: never
         Returns: {
+          created_by_email: string
+          created_by_name: string
           current_quantity: number
           has_adjustment_history: boolean
           issue_type: string

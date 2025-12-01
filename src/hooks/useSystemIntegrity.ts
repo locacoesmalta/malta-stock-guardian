@@ -9,6 +9,8 @@ interface ProductIntegrityIssue {
   current_quantity: number;
   has_adjustment_history: boolean;
   issue_type: string;
+  created_by_name?: string;
+  created_by_email?: string;
 }
 
 interface SessionIntegrityIssue {
