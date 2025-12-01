@@ -139,7 +139,7 @@ const Settings = () => {
               Enviar Erro de Teste
             </Button>
             <div className="text-xs text-muted-foreground">
-              Webhook: https://webhook.7arrows.pro/webhook/erro
+              Webhook enviado via Edge Function segura
             </div>
           </CardContent>
         </Card>

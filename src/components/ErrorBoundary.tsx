@@ -69,22 +69,20 @@ class ErrorBoundary extends Component<Props, State> {
         webhook_sent: false,
       });
 
-      // Enviar para webhook
-      await fetch("https://webhook.7arrows.pro/webhook/erro", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          error_code: errorCode,
-          user_name: userName,
-          user_email: userEmail,
-          page_route: currentRoute,
-          error_type: "RUNTIME_ERROR",
-          error_message: error.message,
-          timestamp,
-          additional_data: {
-            componentStack: errorInfo.componentStack,
-          },
-        }),
+      // Enviar para webhook via edge function segura
+      const { sendErrorWebhook } = await import("@/lib/webhookClient");
+      await sendErrorWebhook({
+        error_code: errorCode,
+        user_name: userName || "Unknown",
+        user_email: userEmail || "unknown@unknown.com",
+        page_route: currentRoute,
+        error_type: "RUNTIME_ERROR",
+        error_message: error.message,
+        error_stack: errorInfo.componentStack,
+        timestamp,
+        additional_data: {
+          browser: navigator.userAgent,
+        },
       });
     } catch (logError) {
       console.error("Erro ao registrar erro na central:", logError);

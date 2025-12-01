@@ -63,10 +63,17 @@ Deno.serve(async (req) => {
     console.log('Admin verified:', authUser.id);
 
     // Parse request body
-    const { user_id, new_password, force_change_password = false } = await req.json();
+    const { user_id, force_change_password = false } = await req.json();
 
-    if (!user_id || !new_password) {
-      throw new Error('Missing required fields: user_id and new_password');
+    if (!user_id) {
+      throw new Error('Missing required field: user_id');
+    }
+
+    // Get default password from secret
+    const new_password = Deno.env.get('DEFAULT_RESET_PASSWORD');
+    
+    if (!new_password) {
+      throw new Error('DEFAULT_RESET_PASSWORD secret not configured');
     }
 
     console.log('Resetting password for user:', user_id);
