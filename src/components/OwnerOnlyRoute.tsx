@@ -26,7 +26,7 @@ export const OwnerOnlyRoute = ({ children }: OwnerOnlyRouteProps) => {
             Esta área é exclusiva para o proprietário do sistema.
           </p>
           <p className="text-sm text-muted-foreground mt-1">
-            Apenas walterknothead@gmail.com tem permissão para acessar esta página.
+            Apenas o proprietário do sistema tem permissão para acessar esta área.
           </p>
         </div>
       </div>
