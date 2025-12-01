@@ -46,16 +46,65 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const endpoint = url.pathname.split('/').pop();
 
-    // Validate API Key
-    const authHeader = req.headers.get('x-api-key');
-    if (authHeader !== n8nApiKey) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized - Invalid API Key' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // ⚠️ TEMPORARY: Allow public access to /test-daily-report for manual testing
+    const isTestEndpoint = endpoint === 'test-daily-report';
+
+    // Validate API Key (skip for test endpoint)
+    if (!isTestEndpoint) {
+      const authHeader = req.headers.get('x-api-key');
+      if (authHeader !== n8nApiKey) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized - Invalid API Key' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     console.log(`N8N API - Endpoint: ${endpoint}`);
+
+    // ============================================
+    // ENDPOINT: GET /test-daily-report (TEMPORARY)
+    // ============================================
+    if (endpoint === 'test-daily-report' && req.method === 'GET') {
+      try {
+        console.log('N8N API - Triggering daily report manually...');
+        
+        // Execute the SQL function that sends the webhook
+        const { error } = await supabase.rpc('send_daily_equipment_report');
+        
+        if (error) {
+          console.error('Error triggering daily report:', error);
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: error.message,
+              details: 'Failed to execute send_daily_equipment_report()' 
+            }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        console.log('N8N API - Daily report triggered successfully');
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: 'Daily report webhook triggered successfully',
+            timestamp: new Date().toISOString(),
+            webhook_url: 'https://webhook.7arrows.pro/webhook/diamalta'
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (error) {
+        console.error('N8N API - Error in test-daily-report:', error);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: error instanceof Error ? error.message : 'Unknown error' 
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
     // GET /products - Lista produtos com filtros
     if (endpoint === 'products' && req.method === 'GET') {
