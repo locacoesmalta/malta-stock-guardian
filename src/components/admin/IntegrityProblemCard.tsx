@@ -38,22 +38,45 @@ export function IntegrityProblemCard({
     return problem.product_id || problem.id;
   };
 
-  const getProblemTitle = () => {
+  const getCompactSummary = () => {
     if (problemType === "products") {
-      if (problem.negative_stock) return `Estoque Negativo: ${problem.product_code} (${problem.current_quantity})`;
-      if (problem.missing_adjustments) return `Sem Histórico: ${problem.product_code}`;
+      const name = problem.product_name?.substring(0, 30) || "Produto";
+      if (problem.negative_stock) {
+        return `🔴 ${problem.product_code} · ${name} · ${problem.current_quantity} un → Ajustar estoque`;
+      }
+      if (problem.missing_adjustments) {
+        return `⚠️ ${problem.product_code} · ${name} · Sem ajustes → Registrar entrada`;
+      }
     }
     if (problemType === "sessions") {
-      if (problem.is_duplicate) return `Sessão Duplicada: ${problem.user_email}`;
-      if (problem.is_stale) return `Sessão Antiga: ${problem.user_email}`;
+      if (problem.is_duplicate) {
+        return `👥 ${problem.user_email} · Sessões duplicadas → Limpar`;
+      }
+      if (problem.is_stale) {
+        const hours = Math.floor((Date.now() - new Date(problem.last_activity).getTime()) / (1000 * 60 * 60));
+        return `⏰ ${problem.user_email} · Inativo há ${hours}h → Encerrar`;
+      }
     }
-    if (problemType === "audit") return `Log sem Integridade: ${problem.action}`;
-    if (problemType === "assets") return `Equipamento: ${problem.asset_code}`;
-    if (problemType === "withdrawals") return `Retirada Inválida: ${problem.product_code}`;
-    if (problemType === "reports") return `Relatório: ${problem.equipment_code}`;
-    if (problemType === "stock") return `Estoque: ${problem.product_code}`;
-    if (problemType === "orphans") return `Produto Órfão: ${problem.code}`;
-    return "Problema";
+    if (problemType === "audit") {
+      return `📋 ${problem.action} · ${problem.user_email} · Log sem integridade → Verificar`;
+    }
+    if (problemType === "assets") {
+      return `🔧 PAT ${problem.asset_code} · ${problem.asset_name || "Equipamento"} → Verificar`;
+    }
+    if (problemType === "withdrawals") {
+      return `📦 ${problem.product_code} · Retirada inválida → Corrigir`;
+    }
+    if (problemType === "reports") {
+      return `📄 PAT ${problem.equipment_code} · Relatório → Verificar`;
+    }
+    if (problemType === "stock") {
+      const name = problem.product_name?.substring(0, 25) || "Produto";
+      return `📉 ${problem.product_code} · ${name} · ${problem.current_quantity}/${problem.min_quantity} min → Comprar`;
+    }
+    if (problemType === "orphans") {
+      return `🔍 ${problem.code} · ${problem.name?.substring(0, 25)} · Produto órfão → Vincular`;
+    }
+    return "⚠️ Problema detectado";
   };
 
   const getStatusIcon = () => {
@@ -71,48 +94,39 @@ export function IntegrityProblemCard({
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div className={cn(
-        "border rounded-lg p-4 transition-all",
+        "border rounded-lg p-3 transition-all",
         resolutionStatus === "resolved" && "bg-green-500/5 border-green-500/20",
         resolutionStatus === "ignored" && "bg-muted/50 border-muted",
         resolutionStatus === "pending" && "bg-card border-border"
       )}>
         <CollapsibleTrigger className="w-full">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-3 flex-1 text-left">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
               {getStatusIcon()}
-              <div className="flex-1 space-y-1">
-                <p className="text-sm font-medium">{getProblemTitle()}</p>
-                <p className="text-xs text-muted-foreground line-clamp-1">
-                  {problemType === "products" && `Nome: ${problem.product_name}`}
-                  {problemType === "sessions" && `Última atividade: ${new Date(problem.last_activity).toLocaleString()}`}
-                  {problemType === "audit" && `Usuário: ${problem.user_email}`}
-                </p>
-              </div>
+              <p className="text-sm font-medium truncate">{getCompactSummary()}</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               {getStatusBadge()}
               <ChevronDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />
             </div>
           </div>
         </CollapsibleTrigger>
 
-        <CollapsibleContent className="mt-4 space-y-3">
-          <div className="pl-7 space-y-2 text-sm text-muted-foreground">
+        <CollapsibleContent className="mt-3 space-y-3">
+          <div className="pl-7 space-y-1 text-xs text-muted-foreground">
             {problemType === "products" && (
               <>
-                <p>• Código: {problem.product_code}</p>
-                <p>• Quantidade: {problem.current_quantity}</p>
-                {problem.negative_stock && <p className="text-destructive">• Estoque negativo detectado</p>}
-                {problem.missing_adjustments && <p className="text-amber-500">• Sem histórico de ajustes</p>}
+                <p>Produto: {problem.product_name}</p>
+                <p>Estoque atual: {problem.current_quantity} {problem.min_quantity && `(mín: ${problem.min_quantity})`}</p>
               </>
             )}
             {problemType === "sessions" && (
+              <p>Última atividade: {new Date(problem.last_activity).toLocaleString('pt-BR')}</p>
+            )}
+            {problemType === "stock" && (
               <>
-                <p>• Email: {problem.user_email}</p>
-                <p>• Status: {problem.is_online ? "Online" : "Offline"}</p>
-                <p>• Última atividade: {new Date(problem.last_activity).toLocaleString()}</p>
-                {problem.is_duplicate && <p className="text-destructive">• Sessão duplicada detectada</p>}
-                {problem.is_stale && <p className="text-amber-500">• Sessão antiga ({'>'}24h)</p>}
+                <p>Produto: {problem.product_name}</p>
+                <p>Estoque: {problem.current_quantity} / Mínimo: {problem.min_quantity}</p>
               </>
             )}
           </div>
@@ -121,27 +135,11 @@ export function IntegrityProblemCard({
             <div className="pl-7 flex flex-wrap gap-2 pt-2 border-t">
               <Button
                 size="sm"
-                variant="outline"
-                onClick={() => onViewDetails(problem, problemType)}
-              >
-                <Eye className="h-3 w-3 mr-1" />
-                Ver Detalhes
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setShowNotesInput(!showNotesInput)}
-              >
-                <MessageSquare className="h-3 w-3 mr-1" />
-                Adicionar Nota
-              </Button>
-              <Button
-                size="sm"
                 variant="default"
                 onClick={() => onResolve(getProblemIdentifier(), notes)}
               >
                 <CheckCircle className="h-3 w-3 mr-1" />
-                Marcar Resolvido
+                Resolvido
               </Button>
               <Button
                 size="sm"
@@ -150,6 +148,22 @@ export function IntegrityProblemCard({
               >
                 <EyeOff className="h-3 w-3 mr-1" />
                 Ignorar
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowNotesInput(!showNotesInput)}
+              >
+                <MessageSquare className="h-3 w-3 mr-1" />
+                {showNotesInput ? "Ocultar" : "Nota"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onViewDetails(problem, problemType)}
+              >
+                <Eye className="h-3 w-3 mr-1" />
+                Detalhes
               </Button>
             </div>
           )}
