@@ -82,8 +82,7 @@ export const ReceiptMovementReport = () => {
         r.client_name,
         r.work_site,
         format(new Date(r.receipt_date), 'dd/MM/yyyy'),
-        r.received_by,
-        r.received_by_cpf || ''
+        r.received_by
       ].join(','))
     ].join('\n');
 
@@ -235,7 +234,6 @@ export const ReceiptMovementReport = () => {
                       <TableCell>{receipt.client_name}</TableCell>
                       <TableCell>{receipt.work_site}</TableCell>
                       <TableCell>{receipt.received_by}</TableCell>
-                      <TableCell className="font-mono text-xs">{receipt.received_by_cpf}</TableCell>
                       <TableCell className="text-right">
                         <Button
                           size="icon"

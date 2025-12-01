@@ -24,7 +24,6 @@ export interface Receipt {
   receipt_date: string;
   operation_nature?: string;
   received_by: string;
-  received_by_cpf: string;
   received_by_malta?: string;
   signature?: string;
   pdf_url?: string;
@@ -99,7 +98,6 @@ export const useReceipts = () => {
           receipt_date: receiptData.receipt_date,
           operation_nature: receiptData.operation_nature,
           received_by: receiptData.received_by,
-          received_by_cpf: receiptData.received_by_cpf,
           whatsapp: whatsapp,
           malta_operator: malta_operator || '',
           received_by_malta: receiptData.received_by_malta,
@@ -154,7 +152,6 @@ export const useReceipts = () => {
             receipt_date: receiptData.receipt_date,
             operation_nature: receiptData.operation_nature,
             received_by: receiptData.received_by,
-            received_by_cpf: receiptData.received_by_cpf,
             whatsapp: whatsapp,
             malta_operator: malta_operator || '',
             received_by_malta: receiptData.received_by_malta,

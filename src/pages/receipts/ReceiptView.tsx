@@ -118,9 +118,6 @@ export const ReceiptView = () => {
             <div>
               <span className="font-semibold">Recebido por:</span> {receipt.received_by}
             </div>
-            <div>
-              <span className="font-semibold">CPF:</span> {receipt.received_by_cpf}
-            </div>
             {receipt.whatsapp && (
               <div>
                 <span className="font-semibold">WhatsApp:</span> {receipt.whatsapp}
@@ -174,9 +171,6 @@ export const ReceiptView = () => {
                     <p className="text-xs text-center text-muted-foreground">
                       {receipt.received_by}
                     </p>
-                    <p className="text-xs text-center text-muted-foreground">
-                      CPF: {receipt.received_by_cpf}
-                    </p>
                   </div>
                 </div>
               ) : (
@@ -185,9 +179,6 @@ export const ReceiptView = () => {
                   <div className="receipt-signature-footer border-t border-muted-foreground/50 pt-2 mt-2">
                     <p className="text-xs text-center text-muted-foreground">
                       {receipt.received_by}
-                    </p>
-                    <p className="text-xs text-center text-muted-foreground">
-                      CPF: {receipt.received_by_cpf}
                     </p>
                   </div>
                 </div>

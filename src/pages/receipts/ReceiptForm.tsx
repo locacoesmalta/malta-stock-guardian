@@ -32,42 +32,11 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
     receipt_date: getTodayLocalDate(),
     operation_nature: '',
     received_by: '',
-    received_by_cpf: '',
     received_by_malta: '',
     signature: '',
     whatsapp: '',
     malta_operator: '',
   });
-
-  const [cpfError, setCpfError] = useState<string>('');
-
-  const formatCPF = (value: string) => {
-    const numbers = value.replace(/\D/g, '');
-    if (numbers.length <= 11) {
-      return numbers
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-    }
-    return value;
-  };
-
-  const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatCPF(e.target.value);
-    setFormData({ ...formData, received_by_cpf: formatted });
-    
-    // Valida CPF quando completo
-    const cleanCPF = formatted.replace(/\D/g, '');
-    if (cleanCPF.length === 11) {
-      if (!validateCPF(formatted)) {
-        setCpfError('CPF inválido');
-      } else {
-        setCpfError('');
-      }
-    } else {
-      setCpfError('');
-    }
-  };
 
   const [items, setItems] = useState<ReceiptItem[]>([
     { quantity: 1, specification: '', item_order: 1, pat_code: '', equipment_comments: '', photos: [] },
@@ -104,12 +73,6 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
     const hasInsufficientPhotos = items.some(item => !item.photos || item.photos.length < 4);
     if (hasInsufficientPhotos) {
       toast.error('Todos os equipamentos devem ter 4 fotos anexadas');
-      return;
-    }
-
-    // Validar CPF
-    if (!validateCPF(formData.received_by_cpf)) {
-      toast.error('CPF inválido');
       return;
     }
 
@@ -251,25 +214,6 @@ export const ReceiptForm = ({ type }: ReceiptFormProps) => {
                   placeholder="Nome completo"
                   required
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="received_by_cpf">CPF *</Label>
-                <Input
-                  id="received_by_cpf"
-                  value={formData.received_by_cpf}
-                  onChange={handleCPFChange}
-                  placeholder="000.000.000-00"
-                  maxLength={14}
-                  required
-                  className={cpfError ? 'border-destructive' : ''}
-                />
-                {cpfError && (
-                  <div className="flex items-center gap-1 text-destructive text-sm">
-                    <AlertCircle className="h-3 w-3" />
-                    <span>{cpfError}</span>
-                  </div>
-                )}
               </div>
 
               <div className="space-y-2">
