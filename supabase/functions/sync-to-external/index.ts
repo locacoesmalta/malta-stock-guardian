@@ -203,6 +203,18 @@ serve(async (req) => {
   }
 
   try {
+    // 🔒 SECURITY: Validate API Key
+    const apiKey = Deno.env.get('N8N_API_KEY');
+    const authHeader = req.headers.get('x-api-key');
+    
+    if (!apiKey || authHeader !== apiKey) {
+      console.error('[Sync] Unauthorized access attempt');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Invalid or missing API Key' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const url = new URL(req.url);
     // Extract path after the function name (handles /functions/v1/sync-to-external/xxx)
     const path = url.pathname.split('/sync-to-external')[1] || '/';
