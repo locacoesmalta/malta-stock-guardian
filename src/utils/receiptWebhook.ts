@@ -295,42 +295,31 @@ export const sendReceiptToWebhook = async (
     // Gera o PDF
     const pdfBlob = await generateReceiptPDF(receiptData);
 
-    // Define a URL do webhook (fixa para todos os tipos)
-    const webhookUrl = "https://webhook.7arrows.pro/webhook/relatorio";
+    // Envia via edge function segura
+    const { sendReceiptWebhook } = await import("@/lib/webhookClient");
+    await sendReceiptWebhook(
+      {
+        numero_recibo: receiptData.receipt_number.toString(),
+        tipo_recibo: receiptData.receipt_type === "entrega" ? "Entrega" : "Devolução",
+        cliente: receiptData.client_name,
+        obra: receiptData.work_site,
+        data: receiptData.receipt_date,
+        natureza_operacao: receiptData.operation_nature || "",
+        recebido_por: receiptData.received_by,
+        cpf: receiptData.received_by_cpf,
+        whatsapp: formatWhatsAppForWebhook(receiptData.whatsapp),
+        responsavel_malta: receiptData.malta_operator,
+        recebido_por_malta: receiptData.received_by_malta || "",
+        itens: JSON.stringify(receiptData.items.map(item => ({
+          pat: item.pat_code || "",
+          especificacao: item.specification,
+          quantidade: item.quantity
+        }))),
+      },
+      pdfBlob
+    );
 
-    // Prepara os dados para envio
-    const formData = new FormData();
-    formData.append("pdf", pdfBlob, "receipt.pdf");
-    formData.append("numero_recibo", receiptData.receipt_number.toString());
-    formData.append("tipo_recibo", receiptData.receipt_type === "entrega" ? "Entrega" : "Devolução");
-    formData.append("cliente", receiptData.client_name);
-    formData.append("obra", receiptData.work_site);
-    formData.append("data", receiptData.receipt_date);
-    formData.append("natureza_operacao", receiptData.operation_nature || "");
-    formData.append("recebido_por", receiptData.received_by);
-    formData.append("cpf", receiptData.received_by_cpf);
-    formData.append("whatsapp", formatWhatsAppForWebhook(receiptData.whatsapp));
-    formData.append("responsavel_malta", receiptData.malta_operator);
-    formData.append("recebido_por_malta", receiptData.received_by_malta || "");
-    
-    // Adiciona os itens do recibo (PAT e Especificação)
-    formData.append("itens", JSON.stringify(receiptData.items.map(item => ({
-      pat: item.pat_code || "",
-      especificacao: item.specification,
-      quantidade: item.quantity
-    }))));
-
-    // Envia para o webhook
-    const response = await fetch(webhookUrl, {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Webhook retornou status ${response.status}`);
-    }
-
-    console.log("Recibo enviado ao webhook com sucesso");
+    console.log("Recibo enviado ao webhook com sucesso via edge function");
   } catch (error) {
     console.error("Erro ao enviar recibo ao webhook:", error);
     // Não lança o erro para não afetar o fluxo principal

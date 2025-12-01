@@ -43,19 +43,22 @@ interface ErrorLogPayload {
   additional_data?: Record<string, any>;
 }
 
-const WEBHOOK_URL = "https://webhook.7arrows.pro/webhook/erro";
-
 const sendErrorToWebhook = async (payload: ErrorLogPayload) => {
   try {
-    const response = await fetch(WEBHOOK_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
+    const { sendErrorWebhook } = await import("@/lib/webhookClient");
+    await sendErrorWebhook({
+      error_code: payload.error_code,
+      user_name: payload.user_name || "Unknown",
+      user_email: payload.user_email || "unknown@unknown.com",
+      page_route: payload.page_route,
+      error_type: payload.error_type,
+      error_message: payload.error_message,
+      error_stack: payload.additional_data?.stack || undefined,
+      timestamp: payload.timestamp,
+      additional_data: payload.additional_data,
     });
     
-    return response.ok;
+    return true;
   } catch (error) {
     console.error("Erro ao enviar para webhook:", error);
     return false;

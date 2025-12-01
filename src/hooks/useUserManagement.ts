@@ -121,21 +121,16 @@ export const useUserManagement = () => {
 
   const resetPassword = useMutation({
     mutationFn: async (userId: string) => {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/reset-user-password`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-          },
-          body: JSON.stringify({
-            user_id: userId,
-            new_password: "Malta@2024",
-            force_change_password: true,
-          }),
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('reset-user-password', {
+        body: {
+          user_id: userId,
+          force_change_password: true,
+        },
+      });
+
+      if (error) throw error;
+      
+      const response = { ok: true, json: async () => data };
 
       if (!response.ok) {
         const error = await response.json();
