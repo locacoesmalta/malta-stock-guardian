@@ -440,6 +440,40 @@ Deno.serve(async (req) => {
     if (endpoint === 'daily-report' && req.method === 'GET') {
       console.log('Generating daily availability report...');
 
+      // 🏷️ Mapeamento de categorias com emojis
+      const CATEGORY_MAP: Record<string, { emoji: string; keywords: string[] }> = {
+        'MARTELETES': { emoji: '🔨', keywords: ['MARTELETE', 'MARTELO'] },
+        'GERADORES': { emoji: '⚡', keywords: ['GERADOR', 'INVERSOR'] },
+        'BETONEIRAS': { emoji: '🪣', keywords: ['BETONEIRA', 'MISTURADOR'] },
+        'ESMERILHADEIRAS': { emoji: '⚙️', keywords: ['ESMERILHADEIRA', 'ESMERILHADERA'] },
+        'PLACAS VIBRATÓRIAS': { emoji: '📳', keywords: ['PLACA VIBRAT'] },
+        'SERRAS': { emoji: '🪚', keywords: ['SERRA'] },
+        'MANGOTES VIBRATÓRIOS': { emoji: '〰️', keywords: ['MANGOTE'] },
+        'MÁQUINAS DE SOLDA': { emoji: '🔥', keywords: ['SOLDA', 'MÁQUINA DE SOLDA'] },
+        'BOMBAS': { emoji: '💧', keywords: ['BOMBA', 'MOTOBOMBA', 'MARACA'] },
+        'POLITRIZES/LIXADEIRAS': { emoji: '✨', keywords: ['POLITRIZ', 'LIXADEIRA'] },
+        'COMPACTADORES': { emoji: '🏗️', keywords: ['COMPACTADOR', 'VIBRADOR', 'SAPO'] },
+        'FURADEIRAS': { emoji: '🔩', keywords: ['FURADEIRA'] },
+        'OUTROS': { emoji: '🔧', keywords: [] }
+      };
+
+      // Função para categorizar equipamento
+      const categorizeEquipment = (equipmentName: string): string => {
+        const normalized = equipmentName.toUpperCase();
+        
+        for (const [category, config] of Object.entries(CATEGORY_MAP)) {
+          if (category === 'OUTROS') continue; // Skip default category
+          
+          for (const keyword of config.keywords) {
+            if (normalized.includes(keyword)) {
+              return category;
+            }
+          }
+        }
+        
+        return 'OUTROS'; // Default category
+      };
+
       // Buscar TODOS os equipamentos disponíveis (depósito Malta)
       const { data: assets, error: assetsError } = await supabase
         .from('assets')
@@ -471,10 +505,45 @@ Deno.serve(async (req) => {
         equipmentMap.set(normalized, (equipmentMap.get(normalized) || 0) + 1);
       });
 
-      // Converter para array e ordenar alfabeticamente
-      const availableEquipment = Array.from(equipmentMap.entries())
-        .map(([name, quantity]) => ({ name, quantity }))
-        .sort((a, b) => a.name.localeCompare(b.name));
+      // Agrupar por categoria
+      const categoryMap = new Map<string, { equipment: { name: string; quantity: number }[]; totalQuantity: number }>();
+
+      for (const [equipmentName, quantity] of equipmentMap.entries()) {
+        const category = categorizeEquipment(equipmentName);
+        
+        if (!categoryMap.has(category)) {
+          categoryMap.set(category, { equipment: [], totalQuantity: 0 });
+        }
+        
+        const categoryData = categoryMap.get(category)!;
+        categoryData.equipment.push({ name: equipmentName, quantity });
+        categoryData.totalQuantity += quantity;
+      }
+
+      // Converter para array e organizar
+      const categories = Array.from(categoryMap.entries())
+        .map(([name, data]) => ({
+          name,
+          emoji: CATEGORY_MAP[name]?.emoji || '🔧',
+          total_types: data.equipment.length,
+          total_quantity: data.totalQuantity,
+          equipment: data.equipment.sort((a, b) => b.quantity - a.quantity) // Ordenar por quantidade descendente
+        }))
+        .filter(cat => cat.name !== 'OUTROS') // Remove categoria OUTROS temporariamente
+        .sort((a, b) => b.total_quantity - a.total_quantity); // Ordenar categorias por quantidade total
+
+      // Adicionar categoria OUTROS no final se existir
+      const othersCategory = Array.from(categoryMap.entries()).find(([name]) => name === 'OUTROS');
+      if (othersCategory) {
+        const [name, data] = othersCategory;
+        categories.push({
+          name,
+          emoji: CATEGORY_MAP[name]?.emoji || '🔧',
+          total_types: data.equipment.length,
+          total_quantity: data.totalQuantity,
+          equipment: data.equipment.sort((a, b) => b.quantity - a.quantity)
+        });
+      }
 
       // Calcular resumo geral
       const summary = {
@@ -487,16 +556,15 @@ Deno.serve(async (req) => {
 
       const reportData = {
         report_type: 'daily_availability',
-        report_date: new Date().toISOString(),
+        report_date: new Date().toISOString().split('T')[0], // Apenas a data (YYYY-MM-DD)
         phone: '+5591996280080',
-        webhook_url: 'https://webhook.7arrows.pro/webhook/diamalta',
         summary,
         total_equipment: assets?.length || 0,
-        total_types: availableEquipment.length,
-        available_equipment: availableEquipment,
+        total_types: equipmentMap.size,
+        categories
       };
 
-      console.log(`Daily report generated: ${availableEquipment.length} types, ${assets?.length} units`);
+      console.log(`Daily report generated: ${categories.length} categories, ${equipmentMap.size} types, ${assets?.length} units`);
 
       return new Response(
         JSON.stringify({ success: true, data: reportData }),
