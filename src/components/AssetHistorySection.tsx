@@ -1,32 +1,19 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { usePatrimonioHistorico } from "@/hooks/usePatrimonioHistorico";
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { History, Loader2, Clock } from "lucide-react";
+import { History, Loader2, Clock, User } from "lucide-react";
+import { 
+  groupHistoryEvents, 
+  formatDateBR, 
+  formatDateOnlyBR,
+  shouldHideField,
+  translateFieldName,
+  translateLocation
+} from "@/lib/historyTranslation";
 
 interface AssetHistorySectionProps {
   assetId: string;
 }
-
-const formatLocationLabel = (value: string) => {
-  const labels: Record<string, string> = {
-    deposito_malta: "Depósito Malta",
-    em_manutencao: "Em Manutenção",
-    locacao: "Locação",
-    aguardando_laudo: "Aguardando Laudo",
-    liberado_locacao: "Liberado para Locação",
-  };
-  return labels[value] || value;
-};
 
 export const AssetHistorySection = ({ assetId }: AssetHistorySectionProps) => {
   const { data: historico, isLoading } = usePatrimonioHistorico(assetId);
@@ -54,43 +41,7 @@ export const AssetHistorySection = ({ assetId }: AssetHistorySectionProps) => {
     );
   }
 
-  const renderEventDetails = (item: any) => {
-    // Se tem detalhes_evento, mostrar ele (eventos novos)
-    if (item.detalhes_evento) {
-      return (
-        <div className="text-sm space-y-1">
-          <span>{item.detalhes_evento}</span>
-          {item.tipo_evento === "RETIRADA DE MATERIAL" && (
-            <Badge variant="outline" className="ml-2 text-xs">
-              Material
-            </Badge>
-          )}
-        </div>
-      );
-    }
-
-    // Senão, mostrar no formato antigo (campo_alterado com valores)
-    if (item.campo_alterado) {
-      const valorAntigo = item.campo_alterado === "Local do Equipamento" && item.valor_antigo
-        ? formatLocationLabel(item.valor_antigo)
-        : item.valor_antigo || "-";
-      
-      const valorNovo = item.campo_alterado === "Local do Equipamento" && item.valor_novo
-        ? formatLocationLabel(item.valor_novo)
-        : item.valor_novo || "-";
-
-      return (
-        <span className="text-sm">
-          <span className="font-medium">{item.campo_alterado}:</span>{" "}
-          <span className="text-muted-foreground">{valorAntigo}</span>
-          {" → "}
-          <span>{valorNovo}</span>
-        </span>
-      );
-    }
-
-    return <span className="text-muted-foreground text-sm">-</span>;
-  };
+  const groupedEvents = groupHistoryEvents(historico);
 
   return (
     <Card className="p-6">
@@ -99,47 +50,111 @@ export const AssetHistorySection = ({ assetId }: AssetHistorySectionProps) => {
         Linha do Tempo do Ativo
       </h2>
       
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Data Real</TableHead>
-              <TableHead>Data de Registro</TableHead>
-              <TableHead>Tipo de Evento</TableHead>
-              <TableHead>Detalhes</TableHead>
-              <TableHead>Usuário</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {historico.map((item) => (
-              <TableRow key={item.historico_id}>
-                <TableCell className="whitespace-nowrap">
-                  {item.data_evento_real ? (
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3 text-amber-600" />
-                      <span>{format(parseISO(item.data_evento_real), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </TableCell>
-                <TableCell className="whitespace-nowrap">
-                  <div className="flex items-center gap-2">
-                    <span>{format(parseISO(item.data_modificacao), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
-                    {item.registro_retroativo && (
+      <div className="space-y-4">
+        {groupedEvents.map((event) => (
+          <div 
+            key={event.id} 
+            className="relative pl-8 pb-4 border-l-2 border-muted last:border-l-0 last:pb-0"
+          >
+            {/* Indicador na timeline */}
+            <div className="absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-primary flex items-center justify-center text-xs">
+              <span className="text-primary-foreground">{event.emoji}</span>
+            </div>
+
+            <Card className="p-4 hover:shadow-md transition-shadow">
+              <div className="flex flex-col gap-2">
+                {/* Cabeçalho com descrição principal */}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <p className="font-medium text-lg flex items-center gap-2">
+                      <span>{event.emoji}</span>
+                      <span>{event.friendlyDescription}</span>
+                    </p>
+                    
+                    {/* Detalhes de empresa/obra se disponíveis */}
+                    {(event.details.company || event.details.workSite) && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {event.details.company}
+                        {event.details.company && event.details.workSite && " - "}
+                        {event.details.workSite}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Badges */}
+                  <div className="flex flex-col items-end gap-1">
+                    {event.isRetroactive && (
                       <Badge variant="outline" className="border-amber-500 text-amber-700 text-xs">
                         Retroativo
                       </Badge>
                     )}
+                    <Badge variant="secondary" className="text-xs">
+                      {event.type}
+                    </Badge>
                   </div>
-                </TableCell>
-                <TableCell className="font-medium">{item.tipo_evento}</TableCell>
-                <TableCell>{renderEventDetails(item)}</TableCell>
-                <TableCell>{item.usuario_nome || "Sistema"}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                </div>
+
+                {/* Informações de data e usuário */}
+                <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mt-2">
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5" />
+                    <span>{formatDateBR(event.timestamp)}</span>
+                  </div>
+                  
+                  {event.realDate && event.realDate !== event.timestamp.split('T')[0] && (
+                    <div className="flex items-center gap-1 text-amber-600">
+                      <Clock className="h-3.5 w-3.5" />
+                      <span>Data real: {formatDateOnlyBR(event.realDate)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center gap-1">
+                    <User className="h-3.5 w-3.5" />
+                    <span>{event.user}</span>
+                  </div>
+                </div>
+
+                {/* Detalhes expandidos (apenas campos relevantes) */}
+                {event.rawEvents.length > 1 && (
+                  <details className="mt-3">
+                    <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground">
+                      Ver detalhes ({event.rawEvents.length} alterações)
+                    </summary>
+                    <div className="mt-2 pl-4 border-l-2 border-muted space-y-1">
+                      {event.rawEvents
+                        .filter(e => !shouldHideField(e.campo_alterado))
+                        .map((rawEvent) => (
+                          <div key={rawEvent.historico_id} className="text-sm">
+                            {rawEvent.campo_alterado && (
+                              <span className="text-muted-foreground">
+                                <strong>{translateFieldName(rawEvent.campo_alterado)}:</strong>{" "}
+                                {rawEvent.campo_alterado?.includes("location") || rawEvent.campo_alterado === "Local do Equipamento" ? (
+                                  <>
+                                    <span className="line-through">{translateLocation(rawEvent.valor_antigo)}</span>
+                                    {" → "}
+                                    <span className="font-medium text-foreground">{translateLocation(rawEvent.valor_novo)}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span className="line-through">{rawEvent.valor_antigo || "-"}</span>
+                                    {" → "}
+                                    <span className="font-medium text-foreground">{rawEvent.valor_novo || "-"}</span>
+                                  </>
+                                )}
+                              </span>
+                            )}
+                            {rawEvent.detalhes_evento && !rawEvent.campo_alterado && (
+                              <span className="text-muted-foreground">{rawEvent.detalhes_evento}</span>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  </details>
+                )}
+              </div>
+            </Card>
+          </div>
+        ))}
       </div>
     </Card>
   );
