@@ -1067,6 +1067,7 @@ export type Database = {
           photos: Json | null
           plan_date: string
           plan_type: string
+          retroactive_justification: string | null
           supervisor_name: string | null
           supervisor_signature: string | null
           technician_name: string | null
@@ -1102,6 +1103,7 @@ export type Database = {
           photos?: Json | null
           plan_date?: string
           plan_type?: string
+          retroactive_justification?: string | null
           supervisor_name?: string | null
           supervisor_signature?: string | null
           technician_name?: string | null
@@ -1137,6 +1139,7 @@ export type Database = {
           photos?: Json | null
           plan_date?: string
           plan_type?: string
+          retroactive_justification?: string | null
           supervisor_name?: string | null
           supervisor_signature?: string | null
           technician_name?: string | null
