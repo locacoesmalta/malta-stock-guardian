@@ -851,48 +851,10 @@ export function MaintenancePlanForm() {
           </Alert>
         )}
         
-        {/* Seletor de Tipo de Manutenção (Motor/Alternador) */}
-        {(equipmentName.toLowerCase().includes("gerador") || equipment?.equipment_name?.toLowerCase().includes("gerador")) && (
-          <Card className="border-amber-200 bg-amber-50/50 dark:bg-amber-950/20">
-            <CardContent className="pt-4">
-              <div className="flex flex-col gap-3">
-                <Label className="text-base font-semibold">Tipo de Manutenção Realizada:</Label>
-                <div className="flex flex-wrap gap-6">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="motor-maintenance"
-                      checked={motorMaintenance}
-                      onCheckedChange={(checked) => setMotorMaintenance(!!checked)}
-                    />
-                    <label htmlFor="motor-maintenance" className="flex items-center gap-2 cursor-pointer font-medium text-orange-600">
-                      <Wrench className="h-4 w-4" />
-                      Manutenção do Motor
-                    </label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="alternador-maintenance"
-                      checked={alternadorMaintenance}
-                      onCheckedChange={(checked) => setAlternadorMaintenance(!!checked)}
-                    />
-                    <label htmlFor="alternador-maintenance" className="flex items-center gap-2 cursor-pointer font-medium text-blue-600">
-                      <Package className="h-4 w-4" />
-                      Manutenção do Alternador
-                    </label>
-                  </div>
-                </div>
-                {!motorMaintenance && !alternadorMaintenance && (
-                  <p className="text-sm text-muted-foreground">Selecione pelo menos um tipo de manutenção para organizar as verificações por categoria.</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         <VerificationTable
           sections={verificationSections}
           onChange={setVerificationSections}
-          showCategoryButtons={motorMaintenance || alternadorMaintenance}
+          showCategoryButtons={equipmentName.toLowerCase().includes("gerador") || equipment?.equipment_name?.toLowerCase().includes("gerador")}
         />
       </div>
 
