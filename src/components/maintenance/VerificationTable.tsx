@@ -80,11 +80,11 @@ export function VerificationTable({ sections, onChange }: VerificationTableProps
   };
 
   const frequencyColumns = [
-    { key: "daily", label: "Diário" },
-    { key: "h250", label: "250h" },
-    { key: "h500", label: "500h" },
-    { key: "h1000", label: "1000h" },
-    { key: "h4000", label: "4000h" },
+    { key: "h50", label: "50h" },
+    { key: "h100", label: "100h" },
+    { key: "h200", label: "200h" },
+    { key: "h800", label: "800h" },
+    { key: "h2000", label: "2000h" },
   ] as const;
 
   return (
