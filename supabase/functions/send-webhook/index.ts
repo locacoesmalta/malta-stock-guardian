@@ -81,20 +81,38 @@ Deno.serve(async (req) => {
         throw new Error('WEBHOOK_ERROR_URL not configured');
       }
 
-      // Send error webhook
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload as ErrorWebhookPayload),
-      });
+      // Send error webhook - fail silently if webhook is not configured correctly
+      try {
+        const response = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload as ErrorWebhookPayload),
+        });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[send-webhook] Error response:', errorText);
-        throw new Error(`Webhook failed with status ${response.status}`);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.warn('[send-webhook] External webhook failed (non-blocking):', response.status, errorText);
+          // Return success anyway - error is already logged to database
+          return new Response(
+            JSON.stringify({ success: true, message: 'Error logged, webhook delivery failed', webhook_error: errorText }),
+            {
+              status: 200,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            }
+          );
+        }
+
+        console.log('[send-webhook] Error webhook sent successfully');
+      } catch (fetchError) {
+        console.warn('[send-webhook] External webhook unreachable (non-blocking):', fetchError);
+        return new Response(
+          JSON.stringify({ success: true, message: 'Error logged, webhook unreachable' }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
       }
-
-      console.log('[send-webhook] Error webhook sent successfully');
 
       return new Response(
         JSON.stringify({ success: true, message: 'Error webhook sent' }),
