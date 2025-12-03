@@ -38,7 +38,7 @@ interface PhotoData {
 
 export function MaintenancePlanForm() {
   const navigate = useNavigate();
-  const { createPlan } = useMaintenancePlans();
+  const { createPlan, useLastPlanByAssetId } = useMaintenancePlans();
   const { data: assets = [] } = useAssetsQuery();
 
   // Estados do formulário
@@ -99,6 +99,9 @@ export function MaintenancePlanForm() {
   // Buscar dados do equipamento
   const { data: equipment, isLoading: loadingEquipment } = useEquipmentByPAT(patFormatted);
   const { totalHourmeter } = useAssetMaintenances(equipment?.id);
+  
+  // Buscar último plano do equipamento para reutilizar tabela de verificação
+  const { data: lastPlan } = useLastPlanByAssetId(equipment?.id);
 
   // Handle PAT input change
   const handlePatChange = (value: string) => {
@@ -146,11 +149,22 @@ export function MaintenancePlanForm() {
         setClientWorkSite(equipment.maintenance_work_site || "");
       }
       // Se em depósito, deixar vazio (equipamento não está em nenhum cliente)
-
-      // Carregar template de verificações baseado no equipamento
-      setVerificationSections(getDefaultSections(equipment.equipment_name));
     }
   }, [equipment]);
+
+  // Carregar tabela de verificação: do último plano salvo ou template padrão
+  useEffect(() => {
+    if (equipment) {
+      if (lastPlan?.verification_sections) {
+        // Reutilizar tabela do último plano salvo para este PAT
+        setVerificationSections(lastPlan.verification_sections as unknown as VerificationSection[]);
+        toast.info("Tabela de verificação carregada do último plano");
+      } else {
+        // Primeiro plano para este PAT → usar template padrão
+        setVerificationSections(getDefaultSections(equipment.equipment_name));
+      }
+    }
+  }, [equipment, lastPlan]);
 
   // Preencher horímetro do último registro
   useEffect(() => {
