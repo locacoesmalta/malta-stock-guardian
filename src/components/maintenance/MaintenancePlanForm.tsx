@@ -26,7 +26,7 @@ import { useMaintenancePlans, MaintenancePlanData, MaintenancePlanPhoto } from "
 import { useAssetMaintenances } from "@/hooks/useAssetMaintenances";
 import { useAssetsQuery } from "@/hooks/useAssetsQuery";
 import { useVerificationTemplates } from "@/hooks/useVerificationTemplates";
-import { getDefaultSections, VerificationSection } from "@/lib/maintenancePlanDefaults";
+import { getDefaultSections, VerificationSection, MaintenanceInterval, AlternadorInterval } from "@/lib/maintenancePlanDefaults";
 import { formatPAT } from "@/lib/patUtils";
 import { formatHourmeter } from "@/lib/hourmeterUtils";
 import { getCurrentDate, formatBelemDate } from "@/config/timezone";
@@ -98,6 +98,10 @@ export function MaintenancePlanForm() {
   // Tipo de manutenção (Motor/Alternador) - para geradores
   const [motorMaintenance, setMotorMaintenance] = useState(false);
   const [alternadorMaintenance, setAlternadorMaintenance] = useState(false);
+  
+  // Intervalo de manutenção selecionado (para cálculo automático da próxima revisão)
+  const [selectedMotorInterval, setSelectedMotorInterval] = useState<MaintenanceInterval | null>(null);
+  const [selectedAlternadorInterval, setSelectedAlternadorInterval] = useState<AlternadorInterval | null>(null);
 
   // Fotos
   const [photos, setPhotos] = useState<PhotoData[]>([
@@ -191,6 +195,33 @@ export function MaintenancePlanForm() {
       setPreviousHourmeter(totalHourmeter);
     }
   }, [totalHourmeter]);
+
+  // Calcular automaticamente a próxima revisão quando intervalo for selecionado
+  useEffect(() => {
+    if (currentHourmeter > 0) {
+      // Converter intervalo para segundos
+      const motorIntervalHours: Record<MaintenanceInterval, number> = {
+        h100: 100, h200: 200, h800: 800, h2000: 2000
+      };
+      const alternadorIntervalHours: Record<AlternadorInterval, number> = {
+        h250: 250, h1000: 1000, h10000: 10000, h30000: 30000
+      };
+      
+      // Usa o maior intervalo selecionado
+      let intervalHours = 0;
+      if (selectedMotorInterval) {
+        intervalHours = Math.max(intervalHours, motorIntervalHours[selectedMotorInterval]);
+      }
+      if (selectedAlternadorInterval) {
+        intervalHours = Math.max(intervalHours, alternadorIntervalHours[selectedAlternadorInterval]);
+      }
+      
+      if (intervalHours > 0) {
+        const intervalSeconds = intervalHours * 3600;
+        setNextRevisionHourmeter(currentHourmeter + intervalSeconds);
+      }
+    }
+  }, [selectedMotorInterval, selectedAlternadorInterval, currentHourmeter]);
 
   const handlePrint = () => {
     window.print();
@@ -795,17 +826,16 @@ export function MaintenancePlanForm() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Horímetro Anterior (Última Manutenção)</Label>
-              <Input
-                value={formatHourmeter(previousHourmeter)}
-                readOnly
-                className="bg-muted font-mono"
-              />
-              <p className="text-xs text-muted-foreground">
-                Valor da última manutenção registrada
+            <HourmeterInput
+              label="Horímetro Anterior (Última Manutenção)"
+              value={previousHourmeter}
+              onChange={setPreviousHourmeter}
+            />
+            {totalHourmeter !== undefined && totalHourmeter !== previousHourmeter && (
+              <p className="text-xs text-muted-foreground mt-1">
+                💡 Sugestão do sistema: {formatHourmeter(totalHourmeter)}
               </p>
-            </div>
+            )}
 
             <HourmeterInput
               label="Horímetro Atual (Novo)"
@@ -818,6 +848,11 @@ export function MaintenancePlanForm() {
               value={nextRevisionHourmeter || 0}
               onChange={(v) => setNextRevisionHourmeter(v || undefined)}
             />
+            {(selectedMotorInterval || selectedAlternadorInterval) && (
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                ✓ Calculado automaticamente com base no intervalo selecionado
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -878,6 +913,8 @@ export function MaintenancePlanForm() {
           sections={verificationSections}
           onChange={setVerificationSections}
           showCategoryButtons={equipmentName.toLowerCase().includes("gerador") || equipment?.equipment_name?.toLowerCase().includes("gerador")}
+          onMotorIntervalChange={setSelectedMotorInterval}
+          onAlternadorIntervalChange={setSelectedAlternadorInterval}
         />
       </div>
 

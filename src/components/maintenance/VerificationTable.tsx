@@ -63,9 +63,17 @@ interface VerificationTableProps {
   sections: VerificationSection[];
   onChange: (sections: VerificationSection[]) => void;
   showCategoryButtons?: boolean;
+  onMotorIntervalChange?: (interval: MaintenanceInterval | null) => void;
+  onAlternadorIntervalChange?: (interval: AlternadorInterval | null) => void;
 }
 
-export function VerificationTable({ sections, onChange, showCategoryButtons = false }: VerificationTableProps) {
+export function VerificationTable({ 
+  sections, 
+  onChange, 
+  showCategoryButtons = false,
+  onMotorIntervalChange,
+  onAlternadorIntervalChange,
+}: VerificationTableProps) {
   const [selectedInterval, setSelectedInterval] = useState<MaintenanceInterval>("h100");
   const [selectedAlternadorInterval, setSelectedAlternadorInterval] = useState<AlternadorInterval>("h250");
 
@@ -74,6 +82,9 @@ export function VerificationTable({ sections, onChange, showCategoryButtons = fa
     // Remove seções de motor existentes e adiciona as novas
     const nonMotorSections = sections.filter(s => s.category !== "motor");
     onChange([...nonMotorSections, ...motorSections]);
+    
+    // Notifica o formulário pai sobre o intervalo selecionado
+    onMotorIntervalChange?.(selectedInterval);
     
     const intervalLabel = maintenanceIntervals.find(i => i.value === selectedInterval)?.label || selectedInterval;
     toast.success(`Tarefas do Motor geradas para ${intervalLabel}`);
@@ -84,6 +95,9 @@ export function VerificationTable({ sections, onChange, showCategoryButtons = fa
     // Remove seções de alternador existentes e adiciona as novas
     const nonAlternadorSections = sections.filter(s => s.category !== "alternador");
     onChange([...nonAlternadorSections, ...alternadorSections]);
+    
+    // Notifica o formulário pai sobre o intervalo selecionado
+    onAlternadorIntervalChange?.(selectedAlternadorInterval);
     
     const intervalLabel = alternadorIntervals.find(i => i.value === selectedAlternadorInterval)?.label || selectedAlternadorInterval;
     toast.success(`Tarefas do Alternador geradas para ${intervalLabel}`);
