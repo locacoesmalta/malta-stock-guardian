@@ -2575,6 +2575,10 @@ export type Database = {
           sale_price: number
         }[]
       }
+      get_last_maintenance_hourmeter: {
+        Args: { p_asset_id: string }
+        Returns: number
+      }
       get_monthly_productivity: {
         Args: { p_month: number; p_year: number }
         Returns: {
