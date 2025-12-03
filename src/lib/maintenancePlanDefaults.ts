@@ -1,9 +1,12 @@
 // Templates padrão para itens de verificação de manutenção
 
-export type ActionType = "verificar" | "limpeza" | "substituir" | "testar" | "manutencao_motor" | "manutencao_alternador";
+export type ActionType = "verificar" | "limpeza" | "substituir" | "testar";
+
+export type MaintenanceTarget = "motor" | "alternador";
 
 export interface VerificationItem {
   id: string;
+  maintenanceTarget?: MaintenanceTarget;
   actionType?: ActionType;
   description: string;
   h50: boolean;
@@ -128,8 +131,9 @@ export const generateItemId = () => `item-${Date.now()}-${Math.random().toString
 export const generateSectionId = () => `section-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 // Criar item vazio
-export const createEmptyItem = (): VerificationItem => ({
+export const createEmptyItem = (defaultTarget?: MaintenanceTarget): VerificationItem => ({
   id: generateItemId(),
+  maintenanceTarget: defaultTarget || "motor",
   actionType: "verificar",
   description: "",
   h50: false,

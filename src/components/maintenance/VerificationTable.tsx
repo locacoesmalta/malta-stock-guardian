@@ -21,18 +21,22 @@ import {
   VerificationItem,
   MaintenanceCategory,
   ActionType,
+  MaintenanceTarget,
   createEmptyItem,
   createEmptySection,
 } from "@/lib/maintenancePlanDefaults";
 import { cn } from "@/lib/utils";
+
+const maintenanceTargets: { value: MaintenanceTarget; label: string }[] = [
+  { value: "motor", label: "🔧 Motor" },
+  { value: "alternador", label: "⚡ Alternador" },
+];
 
 const actionTypes: { value: ActionType; label: string }[] = [
   { value: "verificar", label: "Verificar" },
   { value: "limpeza", label: "Limpeza" },
   { value: "substituir", label: "Substituir" },
   { value: "testar", label: "Testar" },
-  { value: "manutencao_motor", label: "🔧 Manutenção Motor" },
-  { value: "manutencao_alternador", label: "⚡ Manutenção Alternador" },
 ];
 
 interface VerificationTableProps {
@@ -161,6 +165,9 @@ export function VerificationTable({ sections, onChange, showCategoryButtons = fa
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b">
+                <th className="text-left py-2 pr-2 min-w-[130px]">
+                  Manutenção
+                </th>
                 <th className="text-left py-2 pr-2 min-w-[120px]">
                   Ação
                 </th>
@@ -180,12 +187,31 @@ export function VerificationTable({ sections, onChange, showCategoryButtons = fa
                 <tr key={item.id} className="border-b last:border-b-0">
                   <td className="py-2 pr-2">
                     <Select
+                      value={item.maintenanceTarget || "motor"}
+                      onValueChange={(value: MaintenanceTarget) =>
+                        updateItem(section.id, item.id, "maintenanceTarget", value)
+                      }
+                    >
+                      <SelectTrigger className="h-8 w-[130px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {maintenanceTargets.map((target) => (
+                          <SelectItem key={target.value} value={target.value}>
+                            {target.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
+                  <td className="py-2 pr-2">
+                    <Select
                       value={item.actionType || "verificar"}
                       onValueChange={(value: ActionType) =>
                         updateItem(section.id, item.id, "actionType", value)
                       }
                     >
-                      <SelectTrigger className="h-8 w-[180px]">
+                      <SelectTrigger className="h-8 w-[120px]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
