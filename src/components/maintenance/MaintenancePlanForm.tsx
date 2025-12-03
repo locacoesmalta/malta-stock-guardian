@@ -142,7 +142,7 @@ export function MaintenancePlanForm({
 
   // Buscar dados do equipamento
   const { data: equipment, isLoading: loadingEquipment } = useEquipmentByPAT(patFormatted);
-  const { lastHourmeter } = useAssetMaintenances(equipment?.id);
+  const { lastHourmeter, lastPreviousHourmeter } = useAssetMaintenances(equipment?.id);
   
   // Buscar último plano do equipamento para reutilizar tabela de verificação
   const { data: lastPlan } = useLastPlanByAssetId(equipment?.id);
@@ -286,13 +286,22 @@ export function MaintenancePlanForm({
   // Tabela de verificações inicia vazia - usuário adiciona seções manualmente
   // Botões Motor/Alternador disponíveis para especificar de qual sistema é a manutenção
 
-  // Preencher horímetro anterior automaticamente da última manutenção preventiva
+  // Preencher horímetros automaticamente da última manutenção preventiva
   useEffect(() => {
-    // Só preenche automaticamente no modo criação
-    if (mode === "create" && lastHourmeter !== undefined && lastHourmeter > 0) {
-      setPreviousHourmeter(lastHourmeter);
+    // Só preenche automaticamente no modo criação e quando equipamento estiver carregado
+    if (mode === "create" && equipment?.id) {
+      // Horímetro Anterior = previous_hourmeter da última manutenção
+      if (lastPreviousHourmeter !== undefined && lastPreviousHourmeter > 0) {
+        console.log("Auto-fill horímetro anterior:", lastPreviousHourmeter, "para asset:", equipment.id);
+        setPreviousHourmeter(lastPreviousHourmeter);
+      }
+      // Horímetro Atual = current_hourmeter da última manutenção (pré-preenchido, editável)
+      if (lastHourmeter !== undefined && lastHourmeter > 0) {
+        console.log("Auto-fill horímetro atual:", lastHourmeter, "para asset:", equipment.id);
+        setCurrentHourmeter(lastHourmeter);
+      }
     }
-  }, [lastHourmeter, mode]);
+  }, [lastPreviousHourmeter, lastHourmeter, mode, equipment?.id]);
 
   // Calcular automaticamente a próxima revisão quando intervalo for selecionado
   useEffect(() => {
