@@ -65,6 +65,8 @@ const QuickReport = lazy(() => import("./pages/reports/QuickReport"));
 const UserActivities = lazy(() => import("./pages/admin/UserActivities"));
 const ExternalSync = lazy(() => import("./pages/admin/ExternalSync"));
 const MaintenancePlan = lazy(() => import("./pages/maintenance/MaintenancePlan"));
+const MaintenancePlansList = lazy(() => import("./pages/maintenance/MaintenancePlansList"));
+const MaintenancePlanView = lazy(() => import("./pages/maintenance/MaintenancePlanView"));
 
 const queryClient = new QueryClient();
 
@@ -480,6 +482,8 @@ const App = () => (
               <Route path="/admin/settings" element={<ProtectedLayout><AdminRoute><Settings /></AdminRoute></ProtectedLayout>} />
               <Route path="/admin/data-normalization" element={<ProtectedLayout><AdminRoute><DataNormalization /></AdminRoute></ProtectedLayout>} />
               <Route path="/maintenance/plan" element={<ProtectedLayout><PermissionRoute permission="can_edit_assets"><MaintenancePlan /></PermissionRoute></ProtectedLayout>} />
+              <Route path="/maintenance/plans" element={<ProtectedLayout><PermissionRoute permission="can_access_assets"><MaintenancePlansList /></PermissionRoute></ProtectedLayout>} />
+              <Route path="/maintenance/plan/:id" element={<ProtectedLayout><PermissionRoute permission="can_edit_assets"><MaintenancePlanView /></PermissionRoute></ProtectedLayout>} />
               <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
