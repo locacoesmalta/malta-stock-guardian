@@ -293,6 +293,80 @@ export function MaintenancePlanForm() {
     };
   };
 
+  // Função para preencher dados de teste (apenas para visualização de impressão)
+  const fillMockData = () => {
+    // Tipo e Data
+    setPlanType("preventiva");
+    setPlanDate(new Date().toISOString().split("T")[0]);
+    
+    // Equipamento (dados manuais para teste)
+    setPatCode("0048");
+    setEquipmentName("GERADOR 55KVA SILENCIADO");
+    setEquipmentManufacturer("CUMMINS");
+    setEquipmentModel("C55D5");
+    setEquipmentSerial("CMS-2024-55789");
+    setPreviousHourmeter(1250);
+    setCurrentHourmeter(1500);
+    setNextRevisionHourmeter(1750);
+    
+    // Cliente
+    setClientName("João Carlos da Silva");
+    setClientCompany("Construtora Horizonte Ltda");
+    setClientWorkSite("Obra Residencial Porto Sol - Bloco A");
+    
+    // Observações completas
+    setObservationsOperational(
+      "• Manter nível de combustível acima de 30% para evitar entrada de ar no sistema\n" +
+      "• Verificar visualmente vazamentos de óleo ou combustível antes de ligar\n" +
+      "• Aguardar 30 segundos após partida antes de aplicar carga\n" +
+      "• Não desligar o equipamento sob carga total - reduzir gradualmente\n" +
+      "• Realizar inspeção visual diária do nível de água do radiador"
+    );
+    
+    setObservationsTechnical(
+      "📞 EMERGÊNCIA 24H: (91) 99628-0080 - Walter\n" +
+      "📞 Assistência Técnica: (91) 3222-1100\n" +
+      "📧 Email: suporte@maltalocacoes.com.br\n" +
+      "⚙️ Peças Originais: Distribuidora Cummins Norte - (91) 3333-4444\n" +
+      "🏭 Endereço: Rua Augusto Corrêa, 01 - Guamá, Belém - PA"
+    );
+    
+    setObservationsProcedures(
+      "PROCEDIMENTO DE PARTIDA:\n" +
+      "1. Verificar nível de óleo lubrificante\n" +
+      "2. Verificar nível de combustível (mínimo 30%)\n" +
+      "3. Verificar se disjuntor principal está desligado\n" +
+      "4. Acionar chave de partida e aguardar estabilização\n" +
+      "5. Aguardar 30 segundos em marcha lenta\n" +
+      "6. Ligar disjuntor e aplicar carga gradualmente\n\n" +
+      "PROCEDIMENTO DE PARADA:\n" +
+      "1. Desligar cargas gradualmente\n" +
+      "2. Desligar disjuntor principal\n" +
+      "3. Aguardar 5 minutos em marcha lenta para resfriamento\n" +
+      "4. Desligar chave de ignição"
+    );
+    
+    // Nomes das assinaturas
+    setSupervisorName("Walter Malta");
+    setTechnicianName("Everton Souza");
+    
+    // Carregar tabela de verificação de gerador com alguns itens marcados
+    const mockSections = getDefaultSections("GERADOR").map(section => ({
+      ...section,
+      items: section.items.map((item, idx) => ({
+        ...item,
+        daily: idx % 2 === 0,
+        h250: idx % 3 === 0,
+        h500: idx % 4 === 0,
+        h1000: idx % 5 === 0,
+        h4000: idx % 6 === 0,
+      }))
+    }));
+    setVerificationSections(mockSections);
+    
+    toast.success("Dados de teste preenchidos! Clique em Imprimir para visualizar.");
+  };
+
   const handleSubmit = async () => {
     // Validações básicas
     if (!patCode && !equipmentName) {
@@ -753,10 +827,13 @@ export function MaintenancePlanForm() {
 
       {/* Botões de Ação */}
       <div className="flex justify-end gap-4 no-print">
+        <Button variant="secondary" onClick={fillMockData}>
+          🧪 Preencher Teste
+        </Button>
         <Button variant="outline" onClick={() => navigate("/assets")}>
           Cancelar
         </Button>
-        <Button variant="outline" onClick={handlePrint} disabled={!equipment}>
+        <Button variant="outline" onClick={handlePrint}>
           <Printer className="h-4 w-4 mr-2" />
           Imprimir
         </Button>
