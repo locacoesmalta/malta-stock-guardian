@@ -1,9 +1,9 @@
 /* Estilos de impressão para relatórios */
 @media print {
-  /* Configuração da página */
+  /* Configuração da página - Margens padrão Malta */
   @page {
     size: A4;
-    margin: 1cm;
+    margin: 20mm 15mm 20mm 15mm; /* top right bottom left */
   }
 
   /* Esconder elementos que não devem aparecer na impressão */
@@ -57,9 +57,30 @@
     margin-bottom: 0.5cm;
   }
 
-  /* Títulos */
+  /* Títulos - Nunca ficam sozinhos */
   h1, h2, h3 {
     page-break-after: avoid;
+    margin-top: 12px;
+    margin-bottom: 6px;
+  }
+
+  /* Parágrafos - Espaçamento consistente */
+  p {
+    line-height: 1.4;
+    margin-bottom: 8px;
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Tabelas - Padding e distância */
+  table {
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+
+  table th,
+  table td {
+    padding: 6px;
   }
 
   /* Garantir que pares de fotos fiquem juntos */
