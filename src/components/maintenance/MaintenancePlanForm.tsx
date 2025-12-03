@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -23,9 +24,11 @@ import { useAssetMaintenances } from "@/hooks/useAssetMaintenances";
 import { useAssetsQuery } from "@/hooks/useAssetsQuery";
 import { getDefaultSections, VerificationSection } from "@/lib/maintenancePlanDefaults";
 import { formatPAT } from "@/lib/patUtils";
-import { Wrench, Package, User, FileText, Save, Loader2, Upload, X, Plus } from "lucide-react";
+import { formatHourmeter } from "@/lib/hourmeterUtils";
+import { Wrench, Package, User, FileText, Save, Loader2, Upload, X, Plus, CheckCircle2, XCircle, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import "@/styles/maintenance-plan-print.css";
 
 interface PhotoData {
   file: File | null;
@@ -41,8 +44,10 @@ export function MaintenancePlanForm() {
   // Estados do formulário
   const [selectedAssetId, setSelectedAssetId] = useState("");
   const [patCode, setPatCode] = useState("");
+  const [patFormatted, setPatFormatted] = useState("");
   const [planType, setPlanType] = useState<"preventiva" | "corretiva">("preventiva");
   const [planDate, setPlanDate] = useState(new Date().toISOString().split("T")[0]);
+  const [previousHourmeter, setPreviousHourmeter] = useState(0);
   const [currentHourmeter, setCurrentHourmeter] = useState(0);
   const [nextRevisionHourmeter, setNextRevisionHourmeter] = useState<number | undefined>();
 
@@ -92,8 +97,24 @@ export function MaintenancePlanForm() {
   const [additionalPhotos, setAdditionalPhotos] = useState<PhotoData[]>([]);
 
   // Buscar dados do equipamento
-  const { data: equipment, isLoading: loadingEquipment } = useEquipmentByPAT(patCode);
+  const { data: equipment, isLoading: loadingEquipment } = useEquipmentByPAT(patFormatted);
   const { totalHourmeter } = useAssetMaintenances(equipment?.id);
+
+  // Handle PAT input change
+  const handlePatChange = (value: string) => {
+    const numericValue = value.replace(/\D/g, "");
+    setPatCode(numericValue);
+  };
+
+  // Handle PAT blur - format and trigger search
+  const handlePatBlur = () => {
+    if (patCode) {
+      const formatted = formatPAT(patCode);
+      if (formatted) {
+        setPatFormatted(formatted);
+      }
+    }
+  };
 
   // Atualizar PAT quando selecionar equipamento
   useEffect(() => {
@@ -101,6 +122,7 @@ export function MaintenancePlanForm() {
       const asset = assets.find(a => a.id === selectedAssetId);
       if (asset) {
         setPatCode(asset.asset_code);
+        setPatFormatted(asset.asset_code);
       }
     }
   }, [selectedAssetId, assets]);
@@ -125,10 +147,15 @@ export function MaintenancePlanForm() {
 
   // Preencher horímetro do último registro
   useEffect(() => {
-    if (totalHourmeter) {
-      setCurrentHourmeter(totalHourmeter);
+    if (totalHourmeter !== undefined) {
+      setPreviousHourmeter(totalHourmeter);
     }
   }, [totalHourmeter]);
+
+  // Handle print
+  const handlePrint = () => {
+    window.print();
+  };
 
   const handleCompanyChange = (field: string, value: string) => {
     setCompanyData((prev) => ({ ...prev, [field]: value }));
@@ -357,7 +384,7 @@ export function MaintenancePlanForm() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 maintenance-plan-print">
       {/* Cabeçalho da Empresa */}
       <MaintenancePlanHeader
         companyName={companyData.company_name}
@@ -370,7 +397,7 @@ export function MaintenancePlanForm() {
       />
 
       {/* Tipo e Data do Plano */}
-      <Card>
+      <Card className="no-print">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <FileText className="h-5 w-5" />
@@ -403,12 +430,44 @@ export function MaintenancePlanForm() {
 
             <div className="space-y-2">
               <Label>PAT do Equipamento</Label>
-              <Input
-                value={patCode}
-                onChange={(e) => setPatCode(e.target.value)}
-                placeholder="Digite o PAT..."
-              />
-              {loadingEquipment && <LoadingSpinner size="sm" label="Buscando..." />}
+              <div className="relative">
+                <Input
+                  value={patCode}
+                  onChange={(e) => handlePatChange(e.target.value)}
+                  onBlur={handlePatBlur}
+                  placeholder="Digite o PAT (ex: 48)"
+                  maxLength={6}
+                  className="font-mono pr-10"
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {loadingEquipment && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                  {!loadingEquipment && patFormatted && equipment && (
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  )}
+                  {!loadingEquipment && patFormatted && !equipment && (
+                    <XCircle className="h-4 w-4 text-destructive" />
+                  )}
+                </div>
+              </div>
+              
+              {/* PAT validation feedback */}
+              {!loadingEquipment && patFormatted && (
+                equipment ? (
+                  <Alert className="border-green-500 bg-green-50 dark:bg-green-950/20 py-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    <AlertDescription className="text-green-700 dark:text-green-400 text-sm">
+                      Equipamento encontrado: <strong>{equipment.equipment_name}</strong>
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <Alert variant="destructive" className="py-2">
+                    <XCircle className="h-4 w-4" />
+                    <AlertDescription className="text-sm">
+                      Equipamento não encontrado para o PAT {patFormatted}
+                    </AlertDescription>
+                  </Alert>
+                )
+              )}
             </div>
           </div>
         </CardContent>
@@ -463,8 +522,20 @@ export function MaintenancePlanForm() {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label>Horímetro Anterior (Última Manutenção)</Label>
+              <Input
+                value={formatHourmeter(previousHourmeter)}
+                readOnly
+                className="bg-muted font-mono"
+              />
+              <p className="text-xs text-muted-foreground">
+                Valor da última manutenção registrada
+              </p>
+            </div>
+
             <HourmeterInput
-              label="Horímetro Atual"
+              label="Horímetro Atual (Novo)"
               value={currentHourmeter}
               onChange={setCurrentHourmeter}
             />
@@ -631,9 +702,13 @@ export function MaintenancePlanForm() {
       />
 
       {/* Botões de Ação */}
-      <div className="flex justify-end gap-4">
+      <div className="flex justify-end gap-4 no-print">
         <Button variant="outline" onClick={() => navigate(-1)}>
           Cancelar
+        </Button>
+        <Button variant="outline" onClick={handlePrint} disabled={!equipment}>
+          <Printer className="h-4 w-4 mr-2" />
+          Imprimir
         </Button>
         <Button onClick={handleSubmit} disabled={createPlan.isPending}>
           {createPlan.isPending ? (
