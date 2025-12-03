@@ -201,6 +201,7 @@ export function MaintenancePlanForm({
       setPlanDate(initialData.plan_date || getCurrentDate());
       setCurrentHourmeter(initialData.current_hourmeter || 0);
       setNextRevisionHourmeter(initialData.next_revision_hourmeter || undefined);
+      setPreviousHourmeter(initialData.previous_hourmeter || 0);
       
       setClientName(initialData.client_name || "");
       setClientCompany(initialData.client_company || "");
