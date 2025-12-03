@@ -1,7 +1,10 @@
 // Templates padrão para itens de verificação de manutenção
 
+export type ActionType = "verificar" | "limpeza" | "substituir" | "testar";
+
 export interface VerificationItem {
   id: string;
+  actionType?: ActionType;
   description: string;
   h50: boolean;
   h100: boolean;
@@ -127,6 +130,7 @@ export const generateSectionId = () => `section-${Date.now()}-${Math.random().to
 // Criar item vazio
 export const createEmptyItem = (): VerificationItem => ({
   id: generateItemId(),
+  actionType: "verificar",
   description: "",
   h50: false,
   h100: false,

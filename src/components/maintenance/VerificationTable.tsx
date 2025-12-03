@@ -8,15 +8,30 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, Trash2, ClipboardList, GripVertical, Wrench, Zap } from "lucide-react";
 import {
   VerificationSection,
   VerificationItem,
   MaintenanceCategory,
+  ActionType,
   createEmptyItem,
   createEmptySection,
 } from "@/lib/maintenancePlanDefaults";
 import { cn } from "@/lib/utils";
+
+const actionTypes: { value: ActionType; label: string }[] = [
+  { value: "verificar", label: "Verificar" },
+  { value: "limpeza", label: "Limpeza" },
+  { value: "substituir", label: "Substituir" },
+  { value: "testar", label: "Testar" },
+];
 
 interface VerificationTableProps {
   sections: VerificationSection[];
@@ -144,6 +159,9 @@ export function VerificationTable({ sections, onChange, showCategoryButtons = fa
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b">
+                <th className="text-left py-2 pr-2 min-w-[120px]">
+                  Ação
+                </th>
                 <th className="text-left py-2 pr-4 min-w-[300px]">
                   Descrição
                 </th>
@@ -158,6 +176,25 @@ export function VerificationTable({ sections, onChange, showCategoryButtons = fa
             <tbody>
               {section.items.map((item) => (
                 <tr key={item.id} className="border-b last:border-b-0">
+                  <td className="py-2 pr-2">
+                    <Select
+                      value={item.actionType || "verificar"}
+                      onValueChange={(value: ActionType) =>
+                        updateItem(section.id, item.id, "actionType", value)
+                      }
+                    >
+                      <SelectTrigger className="h-8 w-[120px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {actionTypes.map((action) => (
+                          <SelectItem key={action.value} value={action.value}>
+                            {action.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
                   <td className="py-2 pr-4">
                     <Input
                       value={item.description}
