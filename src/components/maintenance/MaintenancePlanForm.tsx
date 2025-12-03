@@ -133,12 +133,19 @@ export function MaintenancePlanForm() {
       setEquipmentName(equipment.equipment_name || "");
       setEquipmentManufacturer(equipment.manufacturer || "");
       setEquipmentModel(equipment.model || "");
+      setEquipmentSerial(equipment.serial_number || "");
       
-      // Preencher dados do cliente se estiver em locação
-      if (equipment.location_type === "locacao") {
+      // Preencher dados do cliente baseado no location_type
+      if (equipment.location_type === "locacao" || equipment.location_type === "aguardando_laudo") {
+        // Em locação ou aguardando laudo - usar dados de rental
         setClientCompany(equipment.rental_company || "");
         setClientWorkSite(equipment.rental_work_site || "");
+      } else if (equipment.location_type === "em_manutencao") {
+        // Em manutenção - usar dados de manutenção
+        setClientCompany(equipment.maintenance_company || "");
+        setClientWorkSite(equipment.maintenance_work_site || "");
       }
+      // Se em depósito, deixar vazio (equipamento não está em nenhum cliente)
 
       // Carregar template de verificações baseado no equipamento
       setVerificationSections(getDefaultSections(equipment.equipment_name));
