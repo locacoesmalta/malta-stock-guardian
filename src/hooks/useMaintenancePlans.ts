@@ -202,10 +202,33 @@ export const useMaintenancePlans = (assetId?: string) => {
     },
   });
 
+  // Buscar último plano de um equipamento para reutilizar template de verificação
+  const useLastPlanByAssetId = (assetId: string | undefined) => {
+    return useQuery({
+      queryKey: ["last-maintenance-plan", assetId],
+      queryFn: async () => {
+        if (!assetId) return null;
+        
+        const { data, error } = await supabase
+          .from("maintenance_plans")
+          .select("verification_sections")
+          .eq("asset_id", assetId)
+          .order("plan_date", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (error) throw error;
+        return data;
+      },
+      enabled: !!assetId && !!user,
+    });
+  };
+
   return {
     plans,
     isLoading,
     usePlanById,
+    useLastPlanByAssetId,
     createPlan,
     updatePlan,
     deletePlan,
