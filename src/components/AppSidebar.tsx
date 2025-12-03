@@ -1,4 +1,4 @@
-import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3, ClipboardList, TrendingUp, Building2, Wallet, FileCheck, FileBarChart, MessageSquare, AlertTriangle, ShoppingCart, Activity, CheckCircle2, Database, type LucideIcon } from "lucide-react";
+import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3, ClipboardList, TrendingUp, Building2, Wallet, FileCheck, FileBarChart, MessageSquare, AlertTriangle, ShoppingCart, Activity, CheckCircle2, Database, Wrench, type LucideIcon } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -94,6 +94,12 @@ export function AppSidebar() {
       icon: Building2,
       label: "Empresas de Locação",
       show: permissions.can_access_assets || isAdmin,
+    },
+    {
+      path: "/maintenance/plan",
+      icon: Wrench,
+      label: "Plano de Manutenção",
+      show: permissions.can_edit_assets || isAdmin,
     },
   ];
 
