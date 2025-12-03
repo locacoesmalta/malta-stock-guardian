@@ -182,33 +182,8 @@ export function MaintenancePlanForm() {
   // 1. Último plano do mesmo PAT
   // 2. Template salvo (tipo + fabricante + modelo)
   // 3. Template padrão do código
-  useEffect(() => {
-    const loadVerificationSections = async () => {
-      if (!equipment) return;
-
-      // 1. Primeiro: último plano do mesmo PAT
-      if (lastPlan?.verification_sections) {
-        setVerificationSections(lastPlan.verification_sections as unknown as VerificationSection[]);
-        setTemplateSource(`Último plano do PAT ${formatPAT(equipment.asset_code)}`);
-        return;
-      }
-
-      // 2. Segundo: buscar template hierárquico
-      const template = await getTemplateByEquipment(
-        equipment.equipment_name,
-        equipment.manufacturer,
-        equipment.model
-      );
-
-      if (template) {
-        setVerificationSections(template.sections);
-        setTemplateSource(template.source);
-        toast.info(`Tabela carregada: ${template.source}`);
-      }
-    };
-
-    loadVerificationSections();
-  }, [equipment, lastPlan, getTemplateByEquipment]);
+  // Tabela de verificações inicia vazia - usuário adiciona seções manualmente
+  // Botões Motor/Alternador disponíveis para especificar de qual sistema é a manutenção
 
   // Preencher horímetro do último registro
   useEffect(() => {
