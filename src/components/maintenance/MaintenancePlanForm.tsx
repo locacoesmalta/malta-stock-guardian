@@ -27,6 +27,7 @@ import { useAssetsQuery } from "@/hooks/useAssetsQuery";
 import { getDefaultSections, VerificationSection } from "@/lib/maintenancePlanDefaults";
 import { formatPAT } from "@/lib/patUtils";
 import { formatHourmeter } from "@/lib/hourmeterUtils";
+import { getCurrentDate, formatBelemDate } from "@/config/timezone";
 import { Wrench, Package, User, FileText, Save, Loader2, Plus, CheckCircle2, XCircle, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,7 +43,7 @@ export function MaintenancePlanForm() {
   const [patCode, setPatCode] = useState("");
   const [patFormatted, setPatFormatted] = useState("");
   const [planType, setPlanType] = useState<"preventiva" | "corretiva">("preventiva");
-  const [planDate, setPlanDate] = useState(new Date().toISOString().split("T")[0]);
+  const [planDate, setPlanDate] = useState(getCurrentDate());
   const [previousHourmeter, setPreviousHourmeter] = useState(0);
   const [currentHourmeter, setCurrentHourmeter] = useState(0);
   const [nextRevisionHourmeter, setNextRevisionHourmeter] = useState<number | undefined>();
@@ -281,7 +282,7 @@ export function MaintenancePlanForm() {
 
   const fillMockData = () => {
     setPlanType("preventiva");
-    setPlanDate(new Date().toISOString().split("T")[0]);
+    setPlanDate(getCurrentDate());
     setPatCode("0048");
     setEquipmentName("GERADOR 55KVA SILENCIADO");
     setEquipmentManufacturer("CUMMINS");
@@ -396,7 +397,7 @@ export function MaintenancePlanForm() {
           <img src="/malta-logo.webp" alt="Malta Locações" className="print-logo" />
           <div className="print-header-title">
             <h1>Plano de Manutenção {planType === "preventiva" ? "Preventiva" : "Corretiva"}</h1>
-            <p>Data: {new Date(planDate).toLocaleDateString('pt-BR')}</p>
+            <p>Data: {formatBelemDate(planDate, 'dd/MM/yyyy')}</p>
           </div>
           <div className="print-header-company">
             <p><strong>{companyData.company_name}</strong></p>
