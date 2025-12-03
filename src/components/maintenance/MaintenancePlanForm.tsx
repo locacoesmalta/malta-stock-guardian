@@ -420,14 +420,15 @@ export function MaintenancePlanForm({
     const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
     const filePath = `maintenance-plans/${fileName}`;
 
-    const { error } = await supabase.storage.from("reports").upload(filePath, photo.file);
+    const { error } = await supabase.storage.from("maintenance-photos").upload(filePath, photo.file);
 
     if (error) {
       console.error("Erro ao fazer upload:", error);
+      toast.error(`Erro ao enviar foto ${index + 1}: ${error.message}`);
       return null;
     }
 
-    const { data: urlData } = supabase.storage.from("reports").getPublicUrl(filePath);
+    const { data: urlData } = supabase.storage.from("maintenance-photos").getPublicUrl(filePath);
 
     return { url: urlData.publicUrl, comment: photo.comment, order: index };
   };
