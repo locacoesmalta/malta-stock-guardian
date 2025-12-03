@@ -1038,6 +1038,122 @@ export type Database = {
           },
         ]
       }
+      maintenance_plans: {
+        Row: {
+          asset_id: string | null
+          client_company: string | null
+          client_name: string | null
+          client_signature: string | null
+          client_work_site: string | null
+          company_address: string | null
+          company_cep: string | null
+          company_cnpj: string | null
+          company_email: string | null
+          company_name: string | null
+          company_phone: string | null
+          created_at: string
+          created_by: string
+          current_hourmeter: number | null
+          equipment_code: string | null
+          equipment_manufacturer: string | null
+          equipment_model: string | null
+          equipment_name: string | null
+          equipment_serial: string | null
+          id: string
+          next_revision_hourmeter: number | null
+          observations_operational: string | null
+          observations_procedures: string | null
+          observations_technical: string | null
+          photos: Json | null
+          plan_date: string
+          plan_type: string
+          supervisor_name: string | null
+          supervisor_signature: string | null
+          technician_name: string | null
+          technician_signature: string | null
+          updated_at: string
+          verification_sections: Json | null
+        }
+        Insert: {
+          asset_id?: string | null
+          client_company?: string | null
+          client_name?: string | null
+          client_signature?: string | null
+          client_work_site?: string | null
+          company_address?: string | null
+          company_cep?: string | null
+          company_cnpj?: string | null
+          company_email?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          created_at?: string
+          created_by: string
+          current_hourmeter?: number | null
+          equipment_code?: string | null
+          equipment_manufacturer?: string | null
+          equipment_model?: string | null
+          equipment_name?: string | null
+          equipment_serial?: string | null
+          id?: string
+          next_revision_hourmeter?: number | null
+          observations_operational?: string | null
+          observations_procedures?: string | null
+          observations_technical?: string | null
+          photos?: Json | null
+          plan_date?: string
+          plan_type?: string
+          supervisor_name?: string | null
+          supervisor_signature?: string | null
+          technician_name?: string | null
+          technician_signature?: string | null
+          updated_at?: string
+          verification_sections?: Json | null
+        }
+        Update: {
+          asset_id?: string | null
+          client_company?: string | null
+          client_name?: string | null
+          client_signature?: string | null
+          client_work_site?: string | null
+          company_address?: string | null
+          company_cep?: string | null
+          company_cnpj?: string | null
+          company_email?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          created_at?: string
+          created_by?: string
+          current_hourmeter?: number | null
+          equipment_code?: string | null
+          equipment_manufacturer?: string | null
+          equipment_model?: string | null
+          equipment_name?: string | null
+          equipment_serial?: string | null
+          id?: string
+          next_revision_hourmeter?: number | null
+          observations_operational?: string | null
+          observations_procedures?: string | null
+          observations_technical?: string | null
+          photos?: Json | null
+          plan_date?: string
+          plan_type?: string
+          supervisor_name?: string | null
+          supervisor_signature?: string | null
+          technician_name?: string | null
+          technician_signature?: string | null
+          updated_at?: string
+          verification_sections?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_plans_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       material_withdrawal_collaborators: {
         Row: {
           collaborator_name: string
