@@ -328,56 +328,93 @@ export function MaintenancePlanForm() {
     toast.success("Dados de teste preenchidos!");
   };
 
+  const [isSaving, setIsSaving] = useState(false);
+
   const handleSubmit = async () => {
+    // Validações obrigatórias
     if (!patCode && !equipmentName) {
       toast.error("Informe o PAT ou nome do equipamento");
       return;
     }
 
-    const uploadedPhotos: MaintenancePlanPhoto[] = [];
-    
-    for (let i = 0; i < photos.length; i++) {
-      const uploaded = await uploadPhoto(photos[i], i);
-      if (uploaded) uploadedPhotos.push(uploaded);
+    if (currentHourmeter <= 0) {
+      toast.error("Informe o horímetro atual do equipamento");
+      return;
     }
 
-    for (let i = 0; i < additionalPhotos.length; i++) {
-      const uploaded = await uploadPhoto(additionalPhotos[i], photos.length + i);
-      if (uploaded) uploadedPhotos.push(uploaded);
+    // Alertas não bloqueantes
+    const hasPhotos = photos.some(p => p.preview) || additionalPhotos.some(p => p.preview);
+    if (!hasPhotos) {
+      toast.warning("Nenhuma foto adicionada - o plano será salvo sem fotos");
     }
 
-    const planData: MaintenancePlanData = {
-      asset_id: equipment?.id || null,
-      equipment_code: formatPAT(patCode) || undefined,
-      equipment_name: equipment?.equipment_name || equipmentName,
-      equipment_manufacturer: equipment?.manufacturer || equipmentManufacturer,
-      equipment_model: equipment?.model || equipmentModel,
-      equipment_serial: equipmentSerial,
-      plan_type: planType,
-      plan_date: planDate,
-      current_hourmeter: currentHourmeter,
-      next_revision_hourmeter: nextRevisionHourmeter,
-      ...companyData,
-      client_name: clientName,
-      client_company: clientCompany,
-      client_work_site: clientWorkSite,
-      observations_operational: observationsOperational,
-      observations_technical: observationsTechnical,
-      observations_procedures: observationsProcedures,
-      supervisor_name: supervisorName,
-      supervisor_signature: supervisorSignature,
-      technician_name: technicianName,
-      technician_signature: technicianSignature,
-      client_signature: clientSignature,
-      verification_sections: verificationSections,
-      photos: uploadedPhotos,
-    };
+    setIsSaving(true);
 
-    createPlan.mutate(planData, {
-      onSuccess: () => {
-        navigate("/assets");
-      },
-    });
+    try {
+      const uploadedPhotos: MaintenancePlanPhoto[] = [];
+      
+      for (let i = 0; i < photos.length; i++) {
+        const uploaded = await uploadPhoto(photos[i], i);
+        if (uploaded) uploadedPhotos.push(uploaded);
+      }
+
+      for (let i = 0; i < additionalPhotos.length; i++) {
+        const uploaded = await uploadPhoto(additionalPhotos[i], photos.length + i);
+        if (uploaded) uploadedPhotos.push(uploaded);
+      }
+
+      const planData: MaintenancePlanData = {
+        asset_id: equipment?.id || null,
+        equipment_code: formatPAT(patCode) || undefined,
+        equipment_name: equipment?.equipment_name || equipmentName,
+        equipment_manufacturer: equipment?.manufacturer || equipmentManufacturer,
+        equipment_model: equipment?.model || equipmentModel,
+        equipment_serial: equipmentSerial,
+        plan_type: planType,
+        plan_date: planDate,
+        current_hourmeter: currentHourmeter,
+        next_revision_hourmeter: nextRevisionHourmeter,
+        ...companyData,
+        client_name: clientName,
+        client_company: clientCompany,
+        client_work_site: clientWorkSite,
+        observations_operational: observationsOperational,
+        observations_technical: observationsTechnical,
+        observations_procedures: observationsProcedures,
+        supervisor_name: supervisorName,
+        supervisor_signature: supervisorSignature,
+        technician_name: technicianName,
+        technician_signature: technicianSignature,
+        client_signature: clientSignature,
+        verification_sections: verificationSections,
+        photos: uploadedPhotos,
+      };
+
+      createPlan.mutate(planData, {
+        onSuccess: () => {
+          const displayName = formatPAT(patCode) || equipmentName;
+          toast.success(`✅ Plano de manutenção salvo com sucesso!`, {
+            description: `${displayName} - ${planType === "preventiva" ? "Preventiva" : "Corretiva"}`,
+            duration: 5000,
+            action: {
+              label: "Imprimir",
+              onClick: () => window.print(),
+            },
+          });
+          // Aguarda para permitir impressão antes de navegar
+          setTimeout(() => navigate("/assets"), 3000);
+        },
+        onError: (error) => {
+          toast.error("Erro ao salvar plano de manutenção", {
+            description: error.message,
+          });
+          setIsSaving(false);
+        },
+      });
+    } catch (error) {
+      toast.error("Erro ao processar dados do plano");
+      setIsSaving(false);
+    }
   };
 
   // Dados formatados para impressão
@@ -885,8 +922,8 @@ export function MaintenancePlanForm() {
           <Printer className="h-4 w-4 mr-2" />
           Imprimir
         </Button>
-        <Button onClick={handleSubmit} disabled={createPlan.isPending}>
-          {createPlan.isPending ? (
+        <Button onClick={handleSubmit} disabled={isSaving || createPlan.isPending}>
+          {isSaving || createPlan.isPending ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Salvando...
