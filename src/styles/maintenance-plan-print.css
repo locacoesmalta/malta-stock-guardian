@@ -35,11 +35,28 @@
     background: #fff !important;
   }
 
-  /* ESCONDER TUDO que não é para impressão */
-  body > *:not(.print-only-section),
-  .maintenance-plan-print > *:not(.print-only-section),
-  header, nav, aside, footer,
+  /* MANTER VISÍVEL a cadeia de containers */
+  #root,
+  #root > *,
+  main,
+  [class*="container"],
+  .maintenance-plan-print {
+    display: block !important;
+    visibility: visible !important;
+    position: relative !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: white !important;
+  }
+
+  /* ESCONDER elementos de UI específicos */
   .no-print,
+  header:not(.print-report-header),
+  nav,
+  aside,
+  footer,
   button,
   .sidebar,
   [data-sidebar],
@@ -48,7 +65,8 @@
   [data-radix-popper-content-wrapper],
   [class*="AppSidebar"],
   [class*="AppHeader"],
-  [class*="BackButton"] {
+  [class*="BackButton"],
+  [class*="SidebarProvider"] > aside {
     display: none !important;
     visibility: hidden !important;
   }

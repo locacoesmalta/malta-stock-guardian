@@ -23,7 +23,7 @@ export function MaintenancePlanHeader({
   onChange,
 }: MaintenancePlanHeaderProps) {
   return (
-    <Card>
+    <Card className="no-print">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Building2 className="h-5 w-5" />
