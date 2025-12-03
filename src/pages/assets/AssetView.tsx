@@ -165,6 +165,9 @@ export default function AssetView() {
     ? asset.next_maintenance_hourmeter - totalHourmeter
     : null;
 
+  // Valor absoluto da próxima manutenção (em segundos)
+  const nextMaintenanceAt = asset?.next_maintenance_hourmeter || null;
+
   return (
     <div className="container mx-auto p-3 sm:p-4 md:p-6 max-w-6xl">
       <ConfirmDialog />
@@ -212,9 +215,14 @@ export default function AssetView() {
                 <span className="font-medium text-green-700">
                   ✅ Manutenção em dia
                 </span>
-                {hoursUntilMaintenance && hoursUntilMaintenance > 0 && (
+                {nextMaintenanceAt && (
                   <span className="text-green-600 text-sm ml-2">
-                    (Próxima em {formatHourmeter(hoursUntilMaintenance)})
+                    — Próxima manutenção: <strong>{formatHourmeter(nextMaintenanceAt)}</strong>
+                    {hoursUntilMaintenance && hoursUntilMaintenance > 0 && (
+                      <span className="opacity-80 ml-1">
+                        (Faltam {formatHourmeter(hoursUntilMaintenance)})
+                      </span>
+                    )}
                   </span>
                 )}
               </>
@@ -225,9 +233,14 @@ export default function AssetView() {
                 <span className="font-medium text-orange-700">
                   🟠 Próxima manutenção se aproximando
                 </span>
-                {hoursUntilMaintenance && hoursUntilMaintenance > 0 && (
+                {nextMaintenanceAt && (
                   <span className="text-orange-600 text-sm ml-2">
-                    (Faltam {formatHourmeter(hoursUntilMaintenance)})
+                    — Próxima: <strong>{formatHourmeter(nextMaintenanceAt)}</strong>
+                    {hoursUntilMaintenance && hoursUntilMaintenance > 0 && (
+                      <span className="opacity-80 ml-1">
+                        (Faltam {formatHourmeter(hoursUntilMaintenance)})
+                      </span>
+                    )}
                   </span>
                 )}
               </>
@@ -238,9 +251,14 @@ export default function AssetView() {
                 <span className="font-medium text-red-700">
                   🔴 Manutenção atrasada
                 </span>
-                {hoursUntilMaintenance && hoursUntilMaintenance < 0 && (
+                {nextMaintenanceAt && (
                   <span className="text-red-600 text-sm ml-2">
-                    (Atrasou {formatHourmeter(Math.abs(hoursUntilMaintenance))})
+                    — Deveria ser em: <strong>{formatHourmeter(nextMaintenanceAt)}</strong>
+                    {hoursUntilMaintenance && hoursUntilMaintenance < 0 && (
+                      <span className="opacity-80 ml-1">
+                        (Atrasou {formatHourmeter(Math.abs(hoursUntilMaintenance))})
+                      </span>
+                    )}
                   </span>
                 )}
               </>
