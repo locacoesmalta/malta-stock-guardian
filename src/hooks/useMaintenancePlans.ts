@@ -92,7 +92,8 @@ export const useMaintenancePlans = (assetId?: string) => {
     mutationFn: async (planData: MaintenancePlanData) => {
       if (!user?.id) throw new Error("Usuário não autenticado");
 
-      const { data, error } = await supabase
+      // 1. Create the maintenance plan
+      const { data: plan, error: planError } = await supabase
         .from("maintenance_plans")
         .insert({
           ...planData,
@@ -103,12 +104,50 @@ export const useMaintenancePlans = (assetId?: string) => {
         .select()
         .single();
 
-      if (error) throw error;
-      return data;
+      if (planError) throw planError;
+
+      // 2. If asset_id exists, also create record in asset_maintenances
+      if (planData.asset_id) {
+        // Get previous hourmeter from last maintenance
+        const { data: lastMaintenance } = await supabase
+          .from("asset_maintenances")
+          .select("current_hourmeter, total_hourmeter")
+          .eq("asset_id", planData.asset_id)
+          .order("maintenance_date", { ascending: false })
+          .limit(1)
+          .single();
+
+        const previousHourmeter = lastMaintenance?.current_hourmeter || 0;
+        const previousTotal = lastMaintenance?.total_hourmeter || 0;
+        const consumption = (planData.current_hourmeter || 0) - previousHourmeter;
+        const newTotal = previousTotal + (consumption > 0 ? consumption : 0);
+
+        const { error: maintenanceError } = await supabase
+          .from("asset_maintenances")
+          .insert({
+            asset_id: planData.asset_id,
+            maintenance_date: planData.plan_date,
+            maintenance_type: planData.plan_type,
+            previous_hourmeter: previousHourmeter,
+            current_hourmeter: planData.current_hourmeter || 0,
+            total_hourmeter: newTotal,
+            services_performed: `Plano de Manutenção ${planData.plan_type === "preventiva" ? "Preventiva" : "Corretiva"} - Ver documento completo`,
+            technician_name: planData.technician_name || null,
+            registered_by: user.id,
+            observations: `Plano ID: ${plan.id}`,
+          });
+
+        if (maintenanceError) {
+          console.error("Error creating asset_maintenance record:", maintenanceError);
+          // Don't throw - the plan was already created successfully
+        }
+      }
+
+      return plan;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["maintenance-plans"] });
-      toast.success("Plano de manutenção criado com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["asset-maintenances"] });
     },
     onError: (error) => {
       console.error("Erro ao criar plano:", error);
