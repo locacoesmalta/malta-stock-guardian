@@ -1,18 +1,15 @@
-/* ============================================
-   PLANO DE MANUTENÇÃO - ESTILOS DE IMPRESSÃO
-   Malta Locações - Layout Profissional A4
-   ============================================ */
+/* Estilos de impressão para Plano de Manutenção */
 
-/* Print header - hidden by default, visible only when printing */
-.print-header {
-  display: none;
-}
-
-/* Seção de impressão dedicada */
+/* ===============================================
+   ESTILOS DE TELA (Esconder seção print-only)
+   =============================================== */
 .print-only-section {
-  display: none;
+  display: none !important;
 }
 
+/* ===============================================
+   ESTILOS DE IMPRESSÃO
+   =============================================== */
 @media print {
   /* Configuração da página A4 */
   @page {
@@ -20,7 +17,7 @@
     margin: 1cm;
   }
 
-  /* Reset geral para impressão */
+  /* Reset básico para impressão */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
@@ -28,423 +25,325 @@
   }
 
   body {
-    margin: 0;
-    padding: 0;
-    background: white !important;
     font-size: 10pt;
-    line-height: 1.4;
+    line-height: 1.3;
     color: #000 !important;
+    background: #fff !important;
   }
 
-  /* ============================================
-     ESCONDER ELEMENTOS DE EDIÇÃO
-     ============================================ */
-  .no-print,
+  /* ESCONDER TUDO que não é para impressão */
+  .maintenance-plan-print > *:not(.print-only-section) {
+    display: none !important;
+  }
+
+  /* Esconder elementos de UI globais */
   header,
   nav,
   aside,
   footer,
-  [data-sidebar],
   .sidebar,
+  [data-sidebar],
+  .no-print,
   button:not(.print-include),
-  input[type="file"],
-  .upload-placeholder,
-  label.cursor-pointer,
-  [class*="hover:"],
-  .fixed,
-  .sticky {
+  .toaster,
+  [role="dialog"] {
     display: none !important;
   }
 
-  /* Esconder cards de edição que não devem aparecer */
-  .maintenance-plan-print > .no-print {
-    display: none !important;
-  }
-
-  /* ============================================
-     CABEÇALHO DE IMPRESSÃO
-     ============================================ */
-  .print-header {
+  /* MOSTRAR seção de impressão */
+  .print-only-section {
     display: block !important;
-    margin-bottom: 15px;
-  }
-
-  .print-header .print-logo {
-    max-height: 50px;
-    width: auto;
-  }
-
-  .print-header .print-title {
-    font-size: 16pt;
-    font-weight: bold;
-    text-transform: uppercase;
-    margin: 0;
-    color: #000 !important;
-  }
-
-  .print-header .print-company-info {
-    font-size: 8pt;
-    line-height: 1.3;
-  }
-
-  /* ============================================
-     CONTAINER PRINCIPAL
-     ============================================ */
-  .maintenance-plan-print {
     width: 100%;
     max-width: 100%;
     padding: 0;
     margin: 0;
-    font-size: 10pt;
   }
 
-  /* ============================================
-     CARDS E SEÇÕES
-     ============================================ */
-  .card,
-  [class*="Card"] {
-    box-shadow: none !important;
-    border: 1px solid #333 !important;
-    border-radius: 0 !important;
-    margin-bottom: 10px;
-    page-break-inside: avoid;
+  /* ===============================================
+     CABEÇALHO DO RELATÓRIO
+     =============================================== */
+  .print-report-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #000;
+    padding-bottom: 0.5cm;
+    margin-bottom: 0.5cm;
   }
 
-  [class*="CardHeader"] {
-    background-color: #1a1a2e !important;
-    color: white !important;
-    padding: 6px 10px !important;
-    border-bottom: none !important;
+  .print-logo {
+    height: 1.5cm;
+    width: auto;
   }
 
-  [class*="CardTitle"] {
-    font-size: 11pt !important;
-    font-weight: bold !important;
-    color: white !important;
-  }
-
-  [class*="CardTitle"] svg {
-    display: none !important;
-  }
-
-  [class*="CardContent"] {
-    padding: 10px !important;
-  }
-
-  /* ============================================
-     INPUTS E CAMPOS - Mostrar como texto
-     ============================================ */
-  input,
-  textarea,
-  select {
-    border: none !important;
-    background: transparent !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    font-size: 10pt !important;
-    color: #000 !important;
-    -webkit-appearance: none;
-    appearance: none;
-  }
-
-  input:disabled,
-  textarea:disabled {
-    opacity: 1 !important;
-    color: #000 !important;
-  }
-
-  /* Labels */
-  label {
-    font-weight: bold !important;
-    font-size: 9pt !important;
-    color: #333 !important;
-    margin-bottom: 2px !important;
-  }
-
-  /* ============================================
-     TABELA DE VERIFICAÇÃO
-     ============================================ */
-  .verification-table-print,
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 8pt;
-    margin-bottom: 10px;
-  }
-
-  .verification-table-print th,
-  table th {
-    background-color: #1a1a2e !important;
-    color: white !important;
-    padding: 4px 6px;
+  .print-header-title {
+    flex: 1;
     text-align: center;
-    border: 1px solid #333;
-    font-size: 8pt;
+  }
+
+  .print-header-title h1 {
+    font-size: 16pt;
     font-weight: bold;
+    text-transform: uppercase;
+    margin: 0;
   }
 
-  .verification-table-print td,
-  table td {
-    border: 1px solid #333;
-    padding: 3px 6px;
-    font-size: 8pt;
-  }
-
-  .verification-table-print .section-row,
-  tr.section-row {
-    background-color: #e0e0e0 !important;
-    font-weight: bold;
-  }
-
-  /* Checkmarks na tabela */
-  .check-cell {
-    text-align: center;
-    width: 50px;
-  }
-
-  .check-mark {
-    font-size: 12pt;
-    font-weight: bold;
-  }
-
-  /* Checkbox como texto */
-  input[type="checkbox"] {
-    display: none !important;
-  }
-
-  /* ============================================
-     SEÇÃO DE FOTOS
-     ============================================ */
-  .photos-section {
-    page-break-inside: avoid;
-  }
-
-  .photos-grid-print {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-
-  .photo-item-print {
-    border: 1px solid #333;
-    padding: 5px;
-    page-break-inside: avoid;
-  }
-
-  .photo-item-print img {
-    width: 100%;
-    height: 150px;
-    object-fit: cover;
-  }
-
-  .photo-item-print .photo-comment {
-    font-size: 8pt;
-    text-align: center;
-    margin-top: 4px;
-    font-style: italic;
+  .print-header-title p {
+    font-size: 9pt;
     color: #333;
+    margin: 0.1cm 0 0 0;
   }
 
-  /* Esconder área de upload vazia */
-  .photo-upload-empty {
-    display: none !important;
+  .print-header-company {
+    text-align: right;
+    font-size: 8pt;
   }
 
-  /* ============================================
-     SEÇÃO DE OBSERVAÇÕES
-     ============================================ */
-  .observations-section {
+  .print-header-company p {
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  /* ===============================================
+     SEÇÕES DO RELATÓRIO
+     =============================================== */
+  .print-section {
+    margin-bottom: 0.4cm;
     page-break-inside: avoid;
   }
 
-  .observations-print {
-    border: 1px solid #333;
-    padding: 8px;
-    margin-bottom: 8px;
-    min-height: 50px;
-    font-size: 9pt;
-    white-space: pre-wrap;
-  }
-
-  textarea {
-    white-space: pre-wrap !important;
-    height: auto !important;
-    min-height: 40px !important;
-  }
-
-  /* ============================================
-     SEÇÃO DE ASSINATURAS
-     ============================================ */
-  .signatures-section {
-    page-break-inside: avoid;
-    margin-top: 15px;
-  }
-
-  .signatures-print {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-    margin-top: 10px;
-  }
-
-  .signature-box {
-    text-align: center;
-    page-break-inside: avoid;
-  }
-
-  .signature-box-print {
-    text-align: center;
-    border: 1px solid #333;
-    padding: 10px;
-    min-height: 120px;
-  }
-
-  .signature-box-print .signature-image {
-    height: 50px;
-    object-fit: contain;
-    margin-bottom: 5px;
-  }
-
-  .signature-box-print .signature-line {
-    border-top: 1px solid #333;
-    margin-top: 10px;
-    padding-top: 5px;
-  }
-
-  .signature-box-print .signature-name {
+  .print-section-title {
+    font-size: 11pt;
     font-weight: bold;
-    font-size: 9pt;
-    margin-bottom: 2px;
+    text-transform: uppercase;
+    background-color: #f0f0f0 !important;
+    padding: 0.15cm 0.3cm;
+    margin: 0 0 0.2cm 0;
+    border: 1px solid #000;
   }
 
-  .signature-box-print .signature-cpf {
-    font-size: 8pt;
-    color: #555;
-    margin-bottom: 2px;
-  }
-
-  .signature-box-print .signature-role {
-    font-size: 8pt;
-    font-style: italic;
-    color: #666;
-  }
-
-  /* Canvas de assinatura */
-  canvas {
-    max-height: 60px !important;
-    border: 1px solid #ccc !important;
-  }
-
-  /* ============================================
-     DADOS DO EQUIPAMENTO - Layout de tabela
-     ============================================ */
-  .equipment-data-print {
+  /* ===============================================
+     TABELAS DE DADOS
+     =============================================== */
+  .print-data-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 10px;
-  }
-
-  .equipment-data-print td {
-    border: 1px solid #333;
-    padding: 5px 8px;
     font-size: 9pt;
+    margin-bottom: 0.3cm;
   }
 
-  .equipment-data-print .label {
-    background-color: #f0f0f0 !important;
+  .print-data-table th,
+  .print-data-table td {
+    border: 1px solid #000;
+    padding: 0.15cm 0.2cm;
+    text-align: left;
+  }
+
+  .print-data-table th {
+    background-color: #e8e8e8 !important;
     font-weight: bold;
     width: 25%;
   }
 
-  /* ============================================
-     CONTROLE DE QUEBRA DE PÁGINA
-     ============================================ */
-  .page-break {
+  .print-data-table td {
+    width: 75%;
+  }
+
+  /* ===============================================
+     TABELA DE VERIFICAÇÕES
+     =============================================== */
+  .print-verification-table {
+    page-break-inside: avoid;
+    margin-bottom: 0.4cm;
+  }
+
+  .print-verification-section {
+    margin-bottom: 0.3cm;
+  }
+
+  .print-section-header {
+    font-size: 10pt;
+    font-weight: bold;
+    background-color: #d9d9d9 !important;
+    padding: 0.1cm 0.2cm;
+    border: 1px solid #000;
+    border-bottom: none;
+  }
+
+  .print-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+  }
+
+  .print-table th,
+  .print-table td {
+    border: 1px solid #000;
+    padding: 0.1cm;
+  }
+
+  .print-th-description {
+    text-align: left;
+    background-color: #e8e8e8 !important;
+    font-weight: bold;
+    width: 50%;
+  }
+
+  .print-th-check {
+    text-align: center;
+    background-color: #e8e8e8 !important;
+    font-weight: bold;
+    width: 10%;
+  }
+
+  .print-td-description {
+    text-align: left;
+  }
+
+  .print-td-check {
+    text-align: center;
+    font-weight: bold;
+    font-size: 12pt;
+  }
+
+  /* ===============================================
+     FOTOS
+     =============================================== */
+  .print-photos-section {
+    page-break-inside: avoid;
+    margin-bottom: 0.4cm;
+  }
+
+  .print-photos-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.3cm;
+  }
+
+  .print-photo-item {
+    border: 1px solid #000;
+    padding: 0.15cm;
+    page-break-inside: avoid;
+  }
+
+  .print-photo-item img {
+    width: 100%;
+    height: 5cm;
+    object-fit: cover;
+    display: block;
+  }
+
+  .print-photo-comment {
+    font-size: 8pt;
+    text-align: center;
+    margin-top: 0.1cm;
+    padding-top: 0.1cm;
+    border-top: 1px solid #ccc;
+    font-style: italic;
+    min-height: 0.5cm;
+  }
+
+  /* ===============================================
+     OBSERVAÇÕES
+     =============================================== */
+  .print-observations-section {
+    page-break-inside: avoid;
+    margin-bottom: 0.4cm;
+  }
+
+  .print-observation-box {
+    border: 1px solid #000;
+    padding: 0.2cm;
+    margin-bottom: 0.2cm;
+    min-height: 1.5cm;
+    font-size: 9pt;
+    white-space: pre-wrap;
+  }
+
+  .print-observation-label {
+    font-weight: bold;
+    font-size: 9pt;
+    margin-bottom: 0.1cm;
+    background-color: #f5f5f5 !important;
+    padding: 0.1cm;
+  }
+
+  /* ===============================================
+     ASSINATURAS
+     =============================================== */
+  .print-signatures-section {
+    page-break-inside: avoid;
+    margin-top: 0.5cm;
+  }
+
+  .print-signatures-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5cm;
+    margin-top: 0.3cm;
+  }
+
+  .print-signature-box {
+    border: 1px solid #000;
+    padding: 0.2cm;
+    text-align: center;
+    min-height: 3cm;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .print-signature-image {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.5cm;
+    border-bottom: 1px solid #000;
+    margin-bottom: 0.2cm;
+  }
+
+  .print-signature-image img {
+    max-height: 1.5cm;
+    max-width: 100%;
+  }
+
+  .print-signature-line {
+    border-top: 1px solid #000;
+    margin-top: 0.2cm;
+    padding-top: 0.1cm;
+  }
+
+  .print-signature-name {
+    font-size: 9pt;
+    font-weight: bold;
+  }
+
+  .print-signature-cpf {
+    font-size: 8pt;
+    color: #333;
+  }
+
+  .print-signature-role {
+    font-size: 8pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-top: 0.1cm;
+    background-color: #e8e8e8 !important;
+    padding: 0.05cm;
+  }
+
+  /* ===============================================
+     UTILITÁRIOS
+     =============================================== */
+  .page-break-before {
     page-break-before: always;
   }
 
-  .no-break {
+  .page-break-after {
+    page-break-after: always;
+  }
+
+  .avoid-break {
     page-break-inside: avoid;
-  }
-
-  /* Evitar quebras em seções importantes */
-  .equipment-section,
-  .client-section,
-  .photos-section,
-  .observations-section,
-  .signatures-section {
-    page-break-inside: avoid;
-  }
-
-  /* Forçar nova página antes das assinaturas se necessário */
-  .signatures-section {
-    page-break-before: auto;
-  }
-
-  /* ============================================
-     GRID RESPONSIVO PARA IMPRESSÃO
-     ============================================ */
-  .grid {
-    display: grid !important;
-  }
-
-  .grid-cols-1 {
-    grid-template-columns: 1fr !important;
-  }
-
-  .md\\:grid-cols-2,
-  .lg\\:grid-cols-2 {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-
-  .md\\:grid-cols-3,
-  .lg\\:grid-cols-3 {
-    grid-template-columns: repeat(3, 1fr) !important;
-  }
-
-  .gap-4 {
-    gap: 8px !important;
-  }
-
-  .gap-6 {
-    gap: 10px !important;
-  }
-
-  /* ============================================
-     UTILITÁRIOS DE IMPRESSÃO
-     ============================================ */
-  .print-visible {
-    display: block !important;
-  }
-
-  .screen-only {
-    display: none !important;
-  }
-
-  /* Esconder elementos com border-dashed (upload areas) */
-  [class*="border-dashed"] {
-    display: none !important;
-  }
-
-  /* Garantir que imagens apareçam */
-  img {
-    max-width: 100% !important;
-    height: auto !important;
-  }
-
-  /* Esconder ícones lucide nos títulos */
-  [class*="lucide"] {
-    display: none !important;
-  }
-
-  /* Texto de muted-foreground */
-  .text-muted-foreground {
-    color: #666 !important;
-  }
-
-  /* Alertas não devem aparecer */
-  [class*="Alert"] {
-    display: none !important;
   }
 }
