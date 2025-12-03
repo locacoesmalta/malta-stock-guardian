@@ -199,6 +199,22 @@ export const useAssetMaintenances = (assetId?: string) => {
     enabled: !!assetId,
   });
 
+  // Buscar o horímetro da última manutenção preventiva
+  const getLastHourmeter = useQuery({
+    queryKey: ["last-hourmeter", assetId],
+    queryFn: async () => {
+      if (!assetId) return 0;
+
+      const { data, error } = await supabase.rpc("get_last_maintenance_hourmeter", {
+        p_asset_id: assetId,
+      });
+
+      if (error) throw error;
+      return (data as number) || 0;
+    },
+    enabled: !!assetId,
+  });
+
   // Função para calcular consumo
   const calculateConsumption = (current: number, previous: number): number => {
     return Math.max(0, current - previous);
@@ -211,6 +227,8 @@ export const useAssetMaintenances = (assetId?: string) => {
     deleteMaintenance,
     totalHourmeter: getTotalHourmeter.data || 0,
     isLoadingTotal: getTotalHourmeter.isLoading,
+    lastHourmeter: getLastHourmeter.data || 0,
+    isLoadingLastHourmeter: getLastHourmeter.isLoading,
     assetMaintenanceData: assetData,
     calculateConsumption,
   };

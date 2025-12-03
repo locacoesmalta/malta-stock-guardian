@@ -142,7 +142,7 @@ export function MaintenancePlanForm({
 
   // Buscar dados do equipamento
   const { data: equipment, isLoading: loadingEquipment } = useEquipmentByPAT(patFormatted);
-  const { totalHourmeter } = useAssetMaintenances(equipment?.id);
+  const { lastHourmeter } = useAssetMaintenances(equipment?.id);
   
   // Buscar último plano do equipamento para reutilizar tabela de verificação
   const { data: lastPlan } = useLastPlanByAssetId(equipment?.id);
@@ -286,12 +286,13 @@ export function MaintenancePlanForm({
   // Tabela de verificações inicia vazia - usuário adiciona seções manualmente
   // Botões Motor/Alternador disponíveis para especificar de qual sistema é a manutenção
 
-  // Preencher horímetro do último registro
+  // Preencher horímetro anterior automaticamente da última manutenção preventiva
   useEffect(() => {
-    if (totalHourmeter !== undefined) {
-      setPreviousHourmeter(totalHourmeter);
+    // Só preenche automaticamente no modo criação
+    if (mode === "create" && lastHourmeter !== undefined && lastHourmeter > 0) {
+      setPreviousHourmeter(lastHourmeter);
     }
-  }, [totalHourmeter]);
+  }, [lastHourmeter, mode]);
 
   // Calcular automaticamente a próxima revisão quando intervalo for selecionado
   useEffect(() => {
@@ -935,33 +936,35 @@ export function MaintenancePlanForm({
               />
             </div>
 
-            <HourmeterInput
-              label="Horímetro Anterior (Última Manutenção)"
-              value={previousHourmeter}
-              onChange={setPreviousHourmeter}
-            />
-            {totalHourmeter !== undefined && totalHourmeter !== previousHourmeter && (
-              <p className="text-xs text-muted-foreground mt-1">
-                💡 Sugestão do sistema: {formatHourmeter(totalHourmeter)}
+            <div className="space-y-2">
+              <HourmeterInput
+                label="Horímetro Anterior (Última Manutenção)"
+                value={previousHourmeter}
+                onChange={() => {}} // Campo somente leitura
+                disabled={true}
+              />
+              <p className="text-xs text-green-600 dark:text-green-400">
+                ✓ Preenchido automaticamente do último registro de manutenção preventiva
               </p>
-            )}
+            </div>
 
             <HourmeterInput
-              label="Horímetro Atual (Novo)"
+              label="Horímetro Atual"
               value={currentHourmeter}
               onChange={setCurrentHourmeter}
             />
 
-            <HourmeterInput
-              label="Próxima Revisão (Horímetro)"
-              value={nextRevisionHourmeter || 0}
-              onChange={(v) => setNextRevisionHourmeter(v || undefined)}
-            />
-            {(selectedMotorInterval || selectedAlternadorInterval) && (
-              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                ✓ Calculado automaticamente com base no intervalo selecionado
+            <div className="space-y-2">
+              <HourmeterInput
+                label="Próxima Revisão (Horímetro)"
+                value={nextRevisionHourmeter || 0}
+                onChange={() => {}} // Campo calculado automaticamente
+                disabled={true}
+              />
+              <p className="text-xs text-blue-600 dark:text-blue-400">
+                ✓ Calculado automaticamente: Horímetro Atual + Intervalo selecionado
               </p>
-            )}
+            </div>
           </div>
         </CardContent>
       </Card>
