@@ -24,9 +24,11 @@ import {
   ActionType,
   MaintenanceTarget,
   MaintenanceInterval,
+  AlternadorInterval,
   createEmptyItem,
   createEmptySection,
   generateMotorSectionsForInterval,
+  generateAlternadorSectionsForInterval,
 } from "@/lib/maintenancePlanDefaults";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -50,6 +52,13 @@ const maintenanceIntervals: { value: MaintenanceInterval; label: string }[] = [
   { value: "h2000", label: "2000 horas" },
 ];
 
+const alternadorIntervals: { value: AlternadorInterval; label: string }[] = [
+  { value: "h250", label: "250 horas" },
+  { value: "h1000", label: "1000 horas" },
+  { value: "h10000", label: "10000 horas" },
+  { value: "h30000", label: "30000 horas" },
+];
+
 interface VerificationTableProps {
   sections: VerificationSection[];
   onChange: (sections: VerificationSection[]) => void;
@@ -58,6 +67,7 @@ interface VerificationTableProps {
 
 export function VerificationTable({ sections, onChange, showCategoryButtons = false }: VerificationTableProps) {
   const [selectedInterval, setSelectedInterval] = useState<MaintenanceInterval>("h100");
+  const [selectedAlternadorInterval, setSelectedAlternadorInterval] = useState<AlternadorInterval>("h250");
 
   const handleGenerateMotorTasks = () => {
     const motorSections = generateMotorSectionsForInterval(selectedInterval);
@@ -67,6 +77,16 @@ export function VerificationTable({ sections, onChange, showCategoryButtons = fa
     
     const intervalLabel = maintenanceIntervals.find(i => i.value === selectedInterval)?.label || selectedInterval;
     toast.success(`Tarefas do Motor geradas para ${intervalLabel}`);
+  };
+
+  const handleGenerateAlternadorTasks = () => {
+    const alternadorSections = generateAlternadorSectionsForInterval(selectedAlternadorInterval);
+    // Remove seções de alternador existentes e adiciona as novas
+    const nonAlternadorSections = sections.filter(s => s.category !== "alternador");
+    onChange([...nonAlternadorSections, ...alternadorSections]);
+    
+    const intervalLabel = alternadorIntervals.find(i => i.value === selectedAlternadorInterval)?.label || selectedAlternadorInterval;
+    toast.success(`Tarefas do Alternador geradas para ${intervalLabel}`);
   };
   const updateSectionTitle = (sectionId: string, title: string) => {
     onChange(
@@ -324,52 +344,86 @@ export function VerificationTable({ sections, onChange, showCategoryButtons = fa
         
         {/* Gerador automático de tarefas por intervalo */}
         {showCategoryButtons && (
-          <div className="mt-4 p-4 bg-muted/50 rounded-lg border">
-            <div className="flex items-center gap-2 mb-3 text-sm font-medium">
-              <Wrench className="h-4 w-4" />
-              Gerar Tarefas Automaticamente
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Intervalo:</span>
-                <Select
-                  value={selectedInterval}
-                  onValueChange={(value: MaintenanceInterval) => setSelectedInterval(value)}
-                >
-                  <SelectTrigger className="w-[140px] h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {maintenanceIntervals.map((interval) => (
-                      <SelectItem key={interval.value} value={interval.value}>
-                        {interval.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          <div className="mt-4 space-y-3">
+            {/* Motor */}
+            <div className="p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
+              <div className="flex items-center gap-2 mb-3 text-sm font-medium text-orange-700 dark:text-orange-400">
+                <Wrench className="h-4 w-4" />
+                🔧 MOTOR - Gerar Tarefas Automaticamente
               </div>
-              <Button 
-                onClick={handleGenerateMotorTasks} 
-                variant="default" 
-                size="sm"
-                className="bg-orange-500 hover:bg-orange-600"
-              >
-                <Wrench className="h-4 w-4 mr-1" />
-                Gerar Tarefas Motor
-              </Button>
-              <Button 
-                onClick={() => addSection("alternador")} 
-                variant="outline" 
-                size="sm"
-                className="border-blue-300 text-blue-600 hover:bg-blue-50"
-              >
-                <Zap className="h-4 w-4 mr-1" />
-                Gerar Tarefas Alternador
-              </Button>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Intervalo:</span>
+                  <Select
+                    value={selectedInterval}
+                    onValueChange={(value: MaintenanceInterval) => setSelectedInterval(value)}
+                  >
+                    <SelectTrigger className="w-[140px] h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {maintenanceIntervals.map((interval) => (
+                        <SelectItem key={interval.value} value={interval.value}>
+                          {interval.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button 
+                  onClick={handleGenerateMotorTasks} 
+                  variant="default" 
+                  size="sm"
+                  className="bg-orange-500 hover:bg-orange-600"
+                >
+                  <Wrench className="h-4 w-4 mr-1" />
+                  Gerar Tarefas Motor
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Template TOYAMA: 100h, 200h, 800h, 2000h (cumulativo)
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Selecione o intervalo de manutenção e clique para gerar automaticamente as tarefas do template TOYAMA.
-            </p>
+
+            {/* Alternador */}
+            <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center gap-2 mb-3 text-sm font-medium text-blue-700 dark:text-blue-400">
+                <Zap className="h-4 w-4" />
+                ⚡ ALTERNADOR - Gerar Tarefas Automaticamente
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Intervalo:</span>
+                  <Select
+                    value={selectedAlternadorInterval}
+                    onValueChange={(value: AlternadorInterval) => setSelectedAlternadorInterval(value)}
+                  >
+                    <SelectTrigger className="w-[140px] h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {alternadorIntervals.map((interval) => (
+                        <SelectItem key={interval.value} value={interval.value}>
+                          {interval.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button 
+                  onClick={handleGenerateAlternadorTasks} 
+                  variant="default" 
+                  size="sm"
+                  className="bg-blue-500 hover:bg-blue-600"
+                >
+                  <Zap className="h-4 w-4 mr-1" />
+                  Gerar Tarefas Alternador
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Template TOYAMA: 250h, 1000h, 10000h, 30000h (cumulativo)
+              </p>
+            </div>
           </div>
         )}
       </CardHeader>

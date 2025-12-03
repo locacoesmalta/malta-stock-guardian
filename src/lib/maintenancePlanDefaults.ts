@@ -6,6 +6,8 @@ export type MaintenanceTarget = "motor" | "alternador";
 
 export type MaintenanceInterval = "h100" | "h200" | "h800" | "h2000";
 
+export type AlternadorInterval = "h250" | "h1000" | "h10000" | "h30000";
+
 // Templates de tarefas do MOTOR por intervalo (TOYAMA)
 // Estrutura cumulativa: cada intervalo inclui as tarefas dos anteriores
 export const MOTOR_TASKS_BY_INTERVAL = {
@@ -200,6 +202,212 @@ export const generateMotorSectionsForInterval = (interval: MaintenanceInterval):
         h200: interval === "h200" || interval === "h800" || interval === "h2000",
         h800: interval === "h800" || interval === "h2000",
         h2000: interval === "h2000"
+      }))
+    });
+  }
+  
+  return sections;
+};
+
+// Templates de tarefas do ALTERNADOR por intervalo (TOYAMA)
+// Estrutura cumulativa: cada intervalo inclui as tarefas dos anteriores
+export const ALTERNADOR_TASKS_BY_INTERVAL = {
+  // Base: Antes de operar + Com o gerador em funcionamento (sempre incluído)
+  base: {
+    verificar: [
+      "Classificação e identificação do gerador",
+      "Base de montagem",
+      "Acoplamento",
+      "Condições ambientais e limpeza",
+      "Danos, peças soltas",
+      "Avisos de segurança",
+      "Acesso à manutenção",
+      "Temperatura ambiente interna/externa",
+      "Conexões elétricas e fiação",
+      "Configuração de sincronização",
+      "Fluxo de ar (velocidade e direção)"
+    ],
+    testar: [
+      "Operação elétrica nominal / excitação",
+      "Vibração",
+      "Resistência de isolamento",
+      "Sensores de temperatura",
+      "Auxiliares",
+      "Sincronização",
+      "Temperatura da admissão"
+    ],
+    limpeza: [] as string[],
+    substituir: [] as string[]
+  },
+  
+  // 250h = base + específico
+  h250: {
+    verificar: [
+      "Condições ambientais",
+      "Danos / peças soltas",
+      "Etiquetas de segurança",
+      "Temperatura ambiente",
+      "Condições dos enrolamentos",
+      "Configuração dos sensores",
+      "Condição dos rolamentos",
+      "Todas as conexões e fiações",
+      "Configuração AVR & PFC",
+      "Conexões auxiliares",
+      "Diodos e varistores",
+      "Retificador trifásico (se houver)",
+      "Ventoinha",
+      "Condição do filtro de ar (se houver)"
+    ],
+    testar: [
+      "Todas as tarefas de funcionamento (consolidado)"
+    ],
+    limpeza: [] as string[],
+    substituir: [] as string[]
+  },
+  
+  // 1000h = 250h + específico
+  h1000: {
+    verificar: [] as string[],
+    testar: [
+      "Resistência de isolamento (se necessário)"
+    ],
+    limpeza: [
+      "Filtro de ar (se necessário)"
+    ],
+    substituir: [
+      "Filtro de ar (se necessário)"
+    ]
+  },
+  
+  // 10000h = 1000h + específico
+  h10000: {
+    verificar: [
+      "Acoplamento (se necessário)"
+    ],
+    testar: [
+      "Resistência de isolamento dos enrolamentos",
+      "Resistência de isolamento do rotor/excitador"
+    ],
+    limpeza: [] as string[],
+    substituir: [
+      "Rolamentos (se necessário)",
+      "Aquecedor anticondensação (se necessário)"
+    ]
+  },
+  
+  // 30000h = 10000h + específico
+  h30000: {
+    verificar: [
+      "Acoplamento (verificação completa)"
+    ],
+    testar: [] as string[],
+    limpeza: [] as string[],
+    substituir: [
+      "Rolamentos",
+      "Diodos e varistores"
+    ]
+  }
+};
+
+// Função para gerar seções de alternador baseado no intervalo selecionado
+export const generateAlternadorSectionsForInterval = (interval: AlternadorInterval): VerificationSection[] => {
+  // Determina quais níveis incluir baseado no intervalo
+  const levels: (keyof typeof ALTERNADOR_TASKS_BY_INTERVAL)[] = ["base"];
+  if (interval === "h250" || interval === "h1000" || interval === "h10000" || interval === "h30000") levels.push("h250");
+  if (interval === "h1000" || interval === "h10000" || interval === "h30000") levels.push("h1000");
+  if (interval === "h10000" || interval === "h30000") levels.push("h10000");
+  if (interval === "h30000") levels.push("h30000");
+  
+  // Agrupa tarefas por tipo de ação
+  const tasksByAction: Record<ActionType, string[]> = { 
+    verificar: [], 
+    limpeza: [], 
+    substituir: [], 
+    testar: [] 
+  };
+  
+  levels.forEach(level => {
+    const tasks = ALTERNADOR_TASKS_BY_INTERVAL[level];
+    (Object.keys(tasks) as ActionType[]).forEach(action => {
+      tasksByAction[action].push(...tasks[action]);
+    });
+  });
+  
+  // Cria seções organizadas por tipo de ação
+  const sections: VerificationSection[] = [];
+  
+  if (tasksByAction.verificar.length > 0) {
+    sections.push({
+      id: generateSectionId(),
+      title: "⚡ ALTERNADOR - Verificações",
+      category: "alternador",
+      items: tasksByAction.verificar.map(desc => ({
+        id: generateItemId(),
+        maintenanceTarget: "alternador" as MaintenanceTarget,
+        actionType: "verificar" as ActionType,
+        description: desc,
+        h50: false,
+        h100: false,
+        h200: false,
+        h800: false,
+        h2000: false
+      }))
+    });
+  }
+  
+  if (tasksByAction.testar.length > 0) {
+    sections.push({
+      id: generateSectionId(),
+      title: "⚡ ALTERNADOR - Testes",
+      category: "alternador",
+      items: tasksByAction.testar.map(desc => ({
+        id: generateItemId(),
+        maintenanceTarget: "alternador" as MaintenanceTarget,
+        actionType: "testar" as ActionType,
+        description: desc,
+        h50: false,
+        h100: false,
+        h200: false,
+        h800: false,
+        h2000: false
+      }))
+    });
+  }
+  
+  if (tasksByAction.substituir.length > 0) {
+    sections.push({
+      id: generateSectionId(),
+      title: "⚡ ALTERNADOR - Substituições",
+      category: "alternador",
+      items: tasksByAction.substituir.map(desc => ({
+        id: generateItemId(),
+        maintenanceTarget: "alternador" as MaintenanceTarget,
+        actionType: "substituir" as ActionType,
+        description: desc,
+        h50: false,
+        h100: false,
+        h200: false,
+        h800: false,
+        h2000: false
+      }))
+    });
+  }
+  
+  if (tasksByAction.limpeza.length > 0) {
+    sections.push({
+      id: generateSectionId(),
+      title: "⚡ ALTERNADOR - Limpeza",
+      category: "alternador",
+      items: tasksByAction.limpeza.map(desc => ({
+        id: generateItemId(),
+        maintenanceTarget: "alternador" as MaintenanceTarget,
+        actionType: "limpeza" as ActionType,
+        description: desc,
+        h50: false,
+        h100: false,
+        h200: false,
+        h800: false,
+        h2000: false
       }))
     });
   }
