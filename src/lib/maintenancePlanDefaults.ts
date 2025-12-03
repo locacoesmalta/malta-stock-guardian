@@ -10,9 +10,12 @@ export interface VerificationItem {
   h2000: boolean;
 }
 
+export type MaintenanceCategory = "motor" | "alternador" | "geral";
+
 export interface VerificationSection {
   id: string;
   title: string;
+  category?: MaintenanceCategory;
   items: VerificationItem[];
 }
 
@@ -133,11 +136,66 @@ export const createEmptyItem = (): VerificationItem => ({
 });
 
 // Criar seção vazia
-export const createEmptySection = (): VerificationSection => ({
+export const createEmptySection = (category?: MaintenanceCategory): VerificationSection => ({
   id: generateSectionId(),
-  title: "Nova Seção",
+  title: category === "motor" 
+    ? "🔧 MOTOR - Nova Seção" 
+    : category === "alternador" 
+      ? "⚡ ALTERNADOR - Nova Seção" 
+      : "Nova Seção",
+  category,
   items: [createEmptyItem()],
 });
+
+// Criar seções vazias para Motor
+export const createMotorSections = (): VerificationSection[] => [
+  {
+    id: generateSectionId(),
+    title: "🔧 MOTOR - Sistema de Lubrificação",
+    category: "motor",
+    items: [createEmptyItem()],
+  },
+  {
+    id: generateSectionId(),
+    title: "🔧 MOTOR - Sistema de Combustível",
+    category: "motor",
+    items: [createEmptyItem()],
+  },
+  {
+    id: generateSectionId(),
+    title: "🔧 MOTOR - Sistema de Arrefecimento",
+    category: "motor",
+    items: [createEmptyItem()],
+  },
+  {
+    id: generateSectionId(),
+    title: "🔧 MOTOR - Sistema Elétrico",
+    category: "motor",
+    items: [createEmptyItem()],
+  },
+];
+
+// Criar seções vazias para Alternador
+export const createAlternadorSections = (): VerificationSection[] => [
+  {
+    id: generateSectionId(),
+    title: "⚡ ALTERNADOR - Verificações Elétricas",
+    category: "alternador",
+    items: [createEmptyItem()],
+  },
+  {
+    id: generateSectionId(),
+    title: "⚡ ALTERNADOR - Enrolamentos e Isolamento",
+    category: "alternador",
+    items: [createEmptyItem()],
+  },
+  {
+    id: generateSectionId(),
+    title: "⚡ ALTERNADOR - Sistema de Excitação",
+    category: "alternador",
+    items: [createEmptyItem()],
+  },
+];
 
 // Obter template por tipo de equipamento
 export const getDefaultSections = (equipmentName?: string): VerificationSection[] => {
