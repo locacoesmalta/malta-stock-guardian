@@ -15,7 +15,9 @@ import {
 } from "@/components/ui/select";
 import { MaintenancePlanHeader } from "./MaintenancePlanHeader";
 import { VerificationTable } from "./VerificationTable";
+import { VerificationTablePrint } from "./VerificationTablePrint";
 import { MaintenanceSignatures } from "./MaintenanceSignatures";
+import { PhotoUploadBox, PhotoData } from "./PhotoUploadBox";
 import { HourmeterInput } from "@/components/HourmeterInput";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
@@ -25,16 +27,10 @@ import { useAssetsQuery } from "@/hooks/useAssetsQuery";
 import { getDefaultSections, VerificationSection } from "@/lib/maintenancePlanDefaults";
 import { formatPAT } from "@/lib/patUtils";
 import { formatHourmeter } from "@/lib/hourmeterUtils";
-import { Wrench, Package, User, FileText, Save, Loader2, Upload, X, Plus, CheckCircle2, XCircle, Printer } from "lucide-react";
+import { Wrench, Package, User, FileText, Save, Loader2, Plus, CheckCircle2, XCircle, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import "@/styles/maintenance-plan-print.css";
-
-interface PhotoData {
-  file: File | null;
-  preview: string;
-  comment: string;
-}
 
 export function MaintenancePlanForm() {
   const navigate = useNavigate();
@@ -142,29 +138,23 @@ export function MaintenancePlanForm() {
       setEquipmentModel(equipment.model || "");
       setEquipmentSerial(equipment.serial_number || "");
       
-      // Preencher dados do cliente baseado no location_type
       if (equipment.location_type === "locacao" || equipment.location_type === "aguardando_laudo") {
-        // Em locação ou aguardando laudo - usar dados de rental
         setClientCompany(equipment.rental_company || "");
         setClientWorkSite(equipment.rental_work_site || "");
       } else if (equipment.location_type === "em_manutencao") {
-        // Em manutenção - usar dados de manutenção
         setClientCompany(equipment.maintenance_company || "");
         setClientWorkSite(equipment.maintenance_work_site || "");
       }
-      // Se em depósito, deixar vazio (equipamento não está em nenhum cliente)
     }
   }, [equipment]);
 
-  // Carregar tabela de verificação: do último plano salvo ou template padrão
+  // Carregar tabela de verificação
   useEffect(() => {
     if (equipment) {
       if (lastPlan?.verification_sections) {
-        // Reutilizar tabela do último plano salvo para este PAT
         setVerificationSections(lastPlan.verification_sections as unknown as VerificationSection[]);
         toast.info("Tabela de verificação carregada do último plano");
       } else {
-        // Primeiro plano para este PAT → usar template padrão
         setVerificationSections(getDefaultSections(equipment.equipment_name));
       }
     }
@@ -177,7 +167,6 @@ export function MaintenancePlanForm() {
     }
   }, [totalHourmeter]);
 
-  // Handle print
   const handlePrint = () => {
     window.print();
   };
@@ -188,33 +177,15 @@ export function MaintenancePlanForm() {
 
   const handleSignatureChange = (field: string, value: string) => {
     switch (field) {
-      case "supervisor_name":
-        setSupervisorName(value);
-        break;
-      case "supervisor_cpf":
-        setSupervisorCpf(value);
-        break;
-      case "supervisor_signature":
-        setSupervisorSignature(value);
-        break;
-      case "technician_name":
-        setTechnicianName(value);
-        break;
-      case "technician_cpf":
-        setTechnicianCpf(value);
-        break;
-      case "technician_signature":
-        setTechnicianSignature(value);
-        break;
-      case "client_name":
-        setSignatureClientName(value);
-        break;
-      case "client_cpf":
-        setClientCpf(value);
-        break;
-      case "client_signature":
-        setClientSignature(value);
-        break;
+      case "supervisor_name": setSupervisorName(value); break;
+      case "supervisor_cpf": setSupervisorCpf(value); break;
+      case "supervisor_signature": setSupervisorSignature(value); break;
+      case "technician_name": setTechnicianName(value); break;
+      case "technician_cpf": setTechnicianCpf(value); break;
+      case "technician_signature": setTechnicianSignature(value); break;
+      case "client_name": setSignatureClientName(value); break;
+      case "client_cpf": setClientCpf(value); break;
+      case "client_signature": setClientSignature(value); break;
     }
   };
 
@@ -222,65 +193,72 @@ export function MaintenancePlanForm() {
     const file = e.target.files?.[0];
     if (file) {
       const preview = URL.createObjectURL(file);
-      const newPhotos = [...photos];
-      newPhotos[index] = { ...newPhotos[index], file, preview };
-      setPhotos(newPhotos);
+      setPhotos(prev => {
+        const newPhotos = [...prev];
+        newPhotos[index] = { ...newPhotos[index], file, preview };
+        return newPhotos;
+      });
     }
   };
 
   const handlePhotoCommentChange = (index: number, comment: string) => {
-    const newPhotos = [...photos];
-    newPhotos[index] = { ...newPhotos[index], comment };
-    setPhotos(newPhotos);
+    setPhotos(prev => {
+      const newPhotos = [...prev];
+      newPhotos[index] = { ...newPhotos[index], comment };
+      return newPhotos;
+    });
   };
 
   const handlePhotoRemove = (index: number) => {
-    const newPhotos = [...photos];
-    if (newPhotos[index].preview) {
-      URL.revokeObjectURL(newPhotos[index].preview);
-    }
-    newPhotos[index] = { file: null, preview: "", comment: "" };
-    setPhotos(newPhotos);
+    setPhotos(prev => {
+      const newPhotos = [...prev];
+      if (newPhotos[index].preview) {
+        URL.revokeObjectURL(newPhotos[index].preview);
+      }
+      newPhotos[index] = { file: null, preview: "", comment: "" };
+      return newPhotos;
+    });
   };
 
   const handleAdditionalPhotoUpload = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const preview = URL.createObjectURL(file);
-      const newPhotos = [...additionalPhotos];
-      newPhotos[index] = { ...newPhotos[index], file, preview };
-      setAdditionalPhotos(newPhotos);
+      setAdditionalPhotos(prev => {
+        const newPhotos = [...prev];
+        newPhotos[index] = { ...newPhotos[index], file, preview };
+        return newPhotos;
+      });
     }
   };
 
   const handleAdditionalPhotoCommentChange = (index: number, comment: string) => {
-    const newPhotos = [...additionalPhotos];
-    newPhotos[index] = { ...newPhotos[index], comment };
-    setAdditionalPhotos(newPhotos);
+    setAdditionalPhotos(prev => {
+      const newPhotos = [...prev];
+      newPhotos[index] = { ...newPhotos[index], comment };
+      return newPhotos;
+    });
   };
 
   const handleAdditionalPhotoRemove = (index: number) => {
-    const newPhotos = [...additionalPhotos];
-    if (newPhotos[index].preview) {
-      URL.revokeObjectURL(newPhotos[index].preview);
-    }
-    setAdditionalPhotos(newPhotos.filter((_, i) => i !== index));
+    setAdditionalPhotos(prev => {
+      const newPhotos = [...prev];
+      if (newPhotos[index].preview) {
+        URL.revokeObjectURL(newPhotos[index].preview);
+      }
+      return newPhotos.filter((_, i) => i !== index);
+    });
   };
 
   const handleAddAdditionalPhoto = () => {
-    setAdditionalPhotos([...additionalPhotos, { file: null, preview: "", comment: "" }]);
+    setAdditionalPhotos(prev => [...prev, { file: null, preview: "", comment: "" }]);
   };
 
   const uploadPhoto = async (photo: PhotoData, index: number): Promise<MaintenancePlanPhoto | null> => {
     if (!photo.file && !photo.preview) return null;
 
-    // Se já é uma URL, retorna direto
     if (photo.preview && !photo.file) {
-      return {
-        url: photo.preview,
-        comment: photo.comment,
-        order: index,
-      };
+      return { url: photo.preview, comment: photo.comment, order: index };
     }
 
     if (!photo.file) return null;
@@ -289,33 +267,21 @@ export function MaintenancePlanForm() {
     const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
     const filePath = `maintenance-plans/${fileName}`;
 
-    const { error } = await supabase.storage
-      .from("reports")
-      .upload(filePath, photo.file);
+    const { error } = await supabase.storage.from("reports").upload(filePath, photo.file);
 
     if (error) {
       console.error("Erro ao fazer upload:", error);
       return null;
     }
 
-    const { data: urlData } = supabase.storage
-      .from("reports")
-      .getPublicUrl(filePath);
+    const { data: urlData } = supabase.storage.from("reports").getPublicUrl(filePath);
 
-    return {
-      url: urlData.publicUrl,
-      comment: photo.comment,
-      order: index,
-    };
+    return { url: urlData.publicUrl, comment: photo.comment, order: index };
   };
 
-  // Função para preencher dados de teste (apenas para visualização de impressão)
   const fillMockData = () => {
-    // Tipo e Data
     setPlanType("preventiva");
     setPlanDate(new Date().toISOString().split("T")[0]);
-    
-    // Equipamento (dados manuais para teste)
     setPatCode("0048");
     setEquipmentName("GERADOR 55KVA SILENCIADO");
     setEquipmentManufacturer("CUMMINS");
@@ -324,45 +290,20 @@ export function MaintenancePlanForm() {
     setPreviousHourmeter(1250);
     setCurrentHourmeter(1500);
     setNextRevisionHourmeter(1750);
-    
-    // Cliente
     setClientName("João Carlos da Silva");
     setClientCompany("Construtora Horizonte Ltda");
     setClientWorkSite("Obra Residencial Porto Sol - Bloco A");
     
-    // Observações completas
     setObservationsOperational(
-      "• Manter nível de combustível acima de 30% para evitar entrada de ar no sistema\n" +
-      "• Verificar visualmente vazamentos de óleo ou combustível antes de ligar\n" +
-      "• Aguardar 30 segundos após partida antes de aplicar carga\n" +
-      "• Não desligar o equipamento sob carga total - reduzir gradualmente\n" +
-      "• Realizar inspeção visual diária do nível de água do radiador"
+      "• Manter nível de combustível acima de 30%\n• Verificar vazamentos antes de ligar\n• Aguardar 30 segundos após partida"
     );
-    
     setObservationsTechnical(
-      "📞 EMERGÊNCIA 24H: (91) 99628-0080 - Walter\n" +
-      "📞 Assistência Técnica: (91) 3222-1100\n" +
-      "📧 Email: suporte@maltalocacoes.com.br\n" +
-      "⚙️ Peças Originais: Distribuidora Cummins Norte - (91) 3333-4444\n" +
-      "🏭 Endereço: Rua Augusto Corrêa, 01 - Guamá, Belém - PA"
+      "📞 EMERGÊNCIA 24H: (91) 99628-0080\n📧 suporte@maltalocacoes.com.br"
     );
-    
     setObservationsProcedures(
-      "PROCEDIMENTO DE PARTIDA:\n" +
-      "1. Verificar nível de óleo lubrificante\n" +
-      "2. Verificar nível de combustível (mínimo 30%)\n" +
-      "3. Verificar se disjuntor principal está desligado\n" +
-      "4. Acionar chave de partida e aguardar estabilização\n" +
-      "5. Aguardar 30 segundos em marcha lenta\n" +
-      "6. Ligar disjuntor e aplicar carga gradualmente\n\n" +
-      "PROCEDIMENTO DE PARADA:\n" +
-      "1. Desligar cargas gradualmente\n" +
-      "2. Desligar disjuntor principal\n" +
-      "3. Aguardar 5 minutos em marcha lenta para resfriamento\n" +
-      "4. Desligar chave de ignição"
+      "PROCEDIMENTO DE PARTIDA:\n1. Verificar nível de óleo\n2. Verificar combustível (mínimo 30%)\n3. Acionar chave de partida"
     );
     
-    // Nomes e CPF/Matrícula das assinaturas
     setSupervisorName("Walter Malta");
     setSupervisorCpf("123.456.789-00");
     setTechnicianName("Everton Souza");
@@ -370,7 +311,6 @@ export function MaintenancePlanForm() {
     setSignatureClientName("João Carlos da Silva");
     setClientCpf("987.654.321-00");
     
-    // Carregar tabela de verificação de gerador com alguns itens marcados
     const mockSections = getDefaultSections("GERADOR").map(section => ({
       ...section,
       items: section.items.map((item, idx) => ({
@@ -384,17 +324,15 @@ export function MaintenancePlanForm() {
     }));
     setVerificationSections(mockSections);
     
-    toast.success("Dados de teste preenchidos! Clique em Imprimir para visualizar.");
+    toast.success("Dados de teste preenchidos!");
   };
 
   const handleSubmit = async () => {
-    // Validações básicas
     if (!patCode && !equipmentName) {
       toast.error("Informe o PAT ou nome do equipamento");
       return;
     }
 
-    // Upload das fotos
     const uploadedPhotos: MaintenancePlanPhoto[] = [];
     
     for (let i = 0; i < photos.length; i++) {
@@ -441,94 +379,177 @@ export function MaintenancePlanForm() {
     });
   };
 
-  // Componente de foto inline
-  const PhotoUploadBox = ({
-    index,
-    photo,
-    onUpload,
-    onCommentChange,
-    onRemove,
-    label,
-  }: {
-    index: number;
-    photo: PhotoData;
-    onUpload: (index: number, e: React.ChangeEvent<HTMLInputElement>) => void;
-    onCommentChange: (index: number, comment: string) => void;
-    onRemove: (index: number) => void;
-    label: string;
-  }) => (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      {photo.preview ? (
-        <div className="relative">
-          <img
-            src={photo.preview}
-            alt={label}
-            className="w-full h-40 object-cover rounded-lg border"
-          />
-          <Button
-            type="button"
-            variant="destructive"
-            size="icon"
-            className="absolute top-2 right-2 h-8 w-8"
-            onClick={() => onRemove(index)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      ) : (
-        <label className="flex flex-col items-center justify-center h-40 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-          <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-          <span className="text-sm text-muted-foreground">Clique para enviar</span>
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => onUpload(index, e)}
-          />
-        </label>
-      )}
-      <Textarea
-        value={photo.comment}
-        onChange={(e) => onCommentChange(index, e.target.value)}
-        placeholder="Comentário da foto..."
-        rows={2}
-        className="text-sm"
-      />
-    </div>
-  );
+  // Dados formatados para impressão
+  const equipmentDisplayName = equipment?.equipment_name || equipmentName;
+  const equipmentDisplayManufacturer = equipment?.manufacturer || equipmentManufacturer;
+  const equipmentDisplayModel = equipment?.model || equipmentModel;
+  const allPhotos = [...photos, ...additionalPhotos].filter(p => p.preview);
 
   return (
     <div className="space-y-6 maintenance-plan-print">
-      {/* Cabeçalho de Impressão - Visível apenas ao imprimir */}
-      <div className="print-header hidden print:block">
-        <div className="flex items-center justify-between border-b-2 border-black pb-4 mb-6">
-          {/* Logo à esquerda */}
-          <img 
-            src="/malta-logo.webp" 
-            alt="Malta Locações" 
-            className="h-16 print-logo"
-          />
-          
-          {/* Título centralizado - DINÂMICO baseado no planType */}
-          <div className="flex-1 text-center">
-            <h1 className="text-2xl font-bold uppercase print-title">
-              Plano de Manutenção {planType === "preventiva" ? "Preventiva" : "Corretiva"}
-            </h1>
-            <p className="text-sm text-gray-600">
-              Data: {new Date(planDate).toLocaleDateString('pt-BR')}
-            </p>
+      {/* ============================================
+          SEÇÃO PRINT-ONLY - Relatório Formatado
+          ============================================ */}
+      <div className="print-only-section">
+        {/* Cabeçalho */}
+        <div className="print-report-header">
+          <img src="/malta-logo.webp" alt="Malta Locações" className="print-logo" />
+          <div className="print-header-title">
+            <h1>Plano de Manutenção {planType === "preventiva" ? "Preventiva" : "Corretiva"}</h1>
+            <p>Data: {new Date(planDate).toLocaleDateString('pt-BR')}</p>
           </div>
-          
-          {/* Informações da empresa à direita */}
-          <div className="text-right text-xs print-company-info">
-            <p className="font-bold">{companyData.company_name}</p>
+          <div className="print-header-company">
+            <p><strong>{companyData.company_name}</strong></p>
             <p>CNPJ: {companyData.company_cnpj}</p>
             <p>{companyData.company_phone}</p>
           </div>
         </div>
+
+        {/* Dados do Equipamento */}
+        <div className="print-section">
+          <h3 className="print-section-title">DADOS DO EQUIPAMENTO</h3>
+          <table className="print-data-table">
+            <tbody>
+              <tr>
+                <th>Equipamento</th>
+                <td>{equipmentDisplayName}</td>
+              </tr>
+              <tr>
+                <th>Fabricante</th>
+                <td>{equipmentDisplayManufacturer}</td>
+              </tr>
+              <tr>
+                <th>Modelo</th>
+                <td>{equipmentDisplayModel}</td>
+              </tr>
+              <tr>
+                <th>PAT</th>
+                <td>{formatPAT(patCode) || "-"}</td>
+              </tr>
+              <tr>
+                <th>Nº Série</th>
+                <td>{equipmentSerial || "-"}</td>
+              </tr>
+              <tr>
+                <th>Horímetro</th>
+                <td>Anterior: {formatHourmeter(previousHourmeter)} | Atual: {formatHourmeter(currentHourmeter)} | Próx. Revisão: {nextRevisionHourmeter ? formatHourmeter(nextRevisionHourmeter) : "-"}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Dados do Cliente */}
+        <div className="print-section">
+          <h3 className="print-section-title">DADOS DO CLIENTE</h3>
+          <table className="print-data-table">
+            <tbody>
+              <tr>
+                <th>Responsável</th>
+                <td>{clientName || "-"}</td>
+              </tr>
+              <tr>
+                <th>Empresa</th>
+                <td>{clientCompany || "-"}</td>
+              </tr>
+              <tr>
+                <th>Obra/Local</th>
+                <td>{clientWorkSite || "-"}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Tabela de Verificações */}
+        <VerificationTablePrint sections={verificationSections} />
+
+        {/* Fotos */}
+        {allPhotos.length > 0 && (
+          <div className="print-photos-section print-section">
+            <h3 className="print-section-title">FOTOS DO EQUIPAMENTO</h3>
+            <div className="print-photos-grid">
+              {allPhotos.map((photo, index) => (
+                <div key={index} className="print-photo-item">
+                  <img src={photo.preview} alt={`Foto ${index + 1}`} />
+                  <div className="print-photo-comment">{photo.comment || `Foto ${index + 1}`}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Observações */}
+        <div className="print-observations-section print-section">
+          <h3 className="print-section-title">OBSERVAÇÕES</h3>
+          
+          {observationsOperational && (
+            <div>
+              <div className="print-observation-label">Cuidados Operacionais:</div>
+              <div className="print-observation-box">{observationsOperational}</div>
+            </div>
+          )}
+          
+          {observationsTechnical && (
+            <div>
+              <div className="print-observation-label">Contatos de Assistência Técnica:</div>
+              <div className="print-observation-box">{observationsTechnical}</div>
+            </div>
+          )}
+          
+          {observationsProcedures && (
+            <div>
+              <div className="print-observation-label">Procedimentos:</div>
+              <div className="print-observation-box">{observationsProcedures}</div>
+            </div>
+          )}
+        </div>
+
+        {/* Assinaturas */}
+        <div className="print-signatures-section print-section">
+          <h3 className="print-section-title">ASSINATURAS</h3>
+          <div className="print-signatures-grid">
+            {/* Supervisor */}
+            <div className="print-signature-box">
+              <div className="print-signature-image">
+                {supervisorSignature && <img src={supervisorSignature} alt="Assinatura Supervisor" />}
+              </div>
+              <div className="print-signature-line">
+                <div className="print-signature-name">{supervisorName || "___________________"}</div>
+                <div className="print-signature-cpf">{supervisorCpf || "CPF/Matrícula: ___________"}</div>
+              </div>
+              <div className="print-signature-role">Supervisor</div>
+            </div>
+
+            {/* Técnico */}
+            <div className="print-signature-box">
+              <div className="print-signature-image">
+                {technicianSignature && <img src={technicianSignature} alt="Assinatura Técnico" />}
+              </div>
+              <div className="print-signature-line">
+                <div className="print-signature-name">{technicianName || "___________________"}</div>
+                <div className="print-signature-cpf">{technicianCpf || "CPF/Matrícula: ___________"}</div>
+              </div>
+              <div className="print-signature-role">Técnico</div>
+            </div>
+
+            {/* Cliente */}
+            <div className="print-signature-box">
+              <div className="print-signature-image">
+                {clientSignature && <img src={clientSignature} alt="Assinatura Cliente" />}
+              </div>
+              <div className="print-signature-line">
+                <div className="print-signature-name">{signatureClientName || "___________________"}</div>
+                <div className="print-signature-cpf">{clientCpf || "CPF/Matrícula: ___________"}</div>
+              </div>
+              <div className="print-signature-role">Cliente</div>
+            </div>
+          </div>
+        </div>
       </div>
 
+      {/* ============================================
+          FORMULÁRIO DE EDIÇÃO (Escondido na Impressão)
+          ============================================ */}
+      
       {/* Cabeçalho da Empresa */}
       <MaintenancePlanHeader
         companyName={companyData.company_name}
@@ -594,7 +615,6 @@ export function MaintenancePlanForm() {
                 </div>
               </div>
               
-              {/* PAT validation feedback */}
               {!loadingEquipment && patFormatted && (
                 equipment ? (
                   <Alert className="border-green-500 bg-green-50 dark:bg-green-950/20 py-2">
@@ -618,7 +638,7 @@ export function MaintenancePlanForm() {
       </Card>
 
       {/* Dados do Equipamento */}
-      <Card>
+      <Card className="no-print">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Wrench className="h-5 w-5" />
@@ -694,7 +714,7 @@ export function MaintenancePlanForm() {
       </Card>
 
       {/* Dados do Cliente */}
-      <Card>
+      <Card className="no-print">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <User className="h-5 w-5" />
@@ -734,13 +754,15 @@ export function MaintenancePlanForm() {
       </Card>
 
       {/* Tabela de Verificações */}
-      <VerificationTable
-        sections={verificationSections}
-        onChange={setVerificationSections}
-      />
+      <div className="no-print">
+        <VerificationTable
+          sections={verificationSections}
+          onChange={setVerificationSections}
+        />
+      </div>
 
       {/* Fotos */}
-      <Card>
+      <Card className="no-print">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Package className="h-5 w-5" />
@@ -751,7 +773,7 @@ export function MaintenancePlanForm() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {photos.map((photo, index) => (
               <PhotoUploadBox
-                key={index}
+                key={`main-${index}`}
                 index={index}
                 photo={photo}
                 onUpload={handlePhotoUpload}
@@ -762,7 +784,6 @@ export function MaintenancePlanForm() {
             ))}
           </div>
 
-          {/* Fotos Adicionais */}
           {additionalPhotos.length > 0 && (
             <div className="space-y-4">
               <Label className="text-base font-medium">Fotos Adicionais</Label>
@@ -795,7 +816,7 @@ export function MaintenancePlanForm() {
       </Card>
 
       {/* Observações */}
-      <Card>
+      <Card className="no-print">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <FileText className="h-5 w-5" />
@@ -836,18 +857,20 @@ export function MaintenancePlanForm() {
       </Card>
 
       {/* Assinaturas */}
-      <MaintenanceSignatures
-        supervisorName={supervisorName}
-        supervisorCpf={supervisorCpf}
-        supervisorSignature={supervisorSignature}
-        technicianName={technicianName}
-        technicianCpf={technicianCpf}
-        technicianSignature={technicianSignature}
-        clientName={signatureClientName}
-        clientCpf={clientCpf}
-        clientSignature={clientSignature}
-        onChange={handleSignatureChange}
-      />
+      <div className="no-print">
+        <MaintenanceSignatures
+          supervisorName={supervisorName}
+          supervisorCpf={supervisorCpf}
+          supervisorSignature={supervisorSignature}
+          technicianName={technicianName}
+          technicianCpf={technicianCpf}
+          technicianSignature={technicianSignature}
+          clientName={signatureClientName}
+          clientCpf={clientCpf}
+          clientSignature={clientSignature}
+          onChange={handleSignatureChange}
+        />
+      </div>
 
       {/* Botões de Ação */}
       <div className="flex justify-end gap-4 no-print">
