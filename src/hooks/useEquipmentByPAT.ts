@@ -8,6 +8,7 @@ interface EquipmentInfo {
   equipment_name: string;
   manufacturer: string;
   model: string | null;
+  serial_number: string | null;
   location_type: string;
   rental_company: string | null;
   rental_work_site: string | null;
@@ -41,6 +42,7 @@ export const useEquipmentByPAT = (pat: string) => {
           equipment_name,
           manufacturer,
           model,
+          serial_number,
           location_type,
           rental_company,
           rental_work_site,
