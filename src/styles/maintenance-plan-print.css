@@ -1,4 +1,31 @@
+/* Print header - hidden by default, visible only when printing */
+.print-header {
+  display: none;
+}
+
 @media print {
+  /* Print header styles */
+  .print-header {
+    display: block !important;
+  }
+
+  .print-header .print-logo {
+    max-height: 60px;
+    width: auto;
+  }
+
+  .print-header .print-title {
+    font-size: 18pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin: 0;
+    color: #000 !important;
+  }
+
+  .print-header .print-company-info {
+    font-size: 9pt;
+  }
+
   /* Hide non-printable elements */
   .no-print,
   header,

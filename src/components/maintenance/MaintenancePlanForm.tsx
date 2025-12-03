@@ -392,6 +392,35 @@ export function MaintenancePlanForm() {
 
   return (
     <div className="space-y-6 maintenance-plan-print">
+      {/* Cabeçalho de Impressão - Visível apenas ao imprimir */}
+      <div className="print-header hidden print:block">
+        <div className="flex items-center justify-between border-b-2 border-black pb-4 mb-6">
+          {/* Logo à esquerda */}
+          <img 
+            src="/malta-logo.webp" 
+            alt="Malta Locações" 
+            className="h-16 print-logo"
+          />
+          
+          {/* Título centralizado - DINÂMICO baseado no planType */}
+          <div className="flex-1 text-center">
+            <h1 className="text-2xl font-bold uppercase print-title">
+              Plano de Manutenção {planType === "preventiva" ? "Preventiva" : "Corretiva"}
+            </h1>
+            <p className="text-sm text-gray-600">
+              Data: {new Date(planDate).toLocaleDateString('pt-BR')}
+            </p>
+          </div>
+          
+          {/* Informações da empresa à direita */}
+          <div className="text-right text-xs print-company-info">
+            <p className="font-bold">{companyData.company_name}</p>
+            <p>CNPJ: {companyData.company_cnpj}</p>
+            <p>{companyData.company_phone}</p>
+          </div>
+        </div>
+      </div>
+
       {/* Cabeçalho da Empresa */}
       <MaintenancePlanHeader
         companyName={companyData.company_name}
