@@ -79,9 +79,13 @@ export function MaintenancePlanForm() {
 
   // Assinaturas
   const [supervisorName, setSupervisorName] = useState("");
+  const [supervisorCpf, setSupervisorCpf] = useState("");
   const [supervisorSignature, setSupervisorSignature] = useState("");
   const [technicianName, setTechnicianName] = useState("");
+  const [technicianCpf, setTechnicianCpf] = useState("");
   const [technicianSignature, setTechnicianSignature] = useState("");
+  const [signatureClientName, setSignatureClientName] = useState("");
+  const [clientCpf, setClientCpf] = useState("");
   const [clientSignature, setClientSignature] = useState("");
 
   // Seções de verificação
@@ -187,14 +191,26 @@ export function MaintenancePlanForm() {
       case "supervisor_name":
         setSupervisorName(value);
         break;
+      case "supervisor_cpf":
+        setSupervisorCpf(value);
+        break;
       case "supervisor_signature":
         setSupervisorSignature(value);
         break;
       case "technician_name":
         setTechnicianName(value);
         break;
+      case "technician_cpf":
+        setTechnicianCpf(value);
+        break;
       case "technician_signature":
         setTechnicianSignature(value);
+        break;
+      case "client_name":
+        setSignatureClientName(value);
+        break;
+      case "client_cpf":
+        setClientCpf(value);
         break;
       case "client_signature":
         setClientSignature(value);
@@ -346,9 +362,13 @@ export function MaintenancePlanForm() {
       "4. Desligar chave de ignição"
     );
     
-    // Nomes das assinaturas
+    // Nomes e CPF/Matrícula das assinaturas
     setSupervisorName("Walter Malta");
+    setSupervisorCpf("123.456.789-00");
     setTechnicianName("Everton Souza");
+    setTechnicianCpf("MAT-2024-001");
+    setSignatureClientName("João Carlos da Silva");
+    setClientCpf("987.654.321-00");
     
     // Carregar tabela de verificação de gerador com alguns itens marcados
     const mockSections = getDefaultSections("GERADOR").map(section => ({
@@ -818,9 +838,13 @@ export function MaintenancePlanForm() {
       {/* Assinaturas */}
       <MaintenanceSignatures
         supervisorName={supervisorName}
+        supervisorCpf={supervisorCpf}
         supervisorSignature={supervisorSignature}
         technicianName={technicianName}
+        technicianCpf={technicianCpf}
         technicianSignature={technicianSignature}
+        clientName={signatureClientName}
+        clientCpf={clientCpf}
         clientSignature={clientSignature}
         onChange={handleSignatureChange}
       />

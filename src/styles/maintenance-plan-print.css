@@ -1,21 +1,81 @@
+/* ============================================
+   PLANO DE MANUTENÇÃO - ESTILOS DE IMPRESSÃO
+   Malta Locações - Layout Profissional A4
+   ============================================ */
+
 /* Print header - hidden by default, visible only when printing */
 .print-header {
   display: none;
 }
 
+/* Seção de impressão dedicada */
+.print-only-section {
+  display: none;
+}
+
 @media print {
-  /* Print header styles */
+  /* Configuração da página A4 */
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
+
+  /* Reset geral para impressão */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: white !important;
+    font-size: 10pt;
+    line-height: 1.4;
+    color: #000 !important;
+  }
+
+  /* ============================================
+     ESCONDER ELEMENTOS DE EDIÇÃO
+     ============================================ */
+  .no-print,
+  header,
+  nav,
+  aside,
+  footer,
+  [data-sidebar],
+  .sidebar,
+  button:not(.print-include),
+  input[type="file"],
+  .upload-placeholder,
+  label.cursor-pointer,
+  [class*="hover:"],
+  .fixed,
+  .sticky {
+    display: none !important;
+  }
+
+  /* Esconder cards de edição que não devem aparecer */
+  .maintenance-plan-print > .no-print {
+    display: none !important;
+  }
+
+  /* ============================================
+     CABEÇALHO DE IMPRESSÃO
+     ============================================ */
   .print-header {
     display: block !important;
+    margin-bottom: 15px;
   }
 
   .print-header .print-logo {
-    max-height: 60px;
+    max-height: 50px;
     width: auto;
   }
 
   .print-header .print-title {
-    font-size: 18pt;
+    font-size: 16pt;
     font-weight: bold;
     text-transform: uppercase;
     margin: 0;
@@ -23,209 +83,368 @@
   }
 
   .print-header .print-company-info {
-    font-size: 9pt;
+    font-size: 8pt;
+    line-height: 1.3;
   }
 
-  /* Hide non-printable elements */
-  .no-print,
-  header,
-  nav,
-  aside,
-  footer,
-  button:not(.print-include),
-  [data-sidebar],
-  .sidebar {
-    display: none !important;
-  }
-
-  /* Reset page */
-  body {
-    margin: 0;
-    padding: 0;
-    background: white !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  /* Main container */
+  /* ============================================
+     CONTAINER PRINCIPAL
+     ============================================ */
   .maintenance-plan-print {
     width: 100%;
     max-width: 100%;
-    padding: 20px;
+    padding: 0;
     margin: 0;
-    font-size: 11pt;
-    line-height: 1.4;
+    font-size: 10pt;
   }
 
-  /* Company header */
-  .company-header-print {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid #000;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
+  /* ============================================
+     CARDS E SEÇÕES
+     ============================================ */
+  .card,
+  [class*="Card"] {
+    box-shadow: none !important;
+    border: 1px solid #333 !important;
+    border-radius: 0 !important;
+    margin-bottom: 10px;
+    page-break-inside: avoid;
   }
 
-  .company-header-print img {
-    max-height: 60px;
-    width: auto;
-  }
-
-  .company-header-print .company-info {
-    text-align: right;
-    font-size: 9pt;
-  }
-
-  /* Section titles */
-  .section-title-print {
+  [class*="CardHeader"] {
     background-color: #1a1a2e !important;
     color: white !important;
-    padding: 8px 12px;
-    font-weight: bold;
-    font-size: 12pt;
-    margin-top: 15px;
-    margin-bottom: 10px;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+    padding: 6px 10px !important;
+    border-bottom: none !important;
   }
 
-  /* Equipment data table */
+  [class*="CardTitle"] {
+    font-size: 11pt !important;
+    font-weight: bold !important;
+    color: white !important;
+  }
+
+  [class*="CardTitle"] svg {
+    display: none !important;
+  }
+
+  [class*="CardContent"] {
+    padding: 10px !important;
+  }
+
+  /* ============================================
+     INPUTS E CAMPOS - Mostrar como texto
+     ============================================ */
+  input,
+  textarea,
+  select {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 10pt !important;
+    color: #000 !important;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  input:disabled,
+  textarea:disabled {
+    opacity: 1 !important;
+    color: #000 !important;
+  }
+
+  /* Labels */
+  label {
+    font-weight: bold !important;
+    font-size: 9pt !important;
+    color: #333 !important;
+    margin-bottom: 2px !important;
+  }
+
+  /* ============================================
+     TABELA DE VERIFICAÇÃO
+     ============================================ */
+  .verification-table-print,
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+    margin-bottom: 10px;
+  }
+
+  .verification-table-print th,
+  table th {
+    background-color: #1a1a2e !important;
+    color: white !important;
+    padding: 4px 6px;
+    text-align: center;
+    border: 1px solid #333;
+    font-size: 8pt;
+    font-weight: bold;
+  }
+
+  .verification-table-print td,
+  table td {
+    border: 1px solid #333;
+    padding: 3px 6px;
+    font-size: 8pt;
+  }
+
+  .verification-table-print .section-row,
+  tr.section-row {
+    background-color: #e0e0e0 !important;
+    font-weight: bold;
+  }
+
+  /* Checkmarks na tabela */
+  .check-cell {
+    text-align: center;
+    width: 50px;
+  }
+
+  .check-mark {
+    font-size: 12pt;
+    font-weight: bold;
+  }
+
+  /* Checkbox como texto */
+  input[type="checkbox"] {
+    display: none !important;
+  }
+
+  /* ============================================
+     SEÇÃO DE FOTOS
+     ============================================ */
+  .photos-section {
+    page-break-inside: avoid;
+  }
+
+  .photos-grid-print {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .photo-item-print {
+    border: 1px solid #333;
+    padding: 5px;
+    page-break-inside: avoid;
+  }
+
+  .photo-item-print img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+  }
+
+  .photo-item-print .photo-comment {
+    font-size: 8pt;
+    text-align: center;
+    margin-top: 4px;
+    font-style: italic;
+    color: #333;
+  }
+
+  /* Esconder área de upload vazia */
+  .photo-upload-empty {
+    display: none !important;
+  }
+
+  /* ============================================
+     SEÇÃO DE OBSERVAÇÕES
+     ============================================ */
+  .observations-section {
+    page-break-inside: avoid;
+  }
+
+  .observations-print {
+    border: 1px solid #333;
+    padding: 8px;
+    margin-bottom: 8px;
+    min-height: 50px;
+    font-size: 9pt;
+    white-space: pre-wrap;
+  }
+
+  textarea {
+    white-space: pre-wrap !important;
+    height: auto !important;
+    min-height: 40px !important;
+  }
+
+  /* ============================================
+     SEÇÃO DE ASSINATURAS
+     ============================================ */
+  .signatures-section {
+    page-break-inside: avoid;
+    margin-top: 15px;
+  }
+
+  .signatures-print {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-top: 10px;
+  }
+
+  .signature-box {
+    text-align: center;
+    page-break-inside: avoid;
+  }
+
+  .signature-box-print {
+    text-align: center;
+    border: 1px solid #333;
+    padding: 10px;
+    min-height: 120px;
+  }
+
+  .signature-box-print .signature-image {
+    height: 50px;
+    object-fit: contain;
+    margin-bottom: 5px;
+  }
+
+  .signature-box-print .signature-line {
+    border-top: 1px solid #333;
+    margin-top: 10px;
+    padding-top: 5px;
+  }
+
+  .signature-box-print .signature-name {
+    font-weight: bold;
+    font-size: 9pt;
+    margin-bottom: 2px;
+  }
+
+  .signature-box-print .signature-cpf {
+    font-size: 8pt;
+    color: #555;
+    margin-bottom: 2px;
+  }
+
+  .signature-box-print .signature-role {
+    font-size: 8pt;
+    font-style: italic;
+    color: #666;
+  }
+
+  /* Canvas de assinatura */
+  canvas {
+    max-height: 60px !important;
+    border: 1px solid #ccc !important;
+  }
+
+  /* ============================================
+     DADOS DO EQUIPAMENTO - Layout de tabela
+     ============================================ */
   .equipment-data-print {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
   }
 
   .equipment-data-print td {
     border: 1px solid #333;
-    padding: 6px 10px;
-    font-size: 10pt;
+    padding: 5px 8px;
+    font-size: 9pt;
   }
 
   .equipment-data-print .label {
     background-color: #f0f0f0 !important;
     font-weight: bold;
     width: 25%;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
   }
 
-  /* Verification table */
-  .verification-table-print {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 9pt;
-    margin-bottom: 15px;
-  }
-
-  .verification-table-print th {
-    background-color: #1a1a2e !important;
-    color: white !important;
-    padding: 6px 4px;
-    text-align: center;
-    border: 1px solid #333;
-    font-size: 8pt;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  .verification-table-print td {
-    border: 1px solid #333;
-    padding: 4px 6px;
-  }
-
-  .verification-table-print .section-row {
-    background-color: #e0e0e0 !important;
-    font-weight: bold;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  .verification-table-print .check-cell {
-    text-align: center;
-    width: 60px;
-  }
-
-  .verification-table-print .check-mark {
-    font-size: 14pt;
-    font-weight: bold;
-  }
-
-  /* Photos grid */
-  .photos-grid-print {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-    margin-bottom: 15px;
-  }
-
-  .photo-item-print {
-    border: 1px solid #333;
-    padding: 5px;
-  }
-
-  .photo-item-print img {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-  }
-
-  .photo-item-print .photo-comment {
-    font-size: 9pt;
-    text-align: center;
-    margin-top: 5px;
-    font-style: italic;
-  }
-
-  /* Observations */
-  .observations-print {
-    border: 1px solid #333;
-    padding: 10px;
-    margin-bottom: 15px;
-    min-height: 80px;
-    font-size: 10pt;
-    white-space: pre-wrap;
-  }
-
-  /* Signatures */
-  .signatures-print {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    margin-top: 30px;
-    page-break-inside: avoid;
-  }
-
-  .signature-box-print {
-    text-align: center;
-  }
-
-  .signature-box-print .signature-line {
-    border-top: 1px solid #333;
-    margin-top: 60px;
-    padding-top: 5px;
-  }
-
-  .signature-box-print .signature-image {
-    height: 60px;
-    object-fit: contain;
-  }
-
-  /* Page breaks */
+  /* ============================================
+     CONTROLE DE QUEBRA DE PÁGINA
+     ============================================ */
   .page-break {
     page-break-before: always;
   }
 
-  /* Avoid breaking inside */
   .no-break {
     page-break-inside: avoid;
   }
 
-  /* Cards should not have shadows or borders in print */
-  .card,
-  [class*="Card"] {
-    box-shadow: none !important;
-    border: none !important;
+  /* Evitar quebras em seções importantes */
+  .equipment-section,
+  .client-section,
+  .photos-section,
+  .observations-section,
+  .signatures-section {
+    page-break-inside: avoid;
+  }
+
+  /* Forçar nova página antes das assinaturas se necessário */
+  .signatures-section {
+    page-break-before: auto;
+  }
+
+  /* ============================================
+     GRID RESPONSIVO PARA IMPRESSÃO
+     ============================================ */
+  .grid {
+    display: grid !important;
+  }
+
+  .grid-cols-1 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .md\\:grid-cols-2,
+  .lg\\:grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .md\\:grid-cols-3,
+  .lg\\:grid-cols-3 {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  .gap-4 {
+    gap: 8px !important;
+  }
+
+  .gap-6 {
+    gap: 10px !important;
+  }
+
+  /* ============================================
+     UTILITÁRIOS DE IMPRESSÃO
+     ============================================ */
+  .print-visible {
+    display: block !important;
+  }
+
+  .screen-only {
+    display: none !important;
+  }
+
+  /* Esconder elementos com border-dashed (upload areas) */
+  [class*="border-dashed"] {
+    display: none !important;
+  }
+
+  /* Garantir que imagens apareçam */
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Esconder ícones lucide nos títulos */
+  [class*="lucide"] {
+    display: none !important;
+  }
+
+  /* Texto de muted-foreground */
+  .text-muted-foreground {
+    color: #666 !important;
+  }
+
+  /* Alertas não devem aparecer */
+  [class*="Alert"] {
+    display: none !important;
   }
 }
