@@ -30,6 +30,8 @@ import { getDefaultSections, VerificationSection } from "@/lib/maintenancePlanDe
 import { formatPAT } from "@/lib/patUtils";
 import { formatHourmeter } from "@/lib/hourmeterUtils";
 import { getCurrentDate, formatBelemDate } from "@/config/timezone";
+import { getNowInBelem, parseLocalDate, getDaysDifference } from "@/lib/dateUtils";
+import { RetroactiveDateWarning } from "@/components/RetroactiveDateWarning";
 import { Wrench, Package, User, FileText, Save, Loader2, Plus, CheckCircle2, XCircle, Printer, Info } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -105,6 +107,24 @@ export function MaintenancePlanForm() {
     { file: null, preview: "", comment: "" },
   ]);
   const [additionalPhotos, setAdditionalPhotos] = useState<PhotoData[]>([]);
+
+  // Justificativa retroativa
+  const [retroactiveJustification, setRetroactiveJustification] = useState("");
+
+  // Funções de validação retroativa
+  const isRetroactive = () => {
+    if (!planDate) return false;
+    const movementDate = parseLocalDate(planDate);
+    const today = getNowInBelem();
+    return getDaysDifference(today, movementDate) > 0;
+  };
+
+  const requiresJustification = () => {
+    if (!planDate) return false;
+    const movementDate = parseLocalDate(planDate);
+    const today = getNowInBelem();
+    return getDaysDifference(today, movementDate) > 7;
+  };
 
   // Buscar dados do equipamento
   const { data: equipment, isLoading: loadingEquipment } = useEquipmentByPAT(patFormatted);
@@ -371,6 +391,12 @@ export function MaintenancePlanForm() {
       return;
     }
 
+    // Validação retroativa
+    if (requiresJustification() && !retroactiveJustification.trim()) {
+      toast.error("Justificativa obrigatória para datas retroativas (>7 dias)");
+      return;
+    }
+
     // Alertas não bloqueantes
     const hasPhotos = photos.some(p => p.preview) || additionalPhotos.some(p => p.preview);
     if (!hasPhotos) {
@@ -417,6 +443,7 @@ export function MaintenancePlanForm() {
         client_signature: clientSignature,
         verification_sections: verificationSections,
         photos: uploadedPhotos,
+        retroactive_justification: retroactiveJustification || null,
       };
 
       createPlan.mutate(planData, {
@@ -677,6 +704,27 @@ export function MaintenancePlanForm() {
                 value={planDate}
                 onChange={(e) => setPlanDate(e.target.value)}
               />
+              {planDate && <RetroactiveDateWarning selectedDate={planDate} />}
+              
+              {requiresJustification() && (
+                <div className="space-y-2 mt-2">
+                  <Label htmlFor="retroactive_justification" className="text-amber-700 dark:text-amber-400">
+                    Justificativa para Data Retroativa *
+                  </Label>
+                  <Textarea
+                    id="retroactive_justification"
+                    value={retroactiveJustification}
+                    onChange={(e) => setRetroactiveJustification(e.target.value)}
+                    placeholder="Explique o motivo do registro com data retroativa..."
+                    className="min-h-[80px] border-amber-500"
+                  />
+                  {!retroactiveJustification && (
+                    <p className="text-sm text-destructive">
+                      Justificativa obrigatória para datas superiores a 7 dias
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">

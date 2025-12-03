@@ -41,6 +41,7 @@ export interface MaintenancePlanData {
   client_signature?: string;
   verification_sections: VerificationSection[];
   photos: MaintenancePlanPhoto[];
+  retroactive_justification?: string | null;
 }
 
 export const useMaintenancePlans = (assetId?: string) => {
