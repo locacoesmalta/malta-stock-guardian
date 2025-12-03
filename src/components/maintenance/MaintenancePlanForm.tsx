@@ -37,9 +37,19 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import "@/styles/maintenance-plan-print.css";
 
-export function MaintenancePlanForm() {
+interface MaintenancePlanFormProps {
+  planId?: string;
+  initialData?: any;
+  mode?: "create" | "edit";
+}
+
+export function MaintenancePlanForm({ 
+  planId, 
+  initialData, 
+  mode = "create" 
+}: MaintenancePlanFormProps) {
   const navigate = useNavigate();
-  const { createPlan, useLastPlanByAssetId } = useMaintenancePlans();
+  const { createPlan, updatePlan, useLastPlanByAssetId } = useMaintenancePlans();
   const { data: assets = [] } = useAssetsQuery();
   const { getTemplateByEquipment, saveAsTemplate } = useVerificationTemplates();
 
@@ -182,7 +192,94 @@ export function MaintenancePlanForm() {
     }
   }, [equipment]);
 
-  // Carregar tabela de verificação com hierarquia: 
+  // Carregar dados iniciais quando em modo edição
+  useEffect(() => {
+    if (mode === "edit" && initialData) {
+      setPatCode(initialData.equipment_code || "");
+      setPatFormatted(initialData.equipment_code || "");
+      setPlanType(initialData.plan_type || "preventiva");
+      setPlanDate(initialData.plan_date || getCurrentDate());
+      setCurrentHourmeter(initialData.current_hourmeter || 0);
+      setNextRevisionHourmeter(initialData.next_revision_hourmeter || undefined);
+      
+      setClientName(initialData.client_name || "");
+      setClientCompany(initialData.client_company || "");
+      setClientWorkSite(initialData.client_work_site || "");
+      
+      setEquipmentName(initialData.equipment_name || "");
+      setEquipmentManufacturer(initialData.equipment_manufacturer || "");
+      setEquipmentModel(initialData.equipment_model || "");
+      setEquipmentSerial(initialData.equipment_serial || "");
+      
+      setObservationsOperational(initialData.observations_operational || "");
+      setObservationsTechnical(initialData.observations_technical || "");
+      setObservationsProcedures(initialData.observations_procedures || "");
+      
+      setSupervisorName(initialData.supervisor_name || "");
+      setSupervisorSignature(initialData.supervisor_signature || "");
+      setTechnicianName(initialData.technician_name || "");
+      setTechnicianSignature(initialData.technician_signature || "");
+      setSignatureClientName(initialData.client_name || "");
+      setClientSignature(initialData.client_signature || "");
+      
+      setRetroactiveJustification(initialData.retroactive_justification || "");
+      
+      // Carregar seções de verificação
+      if (initialData.verification_sections) {
+        try {
+          const sections = typeof initialData.verification_sections === 'string' 
+            ? JSON.parse(initialData.verification_sections) 
+            : initialData.verification_sections;
+          setVerificationSections(sections);
+        } catch {
+          setVerificationSections([]);
+        }
+      }
+      
+      // Carregar fotos existentes
+      if (initialData.photos) {
+        try {
+          const loadedPhotos = typeof initialData.photos === 'string' 
+            ? JSON.parse(initialData.photos) 
+            : initialData.photos;
+          if (Array.isArray(loadedPhotos)) {
+            const mainPhotos = loadedPhotos.slice(0, 4).map((p: any) => ({
+              file: null,
+              preview: p.url || "",
+              comment: p.comment || "",
+            }));
+            setPhotos([
+              ...mainPhotos,
+              ...Array(4 - mainPhotos.length).fill({ file: null, preview: "", comment: "" }),
+            ]);
+            
+            if (loadedPhotos.length > 4) {
+              const extraPhotos = loadedPhotos.slice(4).map((p: any) => ({
+                file: null,
+                preview: p.url || "",
+                comment: p.comment || "",
+              }));
+              setAdditionalPhotos(extraPhotos);
+            }
+          }
+        } catch {
+          // Mantém fotos vazias
+        }
+      }
+      
+      // Dados da empresa
+      if (initialData.company_name) {
+        setCompanyData({
+          company_name: initialData.company_name,
+          company_cnpj: initialData.company_cnpj || "",
+          company_address: initialData.company_address || "",
+          company_cep: initialData.company_cep || "",
+          company_phone: initialData.company_phone || "",
+          company_email: initialData.company_email || "",
+        });
+      }
+    }
+  }, [mode, initialData]);
   // 1. Último plano do mesmo PAT
   // 2. Template salvo (tipo + fabricante + modelo)
   // 3. Template padrão do código
@@ -452,12 +549,16 @@ export function MaintenancePlanForm() {
         retroactive_justification: retroactiveJustification || null,
       };
 
-      createPlan.mutate(planData, {
+      // Usar updatePlan ou createPlan dependendo do modo
+      const mutation = mode === "edit" && planId ? updatePlan : createPlan;
+      const mutationData = mode === "edit" && planId ? { id: planId, ...planData } : planData;
+
+      mutation.mutate(mutationData as any, {
         onSuccess: async () => {
           const displayName = formatPAT(patCode) || equipmentName;
           
-          // Salvar como template se checkbox marcado
-          if (saveAsTemplateChecked && verificationSections.length > 0) {
+          // Salvar como template se checkbox marcado (apenas no modo criação)
+          if (mode === "create" && saveAsTemplateChecked && verificationSections.length > 0) {
             const eqType = equipment?.equipment_name || equipmentName;
             const eqManufacturer = equipment?.manufacturer || equipmentManufacturer;
             
@@ -466,7 +567,7 @@ export function MaintenancePlanForm() {
                 name: `${eqType} ${eqManufacturer || ""}`.trim(),
                 equipmentType: eqType,
                 manufacturer: eqManufacturer || null,
-                model: null, // Salva para tipo + fabricante (equipamentos similares)
+                model: null,
                 sections: verificationSections,
               });
             } catch (error) {
@@ -474,7 +575,11 @@ export function MaintenancePlanForm() {
             }
           }
           
-          toast.success(`✅ Plano de manutenção salvo com sucesso!`, {
+          const successMessage = mode === "edit" 
+            ? "✅ Plano de manutenção atualizado com sucesso!"
+            : "✅ Plano de manutenção salvo com sucesso!";
+          
+          toast.success(successMessage, {
             description: `${displayName} - ${planType === "preventiva" ? "Preventiva" : "Corretiva"}`,
             duration: 5000,
             action: {
@@ -482,11 +587,13 @@ export function MaintenancePlanForm() {
               onClick: () => window.print(),
             },
           });
-          // Aguarda para permitir impressão antes de navegar
-          setTimeout(() => navigate("/assets"), 3000);
+          
+          // Navegar para listagem
+          const redirectPath = mode === "edit" ? "/maintenance/plans" : "/assets";
+          setTimeout(() => navigate(redirectPath), 3000);
         },
-        onError: (error) => {
-          toast.error("Erro ao salvar plano de manutenção", {
+        onError: (error: any) => {
+          toast.error(mode === "edit" ? "Erro ao atualizar plano" : "Erro ao salvar plano de manutenção", {
             description: error.message,
           });
           setIsSaving(false);
@@ -743,6 +850,7 @@ export function MaintenancePlanForm() {
                   placeholder="Digite o PAT (ex: 48)"
                   maxLength={6}
                   className="font-mono pr-10"
+                  disabled={mode === "edit"}
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                   {loadingEquipment && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
@@ -1063,16 +1171,16 @@ export function MaintenancePlanForm() {
                 <Printer className="h-4 w-4 mr-2" />
                 Imprimir
               </Button>
-              <Button onClick={handleSubmit} disabled={isSaving || createPlan.isPending}>
-                {isSaving || createPlan.isPending ? (
+              <Button onClick={handleSubmit} disabled={isSaving || createPlan.isPending || updatePlan.isPending}>
+                {isSaving || createPlan.isPending || updatePlan.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Salvando...
+                    {mode === "edit" ? "Atualizando..." : "Salvando..."}
                   </>
                 ) : (
                   <>
                     <Save className="h-4 w-4 mr-2" />
-                    Salvar Plano
+                    {mode === "edit" ? "Atualizar Plano" : "Salvar Plano"}
                   </>
                 )}
               </Button>
