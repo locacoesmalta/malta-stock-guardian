@@ -1154,6 +1154,45 @@ export type Database = {
           },
         ]
       }
+      maintenance_verification_templates: {
+        Row: {
+          created_at: string
+          created_by: string
+          equipment_type: string
+          id: string
+          is_default: boolean | null
+          manufacturer: string | null
+          model: string | null
+          name: string
+          updated_at: string
+          verification_sections: Json
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          equipment_type: string
+          id?: string
+          is_default?: boolean | null
+          manufacturer?: string | null
+          model?: string | null
+          name: string
+          updated_at?: string
+          verification_sections: Json
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          equipment_type?: string
+          id?: string
+          is_default?: boolean | null
+          manufacturer?: string | null
+          model?: string | null
+          name?: string
+          updated_at?: string
+          verification_sections?: Json
+        }
+        Relationships: []
+      }
       material_withdrawal_collaborators: {
         Row: {
           collaborator_name: string
