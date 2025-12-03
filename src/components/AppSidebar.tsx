@@ -101,6 +101,12 @@ export function AppSidebar() {
       label: "Plano de Manutenção",
       show: permissions.can_edit_assets || isAdmin,
     },
+    {
+      path: "/maintenance/plans",
+      icon: ClipboardList,
+      label: "Histórico de Manutenções",
+      show: permissions.can_access_assets || isAdmin,
+    },
   ];
 
   // RELATÓRIOS
