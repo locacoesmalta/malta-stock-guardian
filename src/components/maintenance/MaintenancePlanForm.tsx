@@ -328,7 +328,7 @@ export function MaintenancePlanForm() {
 
     createPlan.mutate(planData, {
       onSuccess: () => {
-        navigate("/maintenance/plans");
+        navigate("/assets");
       },
     });
   };
@@ -739,7 +739,7 @@ export function MaintenancePlanForm() {
 
       {/* Botões de Ação */}
       <div className="flex justify-end gap-4 no-print">
-        <Button variant="outline" onClick={() => navigate(-1)}>
+        <Button variant="outline" onClick={() => navigate("/assets")}>
           Cancelar
         </Button>
         <Button variant="outline" onClick={handlePrint} disabled={!equipment}>
