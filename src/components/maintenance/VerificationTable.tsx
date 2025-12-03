@@ -8,20 +8,23 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Plus, Trash2, ClipboardList, GripVertical } from "lucide-react";
+import { Plus, Trash2, ClipboardList, GripVertical, Wrench, Zap } from "lucide-react";
 import {
   VerificationSection,
   VerificationItem,
+  MaintenanceCategory,
   createEmptyItem,
   createEmptySection,
 } from "@/lib/maintenancePlanDefaults";
+import { cn } from "@/lib/utils";
 
 interface VerificationTableProps {
   sections: VerificationSection[];
   onChange: (sections: VerificationSection[]) => void;
+  showCategoryButtons?: boolean;
 }
 
-export function VerificationTable({ sections, onChange }: VerificationTableProps) {
+export function VerificationTable({ sections, onChange, showCategoryButtons = false }: VerificationTableProps) {
   const updateSectionTitle = (sectionId: string, title: string) => {
     onChange(
       sections.map((s) => (s.id === sectionId ? { ...s, title } : s))
@@ -71,8 +74,25 @@ export function VerificationTable({ sections, onChange }: VerificationTableProps
     );
   };
 
-  const addSection = () => {
-    onChange([...sections, createEmptySection()]);
+  const addSection = (category?: MaintenanceCategory) => {
+    onChange([...sections, createEmptySection(category)]);
+  };
+
+  // Separar seções por categoria
+  const motorSections = sections.filter(s => s.category === "motor");
+  const alternadorSections = sections.filter(s => s.category === "alternador");
+  const otherSections = sections.filter(s => !s.category || s.category === "geral");
+
+  const getCategoryIcon = (category?: MaintenanceCategory) => {
+    if (category === "motor") return <Wrench className="h-4 w-4 text-orange-500" />;
+    if (category === "alternador") return <Zap className="h-4 w-4 text-blue-500" />;
+    return null;
+  };
+
+  const getCategoryBorderClass = (category?: MaintenanceCategory) => {
+    if (category === "motor") return "border-l-4 border-l-orange-500";
+    if (category === "alternador") return "border-l-4 border-l-blue-500";
+    return "";
   };
 
   const removeSection = (sectionId: string) => {
@@ -87,129 +107,194 @@ export function VerificationTable({ sections, onChange }: VerificationTableProps
     { key: "h2000", label: "2000h" },
   ] as const;
 
+  const renderSection = (section: VerificationSection) => (
+    <AccordionItem
+      key={section.id}
+      value={section.id}
+      className={cn("border rounded-lg px-4", getCategoryBorderClass(section.category))}
+    >
+      <AccordionTrigger className="hover:no-underline">
+        <div className="flex items-center gap-2 flex-1">
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+          {getCategoryIcon(section.category)}
+          <Input
+            value={section.title}
+            onChange={(e) => {
+              e.stopPropagation();
+              updateSectionTitle(section.id, e.target.value);
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="h-8 max-w-[300px] font-semibold"
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive hover:text-destructive"
+            onClick={(e) => {
+              e.stopPropagation();
+              removeSection(section.id);
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </AccordionTrigger>
+      <AccordionContent>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left py-2 pr-4 min-w-[300px]">
+                  Descrição
+                </th>
+                {frequencyColumns.map((col) => (
+                  <th key={col.key} className="text-center py-2 px-2 min-w-[60px]">
+                    {col.label}
+                  </th>
+                ))}
+                <th className="w-10"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {section.items.map((item) => (
+                <tr key={item.id} className="border-b last:border-b-0">
+                  <td className="py-2 pr-4">
+                    <Input
+                      value={item.description}
+                      onChange={(e) =>
+                        updateItem(section.id, item.id, "description", e.target.value)
+                      }
+                      placeholder="Descrição da verificação"
+                      className="h-8"
+                    />
+                  </td>
+                  {frequencyColumns.map((col) => (
+                    <td key={col.key} className="text-center py-2 px-2">
+                      <Checkbox
+                        checked={item[col.key]}
+                        onCheckedChange={(checked) =>
+                          updateItem(section.id, item.id, col.key, !!checked)
+                        }
+                      />
+                    </td>
+                  ))}
+                  <td className="py-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={() => removeItem(section.id, item.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mt-2"
+          onClick={() => addItem(section.id)}
+        >
+          <Plus className="h-4 w-4 mr-1" />
+          Adicionar Item
+        </Button>
+      </AccordionContent>
+    </AccordionItem>
+  );
+
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <CardTitle className="flex items-center gap-2 text-lg">
             <ClipboardList className="h-5 w-5" />
             Tabela de Verificações
           </CardTitle>
-          <Button onClick={addSection} variant="outline" size="sm">
-            <Plus className="h-4 w-4 mr-1" />
-            Nova Seção
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            {showCategoryButtons ? (
+              <>
+                <Button onClick={() => addSection("motor")} variant="outline" size="sm" className="border-orange-300 text-orange-600 hover:bg-orange-50">
+                  <Wrench className="h-4 w-4 mr-1" />
+                  + Seção Motor
+                </Button>
+                <Button onClick={() => addSection("alternador")} variant="outline" size="sm" className="border-blue-300 text-blue-600 hover:bg-blue-50">
+                  <Zap className="h-4 w-4 mr-1" />
+                  + Seção Alternador
+                </Button>
+              </>
+            ) : (
+              <Button onClick={() => addSection()} variant="outline" size="sm">
+                <Plus className="h-4 w-4 mr-1" />
+                Nova Seção
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent>
-        <Accordion type="multiple" defaultValue={sections.map((s) => s.id)} className="space-y-2">
-          {sections.map((section) => (
-            <AccordionItem
-              key={section.id}
-              value={section.id}
-              className="border rounded-lg px-4"
-            >
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-2 flex-1">
-                  <GripVertical className="h-4 w-4 text-muted-foreground" />
-                  <Input
-                    value={section.title}
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      updateSectionTitle(section.id, e.target.value);
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="h-8 max-w-[300px] font-semibold"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeSection(section.id);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-2 pr-4 min-w-[300px]">
-                          Descrição
-                        </th>
-                        {frequencyColumns.map((col) => (
-                          <th key={col.key} className="text-center py-2 px-2 min-w-[60px]">
-                            {col.label}
-                          </th>
-                        ))}
-                        <th className="w-10"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {section.items.map((item) => (
-                        <tr key={item.id} className="border-b last:border-b-0">
-                          <td className="py-2 pr-4">
-                            <Input
-                              value={item.description}
-                              onChange={(e) =>
-                                updateItem(section.id, item.id, "description", e.target.value)
-                              }
-                              placeholder="Descrição da verificação"
-                              className="h-8"
-                            />
-                          </td>
-                          {frequencyColumns.map((col) => (
-                            <td key={col.key} className="text-center py-2 px-2">
-                              <Checkbox
-                                checked={item[col.key]}
-                                onCheckedChange={(checked) =>
-                                  updateItem(section.id, item.id, col.key, !!checked)
-                                }
-                              />
-                            </td>
-                          ))}
-                          <td className="py-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={() => removeItem(section.id, item.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="mt-2"
-                  onClick={() => addItem(section.id)}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Adicionar Item
-                </Button>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+        {showCategoryButtons && motorSections.length > 0 && (
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2 text-orange-600 font-semibold">
+              <Wrench className="h-5 w-5" />
+              <span>MANUTENÇÃO DO MOTOR</span>
+            </div>
+            <Accordion type="multiple" defaultValue={motorSections.map((s) => s.id)} className="space-y-2">
+              {motorSections.map(renderSection)}
+            </Accordion>
+          </div>
+        )}
+
+        {showCategoryButtons && alternadorSections.length > 0 && (
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2 text-blue-600 font-semibold">
+              <Zap className="h-5 w-5" />
+              <span>MANUTENÇÃO DO ALTERNADOR</span>
+            </div>
+            <Accordion type="multiple" defaultValue={alternadorSections.map((s) => s.id)} className="space-y-2">
+              {alternadorSections.map(renderSection)}
+            </Accordion>
+          </div>
+        )}
+
+        {showCategoryButtons && otherSections.length > 0 && (
+          <div className="mb-4">
+            <Accordion type="multiple" defaultValue={otherSections.map((s) => s.id)} className="space-y-2">
+              {otherSections.map(renderSection)}
+            </Accordion>
+          </div>
+        )}
+
+        {!showCategoryButtons && (
+          <Accordion type="multiple" defaultValue={sections.map((s) => s.id)} className="space-y-2">
+            {sections.map(renderSection)}
+          </Accordion>
+        )}
 
         {sections.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
             <ClipboardList className="h-12 w-12 mx-auto mb-2 opacity-50" />
             <p>Nenhuma seção de verificação adicionada</p>
-            <Button onClick={addSection} variant="outline" size="sm" className="mt-2">
-              <Plus className="h-4 w-4 mr-1" />
-              Adicionar Primeira Seção
-            </Button>
+            {showCategoryButtons ? (
+              <div className="flex gap-2 justify-center mt-2">
+                <Button onClick={() => addSection("motor")} variant="outline" size="sm" className="border-orange-300 text-orange-600">
+                  <Wrench className="h-4 w-4 mr-1" />
+                  + Motor
+                </Button>
+                <Button onClick={() => addSection("alternador")} variant="outline" size="sm" className="border-blue-300 text-blue-600">
+                  <Zap className="h-4 w-4 mr-1" />
+                  + Alternador
+                </Button>
+              </div>
+            ) : (
+              <Button onClick={() => addSection()} variant="outline" size="sm" className="mt-2">
+                <Plus className="h-4 w-4 mr-1" />
+                Adicionar Primeira Seção
+              </Button>
+            )}
           </div>
         )}
       </CardContent>
