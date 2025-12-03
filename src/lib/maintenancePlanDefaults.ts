@@ -4,6 +4,209 @@ export type ActionType = "verificar" | "limpeza" | "substituir" | "testar";
 
 export type MaintenanceTarget = "motor" | "alternador";
 
+export type MaintenanceInterval = "h100" | "h200" | "h800" | "h2000";
+
+// Templates de tarefas do MOTOR por intervalo (TOYAMA)
+// Estrutura cumulativa: cada intervalo inclui as tarefas dos anteriores
+export const MOTOR_TASKS_BY_INTERVAL = {
+  // Base: Diário + Semanal + Mensal (sempre incluído)
+  base: {
+    verificar: [
+      "Vazamentos (óleo, arrefecimento, combustível, exaustão)",
+      "Nível de óleo",
+      "Nível de água",
+      "Nível de combustível",
+      "Entrada de ar",
+      "Fumaça da exaustão (sem carga)",
+      "Vibração anormal",
+      "Ruído anormal",
+      "Cheiro anormal",
+      "Parâmetros de funcionamento (sem carga)",
+      "Obstrução do sistema de arrefecimento",
+      "Tubos e conexões do arrefecimento",
+      "Nível de aditivo (anticorrosivo/anticongelante)",
+      "Filtro de ar",
+      "Tubos e conexões da admissão",
+      "Parafuso da exaustão",
+      "Correia do alternador",
+      "Bateria",
+      "Disjuntor",
+      "Conector de partida"
+    ],
+    limpeza: [
+      "Grupo gerador (parte externa)"
+    ],
+    substituir: [] as string[],
+    testar: [] as string[]
+  },
+  
+  // 100h = base + específico
+  h100: {
+    verificar: [
+      "Correia e aperto",
+      "Ventoinha",
+      "Bocal da bomba de combustível",
+      "Tubos e conectores de combustível",
+      "Bomba de combustível",
+      "Operação com ½ carga (partida, fumaça, ruído, vibração, parâmetros)"
+    ],
+    substituir: [
+      "Filtro de óleo",
+      "Óleo lubrificante",
+      "Filtro de combustível",
+      "Núcleo do filtro de ar"
+    ],
+    limpeza: [
+      "Respiro do cárter"
+    ],
+    testar: [] as string[]
+  },
+  
+  // 200h = 100h + específico
+  h200: {
+    verificar: [
+      "Aperto da base"
+    ],
+    limpeza: [
+      "Bandeja de contenção de líquidos"
+    ],
+    substituir: [] as string[],
+    testar: [] as string[]
+  },
+  
+  // 800h = 200h + específico
+  h800: {
+    verificar: [
+      "Pressão de óleo",
+      "Partida",
+      "Alternador do motor"
+    ],
+    substituir: [
+      "Água + aditivo do arrefecimento"
+    ],
+    limpeza: [
+      "Sistema de arrefecimento (flush completo)"
+    ],
+    testar: [] as string[]
+  },
+  
+  // 2000h = 800h + específico
+  h2000: {
+    verificar: [
+      "Resistência da exaustão"
+    ],
+    limpeza: [] as string[],
+    substituir: [] as string[],
+    testar: [] as string[]
+  }
+};
+
+// Função para gerar seções de motor baseado no intervalo selecionado
+export const generateMotorSectionsForInterval = (interval: MaintenanceInterval): VerificationSection[] => {
+  // Determina quais níveis incluir baseado no intervalo
+  const levels: (keyof typeof MOTOR_TASKS_BY_INTERVAL)[] = ["base"];
+  if (interval === "h100" || interval === "h200" || interval === "h800" || interval === "h2000") levels.push("h100");
+  if (interval === "h200" || interval === "h800" || interval === "h2000") levels.push("h200");
+  if (interval === "h800" || interval === "h2000") levels.push("h800");
+  if (interval === "h2000") levels.push("h2000");
+  
+  // Agrupa tarefas por tipo de ação
+  const tasksByAction: Record<ActionType, string[]> = { 
+    verificar: [], 
+    limpeza: [], 
+    substituir: [], 
+    testar: [] 
+  };
+  
+  levels.forEach(level => {
+    const tasks = MOTOR_TASKS_BY_INTERVAL[level];
+    (Object.keys(tasks) as ActionType[]).forEach(action => {
+      tasksByAction[action].push(...tasks[action]);
+    });
+  });
+  
+  // Cria seções organizadas por tipo de ação
+  const sections: VerificationSection[] = [];
+  
+  if (tasksByAction.verificar.length > 0) {
+    sections.push({
+      id: generateSectionId(),
+      title: "🔧 MOTOR - Verificações",
+      category: "motor",
+      items: tasksByAction.verificar.map(desc => ({
+        id: generateItemId(),
+        maintenanceTarget: "motor" as MaintenanceTarget,
+        actionType: "verificar" as ActionType,
+        description: desc,
+        h50: false,
+        h100: interval === "h100" || interval === "h200" || interval === "h800" || interval === "h2000",
+        h200: interval === "h200" || interval === "h800" || interval === "h2000",
+        h800: interval === "h800" || interval === "h2000",
+        h2000: interval === "h2000"
+      }))
+    });
+  }
+  
+  if (tasksByAction.substituir.length > 0) {
+    sections.push({
+      id: generateSectionId(),
+      title: "🔧 MOTOR - Substituições",
+      category: "motor",
+      items: tasksByAction.substituir.map(desc => ({
+        id: generateItemId(),
+        maintenanceTarget: "motor" as MaintenanceTarget,
+        actionType: "substituir" as ActionType,
+        description: desc,
+        h50: false,
+        h100: interval === "h100" || interval === "h200" || interval === "h800" || interval === "h2000",
+        h200: interval === "h200" || interval === "h800" || interval === "h2000",
+        h800: interval === "h800" || interval === "h2000",
+        h2000: interval === "h2000"
+      }))
+    });
+  }
+  
+  if (tasksByAction.limpeza.length > 0) {
+    sections.push({
+      id: generateSectionId(),
+      title: "🔧 MOTOR - Limpeza",
+      category: "motor",
+      items: tasksByAction.limpeza.map(desc => ({
+        id: generateItemId(),
+        maintenanceTarget: "motor" as MaintenanceTarget,
+        actionType: "limpeza" as ActionType,
+        description: desc,
+        h50: false,
+        h100: interval === "h100" || interval === "h200" || interval === "h800" || interval === "h2000",
+        h200: interval === "h200" || interval === "h800" || interval === "h2000",
+        h800: interval === "h800" || interval === "h2000",
+        h2000: interval === "h2000"
+      }))
+    });
+  }
+  
+  if (tasksByAction.testar.length > 0) {
+    sections.push({
+      id: generateSectionId(),
+      title: "🔧 MOTOR - Testes",
+      category: "motor",
+      items: tasksByAction.testar.map(desc => ({
+        id: generateItemId(),
+        maintenanceTarget: "motor" as MaintenanceTarget,
+        actionType: "testar" as ActionType,
+        description: desc,
+        h50: false,
+        h100: interval === "h100" || interval === "h200" || interval === "h800" || interval === "h2000",
+        h200: interval === "h200" || interval === "h800" || interval === "h2000",
+        h800: interval === "h800" || interval === "h2000",
+        h2000: interval === "h2000"
+      }))
+    });
+  }
+  
+  return sections;
+};
+
 export interface VerificationItem {
   id: string;
   maintenanceTarget?: MaintenanceTarget;

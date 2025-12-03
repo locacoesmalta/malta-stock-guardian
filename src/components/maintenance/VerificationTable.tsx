@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,10 +23,13 @@ import {
   MaintenanceCategory,
   ActionType,
   MaintenanceTarget,
+  MaintenanceInterval,
   createEmptyItem,
   createEmptySection,
+  generateMotorSectionsForInterval,
 } from "@/lib/maintenancePlanDefaults";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const maintenanceTargets: { value: MaintenanceTarget; label: string }[] = [
   { value: "motor", label: "🔧 Motor" },
@@ -39,6 +43,13 @@ const actionTypes: { value: ActionType; label: string }[] = [
   { value: "testar", label: "Testar" },
 ];
 
+const maintenanceIntervals: { value: MaintenanceInterval; label: string }[] = [
+  { value: "h100", label: "100 horas" },
+  { value: "h200", label: "200 horas" },
+  { value: "h800", label: "800 horas" },
+  { value: "h2000", label: "2000 horas" },
+];
+
 interface VerificationTableProps {
   sections: VerificationSection[];
   onChange: (sections: VerificationSection[]) => void;
@@ -46,6 +57,17 @@ interface VerificationTableProps {
 }
 
 export function VerificationTable({ sections, onChange, showCategoryButtons = false }: VerificationTableProps) {
+  const [selectedInterval, setSelectedInterval] = useState<MaintenanceInterval>("h100");
+
+  const handleGenerateMotorTasks = () => {
+    const motorSections = generateMotorSectionsForInterval(selectedInterval);
+    // Remove seções de motor existentes e adiciona as novas
+    const nonMotorSections = sections.filter(s => s.category !== "motor");
+    onChange([...nonMotorSections, ...motorSections]);
+    
+    const intervalLabel = maintenanceIntervals.find(i => i.value === selectedInterval)?.label || selectedInterval;
+    toast.success(`Tarefas do Motor geradas para ${intervalLabel}`);
+  };
   const updateSectionTitle = (sectionId: string, title: string) => {
     onChange(
       sections.map((s) => (s.id === sectionId ? { ...s, title } : s))
@@ -299,6 +321,57 @@ export function VerificationTable({ sections, onChange, showCategoryButtons = fa
             )}
           </div>
         </div>
+        
+        {/* Gerador automático de tarefas por intervalo */}
+        {showCategoryButtons && (
+          <div className="mt-4 p-4 bg-muted/50 rounded-lg border">
+            <div className="flex items-center gap-2 mb-3 text-sm font-medium">
+              <Wrench className="h-4 w-4" />
+              Gerar Tarefas Automaticamente
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Intervalo:</span>
+                <Select
+                  value={selectedInterval}
+                  onValueChange={(value: MaintenanceInterval) => setSelectedInterval(value)}
+                >
+                  <SelectTrigger className="w-[140px] h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {maintenanceIntervals.map((interval) => (
+                      <SelectItem key={interval.value} value={interval.value}>
+                        {interval.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button 
+                onClick={handleGenerateMotorTasks} 
+                variant="default" 
+                size="sm"
+                className="bg-orange-500 hover:bg-orange-600"
+              >
+                <Wrench className="h-4 w-4 mr-1" />
+                Gerar Tarefas Motor
+              </Button>
+              <Button 
+                onClick={() => addSection("alternador")} 
+                variant="outline" 
+                size="sm"
+                className="border-blue-300 text-blue-600 hover:bg-blue-50"
+              >
+                <Zap className="h-4 w-4 mr-1" />
+                Gerar Tarefas Alternador
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Selecione o intervalo de manutenção e clique para gerar automaticamente as tarefas do template TOYAMA.
+            </p>
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         {showCategoryButtons && motorSections.length > 0 && (
