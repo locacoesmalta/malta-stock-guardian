@@ -146,14 +146,14 @@ export default function MaintenancePlansList() {
             <div className="space-y-2">
               <Label>Tipo</Label>
               <Select
-                value={filters.planType}
-                onValueChange={(value) => setFilters(prev => ({ ...prev, planType: value as any }))}
+                value={filters.planType || "_all"}
+                onValueChange={(value) => setFilters(prev => ({ ...prev, planType: value === "_all" ? "" : value as any }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="_all">Todos</SelectItem>
                   <SelectItem value="preventiva">Preventiva</SelectItem>
                   <SelectItem value="corretiva">Corretiva</SelectItem>
                 </SelectContent>
