@@ -199,18 +199,27 @@ export const useAssetMaintenances = (assetId?: string) => {
     enabled: !!assetId,
   });
 
-  // Buscar o horímetro da última manutenção preventiva
-  const getLastHourmeter = useQuery({
-    queryKey: ["last-hourmeter", assetId],
+  // Buscar os horímetros da última manutenção preventiva (anterior e atual)
+  const getLastHourmeters = useQuery({
+    queryKey: ["last-hourmeters", assetId],
     queryFn: async () => {
-      if (!assetId) return 0;
+      if (!assetId) return { previous_hourmeter: 0, current_hourmeter: 0 };
 
-      const { data, error } = await supabase.rpc("get_last_maintenance_hourmeter", {
+      const { data, error } = await supabase.rpc("get_last_maintenance_hourmeters", {
         p_asset_id: assetId,
       });
 
       if (error) throw error;
-      return (data as number) || 0;
+      
+      // A função retorna um array com um registro
+      const result = Array.isArray(data) && data.length > 0 
+        ? data[0] 
+        : { previous_hourmeter: 0, current_hourmeter: 0 };
+      
+      return {
+        previous_hourmeter: result.previous_hourmeter || 0,
+        current_hourmeter: result.current_hourmeter || 0
+      };
     },
     enabled: !!assetId,
   });
@@ -227,8 +236,9 @@ export const useAssetMaintenances = (assetId?: string) => {
     deleteMaintenance,
     totalHourmeter: getTotalHourmeter.data || 0,
     isLoadingTotal: getTotalHourmeter.isLoading,
-    lastHourmeter: getLastHourmeter.data || 0,
-    isLoadingLastHourmeter: getLastHourmeter.isLoading,
+    lastHourmeter: getLastHourmeters.data?.current_hourmeter || 0,
+    lastPreviousHourmeter: getLastHourmeters.data?.previous_hourmeter || 0,
+    isLoadingLastHourmeter: getLastHourmeters.isLoading,
     assetMaintenanceData: assetData,
     calculateConsumption,
   };

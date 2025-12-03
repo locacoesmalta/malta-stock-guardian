@@ -1067,6 +1067,7 @@ export type Database = {
           photos: Json | null
           plan_date: string
           plan_type: string
+          previous_hourmeter: number | null
           retroactive_justification: string | null
           supervisor_name: string | null
           supervisor_signature: string | null
@@ -1103,6 +1104,7 @@ export type Database = {
           photos?: Json | null
           plan_date?: string
           plan_type?: string
+          previous_hourmeter?: number | null
           retroactive_justification?: string | null
           supervisor_name?: string | null
           supervisor_signature?: string | null
@@ -1139,6 +1141,7 @@ export type Database = {
           photos?: Json | null
           plan_date?: string
           plan_type?: string
+          previous_hourmeter?: number | null
           retroactive_justification?: string | null
           supervisor_name?: string | null
           supervisor_signature?: string | null
@@ -2578,6 +2581,13 @@ export type Database = {
       get_last_maintenance_hourmeter: {
         Args: { p_asset_id: string }
         Returns: number
+      }
+      get_last_maintenance_hourmeters: {
+        Args: { p_asset_id: string }
+        Returns: {
+          current_hourmeter: number
+          previous_hourmeter: number
+        }[]
       }
       get_monthly_productivity: {
         Args: { p_month: number; p_year: number }
