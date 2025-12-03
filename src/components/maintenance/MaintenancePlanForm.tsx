@@ -53,12 +53,12 @@ export function MaintenancePlanForm() {
 
   // Dados da empresa
   const [companyData, setCompanyData] = useState({
-    company_name: "Malta Locações",
-    company_cnpj: "10.792.415/0001-14",
-    company_address: "Rua Augusto Corrêa, 01 - Guamá, Belém - PA",
-    company_cep: "66075-110",
-    company_phone: "(91) 99628-0080",
-    company_email: "contato@maltalocacoes.com.br",
+    company_name: "Malta Locações De Maquinas E Equipamentos",
+    company_cnpj: "55.108.613/0001-39",
+    company_address: "R. União, 16a - Marco, Belém - PA",
+    company_cep: "66095-670",
+    company_phone: "(91) 98605-4851",
+    company_email: "walter@maltalocacoes.com.br",
   });
 
   // Dados do cliente
