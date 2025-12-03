@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -24,11 +25,12 @@ import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
 import { useMaintenancePlans, MaintenancePlanData, MaintenancePlanPhoto } from "@/hooks/useMaintenancePlans";
 import { useAssetMaintenances } from "@/hooks/useAssetMaintenances";
 import { useAssetsQuery } from "@/hooks/useAssetsQuery";
+import { useVerificationTemplates } from "@/hooks/useVerificationTemplates";
 import { getDefaultSections, VerificationSection } from "@/lib/maintenancePlanDefaults";
 import { formatPAT } from "@/lib/patUtils";
 import { formatHourmeter } from "@/lib/hourmeterUtils";
 import { getCurrentDate, formatBelemDate } from "@/config/timezone";
-import { Wrench, Package, User, FileText, Save, Loader2, Plus, CheckCircle2, XCircle, Printer } from "lucide-react";
+import { Wrench, Package, User, FileText, Save, Loader2, Plus, CheckCircle2, XCircle, Printer, Info } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import "@/styles/maintenance-plan-print.css";
@@ -37,6 +39,7 @@ export function MaintenancePlanForm() {
   const navigate = useNavigate();
   const { createPlan, useLastPlanByAssetId } = useMaintenancePlans();
   const { data: assets = [] } = useAssetsQuery();
+  const { getTemplateByEquipment, saveAsTemplate } = useVerificationTemplates();
 
   // Estados do formulário
   const [selectedAssetId, setSelectedAssetId] = useState("");
@@ -87,6 +90,8 @@ export function MaintenancePlanForm() {
 
   // Seções de verificação
   const [verificationSections, setVerificationSections] = useState<VerificationSection[]>([]);
+  const [templateSource, setTemplateSource] = useState<string>("");
+  const [saveAsTemplateChecked, setSaveAsTemplateChecked] = useState(false);
 
   // Fotos
   const [photos, setPhotos] = useState<PhotoData[]>([
@@ -149,17 +154,37 @@ export function MaintenancePlanForm() {
     }
   }, [equipment]);
 
-  // Carregar tabela de verificação
+  // Carregar tabela de verificação com hierarquia: 
+  // 1. Último plano do mesmo PAT
+  // 2. Template salvo (tipo + fabricante + modelo)
+  // 3. Template padrão do código
   useEffect(() => {
-    if (equipment) {
+    const loadVerificationSections = async () => {
+      if (!equipment) return;
+
+      // 1. Primeiro: último plano do mesmo PAT
       if (lastPlan?.verification_sections) {
         setVerificationSections(lastPlan.verification_sections as unknown as VerificationSection[]);
-        toast.info("Tabela de verificação carregada do último plano");
-      } else {
-        setVerificationSections(getDefaultSections(equipment.equipment_name));
+        setTemplateSource(`Último plano do PAT ${formatPAT(equipment.asset_code)}`);
+        return;
       }
-    }
-  }, [equipment, lastPlan]);
+
+      // 2. Segundo: buscar template hierárquico
+      const template = await getTemplateByEquipment(
+        equipment.equipment_name,
+        equipment.manufacturer,
+        equipment.model
+      );
+
+      if (template) {
+        setVerificationSections(template.sections);
+        setTemplateSource(template.source);
+        toast.info(`Tabela carregada: ${template.source}`);
+      }
+    };
+
+    loadVerificationSections();
+  }, [equipment, lastPlan, getTemplateByEquipment]);
 
   // Preencher horímetro do último registro
   useEffect(() => {
@@ -391,8 +416,27 @@ export function MaintenancePlanForm() {
       };
 
       createPlan.mutate(planData, {
-        onSuccess: () => {
+        onSuccess: async () => {
           const displayName = formatPAT(patCode) || equipmentName;
+          
+          // Salvar como template se checkbox marcado
+          if (saveAsTemplateChecked && verificationSections.length > 0) {
+            const eqType = equipment?.equipment_name || equipmentName;
+            const eqManufacturer = equipment?.manufacturer || equipmentManufacturer;
+            
+            try {
+              await saveAsTemplate.mutateAsync({
+                name: `${eqType} ${eqManufacturer || ""}`.trim(),
+                equipmentType: eqType,
+                manufacturer: eqManufacturer || null,
+                model: null, // Salva para tipo + fabricante (equipamentos similares)
+                sections: verificationSections,
+              });
+            } catch (error) {
+              console.error("Erro ao salvar template:", error);
+            }
+          }
+          
           toast.success(`✅ Plano de manutenção salvo com sucesso!`, {
             description: `${displayName} - ${planType === "preventiva" ? "Preventiva" : "Corretiva"}`,
             duration: 5000,
@@ -792,7 +836,17 @@ export function MaintenancePlanForm() {
       </Card>
 
       {/* Tabela de Verificações */}
-      <div className="no-print">
+      <div className="no-print space-y-3">
+        {/* Indicador de origem do template */}
+        {templateSource && (
+          <Alert className="border-blue-500/50 bg-blue-50/50 dark:bg-blue-950/20">
+            <Info className="h-4 w-4 text-blue-500" />
+            <AlertDescription className="text-blue-700 dark:text-blue-400 text-sm">
+              {templateSource}
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <VerificationTable
           sections={verificationSections}
           onChange={setVerificationSections}
@@ -911,31 +965,56 @@ export function MaintenancePlanForm() {
       </div>
 
       {/* Botões de Ação */}
-      <div className="flex justify-end gap-4 no-print">
-        <Button variant="secondary" onClick={fillMockData}>
-          🧪 Preencher Teste
-        </Button>
-        <Button variant="outline" onClick={() => navigate("/assets")}>
-          Cancelar
-        </Button>
-        <Button variant="outline" onClick={handlePrint}>
-          <Printer className="h-4 w-4 mr-2" />
-          Imprimir
-        </Button>
-        <Button onClick={handleSubmit} disabled={isSaving || createPlan.isPending}>
-          {isSaving || createPlan.isPending ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Salvando...
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4 mr-2" />
-              Salvar Plano
-            </>
-          )}
-        </Button>
-      </div>
+      <Card className="no-print">
+        <CardContent className="pt-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Checkbox para salvar como template */}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="saveAsTemplate"
+                checked={saveAsTemplateChecked}
+                onCheckedChange={(checked) => setSaveAsTemplateChecked(checked === true)}
+              />
+              <label
+                htmlFor="saveAsTemplate"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                Salvar tabela como template para{" "}
+                <span className="text-primary font-semibold">
+                  {equipment?.equipment_name || equipmentName || "este tipo de equipamento"}
+                </span>
+              </label>
+            </div>
+            
+            {/* Botões */}
+            <div className="flex gap-3">
+              <Button variant="secondary" onClick={fillMockData} className="hidden md:flex">
+                🧪 Teste
+              </Button>
+              <Button variant="outline" onClick={() => navigate("/assets")}>
+                Cancelar
+              </Button>
+              <Button variant="outline" onClick={handlePrint}>
+                <Printer className="h-4 w-4 mr-2" />
+                Imprimir
+              </Button>
+              <Button onClick={handleSubmit} disabled={isSaving || createPlan.isPending}>
+                {isSaving || createPlan.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Salvar Plano
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
