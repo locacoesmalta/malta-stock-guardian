@@ -31,6 +31,8 @@ const actionTypes: { value: ActionType; label: string }[] = [
   { value: "limpeza", label: "Limpeza" },
   { value: "substituir", label: "Substituir" },
   { value: "testar", label: "Testar" },
+  { value: "manutencao_motor", label: "🔧 Manutenção Motor" },
+  { value: "manutencao_alternador", label: "⚡ Manutenção Alternador" },
 ];
 
 interface VerificationTableProps {
@@ -183,7 +185,7 @@ export function VerificationTable({ sections, onChange, showCategoryButtons = fa
                         updateItem(section.id, item.id, "actionType", value)
                       }
                     >
-                      <SelectTrigger className="h-8 w-[120px]">
+                      <SelectTrigger className="h-8 w-[180px]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
