@@ -1,9 +1,9 @@
 /* Estilos de impressão para Recibos Completos - Layout Landscape */
 @media print {
-  /* Configuração da página A4 Landscape */
+  /* Configuração da página A4 Landscape - Margens padrão Malta */
   @page {
     size: A4 landscape;
-    margin: 1.5cm;
+    margin: 20mm 15mm 20mm 15mm; /* top right bottom left */
   }
 
   /* Ocultar elementos não necessários */
@@ -31,6 +31,9 @@
     padding: 0;
     background: white;
     color: black;
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-size: 10pt !important;
+    line-height: 1.4 !important;
   }
 
   .container {
@@ -50,8 +53,8 @@
   .receipt-full-print-header {
     background-color: #003399 !important;
     color: white !important;
-    padding: 1cm !important;
-    margin: -1.5cm -1.5cm 1cm -1.5cm !important;
+    padding: 12px !important;
+    margin: 0 0 16px 0 !important;
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
@@ -74,8 +77,8 @@
     text-align: center;
     font-size: 14pt;
     font-weight: bold;
-    padding: 0.5cm;
-    margin: 0.5cm 0 1cm 0;
+    padding: 8px;
+    margin: 12px 0 16px 0;
     border-radius: 4px;
   }
 
@@ -95,37 +98,39 @@
   .receipt-info-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.4cm;
-    margin-bottom: 0.8cm;
+    gap: 8px;
+    margin-bottom: 16px;
     font-size: 10pt;
   }
 
   .receipt-info-grid > div {
     line-height: 1.4;
+    margin-bottom: 4px;
   }
 
   .receipt-info-grid span {
     font-weight: bold;
   }
 
-  /* Tabela de equipamentos */
+  /* Tabela de equipamentos - Padding 6px e distância 10px */
   .receipt-equipment-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 0.8cm;
+    margin-top: 10px;
+    margin-bottom: 10px;
     font-size: 9pt;
   }
 
   .receipt-equipment-table th {
     background-color: #f0f0f0 !important;
     font-weight: bold;
-    padding: 0.3cm;
+    padding: 6px;
     border: 1px solid #333;
     text-align: left;
   }
 
   .receipt-equipment-table td {
-    padding: 0.25cm;
+    padding: 6px;
     border: 1px solid #ddd;
     vertical-align: top;
   }
@@ -138,37 +143,37 @@
   .receipt-signature-section {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1cm;
-    margin-top: 1cm;
-    padding-top: 0.5cm;
+    gap: 16px;
+    margin-top: 24px;
+    padding-top: 8px;
     border-top: 2px solid #ddd;
     page-break-inside: avoid;
   }
 
   .receipt-signature-box {
     border: 2px solid #333;
-    padding: 0.5cm;
+    padding: 8px;
     border-radius: 4px;
-    min-height: 4cm;
+    min-height: 60px;
   }
 
   .receipt-signature-box h3 {
     font-size: 10pt;
     font-weight: bold;
-    margin: 0 0 0.3cm 0;
+    margin: 0 0 8px 0;
   }
 
   .receipt-signature-img {
     width: 100%;
-    max-height: 2.5cm;
+    max-height: 50px;
     object-fit: contain;
-    margin-bottom: 0.3cm;
+    margin-bottom: 8px;
   }
 
   .receipt-signature-footer {
     border-top: 1px solid #999;
-    padding-top: 0.2cm;
-    margin-top: 0.2cm;
+    padding-top: 4px;
+    margin-top: 4px;
     font-size: 8pt;
     text-align: center;
     color: #555;
@@ -184,8 +189,9 @@
     font-size: 14pt;
     font-weight: bold;
     text-align: center;
-    margin-bottom: 1cm;
-    padding-bottom: 0.5cm;
+    margin-top: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
     border-bottom: 2px solid #003399;
     color: #003399;
   }
@@ -194,13 +200,13 @@
   .receipt-photos-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1cm;
+    gap: 10px;
   }
 
   .receipt-photo-item {
     page-break-inside: avoid;
     border: 2px solid #ddd;
-    padding: 0.3cm;
+    padding: 6px;
     border-radius: 4px;
     background: white;
   }
@@ -213,7 +219,7 @@
   /* Imagem da foto - dimensões exatas */
   .receipt-photo-img {
     width: 100%;
-    height: 6.81cm;
+    height: 60mm;
     object-fit: cover;
     border: 1px solid #999;
     border-radius: 2px;
@@ -222,13 +228,13 @@
 
   /* Legenda da foto */
   .receipt-photo-caption {
-    margin-top: 0.3cm;
+    margin-top: 4px;
     font-size: 8pt;
-    line-height: 1.3;
+    line-height: 1.4;
   }
 
   .receipt-photo-caption p {
-    margin: 0.1cm 0;
+    margin: 4px 0;
   }
 
   .receipt-photo-caption strong {
@@ -238,6 +244,12 @@
   /* Evitar quebras indesejadas */
   .no-break {
     page-break-inside: avoid;
+  }
+
+  /* Controle de viúvas e órfãs */
+  p, li, td {
+    orphans: 3;
+    widows: 3;
   }
 
   /* Ajustes de texto */
@@ -251,8 +263,8 @@
 
   /* Footer Malta */
   .receipt-footer {
-    margin-top: 1cm;
-    padding-top: 0.5cm;
+    margin-top: 16px;
+    padding-top: 8px;
     border-top: 1px solid #ddd;
     text-align: center;
     font-size: 8pt;
