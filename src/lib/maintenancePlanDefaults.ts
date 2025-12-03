@@ -1,6 +1,6 @@
 // Templates padrão para itens de verificação de manutenção
 
-export type ActionType = "verificar" | "limpeza" | "substituir" | "testar";
+export type ActionType = "verificar" | "limpeza" | "substituir" | "testar" | "manutencao_motor" | "manutencao_alternador";
 
 export interface VerificationItem {
   id: string;
