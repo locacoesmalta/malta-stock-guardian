@@ -17,7 +17,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useMaintenancePlansQuery, MaintenancePlansFilters } from "@/hooks/useMaintenancePlansQuery";
 import { useMaintenancePlans } from "@/hooks/useMaintenancePlans";
 import { formatHourmeter } from "@/lib/hourmeterUtils";
-import { formatBelemDate } from "@/config/timezone";
+import { formatBelemDate } from "@/lib/dateUtils";
 import { useConfirm } from "@/hooks/useConfirm";
 import { 
   Search, 

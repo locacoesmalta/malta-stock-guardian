@@ -1,4 +1,4 @@
-import { toZonedTime, fromZonedTime, formatInTimeZone } from "date-fns-tz";
+import { toZonedTime, formatInTimeZone } from "date-fns-tz";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -24,6 +24,12 @@ import { ptBR } from "date-fns/locale";
  */
 
 export const BELEM_TIMEZONE = "America/Belem";
+
+/**
+ * Alias para compatibilidade com código que usava timezone.ts
+ * @deprecated Use BELEM_TIMEZONE diretamente
+ */
+export const SYSTEM_TIMEZONE = BELEM_TIMEZONE;
 
 /**
  * ⚠️ FUNÇÃO PRINCIPAL: Retorna a data/hora atual no timezone de Belém (UTC-3)
@@ -213,4 +219,105 @@ export function parseInputDateToBelem(dateString: string): string {
   
   // Retornar apenas a data no formato ISO (YYYY-MM-DD)
   return format(belemDate, 'yyyy-MM-dd');
+}
+
+// ============================================================================
+// FUNÇÕES CONSOLIDADAS DE src/config/timezone.ts
+// ============================================================================
+
+/**
+ * Alias para getNowInBelem - para compatibilidade com código que usava timezone.ts
+ * @deprecated Use getNowInBelem() diretamente
+ */
+export function getCurrentDateTime(): Date {
+  return getNowInBelem();
+}
+
+/**
+ * Alias para getTodayLocalDate - para compatibilidade com código que usava timezone.ts
+ * @deprecated Use getTodayLocalDate() diretamente
+ */
+export function getCurrentDate(): string {
+  return getTodayLocalDate();
+}
+
+/**
+ * Converte uma data/hora para o fuso horário de Belém
+ * 
+ * @param date - Data em UTC ou string ISO
+ * @returns Date object convertido para America/Belem
+ * 
+ * @example
+ * const dataUTC = new Date('2025-11-17T13:30:00Z');
+ * const dataBelem = toBelemTime(dataUTC);
+ * console.log(dataBelem); // 2025-11-17 10:30:00 (UTC-3)
+ */
+export function toBelemTime(date: Date | string): Date {
+  const dateObj = typeof date === 'string' ? parseISO(date) : date;
+  return toZonedTime(dateObj, BELEM_TIMEZONE);
+}
+
+/**
+ * Formata uma data no fuso horário de Belém com formato customizável
+ * 
+ * @param date - Data a ser formatada
+ * @param formatStr - Formato desejado (padrão date-fns)
+ * @returns string com data formatada
+ * 
+ * @example
+ * const data = new Date('2025-11-17T13:30:00Z');
+ * const formatada = formatBelemDate(data, 'dd/MM/yyyy HH:mm');
+ * console.log(formatada); // "17/11/2025 10:30"
+ */
+export function formatBelemDate(date: Date | string, formatStr: string = 'dd/MM/yyyy'): string {
+  const dateObj = typeof date === 'string' ? parseISO(date) : date;
+  return formatInTimeZone(dateObj, BELEM_TIMEZONE, formatStr, { locale: ptBR });
+}
+
+/**
+ * Verifica se uma data está no futuro (considerando fuso horário de Belém)
+ * 
+ * @param date - Data a ser verificada
+ * @returns true se a data é futura, false caso contrário
+ * 
+ * @example
+ * const amanha = new Date('2025-11-18');
+ * console.log(isFutureDate(amanha)); // true
+ */
+export function isFutureDate(date: Date | string): boolean {
+  const dateObj = typeof date === 'string' ? parseISO(date) : date;
+  const now = getNowInBelem();
+  return dateObj > now;
+}
+
+/**
+ * Verifica se uma data está no passado (considerando fuso horário de Belém)
+ * 
+ * @param date - Data a ser verificada
+ * @returns true se a data é passada, false caso contrário
+ * 
+ * @example
+ * const ontem = new Date('2025-11-16');
+ * console.log(isPastDate(ontem)); // true
+ */
+export function isPastDate(date: Date | string): boolean {
+  const dateObj = typeof date === 'string' ? parseISO(date) : date;
+  const now = getNowInBelem();
+  return dateObj < now;
+}
+
+/**
+ * Obtém informações completas sobre o fuso horário do sistema
+ * 
+ * @returns Objeto com informações do fuso horário
+ */
+export function getTimezoneInfo() {
+  return {
+    timezone: BELEM_TIMEZONE,
+    name: 'Horário de Belém',
+    location: 'Belém, Pará, Brasil',
+    utcOffset: 'UTC-3',
+    currentDate: getTodayLocalDate(),
+    currentDateTime: getCurrentDateTimeBR(),
+  };
 }

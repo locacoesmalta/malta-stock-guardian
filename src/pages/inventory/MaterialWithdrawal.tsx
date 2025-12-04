@@ -13,7 +13,7 @@ import { Minus, Plus, Trash2, CheckCircle2, AlertCircle, AlertTriangle } from "l
 import { ProductSelector } from "@/components/ProductSelector";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useProducts } from "@/hooks/useProducts";
-import { withdrawalSchema } from "@/lib/schemas";
+import { withdrawalSchema } from "@/lib/validations";
 import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
 import { useEquipmentFormAutofill } from "@/hooks/useEquipmentFormAutofill";
 import { formatPAT } from "@/lib/patUtils";

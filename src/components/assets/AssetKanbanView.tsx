@@ -12,6 +12,7 @@ import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCenter, P
 import { AssetMovementDialog, MovementData } from "./AssetMovementDialog";
 import { useAssetMovement } from "@/hooks/useAssetMovement";
 import { cn } from "@/lib/utils";
+import { getLocationLabel, getLocationVariant } from "@/lib/locationUtils";
 
 interface Asset {
   id: string;
@@ -131,36 +132,6 @@ export const AssetKanbanView = ({ assets }: AssetKanbanViewProps) => {
       assets: assets.filter((a) => a.location_type === "aguardando_laudo"),
     },
   ];
-
-  const getLocationLabel = (locationType: string) => {
-    switch (locationType) {
-      case "deposito_malta":
-        return "Depósito Malta";
-      case "em_manutencao":
-        return "Em Manutenção";
-      case "locacao":
-        return "Locação";
-      case "aguardando_laudo":
-        return "Aguardando Laudo";
-      default:
-        return locationType;
-    }
-  };
-
-  const getLocationVariant = (locationType: string) => {
-    switch (locationType) {
-      case "deposito_malta":
-        return "secondary" as const;
-      case "em_manutencao":
-        return "destructive" as const;
-      case "locacao":
-        return "default" as const;
-      case "aguardando_laudo":
-        return "warning" as const;
-      default:
-        return "secondary" as const;
-    }
-  };
 
   return (
     <>
