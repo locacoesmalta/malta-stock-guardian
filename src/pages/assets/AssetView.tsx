@@ -25,6 +25,7 @@ import { formatHourmeter } from "@/lib/hourmeterUtils";
 import { QuickFixManufacturerDialog } from "@/components/QuickFixManufacturerDialog";
 import { RetroactiveBadge } from "@/components/RetroactiveBadge";
 import { SubstitutionDecisionDialog } from "@/components/SubstitutionDecisionDialog";
+import { getLocationLabel, getLocationVariant } from "@/lib/locationUtils";
 
 export default function AssetView() {
   const { id } = useParams();
@@ -128,25 +129,6 @@ export default function AssetView() {
     navigate(`/assets/movement/${id}`);
   };
 
-  const getLocationLabel = (locationType: string) => {
-    switch (locationType) {
-      case "deposito_malta": return "Depósito Malta";
-      case "em_manutencao": return "Em Manutenção";
-      case "locacao": return "Locação";
-      case "aguardando_laudo": return "Aguardando Laudo";
-      default: return locationType;
-    }
-  };
-
-  const getLocationVariant = (locationType: string) => {
-    switch (locationType) {
-      case "deposito_malta": return "secondary" as const;
-      case "em_manutencao": return "destructive" as const;
-      case "locacao": return "default" as const;
-      case "aguardando_laudo": return "outline" as const;
-      default: return "secondary" as const;
-    }
-  };
 
   if (isLoading) {
     return (

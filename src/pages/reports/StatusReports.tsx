@@ -15,6 +15,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { DeadlineStatusBadge } from "@/components/DeadlineStatusBadge";
 import { differenceInDays, parseISO } from "date-fns";
+import { getLocationLabel, getLocationVariant } from "@/lib/locationUtils";
 
 type FilterType = "deposito_malta" | "em_manutencao" | "locacao" | "aguardando_laudo" | null;
 
@@ -63,34 +64,6 @@ export default function StatusReports() {
       title: "Funcionalidade em desenvolvimento",
       description: "O recurso de envio será implementado em breve.",
     });
-  };
-
-  const getLocationLabel = (locationType: string) => {
-    const labels: Record<string, string> = {
-      deposito_malta: "Depósito Malta",
-      em_manutencao: "Em Manutenção",
-      locacao: "Locação",
-      aguardando_laudo: "Aguardando Laudo",
-      liberado_locacao: "Liberado para Locação",
-    };
-    return labels[locationType] || locationType;
-  };
-
-  const getLocationVariant = (locationType: string) => {
-    switch (locationType) {
-      case "deposito_malta":
-        return "secondary" as const;
-      case "liberado_locacao":
-        return "outline" as const;
-      case "em_manutencao":
-        return "destructive" as const;
-      case "locacao":
-        return "default" as const;
-      case "aguardando_laudo":
-        return "warning" as const;
-      default:
-        return "secondary" as const;
-    }
   };
 
   const calculateDaysInMaintenance = (asset: any) => {

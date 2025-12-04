@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, RefreshCw, Move } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { getLocationLabel, getLocationVariant } from "@/lib/locationUtils";
 
 interface SubstitutionDecisionDialogProps {
   asset: {
@@ -30,26 +31,6 @@ interface SubstitutionDecisionDialogProps {
 // 🎯 FASE 3: Este diálogo agora só define SE é substituição
 // A escolha de DESTINOS foi movida para AssetSubstitution.tsx
 // onde o operador tem controle total sobre onde cada equipamento vai
-
-const getLocationLabel = (locationType: string) => {
-  switch (locationType) {
-    case "deposito_malta": return "Depósito Malta";
-    case "em_manutencao": return "Em Manutenção";
-    case "locacao": return "Locação";
-    case "aguardando_laudo": return "Aguardando Laudo";
-    default: return locationType;
-  }
-};
-
-const getLocationVariant = (locationType: string) => {
-  switch (locationType) {
-    case "deposito_malta": return "secondary" as const;
-    case "em_manutencao": return "destructive" as const;
-    case "locacao": return "default" as const;
-    case "aguardando_laudo": return "outline" as const;
-    default: return "secondary" as const;
-  }
-};
 
 export function SubstitutionDecisionDialog({
   asset,
