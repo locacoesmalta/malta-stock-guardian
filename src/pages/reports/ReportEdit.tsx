@@ -27,6 +27,7 @@ interface ReportPart {
   productCode: string;
   purchasePrice: number | null;
   isNonCataloged?: boolean;
+  isRemoved?: boolean;
 }
 
 interface PhotoData {
@@ -177,6 +178,17 @@ const ReportEdit = () => {
     setParts(updatedParts);
   };
 
+  const handleRemovePart = (index: number) => {
+    const part = parts[index];
+    
+    // Mark as removed instead of deleting (soft delete for history)
+    const updatedParts = [...parts];
+    updatedParts[index] = { ...part, isRemoved: true, quantity_used: 0 };
+    setParts(updatedParts);
+    
+    toast.success(`Peça "${part.productName}" removida da lista`);
+  };
+
   const handlePhotoChange = (index: number, file: File | null) => {
     const updatedPhotos = [...photos];
     if (file) {
@@ -254,7 +266,7 @@ const ReportEdit = () => {
       return;
     }
 
-    const usedParts = parts.filter(p => p.quantity_used > 0);
+    const usedParts = parts.filter(p => p.quantity_used > 0 && !p.isRemoved);
     if (usedParts.length === 0) {
       toast.error("Selecione pelo menos uma peça utilizada!");
       return;
@@ -480,6 +492,7 @@ const ReportEdit = () => {
             <ReportPartsManager
               parts={parts}
               onUpdateQuantity={updatePartQuantity}
+              onRemovePart={handleRemovePart}
               loadingWithdrawals={loadingWithdrawals}
             />
 
