@@ -30,6 +30,10 @@ interface ReportWithTraceability {
   company: string;
   technician_name: string;
   service_comments: string;
+  considerations: string | null;
+  observations: string | null;
+  receiver: string | null;
+  responsible: string | null;
   report_parts: ReportPartWithTraceability[];
   report_external_services?: Array<{
     id: string;
@@ -68,6 +72,10 @@ export const useReportsWithTraceability = (options?: UseReportsWithTraceabilityO
           company,
           technician_name,
           service_comments,
+          considerations,
+          observations,
+          receiver,
+          responsible,
           report_parts(
             id,
             product_id,

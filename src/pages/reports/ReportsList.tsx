@@ -122,6 +122,10 @@ const ReportsList = () => {
             .photo-item { page-break-inside: avoid; }
             .photo-item img { width: 100%; max-height: 300px; object-fit: contain; border: 1px solid #ddd; }
             .photo-comment { margin-top: 8px; font-size: 14px; }
+            .text-section { margin: 20px 0; padding: 15px; background: #f9fafb; border-radius: 8px; }
+            .text-section-title { font-weight: bold; color: #374151; margin-bottom: 8px; }
+            .signatures-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; }
+            .signature-box { padding: 15px; border: 1px solid #ddd; border-radius: 4px; text-align: center; }
             @media print { .no-print { display: none; } }
           </style>
         </head>
@@ -129,18 +133,34 @@ const ReportsList = () => {
           <h1>Malta Locações - Relatório de Manutenção</h1>
           
           <div class="info-grid">
-          <div class="info-item"><strong>Código PAT:</strong> ${report.equipment_code}</div>
+            <div class="info-item"><strong>Código PAT:</strong> ${report.equipment_code}</div>
             <div class="info-item"><strong>Equipamento:</strong> ${report.equipment_name || 'N/A'}</div>
             <div class="info-item"><strong>Obra:</strong> ${report.work_site}</div>
             <div class="info-item"><strong>Empresa:</strong> ${report.company}</div>
             <div class="info-item"><strong>Funcionário:</strong> ${report.technician_name}</div>
             <div class="info-item"><strong>Data:</strong> ${formatBRFromYYYYMMDD(report.report_date)}</div>
+            ${report.receiver ? `<div class="info-item"><strong>Recebedor:</strong> ${report.receiver}</div>` : ''}
+            ${report.responsible ? `<div class="info-item"><strong>Responsável:</strong> ${report.responsible}</div>` : ''}
           </div>
 
-          <div style="margin: 20px 0;">
-            <strong>Comentários do Serviço:</strong>
+          <div class="text-section">
+            <div class="text-section-title">Comentários do Serviço:</div>
             <p>${report.service_comments}</p>
           </div>
+
+          ${report.considerations ? `
+          <div class="text-section">
+            <div class="text-section-title">Considerações:</div>
+            <p>${report.considerations}</p>
+          </div>
+          ` : ''}
+
+          ${report.observations ? `
+          <div class="text-section">
+            <div class="text-section-title">Observações:</div>
+            <p>${report.observations}</p>
+          </div>
+          ` : ''}
 
           <h2>Peças Utilizadas e Serviços Externos</h2>
           <table class="parts-table">
