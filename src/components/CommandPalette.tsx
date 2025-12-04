@@ -37,8 +37,10 @@ interface CommandItem {
 export const CommandPalette = () => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { data: products } = useProductsQuery();
-  const { data: assets } = useAssetsQuery();
+  
+  // Lazy load: queries só executam quando o dialog abre
+  const { data: products } = useProductsQuery(open);
+  const { data: assets } = useAssetsQuery(open);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {

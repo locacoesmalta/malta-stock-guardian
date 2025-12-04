@@ -2,7 +2,6 @@ import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -68,7 +67,7 @@ const MaintenancePlan = lazy(() => import("./pages/maintenance/MaintenancePlan")
 const MaintenancePlansList = lazy(() => import("./pages/maintenance/MaintenancePlansList"));
 const MaintenancePlanView = lazy(() => import("./pages/maintenance/MaintenancePlanView"));
 
-const queryClient = new QueryClient();
+
 
 const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -141,8 +140,7 @@ const LoadingFallback = () => (
 );
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+  <TooltipProvider>
       <ErrorBoundary>
         <Toaster />
         <Sonner />
@@ -489,9 +487,8 @@ const App = () => (
             </Suspense>
           </AuthProvider>
         </BrowserRouter>
-      </ErrorBoundary>
-    </TooltipProvider>
-  </QueryClientProvider>
+    </ErrorBoundary>
+  </TooltipProvider>
 );
 
 export default App;
