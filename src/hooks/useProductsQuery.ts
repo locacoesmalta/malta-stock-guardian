@@ -29,9 +29,10 @@ const fetchProducts = async (): Promise<Product[]> => {
   return data || [];
 };
 
-export const useProductsQuery = () => {
+export const useProductsQuery = (enabled: boolean = true) => {
   return useQuery({
     queryKey: ["products"],
     queryFn: fetchProducts,
+    enabled,
   });
 };

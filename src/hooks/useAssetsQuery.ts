@@ -52,9 +52,10 @@ const fetchAssets = async (): Promise<Asset[]> => {
   return data || [];
 };
 
-export const useAssetsQuery = () => {
+export const useAssetsQuery = (enabled: boolean = true) => {
   return useQuery({
     queryKey: ["assets"],
     queryFn: fetchAssets,
+    enabled,
   });
 };

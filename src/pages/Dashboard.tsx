@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { StockBadge } from "@/components/StockBadge";
 import { Package, AlertTriangle, TrendingUp, Search } from "lucide-react";
 import { toast } from "sonner";
-import { useProductsQuery } from "@/hooks/useProductsQuery";
+import { useDashboardData } from "@/hooks/useDashboardData";
 import { BackButton } from "@/components/BackButton";
 import { StockTrendChart } from "@/components/dashboard/StockTrendChart";
 import { LowStockAlerts } from "@/components/dashboard/LowStockAlerts";
@@ -14,23 +14,22 @@ import { ActionableDashboard } from "@/components/dashboard/ActionableDashboard"
 
 const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const { data: products = [], isLoading, error } = useProductsQuery();
+  const { data, isLoading, error } = useDashboardData();
 
   if (error) {
     toast.error("Erro ao carregar produtos");
   }
+
+  const products = data?.products || [];
+  const lowStockProducts = data?.lowStockProducts || [];
+  const outOfStockProducts = data?.outOfStockProducts || [];
+  const totalProducts = data?.totalProducts || 0;
 
   const filteredProducts = products.filter(
     (product) =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.code.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const lowStockProducts = products.filter(
-    (p) => p.quantity <= p.min_quantity && p.quantity > 0
-  );
-  const outOfStockProducts = products.filter((p) => p.quantity <= 0);
-  const totalProducts = products.length;
 
   return (
     <div className="space-y-4 sm:space-y-6">
