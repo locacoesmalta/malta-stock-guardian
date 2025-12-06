@@ -25,6 +25,11 @@ const checkRateLimit = (clientIp: string, maxRequests: number = 100, windowMs: n
   return true;
 };
 
+// 🔒 SECURITY: Escapar caracteres especiais ILIKE para prevenir manipulação de query
+const escapeLike = (str: string): string => {
+  return str.replace(/[%_\\]/g, '\\$&');
+};
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -68,8 +73,10 @@ Deno.serve(async (req) => {
         .select('*')
         .order('name');
 
+      // 🔒 SECURITY: Escape ILIKE special characters
       if (searchTerm) {
-        query = query.or(`name.ilike.%${searchTerm}%,code.ilike.%${searchTerm}%`);
+        const escaped = escapeLike(searchTerm);
+        query = query.or(`name.ilike.%${escaped}%,code.ilike.%${escaped}%`);
       }
 
       if (minStock) {
@@ -156,16 +163,17 @@ Deno.serve(async (req) => {
         .order('created_at', { ascending: false })
         .limit(parseInt(limit));
 
+      // 🔒 SECURITY: Escape ILIKE special characters
       if (workSite) {
-        query = query.ilike('work_site', `%${workSite}%`);
+        query = query.ilike('work_site', `%${escapeLike(workSite)}%`);
       }
 
       if (company) {
-        query = query.ilike('company', `%${company}%`);
+        query = query.ilike('company', `%${escapeLike(company)}%`);
       }
 
       if (equipmentCode) {
-        query = query.ilike('equipment_code', `%${equipmentCode}%`);
+        query = query.ilike('equipment_code', `%${escapeLike(equipmentCode)}%`);
       }
 
       if (productId) {
@@ -231,8 +239,10 @@ Deno.serve(async (req) => {
         .order('created_at', { ascending: false })
         .limit(parseInt(limit));
 
+      // 🔒 SECURITY: Escape ILIKE special characters
       if (searchTerm) {
-        query = query.or(`asset_code.ilike.%${searchTerm}%,equipment_name.ilike.%${searchTerm}%`);
+        const escaped = escapeLike(searchTerm);
+        query = query.or(`asset_code.ilike.%${escaped}%,equipment_name.ilike.%${escaped}%`);
       }
 
       if (locationType) {
@@ -240,11 +250,13 @@ Deno.serve(async (req) => {
       }
 
       if (company) {
-        query = query.or(`rental_company.ilike.%${company}%,maintenance_company.ilike.%${company}%`);
+        const escaped = escapeLike(company);
+        query = query.or(`rental_company.ilike.%${escaped}%,maintenance_company.ilike.%${escaped}%`);
       }
 
       if (workSite) {
-        query = query.or(`rental_work_site.ilike.%${workSite}%,maintenance_work_site.ilike.%${workSite}%`);
+        const escaped = escapeLike(workSite);
+        query = query.or(`rental_work_site.ilike.%${escaped}%,maintenance_work_site.ilike.%${escaped}%`);
       }
 
       const { data, error } = await query;
