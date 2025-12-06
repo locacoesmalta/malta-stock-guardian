@@ -42,6 +42,11 @@ const normalizeText = (text: string | null | undefined): string => {
   return text.trim().toUpperCase();
 };
 
+// 🔒 SECURITY: Escapar caracteres especiais ILIKE para prevenir manipulação de query
+const escapeLike = (str: string): string => {
+  return str.replace(/[%_\\]/g, '\\$&');
+};
+
 const validateRequiredFields = (data: any, locationType: string): { valid: boolean; errors: string[] } => {
   const errors: string[] = [];
   
@@ -112,7 +117,26 @@ Deno.serve(async (req) => {
   const pathParts = url.pathname.split('/').filter(Boolean);
   const endpoint = pathParts[pathParts.length - 1];
 
-  // ========== GET /catalog - Endpoint público para catálogo de equipamentos ==========
+  // 🔒 SECURITY: Verificar API Key para TODOS os endpoints (incluindo catalog e availability)
+  const authHeader = req.headers.get('x-api-key');
+  if (authHeader !== n8nApiKey) {
+    console.log('❌ Unauthorized access attempt to sync-assets API');
+    return new Response(
+      JSON.stringify({ error: 'Unauthorized - Invalid API Key' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // Rate limiting para TODOS os endpoints
+  const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+  if (!checkRateLimit(clientIp, 100, 60000)) { // 100 req/min para leitura
+    return new Response(
+      JSON.stringify({ error: 'Rate limit exceeded. Try again later.' }),
+      { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // ========== GET /catalog - Catálogo de equipamentos (autenticado) ==========
   if (endpoint === 'catalog' && req.method === 'GET') {
     try {
       console.log('📋 Fetching equipment rental catalog...');
@@ -187,13 +211,12 @@ Deno.serve(async (req) => {
     }
   }
 
-  // ========== GET /availability - Endpoint público para equipamentos disponíveis ==========
+  // ========== GET /availability - Equipamentos disponíveis (autenticado) ==========
   if (endpoint === 'availability' && req.method === 'GET') {
     try {
       console.log('📦 Fetching available equipment for rental...');
 
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
-      const url = new URL(req.url);
       const nameFilter = url.searchParams.get('name');
 
       // Query base: equipamentos no Depósito Malta (disponíveis)
@@ -204,9 +227,9 @@ Deno.serve(async (req) => {
         .is('deleted_at', null)
         .order('equipment_name');
 
-      // Filtro opcional por nome (busca parcial case-insensitive)
+      // 🔒 SECURITY: Filtro com escape de caracteres especiais ILIKE
       if (nameFilter) {
-        query = query.ilike('equipment_name', `%${nameFilter}%`);
+        query = query.ilike('equipment_name', `%${escapeLike(nameFilter)}%`);
       }
 
       const { data: availableAssets, error: queryError } = await query;
@@ -256,25 +279,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Rate limiting para operações de escrita
-    const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
-    
-    if (!checkRateLimit(clientIp, 50, 60000)) { // 50 req/min para operações de escrita
-      return new Response(
-        JSON.stringify({ error: 'Rate limit exceeded. Try again later.' }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Validate API Key para operações de escrita
-    const authHeader = req.headers.get('x-api-key');
-    if (authHeader !== n8nApiKey) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized - Invalid API Key' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const action = pathParts[pathParts.length - 2] || endpoint;
 
