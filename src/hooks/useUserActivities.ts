@@ -10,6 +10,7 @@ export interface UserActivitySummary {
   user_name: string | null;
   total_actions: number;
   days_active: number;
+  first_activity: string;
   last_activity: string;
   actions_breakdown: {
     INSERT: number;
@@ -117,6 +118,7 @@ export const useUserActivities = (options: UseUserActivitiesOptions = {}) => {
             user_name: log.user_name,
             total_actions: 0,
             days_active: 0,
+            first_activity: log.created_at,
             last_activity: log.created_at,
             actions_breakdown: {
               INSERT: 0,
@@ -138,7 +140,10 @@ export const useUserActivities = (options: UseUserActivitiesOptions = {}) => {
           summary.actions_breakdown.DELETE++;
         }
 
-        // Atualizar última atividade
+        // Atualizar primeira e última atividade
+        if (log.created_at < summary.first_activity) {
+          summary.first_activity = log.created_at;
+        }
         if (log.created_at > summary.last_activity) {
           summary.last_activity = log.created_at;
         }

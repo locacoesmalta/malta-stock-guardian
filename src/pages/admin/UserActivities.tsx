@@ -314,6 +314,8 @@ export default function UserActivities() {
                   "dd/MM/yyyy 'às' HH:mm",
                   { locale: ptBR }
                 );
+                const firstTime = format(new Date(user.first_activity), "HH:mm", { locale: ptBR });
+                const lastTime = format(new Date(user.last_activity), "HH:mm", { locale: ptBR });
 
                 return (
                   <div
@@ -329,6 +331,17 @@ export default function UserActivities() {
                           </h3>
                         </div>
                         <p className="text-sm text-muted-foreground">{user.user_email}</p>
+                        
+                        {/* Horários de primeira e última atividade */}
+                        <div className="flex items-center gap-4 mt-2 text-sm">
+                          <span className="flex items-center gap-1 text-green-600 font-medium">
+                            🌅 Início: {firstTime}
+                          </span>
+                          <span className="flex items-center gap-1 text-blue-600 font-medium">
+                            🌙 Última: {lastTime}
+                          </span>
+                        </div>
+                        
                         <div className="flex flex-wrap gap-2 mt-2">
                           <Badge variant="secondary">
                             {user.total_actions} ações
