@@ -1,7 +1,30 @@
 import { useState } from "react";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { parseLocalDate, toLocalDateString } from "@/lib/dateUtils";
+
+// Funções helper para formatação segura de datas
+const safeFormatTime = (dateStr: string | null | undefined): string => {
+  if (!dateStr) return "--:--";
+  try {
+    const date = new Date(dateStr);
+    if (!isValid(date)) return "--:--";
+    return format(date, "HH:mm", { locale: ptBR });
+  } catch {
+    return "--:--";
+  }
+};
+
+const safeFormatDateTime = (dateStr: string | null | undefined): string => {
+  if (!dateStr) return "Data não disponível";
+  try {
+    const date = new Date(dateStr);
+    if (!isValid(date)) return "Data não disponível";
+    return format(date, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+  } catch {
+    return "Data não disponível";
+  }
+};
 import { ArrowLeft, Calendar, Download, Search, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -309,13 +332,9 @@ export default function UserActivities() {
             <div className="space-y-3">
               {filteredUsers.map((user) => {
                 const indicator = getActivityIndicator(user.last_activity);
-                const lastActivityFormatted = format(
-                  new Date(user.last_activity),
-                  "dd/MM/yyyy 'às' HH:mm",
-                  { locale: ptBR }
-                );
-                const firstTime = format(new Date(user.first_activity), "HH:mm", { locale: ptBR });
-                const lastTime = format(new Date(user.last_activity), "HH:mm", { locale: ptBR });
+                const lastActivityFormatted = safeFormatDateTime(user.last_activity);
+                const firstTime = safeFormatTime(user.first_activity);
+                const lastTime = safeFormatTime(user.last_activity);
 
                 return (
                   <div
