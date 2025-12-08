@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { useReceipts } from "@/hooks/useReceipts";
 import { BackButton } from "@/components/BackButton";
 import { Loader2, FileBarChart, Download, Eye } from "lucide-react";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 
@@ -31,8 +31,8 @@ export const ReceiptMovementReport = () => {
   const { receipts, isLoading } = useReceipts();
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'entrega' | 'devolucao'>('all');
-  const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
-  const [endDate, setEndDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [startDate, setStartDate] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   // Filtrar comprovantes
   const filteredReceipts = receipts?.filter((receipt) => {

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { parseLocalDate, toLocalDateString } from "@/lib/dateUtils";
 import { ArrowLeft, Calendar, Download, Search, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -227,8 +228,8 @@ export default function UserActivities() {
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="date"
-                  value={format(startDate, "yyyy-MM-dd")}
-                  onChange={(e) => setStartDate(new Date(e.target.value))}
+                  value={toLocalDateString(startDate)}
+                  onChange={(e) => setStartDate(parseLocalDate(e.target.value))}
                   className="pl-10"
                 />
               </div>
@@ -240,8 +241,8 @@ export default function UserActivities() {
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="date"
-                  value={format(endDate, "yyyy-MM-dd")}
-                  onChange={(e) => setEndDate(new Date(e.target.value))}
+                  value={toLocalDateString(endDate)}
+                  onChange={(e) => setEndDate(parseLocalDate(e.target.value))}
                   className="pl-10"
                 />
               </div>
