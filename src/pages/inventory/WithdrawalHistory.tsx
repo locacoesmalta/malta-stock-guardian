@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { formatBRFromYYYYMMDD } from "@/lib/dateUtils";
 import { ptBR } from "date-fns/locale";
 import { Search, FileText, FileEdit, AlertTriangle } from "lucide-react";
 import { useWithdrawalsQuery } from "@/hooks/useWithdrawalsQuery";
@@ -90,7 +91,7 @@ const WithdrawalHistory = () => {
         const unitCost = (w.products as any)?.purchase_price || 0;
         const totalCost = unitCost * w.quantity;
         return [
-          format(new Date(w.withdrawal_date), "dd/MM/yyyy", { locale: ptBR }),
+          formatBRFromYYYYMMDD(w.withdrawal_date),
           isSale ? "VENDA" : "RETIRADA",
           w.products?.name || "Sem permissão",
           w.products?.code || "-",
@@ -353,9 +354,7 @@ const WithdrawalHistory = () => {
                           Qtd: {withdrawal.quantity}
                         </div>
                         <div className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
-                          {format(new Date(withdrawal.withdrawal_date), "dd/MM/yyyy", {
-                            locale: ptBR,
-                          })}
+                          {formatBRFromYYYYMMDD(withdrawal.withdrawal_date)}
                         </div>
                         <div className="text-xs text-muted-foreground truncate max-w-[150px] sm:max-w-none">
                           {withdrawal.profiles?.full_name || withdrawal.profiles?.email || "-"}
