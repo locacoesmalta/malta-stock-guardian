@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { getISOStringInBelem, formatBelemDate, getNowInBelem } from "@/lib/dateUtils";
 import { useRegistrarEventoPatrimonio } from "./useRegistrarEventoPatrimonio";
 
 interface MoveAssetParams {
@@ -31,7 +31,7 @@ export const useAssetMovement = () => {
       // Preparar dados de atualização
       const updateData: any = {
         location_type: toStatus,
-        updated_at: new Date().toISOString(),
+        updated_at: getISOStringInBelem(),
       };
 
       // Limpar dados do status anterior
@@ -63,7 +63,7 @@ export const useAssetMovement = () => {
       } else if (toStatus === "deposito_malta") {
         updateData.deposito_description = movementData.deposito_description;
       } else if (toStatus === "aguardando_laudo") {
-        updateData.inspection_start_date = new Date().toISOString();
+        updateData.inspection_start_date = getISOStringInBelem();
       }
 
       // Atualizar no banco
@@ -85,7 +85,7 @@ export const useAssetMovement = () => {
         }
       };
 
-      let detalhes = `Movido de ${getStatusLabel(fromStatus)} para ${getStatusLabel(toStatus)} em ${format(new Date(), "dd/MM/yyyy")}`;
+      let detalhes = `Movido de ${getStatusLabel(fromStatus)} para ${getStatusLabel(toStatus)} em ${formatBelemDate(getNowInBelem(), "dd/MM/yyyy")}`;
       
       if (toStatus === "locacao") {
         detalhes += `. Empresa: ${movementData.rental_company}, Obra: ${movementData.rental_work_site}`;

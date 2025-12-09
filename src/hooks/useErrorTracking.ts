@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { getISOStringInBelem } from "@/lib/dateUtils";
 
 interface ErrorContext {
   acao?: string; // Ex: "Movimentando equipamento", "Criando relatório"
@@ -189,7 +190,7 @@ export const useErrorTracking = () => {
   }: ErrorTrackingData): Promise<string | null> => {
     try {
       const currentRoute = window.location.pathname;
-      const timestamp = new Date().toISOString();
+      const timestamp = getISOStringInBelem();
       const browserInfo = getBrowserInfo();
 
       // Buscar informações do usuário se estiver autenticado
@@ -298,7 +299,7 @@ export const useErrorTracking = () => {
           .from("error_logs")
           .update({
             webhook_sent: true,
-            webhook_sent_at: new Date().toISOString(),
+            webhook_sent_at: getISOStringInBelem(),
           })
           .eq("id", data.id);
       }

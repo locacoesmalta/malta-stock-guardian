@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getISOStringInBelem } from "@/lib/dateUtils";
 
 type LogCategory = 'AUTH' | 'SESSION' | 'PERMISSION' | 'SYSTEM' | 'ERROR';
 
@@ -11,7 +12,7 @@ class Logger {
   private isProd = import.meta.env.PROD;
 
   private formatMessage(category: LogCategory, message: string, data?: LogData): string {
-    const timestamp = new Date().toISOString();
+    const timestamp = getISOStringInBelem();
     return `[${category} ${timestamp}] ${message}`;
   }
 
@@ -72,7 +73,7 @@ class Logger {
           category,
           message,
           data: data || null,
-          timestamp: new Date().toISOString(),
+          timestamp: getISOStringInBelem(),
         },
       });
     } catch (err) {
@@ -94,7 +95,7 @@ class Logger {
         user_email: user?.email,
         page_route: window.location.pathname,
         additional_data: additionalData || null,
-        timestamp: new Date().toISOString(),
+        timestamp: getISOStringInBelem(),
       });
     } catch (err) {
       console.warn('[LOGGER] Failed to persist error:', err);

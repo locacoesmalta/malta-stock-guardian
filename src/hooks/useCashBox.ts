@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { getISOStringInBelem } from "@/lib/dateUtils";
 
 export interface CashBox {
   id: string;
@@ -144,7 +145,7 @@ export const useCashBox = () => {
       const { data, error } = await supabase
         .from("cash_boxes")
         .update({
-          closed_at: new Date().toISOString(),
+          closed_at: getISOStringInBelem(),
           status: "closed",
         })
         .eq("id", cashBoxId)
@@ -187,9 +188,9 @@ export const useCashBox = () => {
           .from("cash_boxes")
           .update({ 
             status: "closed", 
-            closed_at: new Date().toISOString(),
+            closed_at: getISOStringInBelem(),
             edited_by: user?.id,
-            edited_at: new Date().toISOString()
+            edited_at: getISOStringInBelem()
           })
           .eq("status", "open")
           .neq("id", cashBoxId);
@@ -204,7 +205,7 @@ export const useCashBox = () => {
           closed_at: null,
           status: "open",
           edited_by: user?.id,
-          edited_at: new Date().toISOString()
+          edited_at: getISOStringInBelem()
         })
         .eq("id", cashBoxId)
         .select()

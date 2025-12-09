@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { formatBelemDate } from "@/lib/dateUtils";
 
 export interface UserActivityDetail {
   id: string;
@@ -44,12 +44,12 @@ export const useUserActivityDetails = (options: UseUserActivityDetailsOptions) =
 
       // Aplicar filtros de data
       if (startDate) {
-        const startStr = format(startDate, "yyyy-MM-dd 00:00:00");
+        const startStr = formatBelemDate(startDate, "yyyy-MM-dd") + " 00:00:00";
         query = query.gte("created_at", startStr);
       }
 
       if (endDate) {
-        const endStr = format(endDate, "yyyy-MM-dd 23:59:59");
+        const endStr = formatBelemDate(endDate, "yyyy-MM-dd") + " 23:59:59";
         query = query.lte("created_at", endStr);
       }
 

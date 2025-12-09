@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getISOStringInBelem } from "@/lib/dateUtils";
 
 interface SoftDeleteParams {
   table: "assets" | "products" | "reports" | "equipment_receipts";
@@ -21,7 +22,7 @@ export const useSoftDelete = () => {
     mutationFn: async ({ table, id }: SoftDeleteParams) => {
       const { error } = await supabase
         .from(table)
-        .update({ deleted_at: new Date().toISOString() })
+        .update({ deleted_at: getISOStringInBelem() })
         .eq("id", id);
 
       if (error) throw error;

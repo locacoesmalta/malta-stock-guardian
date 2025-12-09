@@ -7,6 +7,7 @@ import { Loader2, AlertTriangle, CheckCircle2, Database } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useConfirm } from "@/hooks/useConfirm";
+import { getISOStringInBelem } from "@/lib/dateUtils";
 
 interface PreviewData {
   count: number;
@@ -143,7 +144,7 @@ export function ManualDataMigration() {
               rental_start_date: rentalStartDate,
               rental_end_date: oldAsset.rental_end_date,
               rental_contract_number: oldAsset.rental_contract_number,
-              updated_at: new Date().toISOString(),
+              updated_at: getISOStringInBelem(),
             })
             .eq("id", substitute.id);
 

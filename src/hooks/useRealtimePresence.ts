@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLocation } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
+import { getISOStringInBelem } from '@/lib/dateUtils';
 
 interface UseRealtimePresenceOptions {
   user: User | null;
@@ -36,7 +37,7 @@ export const useRealtimePresence = ({ user, isEnabled }: UseRealtimePresenceOpti
         user_email: user.email || '',
         user_name: user.user_metadata?.full_name || user.email || 'Usuário',
         is_online: true,
-        last_activity: new Date().toISOString(),
+        last_activity: getISOStringInBelem(),
         session_id: sessionIdRef.current,
         current_route: location.pathname,
         browser_info: browserInfo,

@@ -10,7 +10,7 @@ import { useWithdrawalsByPAT } from "@/hooks/useWithdrawalsByPAT";
 import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
 import { formatPAT } from "@/lib/patUtils";
 import { BackButton } from "@/components/BackButton";
-import { getTodayLocalDate, parseInputDateToBelem } from "@/lib/dateUtils";
+import { getTodayLocalDate, parseInputDateToBelem, getISOStringInBelem } from "@/lib/dateUtils";
 import { ReportEquipmentSelector } from "@/components/reports/ReportEquipmentSelector";
 import { ReportPartsManager } from "@/components/reports/ReportPartsManager";
 import { ReportPhotoUploader } from "@/components/reports/ReportPhotoUploader";
@@ -297,7 +297,7 @@ const ReportEdit = () => {
           observations: formData.observations,
           receiver: formData.receiver,
           responsible: formData.responsible,
-          updated_at: new Date().toISOString(),
+          updated_at: getISOStringInBelem(),
         })
         .eq("id", id);
 
