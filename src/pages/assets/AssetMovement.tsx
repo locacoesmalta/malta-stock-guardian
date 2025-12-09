@@ -18,7 +18,7 @@ import {
 import { QRScanner } from "@/components/QRScanner";
 import { RetroactiveDateWarning } from "@/components/RetroactiveDateWarning";
 import { formatPAT } from "@/lib/patUtils";
-import { getTodayLocalDate } from "@/lib/dateUtils";
+import { getTodayLocalDate, getISOStringInBelem } from "@/lib/dateUtils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -608,7 +608,7 @@ export default function AssetMovement() {
       case "aguardando_laudo":
         return {
           location_type: "aguardando_laudo",
-          inspection_start_date: new Date().toISOString(),
+          inspection_start_date: getISOStringInBelem(),
           equipment_observations: sanitizedData.equipment_observations || null,
           malta_collaborator: sanitizedData.malta_collaborator || null,
         };
@@ -958,7 +958,7 @@ export default function AssetMovement() {
             .from("assets")
             .update({
               location_type: "aguardando_laudo",
-              inspection_start_date: new Date().toISOString(),
+              inspection_start_date: getISOStringInBelem(),
             })
             .eq("id", replacedAssetToReturn.id);
 

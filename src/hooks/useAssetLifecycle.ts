@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { getISOStringInBelem } from "@/lib/dateUtils";
 
 interface LeaseCycleData {
   rental_company: string | null;
@@ -74,8 +75,8 @@ export const useAssetLifecycle = () => {
           asset_id: assetId,
           asset_code: assetCode,
           cycle_number: nextCycleNumber,
-          cycle_started_at: cycleData.rental_start_date || new Date().toISOString(),
-          cycle_closed_at: new Date().toISOString(),
+          cycle_started_at: cycleData.rental_start_date || getISOStringInBelem(),
+          cycle_closed_at: getISOStringInBelem(),
           closed_by: user.id,
           reason: `Ciclo de locação encerrado. Cliente: ${cycleData.rental_company || "N/A"}, Obra: ${cycleData.rental_work_site || "N/A"}, Contrato: ${cycleData.rental_contract_number || "N/A"}`,
           archived_withdrawals_count: 0, // Será atualizado posteriormente se necessário
@@ -142,8 +143,8 @@ export const useAssetLifecycle = () => {
           asset_id: assetId,
           asset_code: assetCode,
           cycle_number: nextCycleNumber,
-          cycle_started_at: cycleData.maintenance_arrival_date || new Date().toISOString(),
-          cycle_closed_at: new Date().toISOString(),
+          cycle_started_at: cycleData.maintenance_arrival_date || getISOStringInBelem(),
+          cycle_closed_at: getISOStringInBelem(),
           closed_by: user.id,
           reason: `Ciclo de manutenção encerrado (${durationDays} dias). ${cycleData.maintenance_company || "N/A"} - ${cycleData.maintenance_work_site || "N/A"}. ${cycleData.maintenance_description || ""}`,
           archived_withdrawals_count: 0,

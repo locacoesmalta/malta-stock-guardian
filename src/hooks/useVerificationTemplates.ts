@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { VerificationSection, getDefaultSections } from "@/lib/maintenancePlanDefaults";
+import { getISOStringInBelem } from "@/lib/dateUtils";
 
 export interface VerificationTemplate {
   id: string;
@@ -156,7 +157,7 @@ export const useVerificationTemplates = () => {
           .update({
             name,
             verification_sections: sections as any,
-            updated_at: new Date().toISOString(),
+            updated_at: getISOStringInBelem(),
           })
           .eq("id", existing.id)
           .select()

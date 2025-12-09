@@ -3,11 +3,10 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRegistrarEventoPatrimonio } from "@/hooks/useRegistrarEventoPatrimonio";
-import { getTodayLocalDate } from "@/lib/dateUtils";
+import { getTodayLocalDate, getISOStringInBelem, formatBelemDate, getNowInBelem } from "@/lib/dateUtils";
 import { formatPAT } from "@/lib/patUtils";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -219,7 +218,7 @@ export default function AssetSubstitution() {
         locked_for_manual_edit: true,
         // ✅ OPERADOR DECIDE: Sistema obedece
         location_type: data.old_asset_destination,
-        updated_at: new Date().toISOString(),
+        updated_at: getISOStringInBelem(),
       };
 
       // Se operador escolheu manutenção para o equipamento antigo
@@ -250,7 +249,7 @@ export default function AssetSubstitution() {
           : asset.location_type;
 
       const newAssetData: any = {
-        updated_at: new Date().toISOString(),
+        updated_at: getISOStringInBelem(),
       };
 
       if (data.new_asset_inherits_position) {
@@ -303,7 +302,7 @@ export default function AssetSubstitution() {
 
       // Evento do equipamento ANTIGO
       const oldAssetDetails = 
-        `Substituído pelo PAT ${substituteAsset.asset_code} em ${format(new Date(data.substitution_date), "dd/MM/yyyy")}. ` +
+        `Substituído pelo PAT ${substituteAsset.asset_code} em ${formatBelemDate(data.substitution_date, "dd/MM/yyyy")}. ` +
         `Equipamento movido para ${getLocationLabel(data.old_asset_destination)} conforme decisão do operador. ` +
         `Motivo: ${data.replacement_reason}`;
 
@@ -322,9 +321,9 @@ export default function AssetSubstitution() {
       const inheritedLocationLabel = getLocationLabel(effectiveOriginalLocation);
       
       const newAssetDetails = data.new_asset_inherits_position
-        ? `Substituiu PAT ${asset.asset_code} em ${format(new Date(data.substitution_date), "dd/MM/yyyy")}. ` +
+        ? `Substituiu PAT ${asset.asset_code} em ${formatBelemDate(data.substitution_date, "dd/MM/yyyy")}. ` +
           `Herdou posição: ${inheritedLocationLabel} conforme decisão do operador.`
-        : `Substituiu PAT ${asset.asset_code} em ${format(new Date(data.substitution_date), "dd/MM/yyyy")}. ` +
+        : `Substituiu PAT ${asset.asset_code} em ${formatBelemDate(data.substitution_date, "dd/MM/yyyy")}. ` +
           `Movido para ${getLocationLabel(data.new_asset_destination!)} conforme decisão do operador.`;
 
       await registrarEvento({

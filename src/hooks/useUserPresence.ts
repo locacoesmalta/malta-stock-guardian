@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { RealtimeChannel } from "@supabase/supabase-js";
+import { getISOStringInBelem } from "@/lib/dateUtils";
 
 export interface OnlineUser {
   user_id: string;
@@ -36,7 +37,7 @@ export const useUserPresence = () => {
             user_name: (u.profiles as any)?.full_name || (u.profiles as any)?.email?.split('@')[0] || 'Usuário',
             user_email: (u.profiles as any)?.email || '',
             status: 'offline' as const,
-            last_seen: new Date().toISOString(),
+            last_seen: getISOStringInBelem(),
             is_active: true,
           }));
         
@@ -100,7 +101,7 @@ export const useUserPresence = () => {
             user_name: profile?.full_name || user.email?.split('@')[0] || 'Usuário',
             user_email: user.email || '',
             status: 'online',
-            last_seen: new Date().toISOString(),
+            last_seen: getISOStringInBelem(),
           });
         }
       });

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { getISOStringInBelem } from "@/lib/dateUtils";
 
 export interface Conversation {
   id: string;
@@ -228,7 +229,7 @@ export const useConversations = () => {
 
       const { error } = await supabase
         .from('conversation_participants')
-        .update({ last_read_at: new Date().toISOString() })
+        .update({ last_read_at: getISOStringInBelem() })
         .eq('conversation_id', conversationId)
         .eq('user_id', user.id);
 

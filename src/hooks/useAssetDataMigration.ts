@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { getISOStringInBelem } from "@/lib/dateUtils";
 
 interface MigrationResult {
   success: boolean;
@@ -270,7 +271,7 @@ export const useAssetDataMigration = () => {
                 rental_start_date: rentalStartDate,
                 rental_end_date: oldAsset.rental_end_date,
                 rental_contract_number: oldAsset.rental_contract_number,
-                updated_at: new Date().toISOString(),
+                updated_at: getISOStringInBelem(),
               })
               .eq("id", substitute.id);
 

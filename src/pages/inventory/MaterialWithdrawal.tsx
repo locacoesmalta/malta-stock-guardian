@@ -22,7 +22,7 @@ import { WithdrawalCollaboratorsManager } from "@/components/WithdrawalCollabora
 import { BackButton } from "@/components/BackButton";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
-import { getTodayLocalDate } from "@/lib/dateUtils";
+import { getTodayLocalDate, getISOStringInBelem } from "@/lib/dateUtils";
 import { useWithdrawalsByPAT } from "@/hooks/useWithdrawalsByPAT";
 import { PendingWithdrawalsAlert } from "@/components/PendingWithdrawalsAlert";
 import { RetroactiveDateWarning } from "@/components/RetroactiveDateWarning";
@@ -249,7 +249,7 @@ const MaterialWithdrawal = () => {
           asset_id: assetData.id,
           asset_code: formattedPAT,
           cycle_number: currentCycle,
-          cycle_closed_at: new Date().toISOString(),
+          cycle_closed_at: getISOStringInBelem(),
           closed_by: user?.id,
           reason: "Novo ciclo de manutenção iniciado",
           archived_withdrawals_count: pendingWithdrawals.length,

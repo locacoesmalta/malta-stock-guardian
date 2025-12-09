@@ -321,3 +321,20 @@ export function getTimezoneInfo() {
     currentDateTime: getCurrentDateTimeBR(),
   };
 }
+
+/**
+ * ⚠️ FUNÇÃO CRÍTICA: Retorna timestamp ISO no timezone de Belém
+ * USE ESTA FUNÇÃO ao salvar timestamps no banco de dados (campos updated_at, created_at, etc)
+ * 
+ * @returns string ISO timestamp com timezone correto de Belém
+ * 
+ * @example
+ * const timestamp = getISOStringInBelem();
+ * console.log(timestamp); // "2025-11-17T10:30:00.000-03:00"
+ * 
+ * // Uso em atualizações:
+ * await supabase.from("assets").update({ updated_at: getISOStringInBelem() });
+ */
+export function getISOStringInBelem(): string {
+  return formatInTimeZone(new Date(), BELEM_TIMEZONE, "yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+}
