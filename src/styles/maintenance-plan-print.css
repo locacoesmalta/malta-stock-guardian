@@ -92,13 +92,13 @@
     align-items: center !important;
     justify-content: space-between !important;
     border-bottom: 2px solid #333 !important;
-    padding-bottom: 0.15cm !important;
-    margin-bottom: 0.2cm !important;
+    padding-bottom: 0.3cm !important;
+    margin-bottom: 0.4cm !important;
     page-break-inside: avoid !important;
   }
 
   .print-logo {
-    height: 1cm !important;
+    height: 1.3cm !important;
     width: auto !important;
   }
 
@@ -108,7 +108,7 @@
   }
 
   .print-header-title h1 {
-    font-size: 11pt !important;
+    font-size: 13pt !important;
     font-weight: bold !important;
     text-transform: uppercase !important;
     margin: 0 !important;
@@ -135,7 +135,7 @@
      SEÇÕES DO RELATÓRIO - Identidade Visual Malta
      =============================================== */
   .print-section {
-    margin-bottom: 0.15cm !important;
+    margin-bottom: 0.25cm !important;
     page-break-inside: avoid !important;
   }
 
@@ -163,7 +163,7 @@
   .print-data-table th,
   .print-data-table td {
     border: 0.5pt solid #000 !important;
-    padding: 0.04cm 0.1cm !important;
+    padding: 0.08cm 0.15cm !important;
     text-align: left !important;
   }
 
@@ -178,9 +178,10 @@
   }
 
   /* ===============================================
-     TABELA DE VERIFICAÇÕES - Otimizada
+     TABELA DE VERIFICAÇÕES - SEMPRE em nova página
      =============================================== */
   .print-verification-table {
+    page-break-before: always !important;
     page-break-inside: auto !important;
     margin-bottom: 0.15cm !important;
   }
@@ -253,39 +254,39 @@
      =============================================== */
   .print-photos-section {
     page-break-inside: avoid !important;
-    margin-bottom: 0.2cm !important;
+    margin-bottom: 0.3cm !important;
   }
 
-  /* Padrão: 2 colunas para até 4 fotos (fotos maiores) */
+  /* Padrão: 2 colunas para até 4 fotos (fotos MUITO maiores) */
   .print-photos-grid {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 0.15cm !important;
+    gap: 0.2cm !important;
   }
 
   /* 3 colunas para 6+ fotos */
   .print-photos-grid.grid-3-cols {
     grid-template-columns: repeat(3, 1fr) !important;
-    gap: 0.1cm !important;
+    gap: 0.15cm !important;
   }
 
   .print-photo-item {
     border: 0.5pt solid #000 !important;
-    padding: 0.08cm !important;
+    padding: 0.1cm !important;
     page-break-inside: avoid !important;
   }
 
-  /* Fotos maiores para 2 colunas (até 4 fotos) */
+  /* Fotos GRANDES para 2 colunas (até 4 fotos) - 6cm altura */
   .print-photo-item img {
     width: 100% !important;
-    height: 4.5cm !important;
+    height: 6cm !important;
     object-fit: cover !important;
     display: block !important;
   }
 
-  /* Fotos menores para 3 colunas (6+ fotos) */
+  /* Fotos médias para 3 colunas (6+ fotos) - 4cm altura */
   .print-photos-grid.grid-3-cols .print-photo-item img {
-    height: 3cm !important;
+    height: 4cm !important;
   }
 
   .print-photo-comment {
