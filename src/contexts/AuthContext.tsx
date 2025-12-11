@@ -11,6 +11,53 @@ import { UpdateAvailableDialog } from "@/components/UpdateAvailableDialog";
 import { setStoredVersion, APP_VERSION } from "@/lib/appVersion";
 import { toast } from "@/hooks/use-toast";
 import { logger } from "@/lib/logger";
+import { getISOStringInBelem } from "@/lib/dateUtils";
+
+/**
+ * Registra evento de LOGIN no audit_logs para rastreamento de jornada
+ */
+const registerLoginEvent = async (userId: string, userEmail: string, userName: string | null) => {
+  try {
+    await supabase.from('audit_logs').insert({
+      user_id: userId,
+      user_email: userEmail,
+      user_name: userName,
+      action: 'LOGIN',
+      table_name: 'auth_session',
+      record_id: userId,
+      new_data: { 
+        login_at: getISOStringInBelem(),
+        user_agent: navigator.userAgent 
+      },
+    });
+    logger.auth('LOGIN event registered', { userId });
+  } catch (error) {
+    logger.error('Failed to register LOGIN event', error);
+  }
+};
+
+/**
+ * Registra evento de LOGOUT no audit_logs para rastreamento de jornada
+ */
+const registerLogoutEvent = async (userId: string, userEmail: string, userName: string | null, reason: string) => {
+  try {
+    await supabase.from('audit_logs').insert({
+      user_id: userId,
+      user_email: userEmail,
+      user_name: userName,
+      action: 'LOGOUT',
+      table_name: 'auth_session',
+      record_id: userId,
+      new_data: { 
+        logout_at: getISOStringInBelem(),
+        reason 
+      },
+    });
+    logger.auth('LOGOUT event registered', { userId, reason });
+  } catch (error) {
+    logger.error('Failed to register LOGOUT event', error);
+  }
+};
 
 interface UserPermissions {
   is_active: boolean;
@@ -109,8 +156,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // Defer async calls para evitar deadlock
       if (session?.user) {
-        setTimeout(() => {
+        setTimeout(async () => {
           checkAdminStatus(session.user.id);
+          
+          // Registrar evento de LOGIN quando usuário faz login
+          if (event === 'SIGNED_IN') {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', session.user.id)
+              .single();
+            
+            await registerLoginEvent(
+              session.user.id, 
+              session.user.email || 'unknown',
+              profile?.full_name || null
+            );
+          }
         }, 0);
       } else {
         setIsAdmin(false);
@@ -290,12 +352,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signOut = async () => {
+  const signOut = async (logoutReason: string = 'manual') => {
     try {
-      logger.auth('User signing out', { userId: user?.id });
+      logger.auth('User signing out', { userId: user?.id, reason: logoutReason });
       
-      // FASE 1: Deletar TODAS as sessões do usuário ao fazer logout
+      // Registrar evento de LOGOUT
       if (user?.id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+        
+        await registerLogoutEvent(
+          user.id,
+          user.email || 'unknown',
+          profile?.full_name || null,
+          logoutReason
+        );
+        
+        // Deletar TODAS as sessões do usuário ao fazer logout
         await supabase
           .from('user_presence')
           .delete()
@@ -336,7 +412,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       description: "Você foi desconectado por inatividade.",
       variant: "destructive",
     });
-    await signOut();
+    await signOut('idle_timeout');
   };
 
   const handleUpdateLogout = async () => {
@@ -344,7 +420,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       title: "Sistema Atualizado",
       description: "Uma nova versão está disponível. Por favor, faça login novamente.",
     });
-    await signOut();
+    await signOut('system_update');
     window.location.reload();
   };
 
