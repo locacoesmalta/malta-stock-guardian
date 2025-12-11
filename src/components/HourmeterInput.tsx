@@ -63,7 +63,7 @@ export function HourmeterInput({
         <p className="text-sm text-destructive">{error || localError}</p>
       )}
       <p className="text-xs text-muted-foreground">
-        Formato: HH:MM:SS (ex: 1:30:45 será convertido para 001:30:45)
+        Formato: HHH:MM:SS (ex: 1109:33:30 para equipamentos com alta utilização)
       </p>
     </div>
   );
