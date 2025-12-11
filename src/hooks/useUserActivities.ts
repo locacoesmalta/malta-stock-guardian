@@ -68,6 +68,7 @@ export const useUserActivities = (options: UseUserActivitiesOptions = {}) => {
     queryKey: ["user_activities", startDate, endDate, actionTypes],
     queryFn: async () => {
       // Construir query base - apenas usuários reais (não sistema)
+      // Incluir LOGIN/LOGOUT para rastreamento de jornada
       let query = supabase
         .from("audit_logs")
         .select("user_id, user_email, user_name, action, created_at")
@@ -86,9 +87,11 @@ export const useUserActivities = (options: UseUserActivitiesOptions = {}) => {
         query = query.lte("created_at", endStr);
       }
 
-      // Aplicar filtro de tipos de ação
+      // Aplicar filtro de tipos de ação (incluindo LOGIN/LOGOUT se não houver filtro)
       if (actionTypes && actionTypes.length > 0) {
-        query = query.in("action", actionTypes);
+        // Sempre incluir LOGIN/LOGOUT para o cálculo de início de jornada
+        const actionsWithSession = [...actionTypes, 'LOGIN', 'LOGOUT'];
+        query = query.in("action", actionsWithSession);
       }
 
       // Ordenar por data decrescente
@@ -129,6 +132,22 @@ export const useUserActivities = (options: UseUserActivitiesOptions = {}) => {
         }
 
         const summary = userMap.get(userId)!;
+
+        // LOGIN/LOGOUT não contam como ações, apenas marcam início/fim de jornada
+        if (log.action === 'LOGIN') {
+          // LOGIN marca o início da jornada (primeira atividade)
+          if (log.created_at < summary.first_activity) {
+            summary.first_activity = log.created_at;
+          }
+          return; // Não incrementar contador de ações
+        }
+        
+        if (log.action === 'LOGOUT') {
+          // LOGOUT não altera contagem, apenas registra fim de sessão
+          return;
+        }
+
+        // Contar apenas ações reais (não LOGIN/LOGOUT)
         summary.total_actions++;
 
         // Contar por tipo de ação
@@ -140,10 +159,7 @@ export const useUserActivities = (options: UseUserActivitiesOptions = {}) => {
           summary.actions_breakdown.DELETE++;
         }
 
-        // Atualizar primeira e última atividade
-        if (log.created_at < summary.first_activity) {
-          summary.first_activity = log.created_at;
-        }
+        // Atualizar última atividade (apenas ações reais)
         if (log.created_at > summary.last_activity) {
           summary.last_activity = log.created_at;
         }
