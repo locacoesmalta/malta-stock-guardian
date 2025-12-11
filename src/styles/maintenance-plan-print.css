@@ -1,4 +1,4 @@
-/* Estilos de impressão para Plano de Manutenção */
+/* Estilos de impressão para Plano de Manutenção - OTIMIZADO */
 
 /* ===============================================
    ESTILOS DE TELA (Esconder seção print-only)
@@ -11,10 +11,10 @@
    ESTILOS DE IMPRESSÃO
    =============================================== */
 @media print {
-  /* Configuração da página A4 - Margens padrão Malta */
+  /* Configuração da página A4 - Margens otimizadas */
   @page {
     size: A4;
-    margin: 20mm 15mm 20mm 15mm; /* top right bottom left */
+    margin: 10mm 12mm 10mm 12mm; /* Reduzido para maximizar área útil */
   }
 
   /* Reset básico para impressão */
@@ -29,8 +29,8 @@
     overflow: visible !important;
     margin: 0 !important;
     padding: 0 !important;
-    font-size: 10pt !important;
-    line-height: 1.4 !important;
+    font-size: 9pt !important;
+    line-height: 1.3 !important;
     color: #000 !important;
     background: #fff !important;
     font-family: Arial, Helvetica, sans-serif !important;
@@ -91,14 +91,14 @@
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    border-bottom: 2px solid #000 !important;
-    padding-bottom: 0.2cm !important;
-    margin-bottom: 0.3cm !important;
+    border-bottom: 2px solid #333 !important;
+    padding-bottom: 0.15cm !important;
+    margin-bottom: 0.2cm !important;
     page-break-inside: avoid !important;
   }
 
   .print-logo {
-    height: 1.2cm !important;
+    height: 1cm !important;
     width: auto !important;
   }
 
@@ -108,21 +108,22 @@
   }
 
   .print-header-title h1 {
-    font-size: 12pt !important;
+    font-size: 11pt !important;
     font-weight: bold !important;
     text-transform: uppercase !important;
     margin: 0 !important;
+    color: #333 !important;
   }
 
   .print-header-title p {
-    font-size: 9pt !important;
+    font-size: 8pt !important;
     color: #333 !important;
     margin: 0 !important;
   }
 
   .print-header-company {
     text-align: right !important;
-    font-size: 7pt !important;
+    font-size: 6pt !important;
     line-height: 1.2 !important;
   }
 
@@ -131,70 +132,79 @@
   }
 
   /* ===============================================
-     SEÇÕES DO RELATÓRIO
+     SEÇÕES DO RELATÓRIO - Identidade Visual Malta
      =============================================== */
   .print-section {
-    margin-bottom: 0.25cm !important;
+    margin-bottom: 0.15cm !important;
     page-break-inside: avoid !important;
   }
 
   .print-section-title {
-    font-size: 9pt !important;
+    font-size: 8pt !important;
     font-weight: bold !important;
     text-transform: uppercase !important;
     background-color: #333 !important;
     color: white !important;
-    padding: 0.08cm 0.2cm !important;
-    margin: 0 0 0.1cm 0 !important;
+    padding: 0.06cm 0.15cm 0.06cm 0.25cm !important;
+    margin: 0 0 0.08cm 0 !important;
+    border-left: 4px solid #D63B30 !important; /* Barra vermelha Malta */
   }
 
   /* ===============================================
-     TABELAS DE DADOS
+     TABELAS DE DADOS - Mais compactas
      =============================================== */
   .print-data-table {
     width: 100% !important;
     border-collapse: collapse !important;
-    font-size: 8pt !important;
-    margin-bottom: 0.15cm !important;
+    font-size: 7pt !important;
+    margin-bottom: 0.1cm !important;
   }
 
   .print-data-table th,
   .print-data-table td {
-    border: 1px solid #000 !important;
-    padding: 0.08cm 0.15cm !important;
+    border: 0.5pt solid #000 !important;
+    padding: 0.04cm 0.1cm !important;
     text-align: left !important;
   }
 
   .print-data-table th {
     background-color: #e8e8e8 !important;
     font-weight: bold !important;
-    width: 22% !important;
+    width: 20% !important;
   }
 
   .print-data-table td {
-    width: 78% !important;
+    width: 80% !important;
   }
 
   /* ===============================================
-     TABELA DE VERIFICAÇÕES
+     TABELA DE VERIFICAÇÕES - Otimizada
      =============================================== */
   .print-verification-table {
     page-break-inside: auto !important;
-    margin-bottom: 0.25cm !important;
+    margin-bottom: 0.15cm !important;
   }
 
   .print-verification-section {
     page-break-inside: avoid !important;
-    margin-bottom: 0.15cm !important;
+    margin-bottom: 0.1cm !important;
+  }
+
+  .print-category-header {
+    font-size: 8pt !important;
+    font-weight: bold !important;
+    padding: 0.05cm 0.1cm !important;
+    margin-top: 0.1cm !important;
+    margin-bottom: 0.05cm !important;
   }
 
   .print-section-header {
-    font-size: 8pt !important;
+    font-size: 7pt !important;
     font-weight: bold !important;
-    background-color: #666 !important;
+    background-color: #555 !important;
     color: white !important;
-    padding: 0.06cm 0.15cm !important;
-    border: 1px solid #000 !important;
+    padding: 0.04cm 0.1cm !important;
+    border: 0.5pt solid #000 !important;
     border-bottom: none !important;
     text-transform: uppercase !important;
   }
@@ -202,139 +212,167 @@
   .print-table {
     width: 100% !important;
     border-collapse: collapse !important;
-    font-size: 7pt !important;
+    font-size: 6.5pt !important;
   }
 
   .print-table th,
   .print-table td {
-    border: 1px solid #000 !important;
-    padding: 0.06cm !important;
+    border: 0.5pt solid #000 !important;
+    padding: 0.03cm 0.05cm !important;
   }
 
   .print-th-description {
     text-align: left !important;
     background-color: #e8e8e8 !important;
     font-weight: bold !important;
-    width: 50% !important;
+    width: 55% !important;
   }
 
   .print-th-check {
     text-align: center !important;
     background-color: #e8e8e8 !important;
     font-weight: bold !important;
-    width: 10% !important;
+    width: 9% !important;
+    font-size: 6pt !important;
   }
 
   .print-td-description {
     text-align: left !important;
+    line-height: 1.2 !important;
   }
 
   .print-td-check {
     text-align: center !important;
     font-weight: bold !important;
-    font-size: 10pt !important;
+    font-size: 9pt !important;
+    color: #D63B30 !important; /* Checkmark vermelho Malta */
   }
 
   /* ===============================================
-     FOTOS
+     FOTOS - Grid 3x2 otimizado
      =============================================== */
   .print-photos-section {
     page-break-inside: avoid !important;
-    margin-bottom: 0.25cm !important;
+    margin-bottom: 0.15cm !important;
   }
 
   .print-photos-grid {
     display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 0.2cm !important;
+    grid-template-columns: repeat(3, 1fr) !important; /* 3 colunas */
+    gap: 0.1cm !important;
   }
 
   .print-photo-item {
-    border: 1px solid #000 !important;
-    padding: 0.1cm !important;
+    border: 0.5pt solid #000 !important;
+    padding: 0.05cm !important;
     page-break-inside: avoid !important;
   }
 
   .print-photo-item img {
     width: 100% !important;
-    height: 3.5cm !important;
+    height: 2.5cm !important; /* Altura reduzida */
     object-fit: cover !important;
     display: block !important;
   }
 
   .print-photo-comment {
-    font-size: 7pt !important;
+    font-size: 5.5pt !important;
     text-align: center !important;
-    margin-top: 0.05cm !important;
-    padding-top: 0.05cm !important;
-    border-top: 1px solid #ccc !important;
+    margin-top: 0.03cm !important;
+    padding-top: 0.03cm !important;
+    border-top: 0.5pt solid #ccc !important;
     font-style: italic !important;
-    min-height: 0.3cm !important;
+    min-height: 0.2cm !important;
+    line-height: 1.1 !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
   }
 
   /* ===============================================
-     OBSERVAÇÕES
+     OBSERVAÇÕES - Compactas
      =============================================== */
   .print-observations-section {
     page-break-inside: avoid !important;
-    margin-bottom: 0.25cm !important;
+    margin-bottom: 0.1cm !important;
   }
 
-  .print-observations-grid {
-    display: grid !important;
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 0.15cm !important;
+  .print-observations-compact {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.1cm !important;
+  }
+
+  .print-observation-item {
+    flex: 1 1 48% !important;
+    min-width: 45% !important;
   }
 
   .print-observation-box {
-    border: 1px solid #000 !important;
-    padding: 0.1cm !important;
-    min-height: 0.8cm !important;
-    font-size: 7pt !important;
+    border: 0.5pt solid #000 !important;
+    padding: 0.06cm !important;
+    min-height: 0.5cm !important;
+    font-size: 6.5pt !important;
+    line-height: 1.2 !important;
   }
 
   .print-observation-box h4 {
-    font-size: 7pt !important;
+    font-size: 6pt !important;
     font-weight: bold !important;
     background-color: #e8e8e8 !important;
-    padding: 0.05cm !important;
-    margin: -0.1cm -0.1cm 0.1cm -0.1cm !important;
+    padding: 0.03cm !important;
+    margin: -0.06cm -0.06cm 0.05cm -0.06cm !important;
     text-transform: uppercase !important;
   }
 
   .print-observation-content {
     white-space: pre-wrap !important;
-    line-height: 1.2 !important;
+    line-height: 1.15 !important;
   }
 
   .print-observation-label {
     font-weight: bold !important;
-    font-size: 8pt !important;
-    margin-bottom: 0.05cm !important;
+    font-size: 6.5pt !important;
+    margin-bottom: 0.03cm !important;
     background-color: #f5f5f5 !important;
-    padding: 0.05cm !important;
+    padding: 0.03cm !important;
   }
 
   /* ===============================================
-     ASSINATURAS
+     ASSINATURAS - 2 colunas otimizadas
      =============================================== */
   .print-signatures-section {
     page-break-inside: avoid !important;
-    margin-top: 0.3cm !important;
+    margin-top: 0.15cm !important;
   }
 
   .print-signatures-grid {
     display: grid !important;
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 0.2cm !important;
-    margin-top: 0.15cm !important;
+    grid-template-columns: 1fr 1fr !important; /* 2 colunas */
+    gap: 0.15cm !important;
+    margin-top: 0.1cm !important;
   }
 
   .print-signature-box {
-    border: 1px solid #000 !important;
-    padding: 0.1cm !important;
+    border: 0.5pt solid #000 !important;
+    padding: 0.08cm !important;
     text-align: center !important;
-    min-height: 2cm !important;
+    min-height: 1.4cm !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .print-signature-column {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.1cm !important;
+  }
+
+  .print-signature-box-small {
+    border: 0.5pt solid #000 !important;
+    padding: 0.06cm !important;
+    text-align: center !important;
+    min-height: 1.1cm !important;
     display: flex !important;
     flex-direction: column !important;
   }
@@ -344,39 +382,39 @@
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    min-height: 0.8cm !important;
-    border-bottom: 1px solid #000 !important;
-    margin-bottom: 0.1cm !important;
+    min-height: 0.6cm !important;
+    border-bottom: 0.5pt solid #000 !important;
+    margin-bottom: 0.05cm !important;
   }
 
   .print-signature-image img {
-    max-height: 1cm !important;
+    max-height: 0.8cm !important;
     max-width: 100% !important;
   }
 
   .print-signature-line {
-    border-top: 1px solid #000 !important;
-    margin-top: 0.1cm !important;
-    padding-top: 0.05cm !important;
+    border-top: 0.5pt solid #000 !important;
+    margin-top: 0.05cm !important;
+    padding-top: 0.03cm !important;
   }
 
   .print-signature-name {
-    font-size: 7pt !important;
+    font-size: 6pt !important;
     font-weight: bold !important;
   }
 
   .print-signature-cpf {
-    font-size: 6pt !important;
+    font-size: 5pt !important;
     color: #333 !important;
   }
 
   .print-signature-role {
-    font-size: 7pt !important;
+    font-size: 6pt !important;
     font-weight: bold !important;
     text-transform: uppercase !important;
-    margin-top: 0.05cm !important;
+    margin-top: 0.03cm !important;
     background-color: #e8e8e8 !important;
-    padding: 0.03cm !important;
+    padding: 0.02cm !important;
   }
 
   /* ===============================================

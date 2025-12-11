@@ -4,15 +4,32 @@ interface VerificationTablePrintProps {
   sections: VerificationSection[];
 }
 
-export function VerificationTablePrint({ sections }: VerificationTablePrintProps) {
-  const frequencyColumns = [
-    { key: "h50", label: "50h" },
-    { key: "h100", label: "100h" },
-    { key: "h200", label: "200h" },
-    { key: "h800", label: "800h" },
-    { key: "h2000", label: "2000h" },
-  ] as const;
+// Colunas de frequência para Motor
+const motorColumns = [
+  { key: "h50", label: "50h" },
+  { key: "h100", label: "100h" },
+  { key: "h200", label: "200h" },
+  { key: "h800", label: "800h" },
+  { key: "h2000", label: "2000h" },
+] as const;
 
+// Colunas de frequência para Alternador
+const alternadorColumns = [
+  { key: "h250", label: "250h" },
+  { key: "h1000", label: "1000h" },
+  { key: "h10000", label: "10000h" },
+  { key: "h30000", label: "30000h" },
+] as const;
+
+// Seleciona colunas corretas baseado na categoria
+const getColumnsForCategory = (category?: string) => {
+  if (category === "alternador") {
+    return alternadorColumns;
+  }
+  return motorColumns;
+};
+
+export function VerificationTablePrint({ sections }: VerificationTablePrintProps) {
   if (sections.length === 0) {
     return null;
   }
@@ -22,15 +39,17 @@ export function VerificationTablePrint({ sections }: VerificationTablePrintProps
   const alternadorSections = sections.filter(s => s.category === "alternador");
   const otherSections = sections.filter(s => !s.category || s.category === "geral");
 
-  const renderSections = (sectionList: VerificationSection[]) => (
-    sectionList.map((section) => (
+  const renderSections = (sectionList: VerificationSection[], category?: string) => {
+    const columns = getColumnsForCategory(category);
+    
+    return sectionList.map((section) => (
       <div key={section.id} className="print-verification-section">
         <div className="print-section-header">{section.title}</div>
         <table className="print-table">
           <thead>
             <tr>
               <th className="print-th-description">Descrição</th>
-              {frequencyColumns.map((col) => (
+              {columns.map((col) => (
                 <th key={col.key} className="print-th-check">{col.label}</th>
               ))}
             </tr>
@@ -39,9 +58,9 @@ export function VerificationTablePrint({ sections }: VerificationTablePrintProps
             {section.items.map((item) => (
               <tr key={item.id}>
                 <td className="print-td-description">{item.description}</td>
-                {frequencyColumns.map((col) => (
+                {columns.map((col) => (
                   <td key={col.key} className="print-td-check">
-                    {item[col.key] ? "✓" : ""}
+                    {item[col.key as keyof typeof item] ? "✓" : ""}
                   </td>
                 ))}
               </tr>
@@ -49,8 +68,8 @@ export function VerificationTablePrint({ sections }: VerificationTablePrintProps
           </tbody>
         </table>
       </div>
-    ))
-  );
+    ));
+  };
 
   return (
     <div className="print-verification-table">
@@ -58,19 +77,19 @@ export function VerificationTablePrint({ sections }: VerificationTablePrintProps
       
       {motorSections.length > 0 && (
         <div className="print-category-group">
-          <div className="print-category-header" style={{ color: '#ea580c', fontWeight: 'bold', marginTop: '8px', marginBottom: '4px' }}>
+          <div className="print-category-header" style={{ color: '#ea580c' }}>
             🔧 MANUTENÇÃO DO MOTOR
           </div>
-          {renderSections(motorSections)}
+          {renderSections(motorSections, "motor")}
         </div>
       )}
 
       {alternadorSections.length > 0 && (
         <div className="print-category-group">
-          <div className="print-category-header" style={{ color: '#2563eb', fontWeight: 'bold', marginTop: '8px', marginBottom: '4px' }}>
+          <div className="print-category-header" style={{ color: '#2563eb' }}>
             ⚡ MANUTENÇÃO DO ALTERNADOR
           </div>
-          {renderSections(alternadorSections)}
+          {renderSections(alternadorSections, "alternador")}
         </div>
       )}
 
