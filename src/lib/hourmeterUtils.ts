@@ -8,7 +8,9 @@ export function formatHourmeter(seconds: number): string {
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
   
-  return `${String(hours).padStart(3, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  // Formato dinâmico: mínimo 3 dígitos, mas cresce se necessário
+  const hoursStr = hours < 1000 ? String(hours).padStart(3, '0') : String(hours);
+  return `${hoursStr}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
 /**
@@ -62,8 +64,8 @@ export function normalizeHourmeterInput(input: string): string | null {
   const minutes = parseInt(parts[1]) || 0;
   const seconds = parseInt(parts[2]) || 0;
   
-  // Validação de ranges
-  if (hours < 0 || hours > 999) return null;
+  // Validação de ranges - permite até 99.999 horas para equipamentos de alta utilização
+  if (hours < 0 || hours > 99999) return null;
   if (minutes < 0 || minutes > 59) return null;
   if (seconds < 0 || seconds > 59) return null;
   
