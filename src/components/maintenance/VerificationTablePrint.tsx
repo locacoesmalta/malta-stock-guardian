@@ -85,7 +85,7 @@ export function VerificationTablePrint({ sections }: VerificationTablePrintProps
       )}
 
       {alternadorSections.length > 0 && (
-        <div className="print-category-group">
+        <div className="print-category-group alternador-section">
           <div className="print-category-header" style={{ color: '#2563eb' }}>
             ⚡ MANUTENÇÃO DO ALTERNADOR
           </div>
