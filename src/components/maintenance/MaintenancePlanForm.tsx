@@ -957,11 +957,17 @@ export function MaintenancePlanForm({
               </p>
             </div>
 
-            <HourmeterInput
-              label="Horímetro Atual"
-              value={currentHourmeter}
-              onChange={setCurrentHourmeter}
-            />
+            <div className="space-y-2">
+              <HourmeterInput
+                label="Horímetro Atual"
+                value={currentHourmeter}
+                onChange={() => {}}
+                disabled={true}
+              />
+              <p className="text-xs text-green-600 dark:text-green-400">
+                ✓ Preenchido automaticamente do último registro de manutenção preventiva
+              </p>
+            </div>
 
             <div className="space-y-2">
               <HourmeterInput
@@ -970,8 +976,8 @@ export function MaintenancePlanForm({
                 onChange={setNextRevisionHourmeter}
                 disabled={false}
               />
-              <p className="text-xs text-muted-foreground">
-                ✓ Sugestão automática (Atual + Intervalo). Pode ser ajustado se manutenção for feita antes/depois.
+              <p className="text-xs text-blue-600 dark:text-blue-400">
+                ✓ Calculado automaticamente (Atual + Intervalo). Editável para ajustes.
               </p>
             </div>
           </div>
