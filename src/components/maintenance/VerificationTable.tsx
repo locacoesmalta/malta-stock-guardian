@@ -176,6 +176,26 @@ export function VerificationTable({
     onChange(sections.filter((s) => s.id !== sectionId));
   };
 
+  const toggleAllInColumn = (sectionId: string, columnKey: string) => {
+    const section = sections.find(s => s.id === sectionId);
+    if (!section) return;
+    
+    const allChecked = section.items.every(item => item[columnKey as keyof VerificationItem]);
+    
+    onChange(
+      sections.map((s) => {
+        if (s.id !== sectionId) return s;
+        return {
+          ...s,
+          items: s.items.map((item) => ({
+            ...item,
+            [columnKey]: !allChecked
+          }))
+        };
+      })
+    );
+  };
+
   const frequencyColumns = [
     { key: "h50", label: "50h" },
     { key: "h100", label: "100h" },
@@ -230,11 +250,27 @@ export function VerificationTable({
                 <th className="text-left py-2 pr-4 min-w-[300px]">
                   Descrição
                 </th>
-                {frequencyColumns.map((col) => (
-                  <th key={col.key} className="text-center py-2 px-2 min-w-[60px]">
-                    {col.label}
-                  </th>
-                ))}
+                {frequencyColumns.map((col) => {
+                  const allChecked = section.items.length > 0 && section.items.every(item => item[col.key]);
+                  return (
+                    <th key={col.key} className="text-center py-1 px-1 min-w-[60px]">
+                      <button
+                        type="button"
+                        onClick={() => toggleAllInColumn(section.id, col.key)}
+                        className="flex flex-col items-center gap-0.5 w-full hover:bg-muted/50 rounded p-1 transition-colors"
+                        title={allChecked ? "Desmarcar todas" : "Marcar todas"}
+                      >
+                        <span className="text-xs font-medium">{col.label}</span>
+                        <span className={cn(
+                          "text-[10px] transition-colors",
+                          allChecked ? "text-primary" : "text-muted-foreground"
+                        )}>
+                          {allChecked ? "✓ Todas" : "☐ Todas"}
+                        </span>
+                      </button>
+                    </th>
+                  );
+                })}
                 <th className="w-10"></th>
               </tr>
             </thead>
