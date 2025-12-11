@@ -197,6 +197,11 @@
     margin-bottom: 0.1cm !important;
   }
 
+  /* Seção do Alternador sempre em nova página */
+  .print-verification-section.alternador-section {
+    page-break-before: always !important;
+  }
+
   /* Header de categoria (MANUTENÇÃO DO MOTOR) - evita quebra após */
   .print-category-header {
     font-size: 8pt !important;
