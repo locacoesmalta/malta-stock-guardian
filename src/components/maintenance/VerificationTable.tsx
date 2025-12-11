@@ -196,13 +196,28 @@ export function VerificationTable({
     );
   };
 
-  const frequencyColumns = [
+  // Colunas de frequência para MOTOR
+  const motorFrequencyColumns = [
     { key: "h50", label: "50h" },
     { key: "h100", label: "100h" },
     { key: "h200", label: "200h" },
     { key: "h800", label: "800h" },
     { key: "h2000", label: "2000h" },
   ] as const;
+
+  // Colunas de frequência para ALTERNADOR (conforme manual)
+  const alternadorFrequencyColumns = [
+    { key: "h250", label: "250h" },
+    { key: "h1000", label: "1000h" },
+    { key: "h10000", label: "10000h" },
+    { key: "h30000", label: "30000h" },
+  ] as const;
+
+  // Seleciona colunas corretas baseado na categoria da seção
+  const getFrequencyColumns = (category?: MaintenanceCategory) => {
+    if (category === "alternador") return alternadorFrequencyColumns;
+    return motorFrequencyColumns;
+  };
 
   const renderSection = (section: VerificationSection) => (
     <AccordionItem
@@ -238,42 +253,45 @@ export function VerificationTable({
       </AccordionTrigger>
       <AccordionContent>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left py-2 pr-2 min-w-[130px]">
-                  Manutenção
-                </th>
-                <th className="text-left py-2 pr-2 min-w-[120px]">
-                  Ação
-                </th>
-                <th className="text-left py-2 pr-4 min-w-[300px]">
-                  Descrição
-                </th>
-                {frequencyColumns.map((col) => {
-                  const allChecked = section.items.length > 0 && section.items.every(item => item[col.key]);
-                  return (
-                    <th key={col.key} className="text-center py-1 px-1 min-w-[60px]">
-                      <button
-                        type="button"
-                        onClick={() => toggleAllInColumn(section.id, col.key)}
-                        className="flex flex-col items-center gap-0.5 w-full hover:bg-muted/50 rounded p-1 transition-colors"
-                        title={allChecked ? "Desmarcar todas" : "Marcar todas"}
-                      >
-                        <span className="text-xs font-medium">{col.label}</span>
-                        <span className={cn(
-                          "text-[10px] transition-colors",
-                          allChecked ? "text-primary" : "text-muted-foreground"
-                        )}>
-                          {allChecked ? "✓ Todas" : "☐ Todas"}
-                        </span>
-                      </button>
+          {(() => {
+            const columns = getFrequencyColumns(section.category);
+            return (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2 pr-2 min-w-[130px]">
+                      Manutenção
                     </th>
-                  );
-                })}
-                <th className="w-10"></th>
-              </tr>
-            </thead>
+                    <th className="text-left py-2 pr-2 min-w-[120px]">
+                      Ação
+                    </th>
+                    <th className="text-left py-2 pr-4 min-w-[300px]">
+                      Descrição
+                    </th>
+                    {columns.map((col) => {
+                      const allChecked = section.items.length > 0 && section.items.every(item => item[col.key as keyof VerificationItem]);
+                      return (
+                        <th key={col.key} className="text-center py-1 px-1 min-w-[70px]">
+                          <button
+                            type="button"
+                            onClick={() => toggleAllInColumn(section.id, col.key)}
+                            className="flex flex-col items-center gap-0.5 w-full hover:bg-muted/50 rounded p-1 transition-colors"
+                            title={allChecked ? "Desmarcar todas" : "Marcar todas"}
+                          >
+                            <span className="text-xs font-medium">{col.label}</span>
+                            <span className={cn(
+                              "text-[10px] transition-colors",
+                              allChecked ? "text-primary" : "text-muted-foreground"
+                            )}>
+                              {allChecked ? "✓ Todas" : "☐ Todas"}
+                            </span>
+                          </button>
+                        </th>
+                      );
+                    })}
+                    <th className="w-10"></th>
+                  </tr>
+                </thead>
             <tbody>
               {section.items.map((item) => (
                 <tr key={item.id} className="border-b last:border-b-0">
@@ -325,30 +343,32 @@ export function VerificationTable({
                       className="h-8"
                     />
                   </td>
-                  {frequencyColumns.map((col) => (
-                    <td key={col.key} className="text-center py-2 px-2">
-                      <Checkbox
-                        checked={item[col.key]}
-                        onCheckedChange={(checked) =>
-                          updateItem(section.id, item.id, col.key, !!checked)
-                        }
-                      />
+                    {columns.map((col) => (
+                      <td key={col.key} className="text-center py-2 px-2">
+                        <Checkbox
+                          checked={!!item[col.key as keyof VerificationItem]}
+                          onCheckedChange={(checked) =>
+                            updateItem(section.id, item.id, col.key as keyof VerificationItem, !!checked)
+                          }
+                        />
+                      </td>
+                    ))}
+                    <td className="py-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => removeItem(section.id, item.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </td>
-                  ))}
-                  <td className="py-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => removeItem(section.id, item.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            );
+          })()}
         </div>
         <Button
           variant="ghost"
