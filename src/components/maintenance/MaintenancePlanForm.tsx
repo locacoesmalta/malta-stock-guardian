@@ -705,9 +705,9 @@ export function MaintenancePlanForm({
         {/* Tabela de Verificações */}
         <VerificationTablePrint sections={verificationSections} />
 
-        {/* Fotos */}
+        {/* Fotos - Grid 3x2 otimizado */}
         {allPhotos.length > 0 && (
-          <div className="print-photos-section print-section">
+          <div className="print-photos-section print-section avoid-break">
             <h3 className="print-section-title">FOTOS DO EQUIPAMENTO</h3>
             <div className="print-photos-grid">
               {allPhotos.map((photo, index) => (
@@ -720,70 +720,76 @@ export function MaintenancePlanForm({
           </div>
         )}
 
-        {/* Observações */}
-        <div className="print-observations-section print-section">
-          <h3 className="print-section-title">OBSERVAÇÕES</h3>
-          
-          {observationsOperational && (
-            <div>
-              <div className="print-observation-label">Cuidados Operacionais:</div>
-              <div className="print-observation-box">{observationsOperational}</div>
+        {/* Observações - Compactas */}
+        {(observationsOperational || observationsTechnical || observationsProcedures) && (
+          <div className="print-observations-section print-section">
+            <h3 className="print-section-title">OBSERVAÇÕES</h3>
+            <div className="print-observations-compact">
+              {observationsOperational && (
+                <div className="print-observation-item">
+                  <div className="print-observation-label">Cuidados Operacionais:</div>
+                  <div className="print-observation-box">{observationsOperational}</div>
+                </div>
+              )}
+              
+              {observationsTechnical && (
+                <div className="print-observation-item">
+                  <div className="print-observation-label">Assistência Técnica:</div>
+                  <div className="print-observation-box">{observationsTechnical}</div>
+                </div>
+              )}
+              
+              {observationsProcedures && (
+                <div className="print-observation-item">
+                  <div className="print-observation-label">Procedimentos:</div>
+                  <div className="print-observation-box">{observationsProcedures}</div>
+                </div>
+              )}
             </div>
-          )}
-          
-          {observationsTechnical && (
-            <div>
-              <div className="print-observation-label">Contatos de Assistência Técnica:</div>
-              <div className="print-observation-box">{observationsTechnical}</div>
-            </div>
-          )}
-          
-          {observationsProcedures && (
-            <div>
-              <div className="print-observation-label">Procedimentos:</div>
-              <div className="print-observation-box">{observationsProcedures}</div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Assinaturas */}
-        <div className="print-signatures-section print-section">
+        {/* Assinaturas - 2 colunas: Supervisor | Técnico+Cliente */}
+        <div className="print-signatures-section print-section avoid-break">
           <h3 className="print-section-title">ASSINATURAS</h3>
           <div className="print-signatures-grid">
-            {/* Supervisor */}
+            {/* Coluna Esquerda: Supervisor */}
             <div className="print-signature-box">
               <div className="print-signature-image">
                 {supervisorSignature && <img src={supervisorSignature} alt="Assinatura Supervisor" />}
               </div>
               <div className="print-signature-line">
                 <div className="print-signature-name">{supervisorName || "___________________"}</div>
-                <div className="print-signature-cpf">{supervisorCpf || "CPF/Matrícula: ___________"}</div>
+                <div className="print-signature-cpf">{supervisorCpf ? `CPF/Mat: ${supervisorCpf}` : "CPF/Mat: ___________"}</div>
               </div>
               <div className="print-signature-role">Supervisor</div>
             </div>
 
-            {/* Técnico */}
-            <div className="print-signature-box">
-              <div className="print-signature-image">
-                {technicianSignature && <img src={technicianSignature} alt="Assinatura Técnico" />}
+            {/* Coluna Direita: Técnico e Cliente empilhados */}
+            <div className="print-signature-column">
+              {/* Técnico */}
+              <div className="print-signature-box-small">
+                <div className="print-signature-image">
+                  {technicianSignature && <img src={technicianSignature} alt="Assinatura Técnico" />}
+                </div>
+                <div className="print-signature-line">
+                  <div className="print-signature-name">{technicianName || "___________________"}</div>
+                  <div className="print-signature-cpf">{technicianCpf ? `CPF/Mat: ${technicianCpf}` : "CPF/Mat: ___________"}</div>
+                </div>
+                <div className="print-signature-role">Técnico</div>
               </div>
-              <div className="print-signature-line">
-                <div className="print-signature-name">{technicianName || "___________________"}</div>
-                <div className="print-signature-cpf">{technicianCpf || "CPF/Matrícula: ___________"}</div>
-              </div>
-              <div className="print-signature-role">Técnico</div>
-            </div>
 
-            {/* Cliente */}
-            <div className="print-signature-box">
-              <div className="print-signature-image">
-                {clientSignature && <img src={clientSignature} alt="Assinatura Cliente" />}
+              {/* Cliente */}
+              <div className="print-signature-box-small">
+                <div className="print-signature-image">
+                  {clientSignature && <img src={clientSignature} alt="Assinatura Cliente" />}
+                </div>
+                <div className="print-signature-line">
+                  <div className="print-signature-name">{signatureClientName || "___________________"}</div>
+                  <div className="print-signature-cpf">{clientCpf ? `CPF/Mat: ${clientCpf}` : "CPF/Mat: ___________"}</div>
+                </div>
+                <div className="print-signature-role">Cliente</div>
               </div>
-              <div className="print-signature-line">
-                <div className="print-signature-name">{signatureClientName || "___________________"}</div>
-                <div className="print-signature-cpf">{clientCpf || "CPF/Matrícula: ___________"}</div>
-              </div>
-              <div className="print-signature-role">Cliente</div>
             </div>
           </div>
         </div>
