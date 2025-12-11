@@ -1043,6 +1043,7 @@ export type Database = {
           asset_id: string | null
           client_company: string | null
           client_cpf: string | null
+          client_cpf_encrypted: string | null
           client_name: string | null
           client_signature: string | null
           client_work_site: string | null
@@ -1071,9 +1072,11 @@ export type Database = {
           previous_hourmeter: number | null
           retroactive_justification: string | null
           supervisor_cpf: string | null
+          supervisor_cpf_encrypted: string | null
           supervisor_name: string | null
           supervisor_signature: string | null
           technician_cpf: string | null
+          technician_cpf_encrypted: string | null
           technician_name: string | null
           technician_signature: string | null
           updated_at: string
@@ -1083,6 +1086,7 @@ export type Database = {
           asset_id?: string | null
           client_company?: string | null
           client_cpf?: string | null
+          client_cpf_encrypted?: string | null
           client_name?: string | null
           client_signature?: string | null
           client_work_site?: string | null
@@ -1111,9 +1115,11 @@ export type Database = {
           previous_hourmeter?: number | null
           retroactive_justification?: string | null
           supervisor_cpf?: string | null
+          supervisor_cpf_encrypted?: string | null
           supervisor_name?: string | null
           supervisor_signature?: string | null
           technician_cpf?: string | null
+          technician_cpf_encrypted?: string | null
           technician_name?: string | null
           technician_signature?: string | null
           updated_at?: string
@@ -1123,6 +1129,7 @@ export type Database = {
           asset_id?: string | null
           client_company?: string | null
           client_cpf?: string | null
+          client_cpf_encrypted?: string | null
           client_name?: string | null
           client_signature?: string | null
           client_work_site?: string | null
@@ -1151,9 +1158,11 @@ export type Database = {
           previous_hourmeter?: number | null
           retroactive_justification?: string | null
           supervisor_cpf?: string | null
+          supervisor_cpf_encrypted?: string | null
           supervisor_name?: string | null
           supervisor_signature?: string | null
           technician_cpf?: string | null
+          technician_cpf_encrypted?: string | null
           technician_name?: string | null
           technician_signature?: string | null
           updated_at?: string
@@ -2494,6 +2503,11 @@ export type Database = {
             }
             Returns: string
           }
+      decrypt_sensitive_data: {
+        Args: { p_encrypted_data: string }
+        Returns: string
+      }
+      encrypt_sensitive_data: { Args: { p_data: string }; Returns: string }
       fix_duplicate_equipment_names: {
         Args: { p_correct_name: string; p_variations: string[] }
         Returns: number
