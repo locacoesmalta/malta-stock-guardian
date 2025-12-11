@@ -61,6 +61,7 @@ export function MaintenancePlanForm({
   const [previousHourmeter, setPreviousHourmeter] = useState(0);
   const [currentHourmeter, setCurrentHourmeter] = useState(0);
   const [nextRevisionHourmeter, setNextRevisionHourmeter] = useState<number | undefined>();
+  const [userHasManuallyEditedNextRevision, setUserHasManuallyEditedNextRevision] = useState(false);
 
   // Dados da empresa
   const [companyData, setCompanyData] = useState({
@@ -307,7 +308,10 @@ export function MaintenancePlanForm({
   }, [lastPreviousHourmeter, lastHourmeter, mode, equipment?.id]);
 
   // Calcular automaticamente a próxima revisão quando intervalo for selecionado
+  // NÃO recalcular se o usuário editou manualmente
   useEffect(() => {
+    if (userHasManuallyEditedNextRevision) return;
+    
     if (currentHourmeter > 0) {
       // Converter intervalo para segundos
       const motorIntervalHours: Record<MaintenanceInterval, number> = {
@@ -321,9 +325,13 @@ export function MaintenancePlanForm({
       let intervalHours = 0;
       if (selectedMotorInterval) {
         intervalHours = Math.max(intervalHours, motorIntervalHours[selectedMotorInterval]);
+        // Resetar a flag quando usuário mudar o intervalo (permite recálculo)
+        setUserHasManuallyEditedNextRevision(false);
       }
       if (selectedAlternadorInterval) {
         intervalHours = Math.max(intervalHours, alternadorIntervalHours[selectedAlternadorInterval]);
+        // Resetar a flag quando usuário mudar o intervalo (permite recálculo)
+        setUserHasManuallyEditedNextRevision(false);
       }
       
       if (intervalHours > 0) {
@@ -331,7 +339,13 @@ export function MaintenancePlanForm({
         setNextRevisionHourmeter(currentHourmeter + intervalSeconds);
       }
     }
-  }, [selectedMotorInterval, selectedAlternadorInterval, currentHourmeter]);
+  }, [selectedMotorInterval, selectedAlternadorInterval, currentHourmeter, userHasManuallyEditedNextRevision]);
+  
+  // Handler para edição manual da próxima revisão
+  const handleNextRevisionChange = (seconds: number) => {
+    setNextRevisionHourmeter(seconds);
+    setUserHasManuallyEditedNextRevision(true);
+  };
 
   const handlePrint = () => {
     window.print();
@@ -985,11 +999,14 @@ export function MaintenancePlanForm({
               <HourmeterInput
                 label="Próxima Revisão (Horímetro)"
                 value={nextRevisionHourmeter || 0}
-                onChange={setNextRevisionHourmeter}
+                onChange={handleNextRevisionChange}
                 disabled={false}
               />
               <p className="text-xs text-blue-600 dark:text-blue-400">
-                ✓ Calculado automaticamente (Atual + Intervalo). Editável para ajustes.
+                {userHasManuallyEditedNextRevision 
+                  ? "✎ Editado manualmente. Selecione um intervalo para recalcular."
+                  : "✓ Calculado automaticamente (Atual + Intervalo). Editável para ajustes."
+                }
               </p>
             </div>
           </div>
