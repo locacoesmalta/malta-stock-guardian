@@ -346,11 +346,11 @@ export const generateAlternadorSectionsForInterval = (interval: AlternadorInterv
         maintenanceTarget: "alternador" as MaintenanceTarget,
         actionType: "verificar" as ActionType,
         description: desc,
-        h50: false,
-        h100: false,
-        h200: false,
-        h800: false,
-        h2000: false
+        h50: false, h100: false, h200: false, h800: false, h2000: false,
+        h250: interval === "h250" || interval === "h1000" || interval === "h10000" || interval === "h30000",
+        h1000: interval === "h1000" || interval === "h10000" || interval === "h30000",
+        h10000: interval === "h10000" || interval === "h30000",
+        h30000: interval === "h30000"
       }))
     });
   }
@@ -365,11 +365,11 @@ export const generateAlternadorSectionsForInterval = (interval: AlternadorInterv
         maintenanceTarget: "alternador" as MaintenanceTarget,
         actionType: "testar" as ActionType,
         description: desc,
-        h50: false,
-        h100: false,
-        h200: false,
-        h800: false,
-        h2000: false
+        h50: false, h100: false, h200: false, h800: false, h2000: false,
+        h250: interval === "h250" || interval === "h1000" || interval === "h10000" || interval === "h30000",
+        h1000: interval === "h1000" || interval === "h10000" || interval === "h30000",
+        h10000: interval === "h10000" || interval === "h30000",
+        h30000: interval === "h30000"
       }))
     });
   }
@@ -384,11 +384,11 @@ export const generateAlternadorSectionsForInterval = (interval: AlternadorInterv
         maintenanceTarget: "alternador" as MaintenanceTarget,
         actionType: "substituir" as ActionType,
         description: desc,
-        h50: false,
-        h100: false,
-        h200: false,
-        h800: false,
-        h2000: false
+        h50: false, h100: false, h200: false, h800: false, h2000: false,
+        h250: interval === "h250" || interval === "h1000" || interval === "h10000" || interval === "h30000",
+        h1000: interval === "h1000" || interval === "h10000" || interval === "h30000",
+        h10000: interval === "h10000" || interval === "h30000",
+        h30000: interval === "h30000"
       }))
     });
   }
@@ -403,11 +403,11 @@ export const generateAlternadorSectionsForInterval = (interval: AlternadorInterv
         maintenanceTarget: "alternador" as MaintenanceTarget,
         actionType: "limpeza" as ActionType,
         description: desc,
-        h50: false,
-        h100: false,
-        h200: false,
-        h800: false,
-        h2000: false
+        h50: false, h100: false, h200: false, h800: false, h2000: false,
+        h250: interval === "h250" || interval === "h1000" || interval === "h10000" || interval === "h30000",
+        h1000: interval === "h1000" || interval === "h10000" || interval === "h30000",
+        h10000: interval === "h10000" || interval === "h30000",
+        h30000: interval === "h30000"
       }))
     });
   }
@@ -420,11 +420,17 @@ export interface VerificationItem {
   maintenanceTarget?: MaintenanceTarget;
   actionType?: ActionType;
   description: string;
+  // Motor intervals
   h50: boolean;
   h100: boolean;
   h200: boolean;
   h800: boolean;
   h2000: boolean;
+  // Alternador intervals
+  h250?: boolean;
+  h1000?: boolean;
+  h10000?: boolean;
+  h30000?: boolean;
 }
 
 export type MaintenanceCategory = "motor" | "alternador" | "geral";
