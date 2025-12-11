@@ -249,41 +249,54 @@
   }
 
   /* ===============================================
-     FOTOS - Grid 3x2 otimizado
+     FOTOS - Grid dinâmico (2 colunas padrão, 3 para 6+ fotos)
      =============================================== */
   .print-photos-section {
     page-break-inside: avoid !important;
-    margin-bottom: 0.15cm !important;
+    margin-bottom: 0.2cm !important;
   }
 
+  /* Padrão: 2 colunas para até 4 fotos (fotos maiores) */
   .print-photos-grid {
     display: grid !important;
-    grid-template-columns: repeat(3, 1fr) !important; /* 3 colunas */
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.15cm !important;
+  }
+
+  /* 3 colunas para 6+ fotos */
+  .print-photos-grid.grid-3-cols {
+    grid-template-columns: repeat(3, 1fr) !important;
     gap: 0.1cm !important;
   }
 
   .print-photo-item {
     border: 0.5pt solid #000 !important;
-    padding: 0.05cm !important;
+    padding: 0.08cm !important;
     page-break-inside: avoid !important;
   }
 
+  /* Fotos maiores para 2 colunas (até 4 fotos) */
   .print-photo-item img {
     width: 100% !important;
-    height: 2.5cm !important; /* Altura reduzida */
+    height: 4.5cm !important;
     object-fit: cover !important;
     display: block !important;
   }
 
+  /* Fotos menores para 3 colunas (6+ fotos) */
+  .print-photos-grid.grid-3-cols .print-photo-item img {
+    height: 3cm !important;
+  }
+
   .print-photo-comment {
-    font-size: 5.5pt !important;
+    font-size: 6pt !important;
     text-align: center !important;
-    margin-top: 0.03cm !important;
-    padding-top: 0.03cm !important;
+    margin-top: 0.05cm !important;
+    padding-top: 0.05cm !important;
     border-top: 0.5pt solid #ccc !important;
     font-style: italic !important;
-    min-height: 0.2cm !important;
-    line-height: 1.1 !important;
+    min-height: 0.25cm !important;
+    line-height: 1.2 !important;
     overflow: hidden !important;
     white-space: nowrap !important;
     text-overflow: ellipsis !important;

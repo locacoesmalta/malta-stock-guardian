@@ -716,14 +716,11 @@ export function MaintenancePlanForm({
           </table>
         </div>
 
-        {/* Tabela de Verificações */}
-        <VerificationTablePrint sections={verificationSections} />
-
-        {/* Fotos - Grid 3x2 otimizado */}
+        {/* Fotos - Grid dinâmico (2 colunas para ≤4 fotos, 3 colunas para 6+) */}
         {allPhotos.length > 0 && (
           <div className="print-photos-section print-section avoid-break">
             <h3 className="print-section-title">FOTOS DO EQUIPAMENTO</h3>
-            <div className="print-photos-grid">
+            <div className={`print-photos-grid ${allPhotos.length > 4 ? 'grid-3-cols' : ''}`}>
               {allPhotos.map((photo, index) => (
                 <div key={index} className="print-photo-item">
                   <img src={photo.preview} alt={`Foto ${index + 1}`} />
@@ -733,6 +730,9 @@ export function MaintenancePlanForm({
             </div>
           </div>
         )}
+
+        {/* Tabela de Verificações */}
+        <VerificationTablePrint sections={verificationSections} />
 
         {/* Observações - Compactas */}
         {(observationsOperational || observationsTechnical || observationsProcedures) && (
