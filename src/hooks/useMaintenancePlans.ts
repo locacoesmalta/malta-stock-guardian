@@ -35,9 +35,12 @@ export interface MaintenancePlanData {
   observations_technical?: string;
   observations_procedures?: string;
   supervisor_name?: string;
+  supervisor_cpf?: string;
   supervisor_signature?: string;
   technician_name?: string;
+  technician_cpf?: string;
   technician_signature?: string;
+  client_cpf?: string;
   client_signature?: string;
   verification_sections: VerificationSection[];
   photos: MaintenancePlanPhoto[];
