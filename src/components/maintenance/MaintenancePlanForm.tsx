@@ -967,11 +967,11 @@ export function MaintenancePlanForm({
               <HourmeterInput
                 label="Próxima Revisão (Horímetro)"
                 value={nextRevisionHourmeter || 0}
-                onChange={() => {}} // Campo calculado automaticamente
-                disabled={true}
+                onChange={setNextRevisionHourmeter}
+                disabled={false}
               />
-              <p className="text-xs text-blue-600 dark:text-blue-400">
-                ✓ Calculado automaticamente: Horímetro Atual + Intervalo selecionado
+              <p className="text-xs text-muted-foreground">
+                ✓ Sugestão automática (Atual + Intervalo). Pode ser ajustado se manutenção for feita antes/depois.
               </p>
             </div>
           </div>
