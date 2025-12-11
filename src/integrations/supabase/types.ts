@@ -1042,6 +1042,7 @@ export type Database = {
         Row: {
           asset_id: string | null
           client_company: string | null
+          client_cpf: string | null
           client_name: string | null
           client_signature: string | null
           client_work_site: string | null
@@ -1069,8 +1070,10 @@ export type Database = {
           plan_type: string
           previous_hourmeter: number | null
           retroactive_justification: string | null
+          supervisor_cpf: string | null
           supervisor_name: string | null
           supervisor_signature: string | null
+          technician_cpf: string | null
           technician_name: string | null
           technician_signature: string | null
           updated_at: string
@@ -1079,6 +1082,7 @@ export type Database = {
         Insert: {
           asset_id?: string | null
           client_company?: string | null
+          client_cpf?: string | null
           client_name?: string | null
           client_signature?: string | null
           client_work_site?: string | null
@@ -1106,8 +1110,10 @@ export type Database = {
           plan_type?: string
           previous_hourmeter?: number | null
           retroactive_justification?: string | null
+          supervisor_cpf?: string | null
           supervisor_name?: string | null
           supervisor_signature?: string | null
+          technician_cpf?: string | null
           technician_name?: string | null
           technician_signature?: string | null
           updated_at?: string
@@ -1116,6 +1122,7 @@ export type Database = {
         Update: {
           asset_id?: string | null
           client_company?: string | null
+          client_cpf?: string | null
           client_name?: string | null
           client_signature?: string | null
           client_work_site?: string | null
@@ -1143,8 +1150,10 @@ export type Database = {
           plan_type?: string
           previous_hourmeter?: number | null
           retroactive_justification?: string | null
+          supervisor_cpf?: string | null
           supervisor_name?: string | null
           supervisor_signature?: string | null
+          technician_cpf?: string | null
           technician_name?: string | null
           technician_signature?: string | null
           updated_at?: string

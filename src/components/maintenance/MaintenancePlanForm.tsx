@@ -216,10 +216,13 @@ export function MaintenancePlanForm({
       setObservationsProcedures(initialData.observations_procedures || "");
       
       setSupervisorName(initialData.supervisor_name || "");
+      setSupervisorCpf(initialData.supervisor_cpf || "");
       setSupervisorSignature(initialData.supervisor_signature || "");
       setTechnicianName(initialData.technician_name || "");
+      setTechnicianCpf(initialData.technician_cpf || "");
       setTechnicianSignature(initialData.technician_signature || "");
       setSignatureClientName(initialData.client_name || "");
+      setClientCpf(initialData.client_cpf || "");
       setClientSignature(initialData.client_signature || "");
       
       setRetroactiveJustification(initialData.retroactive_justification || "");
@@ -551,9 +554,12 @@ export function MaintenancePlanForm({
         observations_technical: observationsTechnical,
         observations_procedures: observationsProcedures,
         supervisor_name: supervisorName,
+        supervisor_cpf: supervisorCpf,
         supervisor_signature: supervisorSignature,
         technician_name: technicianName,
+        technician_cpf: technicianCpf,
         technician_signature: technicianSignature,
+        client_cpf: clientCpf,
         client_signature: clientSignature,
         verification_sections: verificationSections,
         photos: uploadedPhotos,
