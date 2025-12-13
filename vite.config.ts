@@ -5,14 +5,16 @@ import { componentTagger } from "lovable-tagger";
 
 // Content Security Policy para desenvolvimento e produção
 const cspDirectives = [
-  "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.lovable.app https://*.lovableproject.com https://*.supabase.co",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "img-src 'self' data: blob: https: https://*.supabase.co",
-  "connect-src 'self' https://*.lovable.app https://*.lovableproject.com https://*.supabase.co wss://*.supabase.co https://webhook.7arrows.pro",
-  "font-src 'self' data: https://fonts.gstatic.com",
-  "frame-ancestors 'self'",
+  "default-src 'self' https: data: blob:",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob:",
+  "style-src 'self' 'unsafe-inline' https: blob:",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data: https:",
+  "connect-src 'self' https: wss: blob:",
+  "frame-src 'self' https:",
+  "frame-ancestors 'self' https:",
   "object-src 'none'",
+  "base-uri 'self'",
   "upgrade-insecure-requests"
 ].join("; ");
 
