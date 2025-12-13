@@ -5,8 +5,17 @@ import { componentTagger } from "lovable-tagger";
 
 // Content Security Policy para desenvolvimento e produção
 const cspDirectives = [
-  "default-src 'self'",
-  "frame-ancestors 'self'"
+  "default-src 'self' https: data: blob:",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob:",
+  "style-src 'self' 'unsafe-inline' https: blob:",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data: https:",
+  "connect-src 'self' https: wss: blob:",
+  "frame-src 'self' https:",
+  "frame-ancestors 'self' https:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "upgrade-insecure-requests"
 ].join("; ");
 
 // https://vitejs.dev/config/
