@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Save, Printer, History, FileText } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Save, Printer, History, FileText, Calendar, Info } from "lucide-react";
 import { BackButton } from "@/components/BackButton";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { MeasurementRentalsSection } from "@/components/rental/MeasurementRentalsSection";
@@ -20,11 +21,25 @@ import {
   useCreateMeasurement,
   MeasurementItem
 } from "@/hooks/useRentalMeasurements";
-import { getTodayLocalDate } from "@/lib/dateUtils";
-import { format } from "date-fns";
+import { getTodayLocalDate, parseLocalDate } from "@/lib/dateUtils";
+import { format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+
+// Calcula o período baseado na data de corte
+function calculateMeasurementPeriod(cutDate: Date) {
+  const periodEnd = cutDate;
+  const periodStart = subMonths(cutDate, 1);
+  // Ajustar para o mesmo dia do mês
+  periodStart.setDate(cutDate.getDate());
+  return { periodStart, periodEnd };
+}
+
+// Formata data para input date
+function toDateInputValue(date: Date): string {
+  return format(date, 'yyyy-MM-dd');
+}
 
 export default function RentalMeasurement() {
   const { companyId } = useParams<{ companyId: string }>();
@@ -32,6 +47,9 @@ export default function RentalMeasurement() {
   const { user } = useAuth();
   const printRef = useRef<HTMLDivElement>(null);
   const [showPrintView, setShowPrintView] = useState(false);
+  
+  // Estado para data de corte
+  const [cutDateStr, setCutDateStr] = useState<string>("");
 
   // Fetch company data
   const { data: company, isLoading: loadingCompany } = useQuery({
@@ -48,8 +66,53 @@ export default function RentalMeasurement() {
     enabled: !!companyId
   });
 
-  // Fetch equipment from contract
-  const { data: equipment, isLoading: loadingEquipment } = useRentalEquipmentForMeasurement(companyId || '');
+  // Inicializar data de corte baseada no dia de corte do contrato
+  useEffect(() => {
+    if (company && !cutDateStr) {
+      const diaCorte = company.dia_corte || 1;
+      const today = new Date();
+      let cutDate: Date;
+      
+      // Se hoje é antes do dia de corte, usar mês atual
+      // Se hoje é depois do dia de corte, usar mês atual
+      if (today.getDate() >= diaCorte) {
+        cutDate = new Date(today.getFullYear(), today.getMonth(), diaCorte);
+      } else {
+        // Ainda não chegou o dia de corte deste mês, usar mês anterior
+        cutDate = new Date(today.getFullYear(), today.getMonth() - 1, diaCorte);
+      }
+      
+      setCutDateStr(toDateInputValue(cutDate));
+    }
+  }, [company, cutDateStr]);
+
+  // Calcular período baseado na data de corte
+  const { periodStart, periodEnd, totalDays } = useMemo(() => {
+    if (!cutDateStr) {
+      const today = new Date(getTodayLocalDate());
+      return { 
+        periodStart: subMonths(today, 1), 
+        periodEnd: today,
+        totalDays: 31
+      };
+    }
+    
+    const cutDate = parseLocalDate(cutDateStr);
+    const { periodStart, periodEnd } = calculateMeasurementPeriod(cutDate);
+    
+    // Calcular total de dias no período
+    const diffTime = periodEnd.getTime() - periodStart.getTime();
+    const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return { periodStart, periodEnd, totalDays: days };
+  }, [cutDateStr]);
+
+  // Fetch equipment com período calculado
+  const { data: equipment, isLoading: loadingEquipment } = useRentalEquipmentForMeasurement(
+    companyId || '',
+    periodStart,
+    periodEnd
+  );
 
   // Fetch next measurement number
   const { data: nextNumber } = useNextMeasurementNumber(companyId || '');
@@ -66,7 +129,6 @@ export default function RentalMeasurement() {
   // Initialize rental items from equipment
   useEffect(() => {
     if (equipment && equipment.length > 0) {
-      const today = getTodayLocalDate();
       const items: MeasurementItem[] = equipment.map((eq, index) => ({
         rental_equipment_id: eq.id,
         category: 'rentals' as const,
@@ -77,32 +139,22 @@ export default function RentalMeasurement() {
         quantity: eq.dias_cobrados,
         unit_price: eq.valor_diaria,
         total_price: eq.total_price,
-        period_start: eq.pickup_date,
-        period_end: today,
-        days_count: eq.days_count
+        period_start: toDateInputValue(periodStart),
+        period_end: toDateInputValue(periodEnd),
+        days_count: eq.dias_cobrados,
+        dias_reais: eq.dias_reais
       }));
       setRentalItems(items);
+    } else {
+      setRentalItems([]);
     }
-  }, [equipment]);
+  }, [equipment, periodStart, periodEnd]);
 
   // Calculate totals
   const subtotalRentals = rentalItems.reduce((sum, item) => sum + item.total_price, 0);
   const subtotalDemobilization = demobilizationItems.reduce((sum, item) => sum + item.total_price, 0);
   const subtotalMaintenance = maintenanceItems.reduce((sum, item) => sum + item.total_price, 0);
   const totalValue = subtotalRentals + subtotalDemobilization + subtotalMaintenance;
-
-  // Calculate period
-  const periodStart = rentalItems.length > 0
-    ? rentalItems.reduce((min, item) => {
-        if (!item.period_start) return min;
-        return item.period_start < min ? item.period_start : min;
-      }, rentalItems[0]?.period_start || getTodayLocalDate())
-    : getTodayLocalDate();
-  const periodEnd = getTodayLocalDate();
-  const totalDays = Math.max(
-    ...rentalItems.map(item => item.days_count || 0),
-    1
-  );
 
   // Update rental item
   const handleUpdateRentalItem = (index: number, field: keyof MeasurementItem, value: any) => {
@@ -186,8 +238,8 @@ export default function RentalMeasurement() {
       rental_company_id: companyId,
       measurement_number: nextNumber,
       measurement_date: getTodayLocalDate(),
-      period_start: periodStart,
-      period_end: periodEnd,
+      period_start: toDateInputValue(periodStart),
+      period_end: toDateInputValue(periodEnd),
       total_days: totalDays,
       subtotal_rentals: subtotalRentals,
       subtotal_demobilization: subtotalDemobilization,
@@ -286,10 +338,46 @@ export default function RentalMeasurement() {
         </div>
       </div>
 
+      {/* Data de Corte */}
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Data de Corte da Medição
+              </Label>
+              <Input
+                type="date"
+                value={cutDateStr}
+                onChange={(e) => setCutDateStr(e.target.value)}
+                className="max-w-[200px]"
+              />
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Info className="h-3 w-3" />
+                Dia de corte do contrato: {company.dia_corte || 1}
+              </p>
+            </div>
+            <div className="flex items-center justify-end">
+              <div className="bg-background rounded-lg p-4 border">
+                <p className="text-sm text-muted-foreground mb-1">Período da Medição</p>
+                <p className="text-lg font-semibold">
+                  {format(periodStart, "dd/MM/yyyy", { locale: ptBR })} a{" "}
+                  {format(periodEnd, "dd/MM/yyyy", { locale: ptBR })}
+                </p>
+                <p className="text-sm text-primary font-medium">
+                  {totalDays} dias
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Info Card */}
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <p className="text-sm text-muted-foreground">Fatura Nº</p>
               <p className="text-xl font-bold text-primary">
@@ -303,14 +391,6 @@ export default function RentalMeasurement() {
             <div>
               <p className="text-sm text-muted-foreground">Contrato</p>
               <p className="font-medium">{company.contract_number}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Período</p>
-              <p className="font-medium">
-                {format(new Date(periodStart), "dd/MM/yyyy", { locale: ptBR })} a{" "}
-                {format(new Date(periodEnd), "dd/MM/yyyy", { locale: ptBR })}
-                <span className="text-muted-foreground ml-1">({totalDays} dias)</span>
-              </p>
             </div>
           </div>
         </CardContent>
@@ -375,8 +455,8 @@ export default function RentalMeasurement() {
               cnpj={company.cnpj}
               contractNumber={company.contract_number}
               measurementNumber={nextNumber || 1}
-              periodStart={periodStart}
-              periodEnd={periodEnd}
+              periodStart={toDateInputValue(periodStart)}
+              periodEnd={toDateInputValue(periodEnd)}
               totalDays={totalDays}
               rentalItems={rentalItems}
               demobilizationItems={demobilizationItems}

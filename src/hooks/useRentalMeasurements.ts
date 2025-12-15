@@ -51,55 +51,106 @@ export interface RentalEquipmentWithDays {
   dias_cobrados: number;
   valor_diaria: number;
   total_price: number;
+  dias_reais: number;
 }
 
-// Hook para buscar equipamentos do contrato com cálculo de dias e valores
-export function useRentalEquipmentForMeasurement(companyId: string, cutDate?: Date) {
+// Calcula dias dentro do período da medição
+function calculateDaysInPeriod(
+  pickupDate: Date,
+  returnDate: Date | null,
+  periodStart: Date,
+  periodEnd: Date
+): number {
+  // Data efetiva de início no período (maior entre pickup e início do período)
+  const effectiveStart = pickupDate < periodStart ? periodStart : pickupDate;
+  
+  // Data efetiva de fim no período (menor entre return/periodEnd)
+  let effectiveEnd = periodEnd;
+  if (returnDate && returnDate < periodEnd) {
+    effectiveEnd = returnDate;
+  }
+  
+  // Se o equipamento foi devolvido antes do período, não entra
+  if (returnDate && returnDate < periodStart) {
+    return 0;
+  }
+  
+  // Se o equipamento foi retirado depois do período, não entra
+  if (pickupDate > periodEnd) {
+    return 0;
+  }
+  
+  // Calcular diferença em dias
+  const diffTime = effectiveEnd.getTime() - effectiveStart.getTime();
+  const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  
+  return Math.max(days, 0);
+}
+
+// Hook para buscar equipamentos do contrato com cálculo de dias dentro do período
+export function useRentalEquipmentForMeasurement(
+  companyId: string, 
+  periodStart?: Date, 
+  periodEnd?: Date
+) {
   return useQuery({
-    queryKey: ['rental-equipment-measurement', companyId, cutDate?.toISOString()],
+    queryKey: ['rental-equipment-measurement', companyId, periodStart?.toISOString(), periodEnd?.toISOString()],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('rental_equipment')
         .select('*')
-        .eq('rental_company_id', companyId)
-        .is('return_date', null);
+        .eq('rental_company_id', companyId);
 
       if (error) throw error;
 
-      const endDateStr = cutDate ? cutDate.toISOString().split('T')[0] : getTodayLocalDate();
+      // Se não tiver período definido, usar hoje como referência
+      const today = new Date(getTodayLocalDate());
+      const pEnd = periodEnd || today;
+      const pStart = periodStart || new Date(pEnd.getFullYear(), pEnd.getMonth() - 1, pEnd.getDate());
       
-      return (data || []).map(eq => {
-        const pickupDate = new Date(eq.pickup_date);
-        const endDate = new Date(endDateStr);
-        const diffTime = Math.abs(endDate.getTime() - pickupDate.getTime());
-        const days_count = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-        
-        // Aplicar regras de cobrança
-        const diaria15 = eq.daily_rate_15 || 0;
-        const diaria30 = eq.daily_rate_30 || 0;
-        
-        let dias_cobrados = days_count;
-        let valor_diaria = diaria30;
-        let total_price = 0;
-        
-        if (days_count <= 15) {
-          dias_cobrados = 15;
-          valor_diaria = diaria15;
-          total_price = 15 * diaria15;
-        } else {
-          dias_cobrados = days_count;
-          valor_diaria = diaria30;
-          total_price = days_count * diaria30;
-        }
+      return (data || [])
+        .map(eq => {
+          const pickupDate = new Date(eq.pickup_date);
+          const returnDate = eq.return_date ? new Date(eq.return_date) : null;
+          
+          // Calcular dias dentro do período da medição
+          const dias_reais = calculateDaysInPeriod(pickupDate, returnDate, pStart, pEnd);
+          
+          // Se não tem dias no período, pular
+          if (dias_reais === 0) {
+            return null;
+          }
+          
+          // Aplicar regras de cobrança
+          const diaria15 = eq.daily_rate_15 || 0;
+          const diaria30 = eq.daily_rate_30 || 0;
+          
+          let dias_cobrados = dias_reais;
+          let valor_diaria = diaria30;
+          let total_price = 0;
+          
+          if (dias_reais <= 15) {
+            // Até 15 dias = cobra 15 dias com valor maior
+            dias_cobrados = 15;
+            valor_diaria = diaria15;
+            total_price = 15 * diaria15;
+          } else {
+            // Mais de 15 dias = cobra dias reais com valor menor
+            dias_cobrados = dias_reais;
+            valor_diaria = diaria30;
+            total_price = dias_reais * diaria30;
+          }
 
-        return {
-          ...eq,
-          days_count,
-          dias_cobrados,
-          valor_diaria,
-          total_price
-        } as RentalEquipmentWithDays;
-      });
+          return {
+            ...eq,
+            days_count: dias_reais,
+            dias_reais,
+            dias_cobrados,
+            valor_diaria,
+            total_price
+          } as RentalEquipmentWithDays;
+        })
+        .filter((eq): eq is RentalEquipmentWithDays => eq !== null);
     },
     enabled: !!companyId
   });
