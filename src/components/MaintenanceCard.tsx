@@ -1,10 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, Wrench, Calendar, Clock, User, DollarSign } from "lucide-react";
+import { Trash2, Wrench, Calendar, Clock, User, DollarSign, CalendarClock } from "lucide-react";
 import { formatHourmeter } from "@/lib/hourmeterUtils";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatBRFromYYYYMMDD } from "@/lib/dateUtils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,9 +20,10 @@ import { useAuth } from "@/contexts/AuthContext";
 interface MaintenanceCardProps {
   maintenance: any;
   onDelete?: (id: string) => void;
+  sequenceNumber?: number;
 }
 
-export function MaintenanceCard({ maintenance, onDelete }: MaintenanceCardProps) {
+export function MaintenanceCard({ maintenance, onDelete, sequenceNumber }: MaintenanceCardProps) {
   const { permissions } = useAuth();
   const canDelete = permissions?.can_delete_assets;
 
@@ -35,6 +35,10 @@ export function MaintenanceCard({ maintenance, onDelete }: MaintenanceCardProps)
     ? "default"
     : "destructive";
 
+  // Usar data efetiva se existir (retroativa), senão usar data de registro
+  const displayDate = maintenance.effective_maintenance_date || maintenance.maintenance_date;
+  const isRetroactive = !!maintenance.effective_maintenance_date;
+
   return (
     <Card>
       <CardHeader>
@@ -42,10 +46,19 @@ export function MaintenanceCard({ maintenance, onDelete }: MaintenanceCardProps)
           <div className="flex items-center gap-2">
             <Wrench className="h-5 w-5" />
             <CardTitle className="text-lg">
-              Manutenção {maintenanceTypeLabel}
+              {sequenceNumber && maintenance.maintenance_type === "preventiva" 
+                ? `${sequenceNumber}ª Manutenção ${maintenanceTypeLabel}`
+                : `Manutenção ${maintenanceTypeLabel}`
+              }
             </CardTitle>
           </div>
           <div className="flex items-center gap-2">
+            {isRetroactive && (
+              <Badge variant="outline" className="text-xs">
+                <CalendarClock className="h-3 w-3 mr-1" />
+                Retroativa
+              </Badge>
+            )}
             <Badge variant={maintenanceTypeVariant}>
               {maintenanceTypeLabel}
             </Badge>
@@ -77,13 +90,16 @@ export function MaintenanceCard({ maintenance, onDelete }: MaintenanceCardProps)
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <div className="flex items-center gap-2 text-sm">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span>
-              {format(new Date(maintenance.maintenance_date), "dd/MM/yyyy", {
-                locale: ptBR,
-              })}
-            </span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-sm">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">{formatBRFromYYYYMMDD(displayDate)}</span>
+            </div>
+            {isRetroactive && (
+              <span className="text-xs text-muted-foreground ml-6">
+                Registrado em {formatBRFromYYYYMMDD(maintenance.maintenance_date)}
+              </span>
+            )}
           </div>
 
           {maintenance.technician_name && (
