@@ -43,16 +43,20 @@ export interface RentalEquipmentWithDays {
   asset_code: string;
   pickup_date: string;
   return_date: string | null;
-  daily_rate: number | null;
+  daily_rate_15: number | null;
+  daily_rate_30: number | null;
+  rental_period: string | null;
   work_site: string | null;
   days_count: number;
+  dias_cobrados: number;
+  valor_diaria: number;
   total_price: number;
 }
 
-// Hook para buscar equipamentos do contrato com cálculo de dias
-export function useRentalEquipmentForMeasurement(companyId: string) {
+// Hook para buscar equipamentos do contrato com cálculo de dias e valores
+export function useRentalEquipmentForMeasurement(companyId: string, cutDate?: Date) {
   return useQuery({
-    queryKey: ['rental-equipment-measurement', companyId],
+    queryKey: ['rental-equipment-measurement', companyId, cutDate?.toISOString()],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('rental_equipment')
@@ -62,18 +66,37 @@ export function useRentalEquipmentForMeasurement(companyId: string) {
 
       if (error) throw error;
 
-      const today = getTodayLocalDate();
+      const endDateStr = cutDate ? cutDate.toISOString().split('T')[0] : getTodayLocalDate();
       
       return (data || []).map(eq => {
         const pickupDate = new Date(eq.pickup_date);
-        const endDate = new Date(today);
+        const endDate = new Date(endDateStr);
         const diffTime = Math.abs(endDate.getTime() - pickupDate.getTime());
         const days_count = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-        const total_price = (eq.daily_rate || 0) * days_count;
+        
+        // Aplicar regras de cobrança
+        const diaria15 = eq.daily_rate_15 || 0;
+        const diaria30 = eq.daily_rate_30 || 0;
+        
+        let dias_cobrados = days_count;
+        let valor_diaria = diaria30;
+        let total_price = 0;
+        
+        if (days_count <= 15) {
+          dias_cobrados = 15;
+          valor_diaria = diaria15;
+          total_price = 15 * diaria15;
+        } else {
+          dias_cobrados = days_count;
+          valor_diaria = diaria30;
+          total_price = days_count * diaria30;
+        }
 
         return {
           ...eq,
           days_count,
+          dias_cobrados,
+          valor_diaria,
           total_price
         } as RentalEquipmentWithDays;
       });

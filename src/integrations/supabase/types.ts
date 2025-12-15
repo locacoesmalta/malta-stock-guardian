@@ -1672,6 +1672,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           daily_rental_price: number | null
+          dia_corte: number | null
           documents: Json | null
           equipment_description: string | null
           id: string
@@ -1694,6 +1695,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           daily_rental_price?: number | null
+          dia_corte?: number | null
           documents?: Json | null
           equipment_description?: string | null
           id?: string
@@ -1716,6 +1718,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           daily_rental_price?: number | null
+          dia_corte?: number | null
           documents?: Json | null
           equipment_description?: string | null
           id?: string
@@ -1733,10 +1736,13 @@ export type Database = {
           asset_id: string | null
           created_at: string
           daily_rate: number | null
+          daily_rate_15: number | null
+          daily_rate_30: number | null
           equipment_name: string
           id: string
           pickup_date: string
           rental_company_id: string
+          rental_period: string | null
           return_date: string | null
           updated_at: string
           work_site: string | null
@@ -1746,10 +1752,13 @@ export type Database = {
           asset_id?: string | null
           created_at?: string
           daily_rate?: number | null
+          daily_rate_15?: number | null
+          daily_rate_30?: number | null
           equipment_name: string
           id?: string
           pickup_date: string
           rental_company_id: string
+          rental_period?: string | null
           return_date?: string | null
           updated_at?: string
           work_site?: string | null
@@ -1759,10 +1768,13 @@ export type Database = {
           asset_id?: string | null
           created_at?: string
           daily_rate?: number | null
+          daily_rate_15?: number | null
+          daily_rate_30?: number | null
           equipment_name?: string
           id?: string
           pickup_date?: string
           rental_company_id?: string
+          rental_period?: string | null
           return_date?: string | null
           updated_at?: string
           work_site?: string | null
@@ -1857,6 +1869,7 @@ export type Database = {
         Row: {
           created_at: string | null
           created_by: string | null
+          cut_date: string | null
           id: string
           measurement_date: string
           measurement_number: number
@@ -1874,6 +1887,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           created_by?: string | null
+          cut_date?: string | null
           id?: string
           measurement_date?: string
           measurement_number: number
@@ -1891,6 +1905,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           created_by?: string | null
+          cut_date?: string | null
           id?: string
           measurement_date?: string
           measurement_number?: number
