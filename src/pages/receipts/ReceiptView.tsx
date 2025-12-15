@@ -6,6 +6,7 @@ import { BackButton } from "@/components/BackButton";
 import { Loader2, Printer, Download } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import "@/styles/print-base.css";
 import "@/styles/receipt-full-print.css";
 
 export const ReceiptView = () => {

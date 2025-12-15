@@ -15,6 +15,8 @@ import { validateCPF } from "@/lib/validations";
 import { toast } from "sonner";
 import { SignaturePad } from "@/components/SignatureCanvas";
 import { getTodayLocalDate } from "@/lib/dateUtils";
+import "@/styles/print-base.css";
+import "@/styles/receipt-print.css";
 
 interface ReceiptFormProps {
   type: ReceiptType;
