@@ -48,6 +48,9 @@ export default function AssetEdit() {
       supplier: "",
       purchase_date: "",
       comments: "",
+      physical_location: "",
+      effective_registration_date: "",
+      retroactive_registration_notes: "",
     },
   });
 
@@ -70,15 +73,17 @@ export default function AssetEdit() {
         manufacturer: asset.manufacturer || "",
         model: asset.model || "",
         serial_number: asset.serial_number || "",
-        voltage_combustion: asset.voltage_combustion as any,
+        voltage_combustion: asset.voltage_combustion || undefined,
         supplier: asset.supplier || "",
         purchase_date: asset.purchase_date || "",
         unit_value: asset.unit_value || undefined,
-        equipment_condition: asset.equipment_condition as any,
+        equipment_condition: (asset.equipment_condition as "NOVO" | "USADO" | undefined) || undefined,
         manual_attachment: asset.manual_attachment || "",
         exploded_drawing_attachment: asset.exploded_drawing_attachment || "",
         comments: asset.comments || "",
         physical_location: asset.physical_location || "",
+        effective_registration_date: asset.effective_registration_date || "",
+        retroactive_registration_notes: asset.retroactive_registration_notes || "",
       });
     }
   }, [asset, form]);
@@ -341,8 +346,7 @@ export default function AssetEdit() {
                   <Input
                     id="effective_registration_date"
                     type="date"
-                    defaultValue={asset.effective_registration_date || ""}
-                    onChange={(e) => form.setValue("effective_registration_date" as any, e.target.value || undefined)}
+                    {...form.register("effective_registration_date")}
                   />
                   <p className="text-xs text-muted-foreground">
                     Se deixar em branco, será considerada a data de criação do cadastro
@@ -353,8 +357,7 @@ export default function AssetEdit() {
                   <Label htmlFor="retroactive_registration_notes">Justificativa de Registro Retroativo</Label>
                   <Textarea
                     id="retroactive_registration_notes"
-                    defaultValue={asset.retroactive_registration_notes || ""}
-                    onChange={(e) => form.setValue("retroactive_registration_notes" as any, e.target.value || undefined)}
+                    {...form.register("retroactive_registration_notes")}
                     placeholder="Motivo do cadastro tardio..."
                     rows={3}
                   />
