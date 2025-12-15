@@ -10,7 +10,9 @@ import { AppHeader } from "@/components/AppHeader";
 import { PermissionRoute } from "@/components/PermissionRoute";
 import { OwnerOnlyRoute } from "@/components/OwnerOnlyRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import { CommandPalette } from "@/components/CommandPalette";
+
+// Lazy load CommandPalette - only needed for authenticated users
+const CommandPalette = lazy(() => import("./components/CommandPalette").then(m => ({ default: m.CommandPalette })));
 
 // Lazy load routes for better performance
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -90,6 +92,9 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <SidebarProvider defaultOpen={false}>
       <AppHeader />
+      <Suspense fallback={null}>
+        <CommandPalette />
+      </Suspense>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <main className="flex-1 pt-14 md:pt-16 lg:pt-20 p-3 sm:p-4 md:p-6 lg:p-8 overflow-auto">
@@ -146,7 +151,6 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <CommandPalette />
             <Suspense fallback={<LoadingFallback />}>
               <Routes>
               <Route path="/auth" element={<Auth />} />
