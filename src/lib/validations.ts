@@ -331,6 +331,10 @@ export const assetEditSchema = z.object({
   manual_attachment: z.string().optional(),
   exploded_drawing_attachment: z.string().optional(),
   comments: z.string().optional(),
+  physical_location: z.string()
+    .trim()
+    .max(200, "Localização deve ter no máximo 200 caracteres")
+    .optional(),
 });
 
 // Movement Depósito Schema

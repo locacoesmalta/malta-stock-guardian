@@ -409,6 +409,7 @@ export type Database = {
           manufacturer: string
           model: string | null
           next_maintenance_hourmeter: number | null
+          physical_location: string | null
           purchase_date: string | null
           qr_code_data: string | null
           rental_company: string | null
@@ -465,6 +466,7 @@ export type Database = {
           manufacturer: string
           model?: string | null
           next_maintenance_hourmeter?: number | null
+          physical_location?: string | null
           purchase_date?: string | null
           qr_code_data?: string | null
           rental_company?: string | null
@@ -521,6 +523,7 @@ export type Database = {
           manufacturer?: string
           model?: string | null
           next_maintenance_hourmeter?: number | null
+          physical_location?: string | null
           purchase_date?: string | null
           qr_code_data?: string | null
           rental_company?: string | null
