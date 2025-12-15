@@ -11,8 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Send, Loader2, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatBelemDate } from "@/lib/dateUtils";
 import { TypingIndicator } from "@/components/chat/TypingIndicator";
 
 const ConversationChat = () => {
@@ -145,7 +144,7 @@ const ConversationChat = () => {
                           : message.user_name || message.user_email || "Usuário"}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {format(new Date(message.created_at), "HH:mm", { locale: ptBR })}
+                        {formatBelemDate(message.created_at, "HH:mm")}
                       </span>
                     </div>
                     

@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useStockAdjustments } from "@/hooks/useStockAdjustments";
-import { format } from "date-fns";
+import { formatBelemDate } from "@/lib/dateUtils";
 import { ArrowUp, ArrowDown, User } from "lucide-react";
 
 interface Props {
@@ -60,7 +60,7 @@ export const ProductStockAdjustmentsHistory = ({ productId, productName }: Props
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {format(new Date(adj.adjustment_date), "dd/MM/yyyy HH:mm")}
+                  {formatBelemDate(adj.adjustment_date, "dd/MM/yyyy HH:mm")}
                 </p>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <User className="h-3 w-3" />

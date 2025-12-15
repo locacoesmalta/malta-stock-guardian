@@ -9,7 +9,7 @@ import { KeyRound, History, ChevronDown, ChevronUp, AlertCircle, CheckCircle2, C
 import { useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useUserManagement } from "@/hooks/useUserManagement";
-import { format } from "date-fns";
+import { formatBRFromYYYYMMDD } from "@/lib/dateUtils";
 
 interface UserCardProps {
   user: any;
@@ -69,7 +69,7 @@ export const UserCard = ({ user, isOwner }: UserCardProps) => {
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Cadastrado em {format(new Date(user.created_at), "dd/MM/yyyy")}
+              Cadastrado em {formatBRFromYYYYMMDD(user.created_at?.split('T')[0] || '')}
             </p>
           </div>
 
