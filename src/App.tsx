@@ -45,6 +45,8 @@ const PredictivePurchases = lazy(() => import("./pages/admin/PredictivePurchases
 const CashBox = lazy(() => import("./pages/admin/CashBox"));
 const RentalCompaniesList = lazy(() => import("./pages/rental/RentalCompaniesList"));
 const RentalCompanyForm = lazy(() => import("./pages/rental/RentalCompanyForm"));
+const RentalMeasurement = lazy(() => import("./pages/rental/RentalMeasurement"));
+const RentalMeasurementHistory = lazy(() => import("./pages/rental/RentalMeasurementHistory"));
 const ReceiptForm = lazy(() => import("./pages/receipts/ReceiptForm"));
 const ReceiptHistory = lazy(() => import("./pages/receipts/ReceiptHistory"));
 const ReceiptView = lazy(() => import("./pages/receipts/ReceiptView"));
@@ -399,6 +401,26 @@ const App = () => (
                 } 
               />
               <Route 
+                path="/rental-companies/:companyId/measurement" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_access_assets">
+                      <RentalMeasurement />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route 
+                path="/rental-companies/:companyId/measurements" 
+                element={
+                  <ProtectedLayout>
+                    <PermissionRoute permission="can_access_assets">
+                      <RentalMeasurementHistory />
+                    </PermissionRoute>
+                  </ProtectedLayout>
+                } 
+              />
+              <Route
                 path="/receipts/delivery/new" 
                 element={
                   <ProtectedLayout>
