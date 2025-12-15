@@ -1784,6 +1784,137 @@ export type Database = {
           },
         ]
       }
+      rental_measurement_items: {
+        Row: {
+          category: string
+          created_at: string | null
+          days_count: number | null
+          description: string
+          equipment_code: string | null
+          id: string
+          item_order: number
+          measurement_id: string
+          period_end: string | null
+          period_start: string | null
+          quantity: number
+          rental_equipment_id: string | null
+          total_price: number
+          unit: string | null
+          unit_price: number
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          days_count?: number | null
+          description: string
+          equipment_code?: string | null
+          id?: string
+          item_order: number
+          measurement_id: string
+          period_end?: string | null
+          period_start?: string | null
+          quantity?: number
+          rental_equipment_id?: string | null
+          total_price?: number
+          unit?: string | null
+          unit_price?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          days_count?: number | null
+          description?: string
+          equipment_code?: string | null
+          id?: string
+          item_order?: number
+          measurement_id?: string
+          period_end?: string | null
+          period_start?: string | null
+          quantity?: number
+          rental_equipment_id?: string | null
+          total_price?: number
+          unit?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rental_measurement_items_measurement_id_fkey"
+            columns: ["measurement_id"]
+            isOneToOne: false
+            referencedRelation: "rental_measurements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rental_measurement_items_rental_equipment_id_fkey"
+            columns: ["rental_equipment_id"]
+            isOneToOne: false
+            referencedRelation: "rental_equipment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rental_measurements: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          measurement_date: string
+          measurement_number: number
+          notes: string | null
+          period_end: string
+          period_start: string
+          rental_company_id: string
+          subtotal_demobilization: number | null
+          subtotal_maintenance: number | null
+          subtotal_rentals: number | null
+          total_days: number
+          total_value: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          measurement_date?: string
+          measurement_number: number
+          notes?: string | null
+          period_end: string
+          period_start: string
+          rental_company_id: string
+          subtotal_demobilization?: number | null
+          subtotal_maintenance?: number | null
+          subtotal_rentals?: number | null
+          total_days: number
+          total_value?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          measurement_date?: string
+          measurement_number?: number
+          notes?: string | null
+          period_end?: string
+          period_start?: string
+          rental_company_id?: string
+          subtotal_demobilization?: number | null
+          subtotal_maintenance?: number | null
+          subtotal_rentals?: number | null
+          total_days?: number
+          total_value?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rental_measurements_rental_company_id_fkey"
+            columns: ["rental_company_id"]
+            isOneToOne: false
+            referencedRelation: "rental_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_external_services: {
         Row: {
           created_at: string
@@ -2621,6 +2752,10 @@ export type Database = {
           collaborator_name: string
           equipment_count: number
         }[]
+      }
+      get_next_measurement_number: {
+        Args: { p_company_id: string }
+        Returns: number
       }
       get_session_health_stats: { Args: never; Returns: Json }
       get_total_hourmeter: { Args: { p_asset_id: string }; Returns: number }

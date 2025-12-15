@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -100,6 +100,15 @@ export default function RentalCompaniesList() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/rental-companies/${company.id}/measurement`)}
+                          title="Medição de equipamentos"
+                        >
+                          <FileText className="h-4 w-4 mr-1" />
+                          Medição
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
