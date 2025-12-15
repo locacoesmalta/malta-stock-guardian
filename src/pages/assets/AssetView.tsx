@@ -465,6 +465,16 @@ export default function AssetView() {
               <CardTitle className="text-base sm:text-lg">Status e Localização Atual</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Localização Física - exibe para todos os status */}
+              {asset.physical_location && (
+                <div className="p-3 bg-muted/50 rounded-lg border">
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1">
+                    📍 Localização Física
+                  </p>
+                  <p className="text-sm sm:text-base font-medium">{asset.physical_location}</p>
+                </div>
+              )}
+
               {asset.location_type === "aguardando_laudo" && asset.inspection_start_date && (
                 <DeadlineStatusBadge inspectionStartDate={asset.inspection_start_date} />
               )}

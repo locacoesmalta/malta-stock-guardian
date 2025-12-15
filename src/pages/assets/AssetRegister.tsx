@@ -74,6 +74,7 @@ const equipmentSchema = z.object({
   unit_value: z.number().nonnegative("Valor deve ser positivo").optional(),
   equipment_condition: z.enum(["NOVO", "USADO"]).optional(),
   comments: z.string().optional(),
+  physical_location: z.string().trim().max(200, "Localização deve ter no máximo 200 caracteres").optional().transform(val => val ? normalizeText(val) : undefined),
   // Campos retroativos
   retroactive_enabled: z.boolean().optional(),
   effective_registration_date: z.date().optional(),
@@ -133,6 +134,7 @@ export default function AssetRegister() {
       supplier: "",
       unit_value: undefined,
       comments: "",
+      physical_location: "",
       retroactive_enabled: false,
       effective_registration_date: undefined,
       retroactive_registration_notes: "",
@@ -303,6 +305,7 @@ export default function AssetRegister() {
         manual_attachment: manualUrl,
         exploded_drawing_attachment: drawingUrl,
         comments: data.comments || null,
+        physical_location: data.physical_location || null,
         location_type: "deposito_malta", // Default para novo cadastro
         deposito_description: "Aguardando definição de localização",
         // Campos retroativos
@@ -812,6 +815,29 @@ export default function AssetRegister() {
                         <SelectItem value="USADO">Usado</SelectItem>
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Localização Física */}
+              <FormField
+                control={form.control}
+                name="physical_location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Localização Física (Cidade)</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Ex: Belém, Marabá, Tucuruí"
+                        onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                        value={field.value?.toUpperCase() || ''}
+                      />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">
+                      Cidade onde o equipamento está fisicamente localizado (opcional)
+                    </p>
                     <FormMessage />
                   </FormItem>
                 )}

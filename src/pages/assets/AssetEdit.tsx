@@ -78,6 +78,7 @@ export default function AssetEdit() {
         manual_attachment: asset.manual_attachment || "",
         exploded_drawing_attachment: asset.exploded_drawing_attachment || "",
         comments: asset.comments || "",
+        physical_location: asset.physical_location || "",
       });
     }
   }, [asset, form]);
@@ -306,6 +307,23 @@ export default function AssetEdit() {
                 placeholder="Observações adicionais..."
                 rows={3}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="physical_location">Localização Física (Cidade)</Label>
+              <Input
+                id="physical_location"
+                {...form.register("physical_location")}
+                placeholder="Ex: Belém, Marabá, Tucuruí"
+                onChange={(e) => {
+                  const normalized = e.target.value.toUpperCase();
+                  form.setValue("physical_location", normalized || undefined);
+                }}
+                value={form.watch("physical_location")?.toUpperCase() || ""}
+              />
+              <p className="text-xs text-muted-foreground">
+                Cidade onde o equipamento está fisicamente localizado
+              </p>
             </div>
 
             {/* Seção de Registro Retroativo */}
