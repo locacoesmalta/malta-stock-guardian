@@ -4,13 +4,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { addDays, differenceInDays, format, parseISO } from "date-fns";
-import { ArrowLeft, Upload, X, FileText, Printer, Search, Loader2, Plus, Trash2, Package } from "lucide-react";
+import { ArrowLeft, Upload, X, FileText, Printer, Search, Loader2, Plus, Trash2, Package, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useRentalCompany, useCreateRentalCompany, useUpdateRentalCompany } from "@/hooks/useRentalCompanies";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -26,6 +27,7 @@ import {
   useRentalEquipment, 
   useAddRentalEquipment, 
   useDeleteRentalEquipment,
+  useUpdateRentalEquipment,
   calculateDaysRented,
   type RentalEquipmentInput 
 } from "@/hooks/useRentalEquipment";
@@ -39,7 +41,7 @@ const formSchema = z.object({
   contact_phone: z.string().optional(),
   contact_email: z.string().email("E-mail inválido").optional().or(z.literal("")),
   contract_number: z.string().min(1, "Número do contrato é obrigatório"),
-  contract_type: z.enum(["15", "30"]),
+  contract_type: z.enum(["15", "30", "indeterminado"]),
   contract_start_date: z.string().min(1, "Data de início é obrigatória"),
   contract_end_date: z.string().optional(),
   notes: z.string().optional(),
@@ -74,6 +76,10 @@ export default function RentalCompanyForm() {
   // Return equipment dialog state
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
   const [equipmentToReturn, setEquipmentToReturn] = useState<any>(null);
+  
+  // Edit equipment state
+  const [editingEquipment, setEditingEquipment] = useState<any>(null);
+  const updateEquipmentMutation = useUpdateRentalEquipment();
   
   const { data: equipmentByPAT } = useEquipmentByPAT(equipmentPAT);
 
@@ -208,23 +214,28 @@ export default function RentalCompanyForm() {
       return;
     }
 
-    if (!equipmentPAT || !equipmentName || !pickupDate) {
+    // PAT é opcional, mas nome e data de retirada são obrigatórios
+    if (!equipmentName || !pickupDate) {
       toast({
         title: "Campos obrigatórios",
-        description: "PAT, Nome do Equipamento e Data de Retirada são obrigatórios.",
+        description: "Nome do Equipamento e Data de Retirada são obrigatórios.",
         variant: "destructive",
       });
       return;
     }
 
-    const formattedPAT = formatPAT(equipmentPAT);
-    if (!formattedPAT) {
-      toast({
-        title: "PAT inválido",
-        description: "Digite um PAT válido com 6 dígitos.",
-        variant: "destructive",
-      });
-      return;
+    // Formatar PAT apenas se fornecido
+    let formattedPAT: string | undefined;
+    if (equipmentPAT.trim()) {
+      formattedPAT = formatPAT(equipmentPAT);
+      if (!formattedPAT) {
+        toast({
+          title: "PAT inválido",
+          description: "Digite um PAT válido com até 6 dígitos.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     // Validações de data
@@ -273,9 +284,37 @@ export default function RentalCompanyForm() {
     });
   };
 
+  const handleEditEquipment = (equipment: any) => {
+    setEditingEquipment(equipment);
+  };
+
+  const handleSaveEquipmentEdit = () => {
+    if (!editingEquipment) return;
+
+    updateEquipmentMutation.mutate({
+      id: editingEquipment.id,
+      asset_code: editingEquipment.asset_code,
+      equipment_name: editingEquipment.equipment_name,
+      pickup_date: editingEquipment.pickup_date,
+      return_date: editingEquipment.return_date,
+      daily_rate: editingEquipment.daily_rate,
+      work_site: editingEquipment.work_site,
+    }, {
+      onSuccess: () => {
+        setEditingEquipment(null);
+      },
+    });
+  };
+
   const handleDeleteEquipment = (equipmentId: string) => {
     if (!id) return;
     deleteEquipmentMutation.mutate({ id: equipmentId, companyId: id });
+  };
+
+  const calculateMaxDays = () => {
+    const contractType = form.watch("contract_type");
+    if (contractType === "indeterminado") return 999; // Sem limite
+    return parseInt(contractType || "30");
   };
 
   const calculateEquipmentTotals = () => {
@@ -306,18 +345,17 @@ export default function RentalCompanyForm() {
   };
 
   const onSubmit = async (data: FormData) => {
-    // Se contract_end_date for fornecida, usa ela diretamente; senão calcula baseado no tipo
-    let contractEndDate: string;
+    // Se contract_end_date for fornecida, usa ela; senão calcula (exceto indeterminado)
+    let contractEndDate: string | null = null;
     if (data.contract_end_date) {
-      // Usa a data exata fornecida pelo usuário sem conversão de timezone
       contractEndDate = data.contract_end_date;
-    } else {
-      // Calcula data final apenas se não foi fornecida
+    } else if (data.contract_type !== "indeterminado") {
       const contractStartDate = parseISO(data.contract_start_date);
       const contractDays = parseInt(data.contract_type);
       const endDate = addDays(contractStartDate, contractDays);
       contractEndDate = format(endDate, "yyyy-MM-dd");
     }
+    // Se indeterminado e sem data final, mantém null
 
     const submissionData: any = {
       company_name: data.company_name,
@@ -349,7 +387,7 @@ export default function RentalCompanyForm() {
     window.print();
   };
 
-  const suggestedEndDate = form.watch("contract_start_date")
+  const suggestedEndDate = form.watch("contract_start_date") && form.watch("contract_type") !== "indeterminado"
     ? format(
         addDays(parseISO(form.watch("contract_start_date")), parseInt(form.watch("contract_type"))),
         "yyyy-MM-dd"
@@ -515,11 +553,13 @@ export default function RentalCompanyForm() {
                       <Select 
                         onValueChange={(value) => {
                           field.onChange(value);
-                          // Auto-sugerir data final ao mudar tipo
-                          if (form.watch("contract_start_date") && !form.watch("contract_end_date")) {
+                          // Auto-sugerir data final ao mudar tipo (exceto indeterminado)
+                          if (value !== "indeterminado" && form.watch("contract_start_date")) {
                             const startDate = parseISO(form.watch("contract_start_date"));
                             const endDate = addDays(startDate, parseInt(value));
                             form.setValue("contract_end_date", format(endDate, "yyyy-MM-dd"));
+                          } else if (value === "indeterminado") {
+                            form.setValue("contract_end_date", "");
                           }
                         }}
                         value={field.value}
@@ -532,6 +572,7 @@ export default function RentalCompanyForm() {
                         <SelectContent>
                           <SelectItem value="15">15 dias</SelectItem>
                           <SelectItem value="30">30 dias</SelectItem>
+                          <SelectItem value="indeterminado">Indeterminado</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -551,10 +592,11 @@ export default function RentalCompanyForm() {
                           type="date"
                           onChange={(e) => {
                             field.onChange(e);
-                            // Auto-sugerir data final ao mudar data início
-                            if (!form.watch("contract_end_date")) {
+                            // Auto-sugerir data final ao mudar data início (exceto indeterminado)
+                            const contractType = form.watch("contract_type");
+                            if (contractType !== "indeterminado" && e.target.value) {
                               const startDate = parseISO(e.target.value);
-                              const contractDays = parseInt(form.watch("contract_type"));
+                              const contractDays = parseInt(contractType);
                               const endDate = addDays(startDate, contractDays);
                               form.setValue("contract_end_date", format(endDate, "yyyy-MM-dd"));
                             }
@@ -577,7 +619,9 @@ export default function RentalCompanyForm() {
                       <Input {...field} type="date" />
                     </FormControl>
                     <p className="text-sm text-muted-foreground">
-                      Deixe vazio para contratos em andamento ou preencha para contratos prorrogados
+                      {form.watch("contract_type") === "indeterminado" 
+                        ? "Contrato indeterminado - preencha quando encerrar" 
+                        : "Deixe vazio para contratos em andamento ou preencha para contratos prorrogados"}
                     </p>
                     <FormMessage />
                   </FormItem>
@@ -662,13 +706,14 @@ export default function RentalCompanyForm() {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">PAT (6 dígitos) *</label>
+                        <label className="text-sm font-medium">PAT (opcional)</label>
                         <Input
                           placeholder="000000"
                           value={equipmentPAT}
                           onChange={(e) => setEquipmentPAT(e.target.value)}
                           maxLength={6}
                         />
+                        <p className="text-xs text-muted-foreground">Se tiver PAT, preenche automático o nome</p>
                       </div>
 
                       <div className="space-y-2">
@@ -753,18 +798,18 @@ export default function RentalCompanyForm() {
                           </TableHeader>
                           <TableBody>
                             {rentalEquipment.map((equipment) => {
-                              const contractType = parseInt(form.watch("contract_type") || "30");
+                              const maxDays = calculateMaxDays();
                               const days = calculateDaysRented(
                                 equipment.pickup_date, 
                                 equipment.return_date,
-                                contractType
+                                maxDays
                               );
                               const total = equipment.daily_rate ? days * equipment.daily_rate : 0;
-                              const isOverdue = days >= contractType && !equipment.return_date;
+                              const isOverdue = maxDays !== 999 && days >= maxDays && !equipment.return_date;
 
                               return (
                                 <TableRow key={equipment.id} className={isOverdue ? "bg-destructive/10" : ""}>
-                                  <TableCell className="font-mono">{equipment.asset_code}</TableCell>
+                                  <TableCell className="font-mono">{equipment.asset_code || "-"}</TableCell>
                                   <TableCell>{equipment.equipment_name}</TableCell>
                                   <TableCell>{equipment.work_site || "-"}</TableCell>
                                   <TableCell>{format(parseISO(equipment.pickup_date), "dd/MM/yyyy")}</TableCell>
@@ -789,6 +834,15 @@ export default function RentalCompanyForm() {
                                   </TableCell>
                                   <TableCell>
                                     <div className="flex items-center gap-1">
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleEditEquipment(equipment)}
+                                        title="Editar equipamento"
+                                      >
+                                        <Pencil className="h-4 w-4" />
+                                      </Button>
                                       {!equipment.return_date && (
                                         <Button
                                           type="button"
@@ -878,6 +932,82 @@ export default function RentalCompanyForm() {
           onOpenChange={setReturnDialogOpen}
         />
       )}
+
+      {/* Modal de Edição de Equipamento */}
+      <Dialog open={!!editingEquipment} onOpenChange={(open) => !open && setEditingEquipment(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Equipamento</DialogTitle>
+          </DialogHeader>
+          {editingEquipment && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">PAT (opcional)</label>
+                <Input
+                  placeholder="000000"
+                  value={editingEquipment.asset_code || ""}
+                  onChange={(e) => setEditingEquipment({...editingEquipment, asset_code: e.target.value})}
+                  maxLength={6}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Nome do Equipamento *</label>
+                <Input
+                  value={editingEquipment.equipment_name || ""}
+                  onChange={(e) => setEditingEquipment({...editingEquipment, equipment_name: e.target.value})}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Data Retirada</label>
+                  <Input
+                    type="date"
+                    value={editingEquipment.pickup_date || ""}
+                    onChange={(e) => setEditingEquipment({...editingEquipment, pickup_date: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Data Devolução</label>
+                  <Input
+                    type="date"
+                    value={editingEquipment.return_date || ""}
+                    onChange={(e) => setEditingEquipment({...editingEquipment, return_date: e.target.value || null})}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Obra</label>
+                  <Input
+                    value={editingEquipment.work_site || ""}
+                    onChange={(e) => setEditingEquipment({...editingEquipment, work_site: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Valor Diário (R$)</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={editingEquipment.daily_rate || ""}
+                    onChange={(e) => setEditingEquipment({...editingEquipment, daily_rate: e.target.value ? parseFloat(e.target.value) : null})}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingEquipment(null)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleSaveEquipmentEdit}
+              disabled={updateEquipmentMutation.isPending}
+            >
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
