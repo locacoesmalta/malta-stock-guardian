@@ -10,7 +10,7 @@ export interface RentalCompany {
   contact_phone?: string;
   contact_email?: string;
   contract_number: string;
-  contract_type: "15" | "30";
+  contract_type: "15" | "30" | "indeterminado";
   contract_start_date: string;
   contract_end_date: string;
   is_renewed: boolean;
@@ -20,6 +20,7 @@ export interface RentalCompany {
   equipment_description?: string;
   documents: any[];
   notes?: string;
+  dia_corte?: number;
   created_by?: string;
   created_at: string;
   updated_at: string;

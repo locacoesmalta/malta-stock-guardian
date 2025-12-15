@@ -44,6 +44,7 @@ const formSchema = z.object({
   contract_type: z.enum(["15", "30", "indeterminado"]),
   contract_start_date: z.string().min(1, "Data de início é obrigatória"),
   contract_end_date: z.string().optional(),
+  dia_corte: z.number().min(1).max(31).optional(),
   notes: z.string().optional(),
 });
 
@@ -69,8 +70,9 @@ export default function RentalCompanyForm() {
   const [equipmentPAT, setEquipmentPAT] = useState("");
   const [equipmentName, setEquipmentName] = useState("");
   const [pickupDate, setPickupDate] = useState("");
-  const [returnDate, setReturnDate] = useState("");
-  const [dailyRate, setDailyRate] = useState("");
+  const [dailyRate15, setDailyRate15] = useState("");
+  const [dailyRate30, setDailyRate30] = useState("");
+  const [rentalPeriod, setRentalPeriod] = useState("30");
   const [workSite, setWorkSite] = useState("");
   
   // Return equipment dialog state
@@ -95,6 +97,7 @@ export default function RentalCompanyForm() {
       contract_type: "30",
       contract_start_date: "",
       contract_end_date: "",
+      dia_corte: 1,
       notes: "",
     },
   });
@@ -111,6 +114,7 @@ export default function RentalCompanyForm() {
         contract_type: company.contract_type,
         contract_start_date: company.contract_start_date,
         contract_end_date: company.contract_end_date || "",
+        dia_corte: company.dia_corte || 1,
         notes: company.notes || "",
       });
       setUploadedFiles(company.documents || []);
@@ -266,8 +270,9 @@ export default function RentalCompanyForm() {
       asset_code: formattedPAT,
       equipment_name: equipmentName,
       pickup_date: pickupDate,
-      return_date: returnDate || undefined,
-      daily_rate: dailyRate ? parseFloat(dailyRate) : undefined,
+      daily_rate_15: dailyRate15 ? parseFloat(dailyRate15) : undefined,
+      daily_rate_30: dailyRate30 ? parseFloat(dailyRate30) : undefined,
+      rental_period: rentalPeriod,
       work_site: workSite || undefined,
     };
 
@@ -276,8 +281,9 @@ export default function RentalCompanyForm() {
         setEquipmentPAT("");
         setEquipmentName("");
         setPickupDate("");
-        setReturnDate("");
-        setDailyRate("");
+        setDailyRate15("");
+        setDailyRate30("");
+        setRentalPeriod("30");
         setWorkSite("");
         setSelectedAssetId("");
       },
@@ -297,7 +303,9 @@ export default function RentalCompanyForm() {
       equipment_name: editingEquipment.equipment_name,
       pickup_date: editingEquipment.pickup_date,
       return_date: editingEquipment.return_date,
-      daily_rate: editingEquipment.daily_rate,
+      daily_rate_15: editingEquipment.daily_rate_15,
+      daily_rate_30: editingEquipment.daily_rate_30,
+      rental_period: editingEquipment.rental_period,
       work_site: editingEquipment.work_site,
     }, {
       onSuccess: () => {
@@ -311,29 +319,22 @@ export default function RentalCompanyForm() {
     deleteEquipmentMutation.mutate({ id: equipmentId, companyId: id });
   };
 
-  const calculateMaxDays = () => {
-    const contractType = form.watch("contract_type");
-    if (contractType === "indeterminado") return 999; // Sem limite
-    return parseInt(contractType || "30");
-  };
-
   const calculateEquipmentTotals = () => {
-    const contractType = parseInt(form.watch("contract_type") || "30");
-    
     let totalDays = 0;
     let totalValue = 0;
 
     rentalEquipment.forEach((equipment) => {
-      // Calcular dias a partir da data de RETIRADA (não do início do contrato)
-      const days = calculateDaysRented(
-        equipment.pickup_date, 
-        equipment.return_date,
-        contractType
-      );
+      const days = calculateDaysRented(equipment.pickup_date, equipment.return_date);
       totalDays += days;
       
-      if (equipment.daily_rate) {
-        totalValue += days * equipment.daily_rate;
+      // Aplicar regra de cobrança
+      const diaria15 = equipment.daily_rate_15 || 0;
+      const diaria30 = equipment.daily_rate_30 || 0;
+      
+      if (days <= 15) {
+        totalValue += 15 * diaria15;
+      } else {
+        totalValue += days * diaria30;
       }
     });
 
@@ -367,6 +368,7 @@ export default function RentalCompanyForm() {
       contract_type: data.contract_type,
       contract_start_date: data.contract_start_date,
       contract_end_date: contractEndDate,
+      dia_corte: data.dia_corte || 1,
       notes: data.notes || undefined,
       documents: uploadedFiles,
       is_renewed: false,
@@ -641,6 +643,37 @@ export default function RentalCompanyForm() {
                 </div>
               )}
 
+              <FormField
+                control={form.control}
+                name="dia_corte"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Dia de Corte para Medição</FormLabel>
+                    <Select 
+                      onValueChange={(value) => field.onChange(parseInt(value))}
+                      value={field.value?.toString() || "1"}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Dia do mês" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                          <SelectItem key={day} value={day.toString()}>
+                            Dia {day}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground">
+                      📅 Todo dia {field.value || 1} fecha a medição mensal
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <div>
                 <FormLabel>Documentos do Contrato</FormLabel>
                 <div className="mt-2 space-y-2">
@@ -726,7 +759,7 @@ export default function RentalCompanyForm() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Data de Retirada *</label>
                         <Input
@@ -737,16 +770,19 @@ export default function RentalCompanyForm() {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Data de Devolução</label>
-                        <Input
-                          type="date"
-                          value={returnDate}
-                          onChange={(e) => setReturnDate(e.target.value)}
-                        />
+                        <label className="text-sm font-medium">Período *</label>
+                        <Select value={rentalPeriod} onValueChange={setRentalPeriod}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="15">15 dias</SelectItem>
+                            <SelectItem value="30">30 dias</SelectItem>
+                            <SelectItem value="31">31 dias</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Obra</label>
                         <Input
@@ -755,16 +791,31 @@ export default function RentalCompanyForm() {
                           onChange={(e) => setWorkSite(e.target.value)}
                         />
                       </div>
+                    </div>
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Valor Diário (R$)</label>
+                        <label className="text-sm font-medium">Diária 15 dias (R$) *</label>
                         <Input
                           type="number"
                           step="0.01"
-                          placeholder="0.00"
-                          value={dailyRate}
-                          onChange={(e) => setDailyRate(e.target.value)}
+                          placeholder="Valor maior (ex: 150.00)"
+                          value={dailyRate15}
+                          onChange={(e) => setDailyRate15(e.target.value)}
                         />
+                        <p className="text-xs text-muted-foreground">Valor cobrado para locações até 15 dias</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Diária 30 dias (R$) *</label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="Valor menor (ex: 100.00)"
+                          value={dailyRate30}
+                          onChange={(e) => setDailyRate30(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">Valor cobrado para locações acima de 15 dias</p>
                       </div>
                     </div>
 
@@ -789,45 +840,61 @@ export default function RentalCompanyForm() {
                               <TableHead>Equipamento</TableHead>
                               <TableHead>Obra</TableHead>
                               <TableHead>Retirada</TableHead>
-                              <TableHead>Devolução</TableHead>
+                              <TableHead>Status</TableHead>
                               <TableHead className="text-right">Dias</TableHead>
-                              <TableHead className="text-right">Valor Diário</TableHead>
+                              <TableHead className="text-right">Diária 15d</TableHead>
+                              <TableHead className="text-right">Diária 30d</TableHead>
                               <TableHead className="text-right">Total</TableHead>
                               <TableHead></TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {rentalEquipment.map((equipment) => {
-                              const maxDays = calculateMaxDays();
-                              const days = calculateDaysRented(
-                                equipment.pickup_date, 
-                                equipment.return_date,
-                                maxDays
-                              );
-                              const total = equipment.daily_rate ? days * equipment.daily_rate : 0;
-                              const isOverdue = maxDays !== 999 && days >= maxDays && !equipment.return_date;
+                              const days = calculateDaysRented(equipment.pickup_date, equipment.return_date);
+                              const diaria15 = equipment.daily_rate_15 || 0;
+                              const diaria30 = equipment.daily_rate_30 || 0;
+                              
+                              // Calcular valor com regra de cobrança
+                              let total = 0;
+                              let diasCobrados = days;
+                              let valorDiaria = diaria30;
+                              
+                              if (days <= 15) {
+                                diasCobrados = 15;
+                                valorDiaria = diaria15;
+                                total = 15 * diaria15;
+                              } else {
+                                total = days * diaria30;
+                              }
 
                               return (
-                                <TableRow key={equipment.id} className={isOverdue ? "bg-destructive/10" : ""}>
+                                <TableRow key={equipment.id}>
                                   <TableCell className="font-mono">{equipment.asset_code || "-"}</TableCell>
                                   <TableCell>{equipment.equipment_name}</TableCell>
                                   <TableCell>{equipment.work_site || "-"}</TableCell>
                                   <TableCell>{format(parseISO(equipment.pickup_date), "dd/MM/yyyy")}</TableCell>
                                   <TableCell>
                                     {equipment.return_date ? (
-                                      format(parseISO(equipment.return_date), "dd/MM/yyyy")
-                                    ) : (
-                                      <Badge variant={isOverdue ? "destructive" : "secondary"}>
-                                        {isOverdue ? "Locação Excedida" : "Em Locação"}
+                                      <Badge variant="outline" className="text-green-600 border-green-600">
+                                        Devolvido {format(parseISO(equipment.return_date), "dd/MM")}
                                       </Badge>
+                                    ) : (
+                                      <Badge variant="secondary">Em Locação</Badge>
                                     )}
                                   </TableCell>
-                                  <TableCell className="text-right font-semibold">
-                                    {days}
-                                    {isOverdue && <span className="text-destructive ml-1">⚠</span>}
-                                  </TableCell>
                                   <TableCell className="text-right">
-                                    {equipment.daily_rate ? `R$ ${equipment.daily_rate.toFixed(2)}` : "-"}
+                                    <div className="flex flex-col items-end">
+                                      <span className="font-semibold">{diasCobrados}</span>
+                                      {days !== diasCobrados && (
+                                        <span className="text-xs text-muted-foreground">({days} reais)</span>
+                                      )}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-right text-sm">
+                                    {diaria15 > 0 ? `R$ ${diaria15.toFixed(2)}` : "-"}
+                                  </TableCell>
+                                  <TableCell className="text-right text-sm">
+                                    {diaria30 > 0 ? `R$ ${diaria30.toFixed(2)}` : "-"}
                                   </TableCell>
                                   <TableCell className="text-right font-semibold">
                                     {total > 0 ? `R$ ${total.toFixed(2)}` : "-"}

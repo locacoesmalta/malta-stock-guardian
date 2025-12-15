@@ -11,7 +11,9 @@ export interface RentalEquipment {
   equipment_name: string;
   pickup_date: string;
   return_date: string | null;
-  daily_rate: number | null;
+  daily_rate_15: number | null;
+  daily_rate_30: number | null;
+  rental_period: string | null;
   work_site: string | null;
   created_at: string;
   updated_at: string;
@@ -20,29 +22,52 @@ export interface RentalEquipment {
 export interface RentalEquipmentInput {
   rental_company_id: string;
   asset_id?: string;
-  asset_code?: string; // PAT agora é opcional
+  asset_code?: string;
   equipment_name: string;
   pickup_date: string;
   return_date?: string;
-  daily_rate?: number;
+  daily_rate_15?: number;
+  daily_rate_30?: number;
+  rental_period?: string;
   work_site?: string;
 }
 
 /**
  * Calcula os dias de locação baseado na data de RETIRADA do equipamento
- * Limite máximo: 30 dias (ou conforme tipo de contrato)
  */
 export const calculateDaysRented = (
   pickupDate: string,
-  returnDate: string | null,
-  maxDays: number = 30
+  returnDate: string | null
 ): number => {
   const startDate = parseISO(pickupDate);
   const endDate = returnDate ? parseISO(returnDate) : new Date();
   const days = differenceInDays(endDate, startDate) + 1; // +1 para incluir o dia inicial
-  
-  // Limitar ao máximo de dias do contrato
-  return Math.min(Math.max(0, days), maxDays);
+  return Math.max(0, days);
+};
+
+/**
+ * Calcula o valor da locação com regras de cobrança mínima
+ * - Até 15 dias: cobra 15 dias com diária de 15 dias (maior)
+ * - Mais de 15 dias: cobra dias reais com diária de 30 dias (menor)
+ */
+export const calcularValorLocacao = (
+  diasLocados: number,
+  diaria15: number,
+  diaria30: number
+): { diasCobrados: number; valorDiaria: number; valorTotal: number } => {
+  if (diasLocados <= 15) {
+    return {
+      diasCobrados: 15,
+      valorDiaria: diaria15,
+      valorTotal: 15 * diaria15
+    };
+  } else {
+    return {
+      diasCobrados: diasLocados,
+      valorDiaria: diaria30,
+      valorTotal: diasLocados * diaria30
+    };
+  }
 };
 
 /**
