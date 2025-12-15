@@ -7,7 +7,7 @@ export interface RentalEquipment {
   id: string;
   rental_company_id: string;
   asset_id: string | null;
-  asset_code: string;
+  asset_code: string | null;
   equipment_name: string;
   pickup_date: string;
   return_date: string | null;
@@ -20,7 +20,7 @@ export interface RentalEquipment {
 export interface RentalEquipmentInput {
   rental_company_id: string;
   asset_id?: string;
-  asset_code: string;
+  asset_code?: string; // PAT agora é opcional
   equipment_name: string;
   pickup_date: string;
   return_date?: string;

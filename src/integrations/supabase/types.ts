@@ -1665,7 +1665,7 @@ export type Database = {
           company_name: string
           contact_email: string | null
           contact_phone: string | null
-          contract_end_date: string
+          contract_end_date: string | null
           contract_number: string
           contract_start_date: string
           contract_type: string
@@ -1687,7 +1687,7 @@ export type Database = {
           company_name: string
           contact_email?: string | null
           contact_phone?: string | null
-          contract_end_date: string
+          contract_end_date?: string | null
           contract_number: string
           contract_start_date: string
           contract_type: string
@@ -1709,7 +1709,7 @@ export type Database = {
           company_name?: string
           contact_email?: string | null
           contact_phone?: string | null
-          contract_end_date?: string
+          contract_end_date?: string | null
           contract_number?: string
           contract_start_date?: string
           contract_type?: string
@@ -1729,7 +1729,7 @@ export type Database = {
       }
       rental_equipment: {
         Row: {
-          asset_code: string
+          asset_code: string | null
           asset_id: string | null
           created_at: string
           daily_rate: number | null
@@ -1742,7 +1742,7 @@ export type Database = {
           work_site: string | null
         }
         Insert: {
-          asset_code: string
+          asset_code?: string | null
           asset_id?: string | null
           created_at?: string
           daily_rate?: number | null
@@ -1755,7 +1755,7 @@ export type Database = {
           work_site?: string | null
         }
         Update: {
-          asset_code?: string
+          asset_code?: string | null
           asset_id?: string | null
           created_at?: string
           daily_rate?: number | null
