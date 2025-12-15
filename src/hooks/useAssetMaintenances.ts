@@ -57,6 +57,7 @@ export const useAssetMaintenances = (assetId?: string) => {
           asset:assets(asset_code, equipment_name)
         `)
         .eq("asset_id", assetId)
+        .order("effective_maintenance_date", { ascending: false, nullsFirst: false })
         .order("maintenance_date", { ascending: false });
 
       if (error) throw error;

@@ -119,13 +119,30 @@ export function AssetMaintenanceSection({
         </Alert>
       ) : (
         <div className="grid gap-4">
-          {maintenances.map((maintenance) => (
-            <MaintenanceCard
-              key={maintenance.id}
-              maintenance={maintenance}
-              onDelete={(id) => deleteMaintenance.mutate(id)}
-            />
-          ))}
+          {maintenances.map((maintenance) => {
+            // Calcular número de sequência para preventivas
+            // Ordenar preventivas por data (mais antiga primeiro) para numerar corretamente
+            let sequenceNumber: number | undefined;
+            if (maintenance.maintenance_type === "preventiva") {
+              const preventivas = maintenances
+                .filter((m) => m.maintenance_type === "preventiva")
+                .sort((a, b) => {
+                  const dateA = a.effective_maintenance_date || a.maintenance_date;
+                  const dateB = b.effective_maintenance_date || b.maintenance_date;
+                  return dateA.localeCompare(dateB);
+                });
+              sequenceNumber = preventivas.findIndex((p) => p.id === maintenance.id) + 1;
+            }
+            
+            return (
+              <MaintenanceCard
+                key={maintenance.id}
+                maintenance={maintenance}
+                onDelete={(id) => deleteMaintenance.mutate(id)}
+                sequenceNumber={sequenceNumber}
+              />
+            );
+          })}
         </div>
       )}
     </div>
