@@ -7,8 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { PlayCircle, CheckCircle2, AlertTriangle, Database } from "lucide-react";
 import { useState } from "react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { getCurrentDateTimeBR } from "@/lib/dateUtils";
 
 export const DataNormalizationCard = () => {
   const { data, isLoading } = useDuplicateDetection();
@@ -171,7 +170,7 @@ export const DataNormalizationCard = () => {
         {/* Informações de Automação */}
         <div className="pt-2 border-t text-xs text-muted-foreground">
           <p>⏰ Normalização automática: Diariamente às 03:00</p>
-          <p>📊 Última verificação: {format(new Date(), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}</p>
+          <p>📊 Última verificação: {getCurrentDateTimeBR()}</p>
         </div>
       </CardContent>
     </Card>

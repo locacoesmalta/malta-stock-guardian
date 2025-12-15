@@ -1,7 +1,6 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatBRFromYYYYMMDD } from "@/lib/dateUtils";
 import { useDuplicateReportDetection } from "@/hooks/useDuplicateReportDetection";
 
 interface DuplicateReportWarningProps {
@@ -36,7 +35,7 @@ export const DuplicateReportWarning = ({
         <strong>Atenção:</strong> Já existe{" "}
         {duplicates.length === 1 ? "um relatório" : `${duplicates.length} relatórios`} para este
         equipamento (PAT: {equipmentCode}) na data{" "}
-        {format(new Date(reportDate + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}.
+        {formatBRFromYYYYMMDD(reportDate)}.
         <div className="mt-2 space-y-1">
           {duplicates.map((report) => (
             <div key={report.id} className="text-xs">

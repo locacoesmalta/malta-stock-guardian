@@ -28,8 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatBRFromYYYYMMDD } from "@/lib/dateUtils";
 import { Loader2 } from "lucide-react";
 
 interface Props {
@@ -210,9 +209,7 @@ export const ProductPurchaseHistory = ({
                         {purchases.map((purchase) => (
                           <TableRow key={purchase.id}>
                             <TableCell>
-                              {format(new Date(purchase.purchase_date), "dd/MM/yyyy", {
-                                locale: ptBR,
-                              })}
+                              {formatBRFromYYYYMMDD(purchase.purchase_date)}
                             </TableCell>
                             <TableCell>{purchase.quantity}</TableCell>
                             <TableCell>

@@ -8,8 +8,7 @@ import { ProductSearchCombobox } from "@/components/ProductSearchCombobox";
 import { useProducts } from "@/hooks/useProducts";
 import { useAssetSpareParts } from "@/hooks/useAssetSpareParts";
 import { Trash2, Package } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatBelemDate } from "@/lib/dateUtils";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   Table,
@@ -154,7 +153,7 @@ export const AssetSparePartsSection = ({ assetId, assetCode }: AssetSparePartsSe
                       </TableCell>
                       <TableCell>{part.profiles?.full_name || "Usuário"}</TableCell>
                       <TableCell>
-                        {format(new Date(part.registered_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                        {formatBelemDate(part.registered_at, "dd/MM/yyyy HH:mm")}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button

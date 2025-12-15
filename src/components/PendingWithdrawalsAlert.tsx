@@ -3,8 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Plus, Archive } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatBRFromYYYYMMDD } from "@/lib/dateUtils";
 
 interface PendingWithdrawal {
   id: string;
@@ -54,7 +53,7 @@ export const PendingWithdrawalsAlert = ({
               <div className="flex-1">
                 <div className="font-medium text-sm">{w.products.name}</div>
                 <div className="text-xs text-muted-foreground">
-                  Código: {w.products.code} • Retirada em {format(new Date(w.withdrawal_date), "dd/MM/yyyy", { locale: ptBR })}
+                  Código: {w.products.code} • Retirada em {formatBRFromYYYYMMDD(w.withdrawal_date)}
                 </div>
               </div>
               <Badge variant="outline" className="ml-2">

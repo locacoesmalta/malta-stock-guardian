@@ -2,8 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Package, Calendar, MapPin, Building2, AlertCircle, CheckCircle2, Link as LinkIcon } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatBRFromYYYYMMDD } from "@/lib/dateUtils";
+
 
 interface ReportPart {
   id: string;
@@ -101,7 +101,7 @@ export const ReportPartsTraceability = ({ parts }: ReportPartsTraceabilityProps)
                         <Calendar className="h-3 w-3 text-muted-foreground" />
                         <span className="text-muted-foreground">Data Retirada:</span>
                         <span className="font-medium">
-                          {format(new Date(withdrawal.withdrawal_date), "dd/MM/yyyy", { locale: ptBR })}
+                          {formatBRFromYYYYMMDD(withdrawal.withdrawal_date)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">

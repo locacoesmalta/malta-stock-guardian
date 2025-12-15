@@ -3,8 +3,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Conversation } from "@/hooks/useConversations";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatBelemDate } from "@/lib/dateUtils";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface ConversationListProps {
@@ -66,7 +65,7 @@ export const ConversationList = ({
                     </p>
                     {conv.last_message && (
                       <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        {format(new Date(conv.last_message.created_at), 'HH:mm', { locale: ptBR })}
+                        {formatBelemDate(conv.last_message.created_at, 'HH:mm')}
                       </span>
                     )}
                   </div>
