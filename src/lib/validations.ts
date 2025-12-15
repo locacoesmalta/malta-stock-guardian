@@ -335,6 +335,11 @@ export const assetEditSchema = z.object({
     .trim()
     .max(200, "Localização deve ter no máximo 200 caracteres")
     .optional(),
+  effective_registration_date: z.string().optional(),
+  retroactive_registration_notes: z.string()
+    .trim()
+    .max(1000, "Justificativa deve ter no máximo 1000 caracteres")
+    .optional(),
 });
 
 // Movement Depósito Schema
