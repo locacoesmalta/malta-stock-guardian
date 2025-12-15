@@ -45,14 +45,25 @@ export default function AssetEdit() {
       manufacturer: "",
       model: "",
       serial_number: "",
+      voltage_combustion: "",
       supplier: "",
       purchase_date: "",
+      unit_value: undefined,
+      equipment_condition: undefined,
+      manual_attachment: "",
+      exploded_drawing_attachment: "",
       comments: "",
       physical_location: "",
       effective_registration_date: "",
       retroactive_registration_notes: "",
     },
   });
+
+  // Debug: Log validation errors
+  const formErrors = form.formState.errors;
+  if (Object.keys(formErrors).length > 0) {
+    console.warn("[AssetEdit] Validation errors:", formErrors);
+  }
 
   // Validação em tempo real
   const manufacturerValidation = useRealtimeDuplicateDetection(
@@ -73,7 +84,7 @@ export default function AssetEdit() {
         manufacturer: asset.manufacturer || "",
         model: asset.model || "",
         serial_number: asset.serial_number || "",
-        voltage_combustion: asset.voltage_combustion || undefined,
+        voltage_combustion: asset.voltage_combustion || "",
         supplier: asset.supplier || "",
         purchase_date: asset.purchase_date || "",
         unit_value: asset.unit_value || undefined,
@@ -180,6 +191,19 @@ export default function AssetEdit() {
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Debug: Mostrar erros de validação */}
+            {Object.keys(form.formState.errors).length > 0 && (
+              <Alert variant="destructive" className="col-span-full">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Erros de validação</AlertTitle>
+                <AlertDescription>
+                  {Object.entries(form.formState.errors).map(([key, value]) => (
+                    <div key={key} className="text-sm">{key}: {(value as any)?.message || "Inválido"}</div>
+                  ))}
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="manufacturer">Fabricante *</Label>
@@ -244,9 +268,13 @@ export default function AssetEdit() {
                 <Label htmlFor="voltage_combustion">Voltagem/Combustível</Label>
                 <Input
                   id="voltage_combustion"
+                  {...form.register("voltage_combustion")}
                   placeholder="Ex: 110V, 220V, Gasolina, Diesel, Gás"
+                  onChange={(e) => {
+                    const normalized = e.target.value.toUpperCase();
+                    form.setValue("voltage_combustion", normalized || undefined);
+                  }}
                   value={form.watch("voltage_combustion")?.toUpperCase() || ""}
-                  onChange={(e) => form.setValue("voltage_combustion", e.target.value.toUpperCase() || undefined)}
                 />
               </div>
 
