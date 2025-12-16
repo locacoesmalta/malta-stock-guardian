@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package } from "lucide-react";
+import { Package, AlertCircle } from "lucide-react";
 import { MeasurementItem } from "@/hooks/useRentalMeasurements";
 import { parseLocalDate, formatBelemDate } from "@/lib/dateUtils";
 
@@ -27,6 +28,8 @@ export function MeasurementRentalsSection({
   totalDays,
   readOnly = false
 }: MeasurementRentalsSectionProps) {
+  // Estado local para permitir edição livre do valor mensal
+  const [editingValues, setEditingValues] = useState<{[key: number]: string}>({});
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -138,20 +141,38 @@ export function MeasurementRentalsSection({
                         {readOnly ? (
                           formatCurrency(valorMensal)
                         ) : (
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={valorMensal}
-                            onChange={(e) => {
-                              const newPrice = parseFloat(e.target.value) || 0;
-                              onUpdateItem(index, 'monthly_price' as any, newPrice);
-                              // Recalcular valor total
-                              const newTotal = unidade * newPrice * (diasReais / totalDays);
-                              onUpdateItem(index, 'total_price', newTotal);
-                            }}
-                            className="w-28 text-right h-8"
-                          />
+                          <div className="flex flex-col items-end gap-1">
+                            <Input
+                              type="text"
+                              inputMode="decimal"
+                              value={editingValues[index] !== undefined ? editingValues[index] : valorMensal.toString()}
+                              onChange={(e) => {
+                                // Permite edição livre como string
+                                setEditingValues(prev => ({ ...prev, [index]: e.target.value }));
+                              }}
+                              onBlur={(e) => {
+                                // Converte para número apenas no blur
+                                const newPrice = parseFloat(e.target.value) || 0;
+                                onUpdateItem(index, 'monthly_price' as any, newPrice);
+                                // Recalcular valor total
+                                const newTotal = unidade * newPrice * (diasReais / totalDays);
+                                onUpdateItem(index, 'total_price', newTotal);
+                                // Limpar estado local
+                                setEditingValues(prev => {
+                                  const next = { ...prev };
+                                  delete next[index];
+                                  return next;
+                                });
+                              }}
+                              className={`w-28 text-right h-8 ${valorMensal <= 0 ? 'border-destructive' : ''}`}
+                            />
+                            {valorMensal <= 0 && (
+                              <span className="text-xs text-destructive flex items-center gap-1">
+                                <AlertCircle className="h-3 w-3" />
+                                Obrigatório
+                              </span>
+                            )}
+                          </div>
                         )}
                       </TableCell>
                       

@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Save, Printer, History, FileText, Calendar, Info } from "lucide-react";
+import { ArrowLeft, Save, Printer, History, FileText, Calendar, Info, AlertTriangle } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/BackButton";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { MeasurementRentalsSection } from "@/components/rental/MeasurementRentalsSection";
@@ -57,6 +58,7 @@ export default function RentalMeasurement() {
   const printRef = useRef<HTMLDivElement>(null);
   const [showPrintView, setShowPrintView] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isSaved, setIsSaved] = useState(isEditMode); // Em modo edição, já está salvo
   
   // Estado para data de corte
   const [cutDateStr, setCutDateStr] = useState<string>("");
@@ -206,6 +208,16 @@ export default function RentalMeasurement() {
   const subtotalRentals = rentalItems.reduce((sum, item) => sum + item.total_price, 0);
   const subtotalDemobilization = demobilizationItems.reduce((sum, item) => sum + item.total_price, 0);
   const subtotalMaintenance = maintenanceItems.reduce((sum, item) => sum + item.total_price, 0);
+
+  // Validação: verificar se há valores mensais zerados nos aluguéis
+  const hasInvalidRentalPrices = rentalItems.some(item => {
+    const valor = item.monthly_price || item.unit_price || 0;
+    return valor <= 0;
+  });
+  const invalidPricesCount = rentalItems.filter(item => {
+    const valor = item.monthly_price || item.unit_price || 0;
+    return valor <= 0;
+  }).length;
   const totalValue = subtotalRentals + subtotalDemobilization + subtotalMaintenance;
 
   // Update rental item
@@ -280,6 +292,16 @@ export default function RentalMeasurement() {
   const handleSave = async () => {
     if (!companyId || !measurementNumber || !user) return;
 
+    // Validar valores mensais obrigatórios
+    if (hasInvalidRentalPrices) {
+      toast({
+        title: "Valores obrigatórios",
+        description: `${invalidPricesCount} equipamento(s) com valor mensal zerado. Preencha todos os valores antes de salvar.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     const allItems = [
       ...rentalItems,
       ...demobilizationItems.map((item, i) => ({ ...item, item_order: i + 1 })),
@@ -312,6 +334,13 @@ export default function RentalMeasurement() {
       // Criar nova medição
       await createMeasurement.mutateAsync(measurementData);
     }
+
+    // Marcar como salvo após sucesso
+    setIsSaved(true);
+    toast({
+      title: "Medição salva",
+      description: "Agora você pode gerar o PDF."
+    });
   };
 
   // Generate PDF
@@ -397,16 +426,36 @@ export default function RentalMeasurement() {
             <History className="h-4 w-4 mr-2" />
             Histórico
           </Button>
-          <Button variant="outline" onClick={handlePrint}>
+          <Button 
+            variant="outline" 
+            onClick={handlePrint}
+            disabled={!isSaved || hasInvalidRentalPrices}
+            title={!isSaved ? "Salve a medição primeiro" : hasInvalidRentalPrices ? "Preencha todos os valores mensais" : ""}
+          >
             <Printer className="h-4 w-4 mr-2" />
             Gerar PDF
           </Button>
-          <Button onClick={handleSave} disabled={isPending}>
+          <Button onClick={handleSave} disabled={isPending || hasInvalidRentalPrices}>
             <Save className="h-4 w-4 mr-2" />
             {isEditMode ? 'Atualizar Medição' : 'Salvar Medição'}
           </Button>
         </div>
       </div>
+
+      {/* Alerta de valores inválidos */}
+      {hasInvalidRentalPrices && (
+        <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 flex items-center gap-3">
+          <AlertTriangle className="h-5 w-5 text-destructive" />
+          <div>
+            <p className="font-medium text-destructive">
+              {invalidPricesCount} equipamento(s) sem valor mensal
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Preencha o valor mensal de todos os equipamentos para salvar e gerar o PDF.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Data de Corte */}
       <Card className="border-primary/20 bg-primary/5">
