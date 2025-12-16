@@ -25,9 +25,7 @@ import {
   useMeasurementDetails,
   MeasurementItem
 } from "@/hooks/useRentalMeasurements";
-import { getTodayLocalDate, parseLocalDate, getNowInBelem, formatBelemDate } from "@/lib/dateUtils";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { getTodayLocalDate, parseLocalDate, getNowInBelem, formatBelemDate, toLocalDateString } from "@/lib/dateUtils";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
@@ -43,9 +41,9 @@ function calculateMeasurementPeriod(cutDate: Date) {
   return { periodStart, periodEnd };
 }
 
-// Formata data para input date
+// Formata data para input date - USA toLocalDateString para timezone correto
 function toDateInputValue(date: Date): string {
-  return format(date, 'yyyy-MM-dd');
+  return toLocalDateString(date);
 }
 
 export default function RentalMeasurement() {
@@ -511,8 +509,8 @@ export default function RentalMeasurement() {
               <div className="bg-background rounded-lg p-4 border">
                 <p className="text-sm text-muted-foreground mb-1">Período da Medição</p>
                 <p className="text-lg font-semibold">
-                  {format(periodStart, "dd/MM/yyyy", { locale: ptBR })} a{" "}
-                  {format(periodEnd, "dd/MM/yyyy", { locale: ptBR })}
+                  {formatBelemDate(periodStart, "dd/MM/yyyy")} a{" "}
+                  {formatBelemDate(periodEnd, "dd/MM/yyyy")}
                 </p>
                 <p className="text-sm text-primary font-medium">
                   {totalDays} dias
