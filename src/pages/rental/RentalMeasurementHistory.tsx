@@ -72,7 +72,7 @@ export default function RentalMeasurementHistory() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <BackButton fallbackPath={`/rental-companies/${companyId}/measurement`} />
+          <BackButton fallbackPath={`/rental-companies/${companyId}/edit`} />
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <FileText className="h-6 w-6" />
@@ -142,7 +142,7 @@ export default function RentalMeasurementHistory() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => navigate(`/rental-companies/${companyId}/measurements/${m.id}`)}
+                        onClick={() => navigate(`/rental-companies/${companyId}/measurement?measurementId=${m.id}`)}
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
