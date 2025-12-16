@@ -131,6 +131,51 @@ export const useAddRentalEquipment = () => {
 };
 
 /**
+ * Verifica se todos os equipamentos de uma empresa foram devolvidos
+ * Se sim, atualiza a data de término do contrato automaticamente
+ */
+const checkAndUpdateContractEndDate = async (companyId: string, returnDate: string) => {
+  // Buscar todos os equipamentos da empresa
+  const { data: equipment, error: fetchError } = await supabase
+    .from("rental_equipment")
+    .select("id, return_date")
+    .eq("rental_company_id", companyId);
+
+  if (fetchError) {
+    console.error("Error checking equipment:", fetchError);
+    return;
+  }
+
+  // Verificar se TODOS os equipamentos têm return_date
+  const allReturned = equipment && equipment.length > 0 && 
+    equipment.every(eq => eq.return_date !== null);
+
+  if (allReturned) {
+    // Encontrar a última data de devolução
+    const latestReturn = equipment
+      .map(eq => eq.return_date)
+      .filter(Boolean)
+      .sort()
+      .pop();
+
+    // Atualizar a data de término do contrato
+    const { error: updateError } = await supabase
+      .from("rental_companies")
+      .update({ contract_end_date: latestReturn || returnDate })
+      .eq("id", companyId);
+
+    if (updateError) {
+      console.error("Error updating contract end date:", updateError);
+    } else {
+      toast({
+        title: "Contrato finalizado",
+        description: "Todos os equipamentos foram devolvidos. Data de término atualizada automaticamente.",
+      });
+    }
+  }
+};
+
+/**
  * Hook para atualizar equipamento (principalmente para marcar devolução)
  */
 export const useUpdateRentalEquipment = () => {
@@ -148,8 +193,15 @@ export const useUpdateRentalEquipment = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["rental-equipment", data.rental_company_id] });
+      queryClient.invalidateQueries({ queryKey: ["rental-companies"] });
+      
+      // Se foi uma devolução (return_date foi atualizado), verificar se todos equipamentos foram devolvidos
+      if ('return_date' in variables && variables.return_date) {
+        await checkAndUpdateContractEndDate(data.rental_company_id, variables.return_date as string);
+      }
+      
       toast({
         title: "Equipamento atualizado",
         description: "O equipamento foi atualizado com sucesso.",
