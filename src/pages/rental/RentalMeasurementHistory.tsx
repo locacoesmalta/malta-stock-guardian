@@ -8,7 +8,7 @@ import { ArrowLeft, Eye, Plus, FileText } from "lucide-react";
 import { BackButton } from "@/components/BackButton";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useRentalMeasurements } from "@/hooks/useRentalMeasurements";
-import { formatBelemDate } from "@/lib/dateUtils";
+import { formatBRFromYYYYMMDD } from "@/lib/dateUtils";
 
 export default function RentalMeasurementHistory() {
   const { companyId } = useParams<{ companyId: string }>();
@@ -39,9 +39,10 @@ export default function RentalMeasurementHistory() {
     }).format(value);
   };
 
+  // SAFE: Formatar data SEM conversão timezone (manipulação de string)
   const formatDate = (dateStr: string) => {
     try {
-      return formatBelemDate(dateStr, "dd/MM/yyyy");
+      return formatBRFromYYYYMMDD(dateStr);
     } catch {
       return dateStr;
     }

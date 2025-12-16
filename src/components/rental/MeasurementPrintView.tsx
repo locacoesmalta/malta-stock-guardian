@@ -1,4 +1,4 @@
-import { formatBelemDate } from "@/lib/dateUtils";
+import { formatBRFromYYYYMMDD, formatBRShortFromYYYYMMDD } from "@/lib/dateUtils";
 import { MeasurementItem } from "@/hooks/useRentalMeasurements";
 
 interface MeasurementPrintViewProps {
@@ -43,20 +43,20 @@ export function MeasurementPrintView({
     }).format(value);
   };
 
+  // SAFE: Formatar data SEM conversão timezone (manipulação de string)
   const formatDate = (dateStr: string) => {
     try {
-      return formatBelemDate(dateStr, "dd/MM/yyyy");
+      return formatBRFromYYYYMMDD(dateStr);
     } catch {
       return dateStr;
     }
   };
 
+  // SAFE: Formatar período SEM conversão timezone (manipulação de string)
   const formatPeriod = (start?: string, end?: string) => {
     if (!start || !end) return "-";
     try {
-      const startDate = formatBelemDate(start, "dd/MM/yy");
-      const endDate = formatBelemDate(end, "dd/MM/yy");
-      return `${startDate} a ${endDate}`;
+      return `${formatBRShortFromYYYYMMDD(start)} a ${formatBRShortFromYYYYMMDD(end)}`;
     } catch {
       return "-";
     }

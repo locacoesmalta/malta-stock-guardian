@@ -338,3 +338,61 @@ export function getTimezoneInfo() {
 export function getISOStringInBelem(): string {
   return formatInTimeZone(new Date(), BELEM_TIMEZONE, "yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
 }
+
+// ============================================================================
+// FUNÇÕES SAFE - SEM CONVERSÃO DE TIMEZONE DUPLA
+// ============================================================================
+
+/**
+ * ⚠️ FUNÇÃO SAFE: Parse de string "YYYY-MM-DD" para Date SEM conversão UTC
+ * 
+ * USE ESTA FUNÇÃO para strings que já representam datas de Belém (vindas do banco ou inputs HTML)
+ * Cria Date ao MEIO-DIA para evitar edge cases de meia-noite
+ * 
+ * @param dateString - String no formato YYYY-MM-DD
+ * @returns Date object local (sem conversão timezone)
+ * 
+ * @example
+ * safeParseDateString("2025-12-14") // Date local 14/12/2025 12:00:00
+ */
+export function safeParseDateString(dateString: string): Date {
+  if (!dateString) throw new Error("Data inválida");
+  const [year, month, day] = dateString.split('-').map(Number);
+  // Criar Date ao MEIO-DIA para evitar edge cases de meia-noite
+  return new Date(year, month - 1, day, 12, 0, 0);
+}
+
+/**
+ * ⚠️ FUNÇÃO SAFE: Converte Date para string "YYYY-MM-DD" SEM conversão timezone
+ * 
+ * USE ESTA FUNÇÃO para converter Date local para string sem aplicar timezone
+ * 
+ * @param date - Date object
+ * @returns string no formato YYYY-MM-DD
+ * 
+ * @example
+ * safeDateToString(new Date(2025, 11, 14)) // "2025-12-14"
+ */
+export function safeDateToString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * ⚠️ FUNÇÃO SAFE: Formata string YYYY-MM-DD para formato curto DD/MM/YY
+ * 
+ * USE ESTA FUNÇÃO para exibir datas em formato curto sem conversão timezone
+ * 
+ * @param dateString - String no formato YYYY-MM-DD
+ * @returns string no formato DD/MM/YY
+ * 
+ * @example
+ * formatBRShortFromYYYYMMDD("2025-12-14") // "14/12/25"
+ */
+export function formatBRShortFromYYYYMMDD(dateString: string): string {
+  if (!dateString) return "";
+  const [year, month, day] = dateString.split("-");
+  return `${day}/${month}/${year.slice(-2)}`;
+}

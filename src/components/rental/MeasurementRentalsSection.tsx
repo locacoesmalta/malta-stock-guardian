@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Package, AlertCircle } from "lucide-react";
 import { MeasurementItem } from "@/hooks/useRentalMeasurements";
-import { parseLocalDate, formatBelemDate } from "@/lib/dateUtils";
+import { formatBRShortFromYYYYMMDD } from "@/lib/dateUtils";
 
 interface ExtendedMeasurementItem extends MeasurementItem {
   dias_reais?: number;
@@ -37,12 +37,11 @@ export function MeasurementRentalsSection({
     }).format(value);
   };
 
+  // SAFE: Formatar período SEM conversão timezone (manipulação de string)
   const formatPeriod = (start?: string, end?: string) => {
     if (!start || !end) return "-";
     try {
-      const startDate = formatBelemDate(parseLocalDate(start), "dd/MM/yy");
-      const endDate = formatBelemDate(parseLocalDate(end), "dd/MM/yy");
-      return `${startDate} a ${endDate}`;
+      return `${formatBRShortFromYYYYMMDD(start)} a ${formatBRShortFromYYYYMMDD(end)}`;
     } catch {
       return "-";
     }
