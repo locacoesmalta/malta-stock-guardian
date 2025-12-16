@@ -281,16 +281,36 @@ Ao trabalhar com datas, verifique:
 
 ---
 
-## 📞 Dúvidas?
+## 🚨 REGRA CRÍTICA: TIMEZONE EXPLÍCITO OBRIGATÓRIO
 
-Em caso de dúvida sobre como usar datas corretamente:
-1. Consulte este documento
-2. Veja exemplos em `src/config/timezone.ts`
-3. Verifique a implementação em `src/lib/dateUtils.ts`
-4. Use `getTimezoneInfo()` para debug
+### ✅ Funções CORRETAS (SEMPRE usar estas):
+| Função | Uso |
+|--------|-----|
+| `formatInTimeZone(date, BELEM_TIMEZONE, format)` | Formatar Date para string |
+| `toZonedTime(date, BELEM_TIMEZONE)` | Converter para Date em Belém |
+| `safeParseDateString(str)` | Parse "YYYY-MM-DD" → Date em Belém |
+| `safeDateToString(date)` | Date → "YYYY-MM-DD" em Belém |
+| `toLocalDateString(date)` | Date → "YYYY-MM-DD" em Belém |
+| `parseLocalDate(string)` | "YYYY-MM-DD" → Date em Belém |
+| `formatBelemDate(date, format)` | Formatar em qualquer formato |
+| `formatBRFromYYYYMMDD(str)` | "YYYY-MM-DD" → "DD/MM/YYYY" (string) |
+
+### ❌ Funções PROIBIDAS (NUNCA usar):
+| Função | Motivo |
+|--------|--------|
+| `date.getFullYear()` | Depende do timezone do browser |
+| `date.getMonth()` | Depende do timezone do browser |
+| `date.getDate()` | Depende do timezone do browser |
+| `new Date(year, month, day)` | Cria no timezone do browser |
+| `new Date().toISOString().split('T')[0]` | Converte para UTC |
+
+### ⚠️ MOTIVO TÉCNICO:
+O browser do usuário pode estar em QUALQUER timezone (UTC, São Paulo, Nova York, etc).
+Métodos como `getDate()` retornam valores no timezone LOCAL do browser, NÃO de Belém.
+**SEMPRE** usar `formatInTimeZone` ou `toZonedTime` para GARANTIR timezone Belém.
 
 ---
 
-**Última atualização:** 17/11/2025  
+**Última atualização:** 16/12/2025  
 **Mantenedor:** Sistema Malta Stock Guardian  
 **Fuso Horário:** America/Belem (UTC-3)

@@ -37,21 +37,27 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
 // Calcula o período baseado na data de corte (string YYYY-MM-DD)
+// SEMPRE usa funções com timezone Belém explícito
 function calculateMeasurementPeriod(cutDateStr: string) {
-  // SAFE: Parse sem conversão UTC
+  // Parse com timezone Belém explícito
   const cutDate = safeParseDateString(cutDateStr);
   const periodEnd = cutDate;
-  // Calcular mês anterior mantendo o mesmo dia
-  const periodStart = new Date(
-    cutDate.getFullYear(),
-    cutDate.getMonth() - 1,
-    cutDate.getDate(),
-    12, 0, 0 // Meio-dia para evitar edge cases
-  );
+  
+  // Calcular mês anterior: usar safeParseDateString para garantir timezone Belém
+  const year = parseInt(cutDateStr.substring(0, 4));
+  const month = parseInt(cutDateStr.substring(5, 7));
+  const day = parseInt(cutDateStr.substring(8, 10));
+  
+  // Mês anterior (se janeiro, vai para dezembro do ano anterior)
+  const prevMonth = month === 1 ? 12 : month - 1;
+  const prevYear = month === 1 ? year - 1 : year;
+  const prevDateStr = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  
+  const periodStart = safeParseDateString(prevDateStr);
   return { periodStart, periodEnd };
 }
 
-// SAFE: Formata Date para input date SEM conversão timezone dupla
+// Formata Date para input date SEMPRE no timezone Belém
 function toDateInputValue(date: Date): string {
   return safeDateToString(date);
 }

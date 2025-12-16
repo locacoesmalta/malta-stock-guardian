@@ -342,48 +342,53 @@ export function getISOStringInBelem(): string {
 // ============================================================================
 // FUNÇÕES SAFE - SEM CONVERSÃO DE TIMEZONE DUPLA
 // ============================================================================
+// FUNÇÕES SAFE PARA DATAS - SEMPRE USAM TIMEZONE BELÉM EXPLÍCITO
+// ============================================================================
+// REGRA CRÍTICA: NUNCA usar new Date() com getFullYear/getMonth/getDate diretamente
+// SEMPRE usar formatInTimeZone ou toZonedTime para GARANTIR timezone Belém
+// ============================================================================
 
 /**
- * ⚠️ FUNÇÃO SAFE: Parse de string "YYYY-MM-DD" para Date SEM conversão UTC
+ * ✅ FUNÇÃO SAFE: Parse de string "YYYY-MM-DD" para Date no timezone Belém
  * 
  * USE ESTA FUNÇÃO para strings que já representam datas de Belém (vindas do banco ou inputs HTML)
- * Cria Date ao MEIO-DIA para evitar edge cases de meia-noite
+ * SEMPRE converte para timezone Belém EXPLÍCITO via toZonedTime
  * 
  * @param dateString - String no formato YYYY-MM-DD
- * @returns Date object local (sem conversão timezone)
+ * @returns Date object no timezone America/Belem
  * 
  * @example
- * safeParseDateString("2025-12-14") // Date local 14/12/2025 12:00:00
+ * safeParseDateString("2025-12-14") // Date em Belém 14/12/2025 12:00:00
  */
 export function safeParseDateString(dateString: string): Date {
   if (!dateString) throw new Error("Data inválida");
-  const [year, month, day] = dateString.split('-').map(Number);
-  // Criar Date ao MEIO-DIA para evitar edge cases de meia-noite
-  return new Date(year, month - 1, day, 12, 0, 0);
+  // CRÍTICO: Usar toZonedTime para GARANTIR que a data é interpretada em Belém
+  // Adiciona T12:00:00 para criar Date ao meio-dia, evitando edge cases de meia-noite
+  return toZonedTime(new Date(dateString + 'T12:00:00'), BELEM_TIMEZONE);
 }
 
 /**
- * ⚠️ FUNÇÃO SAFE: Converte Date para string "YYYY-MM-DD" SEM conversão timezone
+ * ✅ FUNÇÃO SAFE: Converte Date para string "YYYY-MM-DD" no timezone Belém
  * 
- * USE ESTA FUNÇÃO para converter Date local para string sem aplicar timezone
+ * USE ESTA FUNÇÃO para converter Date para string SEMPRE no timezone Belém
+ * NUNCA usa getFullYear/getMonth/getDate diretamente (dependem do browser)
  * 
  * @param date - Date object
- * @returns string no formato YYYY-MM-DD
+ * @returns string no formato YYYY-MM-DD no timezone Belém
  * 
  * @example
- * safeDateToString(new Date(2025, 11, 14)) // "2025-12-14"
+ * safeDateToString(new Date()) // "2025-12-14" (em Belém)
  */
 export function safeDateToString(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  // CRÍTICO: Usar formatInTimeZone para GARANTIR timezone Belém
+  return formatInTimeZone(date, BELEM_TIMEZONE, 'yyyy-MM-dd');
 }
 
 /**
- * ⚠️ FUNÇÃO SAFE: Formata string YYYY-MM-DD para formato curto DD/MM/YY
+ * ✅ FUNÇÃO SAFE: Formata string YYYY-MM-DD para formato curto DD/MM/YY
  * 
- * USE ESTA FUNÇÃO para exibir datas em formato curto sem conversão timezone
+ * USE ESTA FUNÇÃO para exibir datas em formato curto
+ * Manipula STRING diretamente, não precisa de conversão timezone
  * 
  * @param dateString - String no formato YYYY-MM-DD
  * @returns string no formato DD/MM/YY
