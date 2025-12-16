@@ -107,32 +107,26 @@ export function MeasurementPrintView({
         </div>
       </div>
 
-      {/* Rentals Section */}
-      <div className="mb-6">
-        <h2 className="text-lg font-bold bg-gray-800 text-white px-3 py-2 mb-2">
-          📦 ALUGUÉIS DE MÁQUINAS
-        </h2>
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="border p-2 text-left w-12">ITEM</th>
-              <th className="border p-2 text-left w-16">PAT</th>
-              <th className="border p-2 text-left">DESCRIÇÃO</th>
-              <th className="border p-2 text-center w-28">PERÍODO</th>
-              <th className="border p-2 text-center w-12">DIAS</th>
-              <th className="border p-2 text-right w-24">VL. UNIT.</th>
-              <th className="border p-2 text-right w-24">VL. TOTAL</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rentalItems.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="border p-4 text-center text-gray-500">
-                  Nenhum equipamento
-                </td>
+      {/* Rentals Section - só aparece se tiver itens */}
+      {rentalItems.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-lg font-bold bg-gray-800 text-white px-3 py-2 mb-2">
+            📦 ALUGUÉIS DE MÁQUINAS
+          </h2>
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="border p-2 text-left w-12">ITEM</th>
+                <th className="border p-2 text-left w-16">PAT</th>
+                <th className="border p-2 text-left">DESCRIÇÃO</th>
+                <th className="border p-2 text-center w-28">PERÍODO</th>
+                <th className="border p-2 text-center w-12">DIAS</th>
+                <th className="border p-2 text-right w-24">VL. UNIT.</th>
+                <th className="border p-2 text-right w-24">VL. TOTAL</th>
               </tr>
-            ) : (
-              rentalItems.map((item, index) => (
+            </thead>
+            <tbody>
+              {rentalItems.map((item, index) => (
                 <tr key={index}>
                   <td className="border p-2">{String(index + 1).padStart(2, '0')}</td>
                   <td className="border p-2 font-mono">{item.equipment_code || "-"}</td>
@@ -144,41 +138,35 @@ export function MeasurementPrintView({
                   <td className="border p-2 text-right">{formatCurrency(item.unit_price)}</td>
                   <td className="border p-2 text-right font-semibold">{formatCurrency(item.total_price)}</td>
                 </tr>
-              ))
-            )}
-            <tr className="bg-gray-100 font-semibold">
-              <td colSpan={6} className="border p-2 text-right">Subtotal:</td>
-              <td className="border p-2 text-right">{formatCurrency(subtotalRentals)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      {/* Demobilization Section */}
-      <div className="mb-6">
-        <h2 className="text-lg font-bold bg-gray-800 text-white px-3 py-2 mb-2">
-          🚚 DESMOBILIZAÇÃO
-        </h2>
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="border p-2 text-left w-12">ITEM</th>
-              <th className="border p-2 text-left">DESCRIÇÃO</th>
-              <th className="border p-2 text-center w-16">QTD</th>
-              <th className="border p-2 text-center w-12">UN</th>
-              <th className="border p-2 text-right w-24">VL. UNIT.</th>
-              <th className="border p-2 text-right w-24">VL. TOTAL</th>
-            </tr>
-          </thead>
-          <tbody>
-            {demobilizationItems.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="border p-4 text-center text-gray-500">
-                  Nenhum item
-                </td>
+              ))}
+              <tr className="bg-gray-100 font-semibold">
+                <td colSpan={6} className="border p-2 text-right">Subtotal:</td>
+                <td className="border p-2 text-right">{formatCurrency(subtotalRentals)}</td>
               </tr>
-            ) : (
-              demobilizationItems.map((item, index) => (
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Demobilization Section - só aparece se tiver itens */}
+      {demobilizationItems.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-lg font-bold bg-gray-800 text-white px-3 py-2 mb-2">
+            🚚 DESMOBILIZAÇÃO
+          </h2>
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="border p-2 text-left w-12">ITEM</th>
+                <th className="border p-2 text-left">DESCRIÇÃO</th>
+                <th className="border p-2 text-center w-16">QTD</th>
+                <th className="border p-2 text-center w-12">UN</th>
+                <th className="border p-2 text-right w-24">VL. UNIT.</th>
+                <th className="border p-2 text-right w-24">VL. TOTAL</th>
+              </tr>
+            </thead>
+            <tbody>
+              {demobilizationItems.map((item, index) => (
                 <tr key={index}>
                   <td className="border p-2">{String(index + 1).padStart(2, '0')}</td>
                   <td className="border p-2">{item.description}</td>
@@ -187,41 +175,35 @@ export function MeasurementPrintView({
                   <td className="border p-2 text-right">{formatCurrency(item.unit_price)}</td>
                   <td className="border p-2 text-right font-semibold">{formatCurrency(item.total_price)}</td>
                 </tr>
-              ))
-            )}
-            <tr className="bg-gray-100 font-semibold">
-              <td colSpan={5} className="border p-2 text-right">Subtotal:</td>
-              <td className="border p-2 text-right">{formatCurrency(subtotalDemobilization)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      {/* Maintenance Section */}
-      <div className="mb-6">
-        <h2 className="text-lg font-bold bg-gray-800 text-white px-3 py-2 mb-2">
-          🔧 MANUTENÇÃO
-        </h2>
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="border p-2 text-left w-12">ITEM</th>
-              <th className="border p-2 text-left">DESCRIÇÃO</th>
-              <th className="border p-2 text-center w-16">QTD</th>
-              <th className="border p-2 text-center w-12">UN</th>
-              <th className="border p-2 text-right w-24">VL. UNIT.</th>
-              <th className="border p-2 text-right w-24">VL. TOTAL</th>
-            </tr>
-          </thead>
-          <tbody>
-            {maintenanceItems.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="border p-4 text-center text-gray-500">
-                  Nenhum item
-                </td>
+              ))}
+              <tr className="bg-gray-100 font-semibold">
+                <td colSpan={5} className="border p-2 text-right">Subtotal:</td>
+                <td className="border p-2 text-right">{formatCurrency(subtotalDemobilization)}</td>
               </tr>
-            ) : (
-              maintenanceItems.map((item, index) => (
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Maintenance Section - só aparece se tiver itens */}
+      {maintenanceItems.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-lg font-bold bg-gray-800 text-white px-3 py-2 mb-2">
+            🔧 MANUTENÇÃO
+          </h2>
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="border p-2 text-left w-12">ITEM</th>
+                <th className="border p-2 text-left">DESCRIÇÃO</th>
+                <th className="border p-2 text-center w-16">QTD</th>
+                <th className="border p-2 text-center w-12">UN</th>
+                <th className="border p-2 text-right w-24">VL. UNIT.</th>
+                <th className="border p-2 text-right w-24">VL. TOTAL</th>
+              </tr>
+            </thead>
+            <tbody>
+              {maintenanceItems.map((item, index) => (
                 <tr key={index}>
                   <td className="border p-2">{String(index + 1).padStart(2, '0')}</td>
                   <td className="border p-2">{item.description}</td>
@@ -230,15 +212,15 @@ export function MeasurementPrintView({
                   <td className="border p-2 text-right">{formatCurrency(item.unit_price)}</td>
                   <td className="border p-2 text-right font-semibold">{formatCurrency(item.total_price)}</td>
                 </tr>
-              ))
-            )}
-            <tr className="bg-gray-100 font-semibold">
-              <td colSpan={5} className="border p-2 text-right">Subtotal:</td>
-              <td className="border p-2 text-right">{formatCurrency(subtotalMaintenance)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              ))}
+              <tr className="bg-gray-100 font-semibold">
+                <td colSpan={5} className="border p-2 text-right">Subtotal:</td>
+                <td className="border p-2 text-right">{formatCurrency(subtotalMaintenance)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Total */}
       <div className="bg-primary text-white p-4 rounded text-right">
