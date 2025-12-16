@@ -310,9 +310,9 @@ export default function RentalMeasurement() {
       ...maintenanceItems.map((item, i) => ({ ...item, item_order: i + 1 }))
     ];
 
-    const measurementData = {
+    // Dados base da medição (sem measurement_number para updates)
+    const baseMeasurementData = {
       rental_company_id: companyId,
-      measurement_number: measurementNumber,
       measurement_date: getTodayLocalDate(),
       period_start: toDateInputValue(periodStart),
       period_end: toDateInputValue(periodEnd),
@@ -327,22 +327,28 @@ export default function RentalMeasurement() {
     };
 
     if (isEditMode && measurementId) {
-      // Atualizar medição existente
+      // Atualizar medição existente - measurement_number é passado para TypeScript mas NÃO é atualizado no banco
       await updateMeasurement.mutateAsync({
-        ...measurementData,
+        ...baseMeasurementData,
+        measurement_number: measurementNumber!, // Imutável - hook ignora este campo no UPDATE
         id: measurementId
       });
+      toast({
+        title: "Alterações salvas",
+        description: "A medição foi atualizada com sucesso."
+      });
     } else {
-      // Criar nova medição
-      await createMeasurement.mutateAsync(measurementData);
+      // Criar nova medição - INCLUI measurement_number
+      await createMeasurement.mutateAsync({
+        ...baseMeasurementData,
+        measurement_number: measurementNumber
+      });
+      setIsSaved(true);
+      toast({
+        title: "Medição finalizada",
+        description: "Agora você pode gerar o PDF."
+      });
     }
-
-    // Marcar como salvo após sucesso
-    setIsSaved(true);
-    toast({
-      title: "Medição salva",
-      description: "Agora você pode gerar o PDF."
-    });
   };
 
   // Generate PDF
@@ -438,8 +444,8 @@ export default function RentalMeasurement() {
           <Button 
             variant="outline" 
             onClick={handlePrint}
-            disabled={!isSaved || hasInvalidRentalPrices}
-            title={!isSaved ? "Finalize a medição primeiro" : hasInvalidRentalPrices ? "Preencha todos os valores mensais" : ""}
+            disabled={(!isSaved && !isEditMode) || hasInvalidRentalPrices}
+            title={(!isSaved && !isEditMode) ? "Finalize a medição primeiro" : hasInvalidRentalPrices ? "Preencha todos os valores mensais" : ""}
           >
             <Printer className="h-4 w-4 mr-2" />
             Gerar PDF
@@ -447,7 +453,7 @@ export default function RentalMeasurement() {
           {isEditMode ? (
             <Button onClick={handleSave} disabled={!canSave}>
               <Save className="h-4 w-4 mr-2" />
-              Atualizar Medição
+              Salvar Alterações
             </Button>
           ) : (
             <Button 
@@ -523,8 +529,13 @@ export default function RentalMeasurement() {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <p className="text-sm text-muted-foreground">Fatura Nº</p>
-              <p className="text-xl font-bold text-primary">
+              <p className="text-xl font-bold text-primary flex items-center gap-2">
                 {String(measurementNumber || 1).padStart(3, '0')}
+                {isEditMode && (
+                  <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                    imutável
+                  </span>
+                )}
               </p>
             </div>
             <div>
