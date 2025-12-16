@@ -82,6 +82,7 @@ export const useCreateRentalCompany = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["rental-companies"] });
+      queryClient.invalidateQueries({ queryKey: ["rental-companies-with-equipment"] });
       toast({
         title: "Sucesso",
         description: "Empresa de locação cadastrada com sucesso.",
@@ -112,8 +113,10 @@ export const useUpdateRentalCompany = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["rental-companies"] });
+      queryClient.invalidateQueries({ queryKey: ["rental-company", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["rental-companies-with-equipment"] });
       toast({
         title: "Sucesso",
         description: "Empresa de locação atualizada com sucesso.",
