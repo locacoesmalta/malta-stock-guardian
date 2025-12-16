@@ -4,8 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Package } from "lucide-react";
 import { MeasurementItem } from "@/hooks/useRentalMeasurements";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { parseLocalDate, formatBelemDate } from "@/lib/dateUtils";
 
 interface ExtendedMeasurementItem extends MeasurementItem {
   dias_reais?: number;
@@ -34,8 +33,8 @@ export function MeasurementRentalsSection({
   const formatPeriod = (start?: string, end?: string) => {
     if (!start || !end) return "-";
     try {
-      const startDate = format(new Date(start), "dd/MM/yy", { locale: ptBR });
-      const endDate = format(new Date(end), "dd/MM/yy", { locale: ptBR });
+      const startDate = formatBelemDate(parseLocalDate(start), "dd/MM/yy");
+      const endDate = formatBelemDate(parseLocalDate(end), "dd/MM/yy");
       return `${startDate} a ${endDate}`;
     } catch {
       return "-";
