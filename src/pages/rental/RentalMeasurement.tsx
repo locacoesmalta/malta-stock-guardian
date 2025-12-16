@@ -21,8 +21,8 @@ import {
   useCreateMeasurement,
   MeasurementItem
 } from "@/hooks/useRentalMeasurements";
-import { getTodayLocalDate, parseLocalDate } from "@/lib/dateUtils";
-import { format, subMonths } from "date-fns";
+import { getTodayLocalDate, parseLocalDate, getNowInBelem } from "@/lib/dateUtils";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -30,9 +30,12 @@ import jsPDF from "jspdf";
 // Calcula o período baseado na data de corte
 function calculateMeasurementPeriod(cutDate: Date) {
   const periodEnd = cutDate;
-  const periodStart = subMonths(cutDate, 1);
-  // Ajustar para o mesmo dia do mês
-  periodStart.setDate(cutDate.getDate());
+  // Calcular mês anterior mantendo o mesmo dia (evita edge cases do subMonths)
+  const periodStart = new Date(
+    cutDate.getFullYear(),
+    cutDate.getMonth() - 1,
+    cutDate.getDate()
+  );
   return { periodStart, periodEnd };
 }
 
@@ -70,7 +73,7 @@ export default function RentalMeasurement() {
   useEffect(() => {
     if (company && !cutDateStr) {
       const diaCorte = company.dia_corte || 1;
-      const today = new Date();
+      const today = getNowInBelem(); // Usar timezone correto de Belém
       let cutDate: Date;
       
       // Se hoje é antes do dia de corte, usar mês atual
@@ -89,9 +92,10 @@ export default function RentalMeasurement() {
   // Calcular período baseado na data de corte
   const { periodStart, periodEnd, totalDays } = useMemo(() => {
     if (!cutDateStr) {
-      const today = new Date(getTodayLocalDate());
+      const today = parseLocalDate(getTodayLocalDate());
+      const periodStart = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
       return { 
-        periodStart: subMonths(today, 1), 
+        periodStart, 
         periodEnd: today,
         totalDays: 31
       };
