@@ -418,7 +418,7 @@ export default function RentalMeasurement() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <BackButton fallbackPath={`/rental-companies/${companyId}`} />
+          <BackButton fallbackPath={`/rental-companies/${companyId}/edit`} />
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <FileText className="h-6 w-6" />
