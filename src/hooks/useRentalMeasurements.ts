@@ -18,6 +18,9 @@ export interface MeasurementItem {
   period_start?: string;
   period_end?: string;
   days_count?: number;
+  // Novos campos para cálculo proporcional
+  monthly_price?: number;
+  unit_quantity?: number;
 }
 
 export interface Measurement {
@@ -52,6 +55,9 @@ export interface RentalEquipmentWithDays {
   valor_diaria: number;
   total_price: number;
   dias_reais: number;
+  // Novos campos para cálculo proporcional
+  monthly_price: number;
+  unit_quantity: number;
 }
 
 // Calcula dias dentro do período da medição
@@ -129,17 +135,23 @@ export function useRentalEquipmentForMeasurement(
           let dias_cobrados = dias_reais;
           let valor_diaria = diaria30;
           let total_price = 0;
+          let monthly_price = 0;
+          
+          // Calcular dias totais do período para cálculo proporcional
+          const totalDays = Math.ceil((pEnd.getTime() - pStart.getTime()) / (1000 * 60 * 60 * 24));
           
           if (dias_reais <= 15) {
-            // Até 15 dias = cobra 15 dias com valor maior
+            // Até 15 dias = cobra 15 dias com valor maior (quinzena)
             dias_cobrados = 15;
             valor_diaria = diaria15;
-            total_price = 15 * diaria15;
+            monthly_price = diaria15 * 15; // Valor da quinzena
+            total_price = 1 * monthly_price * (dias_reais / totalDays);
           } else {
-            // Mais de 15 dias = cobra dias reais com valor menor
+            // Mais de 15 dias = cobra proporcionalmente com valor mensal
             dias_cobrados = dias_reais;
             valor_diaria = diaria30;
-            total_price = dias_reais * diaria30;
+            monthly_price = diaria30 * 30; // Valor mensal completo
+            total_price = 1 * monthly_price * (dias_reais / totalDays);
           }
 
           return {
@@ -148,7 +160,9 @@ export function useRentalEquipmentForMeasurement(
             dias_reais,
             dias_cobrados,
             valor_diaria,
-            total_price
+            total_price,
+            monthly_price,
+            unit_quantity: 1
           } as RentalEquipmentWithDays;
         })
         .filter((eq): eq is RentalEquipmentWithDays => eq !== null);
