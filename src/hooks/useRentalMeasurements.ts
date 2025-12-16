@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { getNowInBelem, getTodayLocalDate } from "@/lib/dateUtils";
+import { getNowInBelem, getTodayLocalDate, parseLocalDate } from "@/lib/dateUtils";
 
 export interface MeasurementItem {
   id?: string;
@@ -104,14 +104,15 @@ export function useRentalEquipmentForMeasurement(
       if (error) throw error;
 
       // Se não tiver período definido, usar hoje como referência
-      const today = new Date(getTodayLocalDate());
+      const today = parseLocalDate(getTodayLocalDate());
       const pEnd = periodEnd || today;
       const pStart = periodStart || new Date(pEnd.getFullYear(), pEnd.getMonth() - 1, pEnd.getDate());
       
       return (data || [])
         .map(eq => {
-          const pickupDate = new Date(eq.pickup_date);
-          const returnDate = eq.return_date ? new Date(eq.return_date) : null;
+          // CRÍTICO: usar parseLocalDate para interpretar datas no timezone correto (Belém UTC-3)
+          const pickupDate = parseLocalDate(eq.pickup_date);
+          const returnDate = eq.return_date ? parseLocalDate(eq.return_date) : null;
           
           // Calcular dias dentro do período da medição
           const dias_reais = calculateDaysInPeriod(pickupDate, returnDate, pStart, pEnd);
