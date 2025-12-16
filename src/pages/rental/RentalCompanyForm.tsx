@@ -32,6 +32,7 @@ import {
   type RentalEquipmentInput 
 } from "@/hooks/useRentalEquipment";
 import { ReturnEquipmentDialog } from "@/components/ReturnEquipmentDialog";
+import { useEquipmentsByCompany } from "@/hooks/useEquipmentsByCompany";
 import "@/styles/contract-print.css";
 
 const formSchema = z.object({
@@ -128,6 +129,28 @@ export default function RentalCompanyForm() {
       setSelectedAssetId(equipmentByPAT.id);
     }
   }, [equipmentByPAT]);
+
+  // Buscar equipamentos sugeridos para a empresa
+  const companyNameForSearch = form.watch("company_name");
+  const { data: suggestedEquipments = [], isLoading: isLoadingSuggestions } = useEquipmentsByCompany(companyNameForSearch);
+  
+  // Filtrar equipamentos já adicionados ao contrato
+  const filteredSuggestions = suggestedEquipments.filter(
+    (eq) => !rentalEquipment.some((re) => re.asset_code === eq.asset_code || re.asset_id === eq.id)
+  );
+
+  // Função para preencher formulário com equipamento sugerido
+  const handleSelectSuggested = (equipment: typeof suggestedEquipments[0]) => {
+    setEquipmentPAT(equipment.asset_code);
+    setEquipmentName(equipment.equipment_name);
+    setSelectedAssetId(equipment.id);
+    setWorkSite(equipment.rental_work_site || "");
+    
+    // Scroll para o formulário de adicionar
+    setTimeout(() => {
+      document.getElementById("add-equipment-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -718,7 +741,64 @@ export default function RentalCompanyForm() {
 
               {isEditMode && (
                 <>
-                  <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+                  {/* Seção de Equipamentos Sugeridos */}
+                  {filteredSuggestions.length > 0 && (
+                    <div className="space-y-4 p-4 border rounded-lg bg-primary/5 border-primary/20">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold flex items-center gap-2">
+                          <Package className="h-4 w-4 text-primary" />
+                          Equipamentos em Locação para esta Empresa
+                          <Badge variant="secondary" className="ml-2">{filteredSuggestions.length}</Badge>
+                        </h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Clique em "Adicionar" para preencher automaticamente o formulário
+                      </p>
+                      <div className="border rounded-lg overflow-hidden bg-background">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-24">PAT</TableHead>
+                              <TableHead>Equipamento</TableHead>
+                              <TableHead>Fabricante</TableHead>
+                              <TableHead>Obra</TableHead>
+                              <TableHead className="w-32">Ação</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredSuggestions.map((eq) => (
+                              <TableRow key={eq.id}>
+                                <TableCell className="font-mono font-semibold">{eq.asset_code}</TableCell>
+                                <TableCell>{eq.equipment_name}</TableCell>
+                                <TableCell className="text-muted-foreground">{eq.manufacturer || "-"}</TableCell>
+                                <TableCell>{eq.rental_work_site || "-"}</TableCell>
+                                <TableCell>
+                                  <Button
+                                    type="button"
+                                    variant="default"
+                                    size="sm"
+                                    onClick={() => handleSelectSuggested(eq)}
+                                  >
+                                    <Plus className="h-3 w-3 mr-1" />
+                                    Adicionar
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  )}
+
+                  {isLoadingSuggestions && (
+                    <div className="p-4 border rounded-lg bg-muted/30 flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm text-muted-foreground">Buscando equipamentos da empresa...</span>
+                    </div>
+                  )}
+
+                  <div id="add-equipment-form" className="space-y-4 p-4 border rounded-lg bg-muted/30">
                     <h3 className="font-semibold">Adicionar Equipamento</h3>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
