@@ -346,17 +346,9 @@ export default function RentalCompanyForm() {
   };
 
   const onSubmit = async (data: FormData) => {
-    // Se contract_end_date for fornecida, usa ela; senão calcula (exceto indeterminado)
-    let contractEndDate: string | null = null;
-    if (data.contract_end_date) {
-      contractEndDate = data.contract_end_date;
-    } else if (data.contract_type !== "indeterminado") {
-      const contractStartDate = parseISO(data.contract_start_date);
-      const contractDays = parseInt(data.contract_type);
-      const endDate = addDays(contractStartDate, contractDays);
-      contractEndDate = format(endDate, "yyyy-MM-dd");
-    }
-    // Se indeterminado e sem data final, mantém null
+    // Data final só é preenchida manualmente ou automaticamente quando último equipamento for devolvido
+    // NUNCA calcular automaticamente baseado no tipo de contrato
+    const contractEndDate = data.contract_end_date || null;
 
     const submissionData: any = {
       company_name: data.company_name,
@@ -553,17 +545,7 @@ export default function RentalCompanyForm() {
                     <FormItem>
                       <FormLabel>Tipo de Contrato *</FormLabel>
                       <Select 
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          // Auto-sugerir data final ao mudar tipo (exceto indeterminado)
-                          if (value !== "indeterminado" && form.watch("contract_start_date")) {
-                            const startDate = parseISO(form.watch("contract_start_date"));
-                            const endDate = addDays(startDate, parseInt(value));
-                            form.setValue("contract_end_date", format(endDate, "yyyy-MM-dd"));
-                          } else if (value === "indeterminado") {
-                            form.setValue("contract_end_date", "");
-                          }
-                        }}
+                        onValueChange={field.onChange}
                         value={field.value}
                       >
                         <FormControl>
@@ -589,21 +571,7 @@ export default function RentalCompanyForm() {
                     <FormItem>
                       <FormLabel>Data de Início *</FormLabel>
                       <FormControl>
-                        <Input 
-                          {...field} 
-                          type="date"
-                          onChange={(e) => {
-                            field.onChange(e);
-                            // Auto-sugerir data final ao mudar data início (exceto indeterminado)
-                            const contractType = form.watch("contract_type");
-                            if (contractType !== "indeterminado" && e.target.value) {
-                              const startDate = parseISO(e.target.value);
-                              const contractDays = parseInt(contractType);
-                              const endDate = addDays(startDate, contractDays);
-                              form.setValue("contract_end_date", format(endDate, "yyyy-MM-dd"));
-                            }
-                          }}
-                        />
+                        <Input {...field} type="date" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -621,9 +589,7 @@ export default function RentalCompanyForm() {
                       <Input {...field} type="date" />
                     </FormControl>
                     <p className="text-sm text-muted-foreground">
-                      {form.watch("contract_type") === "indeterminado" 
-                        ? "Contrato indeterminado - preencha quando encerrar" 
-                        : "Deixe vazio para contratos em andamento ou preencha para contratos prorrogados"}
+                      💡 Data final será definida automaticamente quando todos os equipamentos forem devolvidos
                     </p>
                     <FormMessage />
                   </FormItem>

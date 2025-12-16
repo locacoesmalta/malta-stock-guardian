@@ -96,7 +96,10 @@ export default function RentalCompaniesList() {
                       {format(parseISO(company.contract_start_date), "dd/MM/yyyy", { locale: ptBR })}
                     </TableCell>
                     <TableCell>
-                      {format(parseISO(company.contract_end_date), "dd/MM/yyyy", { locale: ptBR })}
+                      {company.contract_end_date 
+                        ? format(parseISO(company.contract_end_date), "dd/MM/yyyy", { locale: ptBR })
+                        : <span className="text-muted-foreground">—</span>
+                      }
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">

@@ -1,9 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import { differenceInDays, parseISO } from "date-fns";
-import { Clock, AlertCircle, CheckCircle } from "lucide-react";
+import { Clock, AlertCircle, CheckCircle, Play } from "lucide-react";
 
 interface ContractExpirationBadgeProps {
-  contractEndDate: string;
+  contractEndDate: string | null | undefined;
   allEquipmentReturned?: boolean;
 }
 
@@ -11,10 +11,6 @@ export function ContractExpirationBadge({
   contractEndDate, 
   allEquipmentReturned = false 
 }: ContractExpirationBadgeProps) {
-  const endDate = parseISO(contractEndDate);
-  const today = new Date();
-  const daysUntilExpiration = differenceInDays(endDate, today);
-
   // Se todos equipamentos foram devolvidos, contrato está finalizado
   if (allEquipmentReturned) {
     return (
@@ -29,6 +25,25 @@ export function ContractExpirationBadge({
       </div>
     );
   }
+
+  // Se não tem data final, contrato está em andamento
+  if (!contractEndDate) {
+    return (
+      <div className="flex items-center gap-2">
+        <Badge variant="default" className="flex items-center gap-1 bg-green-600">
+          <Play className="h-3 w-3" />
+          EM ANDAMENTO
+        </Badge>
+        <span className="text-xs text-muted-foreground">
+          Aguardando devolução de equipamentos
+        </span>
+      </div>
+    );
+  }
+
+  const endDate = parseISO(contractEndDate);
+  const today = new Date();
+  const daysUntilExpiration = differenceInDays(endDate, today);
 
   const isExpiringSoon = daysUntilExpiration <= 5 && daysUntilExpiration >= 0;
   const isExpired = daysUntilExpiration < 0;
