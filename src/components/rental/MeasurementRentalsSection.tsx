@@ -8,12 +8,15 @@ import { parseLocalDate, formatBelemDate } from "@/lib/dateUtils";
 
 interface ExtendedMeasurementItem extends MeasurementItem {
   dias_reais?: number;
+  monthly_price?: number;
+  unit_quantity?: number;
 }
 
 interface MeasurementRentalsSectionProps {
   items: ExtendedMeasurementItem[];
   onUpdateItem: (index: number, field: keyof MeasurementItem, value: any) => void;
   subtotal: number;
+  totalDays: number;
   readOnly?: boolean;
 }
 
@@ -21,6 +24,7 @@ export function MeasurementRentalsSection({
   items,
   onUpdateItem,
   subtotal,
+  totalDays,
   readOnly = false
 }: MeasurementRentalsSectionProps) {
   const formatCurrency = (value: number) => {
@@ -41,6 +45,16 @@ export function MeasurementRentalsSection({
     }
   };
 
+  // Cálculo proporcional: UNIDADE × VALOR MENSAL × (QUANT. DIAS / totalDays)
+  const calculateTotalPrice = (item: ExtendedMeasurementItem): number => {
+    const unidade = item.unit_quantity || 1;
+    const valorMensal = item.monthly_price || item.unit_price || 0;
+    const quantDias = item.dias_reais || item.days_count || item.quantity || 0;
+    
+    if (totalDays === 0) return 0;
+    return unidade * valorMensal * (quantDias / totalDays);
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -54,13 +68,13 @@ export function MeasurementRentalsSection({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
-                <TableHead className="w-14">ITEM</TableHead>
-                <TableHead className="w-20">PAT</TableHead>
-                <TableHead>DESCRIÇÃO</TableHead>
-                <TableHead className="w-32">PERÍODO</TableHead>
-                <TableHead className="w-24 text-center">DIAS</TableHead>
-                <TableHead className="w-28 text-right">VL. UNIT.</TableHead>
-                <TableHead className="w-28 text-right">VL. TOTAL</TableHead>
+                <TableHead className="w-16">QUANT.</TableHead>
+                <TableHead className="w-20">UNIDADE</TableHead>
+                <TableHead>EQUIPAMENTOS</TableHead>
+                <TableHead className="w-36">PERÍODO</TableHead>
+                <TableHead className="w-24 text-center">QUANT. DIAS</TableHead>
+                <TableHead className="w-32 text-right">VALOR MENSAL</TableHead>
+                <TableHead className="w-32 text-right">VALOR TOTAL</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -72,58 +86,78 @@ export function MeasurementRentalsSection({
                 </TableRow>
               ) : (
                 items.map((item, index) => {
-                  const diasReais = item.dias_reais || item.quantity;
-                  const diasCobrados = item.days_count || item.quantity;
-                  const isMinimum = diasReais <= 15 && diasCobrados === 15;
+                  const diasReais = item.dias_reais || item.days_count || item.quantity || 0;
+                  const unidade = item.unit_quantity || 1;
+                  const valorMensal = item.monthly_price || item.unit_price || 0;
+                  const valorTotal = calculateTotalPrice(item);
+                  const isMinimum = diasReais <= 15;
                   
                   return (
-                    <TableRow key={item.id || index}>
+                    <TableRow key={item.id || `rental-${index}`}>
+                      {/* QUANT. - Número sequencial */}
                       <TableCell className="font-medium">
                         {String(index + 1).padStart(2, '0')}
                       </TableCell>
-                      <TableCell className="font-mono text-sm">
-                        {item.equipment_code || "-"}
-                      </TableCell>
-                      <TableCell>{item.description}</TableCell>
-                      <TableCell className="text-sm">
-                        {formatPeriod(item.period_start, item.period_end)}
-                      </TableCell>
+                      
+                      {/* UNIDADE */}
                       <TableCell className="text-center">
-                        <div className="flex flex-col items-center gap-1">
-                          {isMinimum ? (
-                            <>
-                              <span className="text-muted-foreground line-through text-xs">
-                                {diasReais}
-                              </span>
-                              <Badge variant="outline" className="text-xs">
-                                {diasCobrados} (mín)
-                              </Badge>
-                            </>
-                          ) : (
-                            <span>{diasCobrados}</span>
+                        {unidade} UN
+                      </TableCell>
+                      
+                      {/* EQUIPAMENTOS - Nome + PAT */}
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{item.description}</span>
+                          {item.equipment_code && (
+                            <span className="text-xs text-muted-foreground">
+                              PAT {item.equipment_code}
+                            </span>
                           )}
                         </div>
                       </TableCell>
+                      
+                      {/* PERÍODO */}
+                      <TableCell className="text-sm">
+                        {formatPeriod(item.period_start, item.period_end)}
+                      </TableCell>
+                      
+                      {/* QUANT. DIAS */}
+                      <TableCell className="text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="font-medium">{diasReais}</span>
+                          {isMinimum && (
+                            <Badge variant="outline" className="text-xs">
+                              mín. 15
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      
+                      {/* VALOR MENSAL */}
                       <TableCell className="text-right">
                         {readOnly ? (
-                          formatCurrency(item.unit_price)
+                          formatCurrency(valorMensal)
                         ) : (
                           <Input
                             type="number"
                             step="0.01"
                             min="0"
-                            value={item.unit_price}
+                            value={valorMensal}
                             onChange={(e) => {
                               const newPrice = parseFloat(e.target.value) || 0;
-                              onUpdateItem(index, 'unit_price', newPrice);
-                              onUpdateItem(index, 'total_price', newPrice * (item.days_count || 1));
+                              onUpdateItem(index, 'monthly_price' as any, newPrice);
+                              // Recalcular valor total
+                              const newTotal = unidade * newPrice * (diasReais / totalDays);
+                              onUpdateItem(index, 'total_price', newTotal);
                             }}
-                            className="w-24 text-right h-8"
+                            className="w-28 text-right h-8"
                           />
                         )}
                       </TableCell>
+                      
+                      {/* VALOR TOTAL */}
                       <TableCell className="text-right font-medium">
-                        {formatCurrency(item.total_price)}
+                        {formatCurrency(valorTotal)}
                       </TableCell>
                     </TableRow>
                   );
@@ -139,6 +173,12 @@ export function MeasurementRentalsSection({
               </TableRow>
             </TableBody>
           </Table>
+        </div>
+        
+        {/* Legenda do cálculo */}
+        <div className="mt-4 p-3 bg-muted/30 rounded-lg text-xs text-muted-foreground">
+          <p className="font-medium mb-1">Cálculo do Valor Total:</p>
+          <p>UNIDADE × VALOR MENSAL × (QUANT. DIAS ÷ {totalDays} dias do período)</p>
         </div>
       </CardContent>
     </Card>

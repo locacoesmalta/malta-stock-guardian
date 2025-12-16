@@ -139,14 +139,16 @@ export default function RentalMeasurement() {
         item_order: index + 1,
         equipment_code: eq.asset_code,
         description: eq.equipment_name,
-        unit: 'DIA',
+        unit: 'UN',
         quantity: eq.dias_cobrados,
         unit_price: eq.valor_diaria,
         total_price: eq.total_price,
         period_start: toDateInputValue(periodStart),
         period_end: toDateInputValue(periodEnd),
         days_count: eq.dias_cobrados,
-        dias_reais: eq.dias_reais
+        dias_reais: eq.dias_reais,
+        monthly_price: eq.monthly_price,
+        unit_quantity: eq.unit_quantity
       }));
       setRentalItems(items);
     } else {
@@ -405,6 +407,7 @@ export default function RentalMeasurement() {
         items={rentalItems}
         onUpdateItem={handleUpdateRentalItem}
         subtotal={subtotalRentals}
+        totalDays={totalDays}
       />
 
       <MeasurementExtraSection
