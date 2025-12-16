@@ -105,25 +105,32 @@ export default function RentalMeasurement() {
     } else if (company && !cutDateStr && !isEditMode) {
       const diaCorte = company.dia_corte || 1;
       const today = getNowInBelem();
-      let cutDate: Date;
-      
-      if (today.getDate() >= diaCorte) {
-        cutDate = new Date(today.getFullYear(), today.getMonth(), diaCorte);
-      } else {
-        cutDate = new Date(today.getFullYear(), today.getMonth() - 1, diaCorte);
-      }
-      
-      setCutDateStr(toDateInputValue(cutDate));
+      // CORRETO: Construir string YYYY-MM-DD diretamente, SEM usar new Date()
+      // Isso evita qualquer dependência do timezone do browser
+      const year = today.getFullYear();
+      const month = today.getDate() >= diaCorte ? today.getMonth() : today.getMonth() - 1;
+      const adjustedYear = month < 0 ? year - 1 : year;
+      const adjustedMonth = month < 0 ? 11 : month;
+      const cutDateString = `${adjustedYear}-${String(adjustedMonth + 1).padStart(2, '0')}-${String(diaCorte).padStart(2, '0')}`;
+      setCutDateStr(cutDateString);
     }
   }, [company, cutDateStr, isEditMode, existingMeasurement]);
 
   // Calcular período baseado na data de corte
   const { periodStart, periodEnd, totalDays } = useMemo(() => {
     if (!cutDateStr) {
-      const today = safeParseDateString(getTodayLocalDate());
-      const periodStart = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate(), 12, 0, 0);
+      // CORRETO: Usar funções que GARANTEM timezone Belém
+      const todayStr = getTodayLocalDate(); // YYYY-MM-DD em Belém
+      const today = safeParseDateString(todayStr);
+      
+      // Calcular mês anterior via string, sem new Date()
+      const [year, month, day] = todayStr.split('-').map(Number);
+      const prevMonth = month === 1 ? 12 : month - 1;
+      const prevYear = month === 1 ? year - 1 : year;
+      const periodStartStr = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      
       return { 
-        periodStart, 
+        periodStart: safeParseDateString(periodStartStr), 
         periodEnd: today,
         totalDays: 31
       };
