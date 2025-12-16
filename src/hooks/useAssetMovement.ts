@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getISOStringInBelem, formatBelemDate, getNowInBelem } from "@/lib/dateUtils";
+import { getISOStringInBelem, formatBelemDate, getNowInBelem, getTodayLocalDate } from "@/lib/dateUtils";
 import { useRegistrarEventoPatrimonio } from "./useRegistrarEventoPatrimonio";
+import { findPendingHistoryByAsset } from "./useRentalEquipmentHistory";
 
 interface MoveAssetParams {
   assetId: string;
@@ -107,6 +108,20 @@ export const useAssetMovement = () => {
         valorNovo: toStatus,
         detalhesEvento: detalhes,
       });
+
+      // Se o equipamento foi para depósito, verificar se há histórico de substituição pendente
+      if (toStatus === "deposito_malta") {
+        const pendingHistory = await findPendingHistoryByAsset(assetId);
+        if (pendingHistory) {
+          await supabase
+            .from("rental_equipment_history")
+            .update({
+              association_end_date: getTodayLocalDate(),
+              current_status: "deposito_malta",
+            })
+            .eq("id", pendingHistory.id);
+        }
+      }
 
       return { assetId, fromStatus, toStatus };
     },

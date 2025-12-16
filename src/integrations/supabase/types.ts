@@ -1744,6 +1744,9 @@ export type Database = {
           rental_company_id: string
           rental_period: string | null
           return_date: string | null
+          substituted_from_asset_id: string | null
+          substitution_count: number | null
+          substitution_date: string | null
           updated_at: string
           work_site: string | null
         }
@@ -1760,6 +1763,9 @@ export type Database = {
           rental_company_id: string
           rental_period?: string | null
           return_date?: string | null
+          substituted_from_asset_id?: string | null
+          substitution_count?: number | null
+          substitution_date?: string | null
           updated_at?: string
           work_site?: string | null
         }
@@ -1776,6 +1782,9 @@ export type Database = {
           rental_company_id?: string
           rental_period?: string | null
           return_date?: string | null
+          substituted_from_asset_id?: string | null
+          substitution_count?: number | null
+          substitution_date?: string | null
           updated_at?: string
           work_site?: string | null
         }
@@ -1792,6 +1801,108 @@ export type Database = {
             columns: ["rental_company_id"]
             isOneToOne: false
             referencedRelation: "rental_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rental_equipment_substituted_from_asset_id_fkey"
+            columns: ["substituted_from_asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rental_equipment_history: {
+        Row: {
+          association_end_date: string | null
+          created_at: string | null
+          created_by: string | null
+          current_status: string | null
+          event_type: string
+          id: string
+          notes: string | null
+          original_asset_code: string
+          original_asset_id: string | null
+          original_equipment_name: string
+          original_pickup_date: string
+          rental_company_id: string
+          rental_equipment_id: string | null
+          substitute_asset_code: string | null
+          substitute_asset_id: string | null
+          substitute_equipment_name: string | null
+          substitution_date: string | null
+          substitution_reason: string | null
+          work_site: string | null
+        }
+        Insert: {
+          association_end_date?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          current_status?: string | null
+          event_type: string
+          id?: string
+          notes?: string | null
+          original_asset_code: string
+          original_asset_id?: string | null
+          original_equipment_name: string
+          original_pickup_date: string
+          rental_company_id: string
+          rental_equipment_id?: string | null
+          substitute_asset_code?: string | null
+          substitute_asset_id?: string | null
+          substitute_equipment_name?: string | null
+          substitution_date?: string | null
+          substitution_reason?: string | null
+          work_site?: string | null
+        }
+        Update: {
+          association_end_date?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          current_status?: string | null
+          event_type?: string
+          id?: string
+          notes?: string | null
+          original_asset_code?: string
+          original_asset_id?: string | null
+          original_equipment_name?: string
+          original_pickup_date?: string
+          rental_company_id?: string
+          rental_equipment_id?: string | null
+          substitute_asset_code?: string | null
+          substitute_asset_id?: string | null
+          substitute_equipment_name?: string | null
+          substitution_date?: string | null
+          substitution_reason?: string | null
+          work_site?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rental_equipment_history_original_asset_id_fkey"
+            columns: ["original_asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rental_equipment_history_rental_company_id_fkey"
+            columns: ["rental_company_id"]
+            isOneToOne: false
+            referencedRelation: "rental_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rental_equipment_history_rental_equipment_id_fkey"
+            columns: ["rental_equipment_id"]
+            isOneToOne: false
+            referencedRelation: "rental_equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rental_equipment_history_substitute_asset_id_fkey"
+            columns: ["substitute_asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
             referencedColumns: ["id"]
           },
         ]

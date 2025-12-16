@@ -20,6 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { ArrowLeft, RefreshCw, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { findActiveRentalEquipment } from "@/hooks/useRentalEquipmentHistory";
 
 // 🎯 FASE 1: Schema com controle total do operador sobre destinos
 const substitutionSchema = z.object({
@@ -286,6 +287,64 @@ export default function AssetSubstitution() {
       if (newAssetError) throw newAssetError;
 
       // ============================================
+      // 🎯 INTEGRAÇÃO COM CONTRATOS DE LOCAÇÃO
+      // Atualizar rental_equipment e criar histórico
+      // ============================================
+
+      const rentalEquipmentRecord = await findActiveRentalEquipment(asset.id);
+      
+      if (rentalEquipmentRecord) {
+        // Equipamento está em um contrato ativo!
+        // 1. Registrar no histórico o equipamento antigo
+        const { error: historyError } = await supabase
+          .from("rental_equipment_history")
+          .insert({
+            rental_company_id: rentalEquipmentRecord.rental_company_id,
+            rental_equipment_id: rentalEquipmentRecord.id,
+            original_asset_id: asset.id,
+            original_asset_code: asset.asset_code,
+            original_equipment_name: asset.equipment_name,
+            substitute_asset_id: substituteAsset.id,
+            substitute_asset_code: substituteAsset.asset_code,
+            substitute_equipment_name: substituteAsset.equipment_name,
+            original_pickup_date: rentalEquipmentRecord.pickup_date,
+            substitution_date: data.substitution_date,
+            substitution_reason: data.replacement_reason,
+            work_site: rentalEquipmentRecord.work_site,
+            current_status: data.old_asset_destination,
+            event_type: 'SUBSTITUTION',
+            created_by: user?.id,
+          });
+
+        if (historyError) {
+          console.error("Erro ao criar histórico de substituição:", historyError);
+        }
+
+        // 2. Atualizar rental_equipment para o novo equipamento
+        // MANTENDO a pickup_date original para medição
+        const { error: rentalUpdateError } = await supabase
+          .from("rental_equipment")
+          .update({
+            asset_id: substituteAsset.id,
+            asset_code: substituteAsset.asset_code,
+            equipment_name: substituteAsset.equipment_name,
+            substitution_date: data.substitution_date,
+            substituted_from_asset_id: asset.id,
+            substitution_count: (rentalEquipmentRecord.substitution_count || 0) + 1,
+            // pickup_date PERMANECE o original!
+          })
+          .eq("id", rentalEquipmentRecord.id);
+
+        if (rentalUpdateError) {
+          console.error("Erro ao atualizar rental_equipment:", rentalUpdateError);
+        } else {
+          toast.info(`📋 Contrato atualizado: ${rentalEquipmentRecord.rental_companies?.company_name || 'Empresa'}`, {
+            duration: 5000,
+          });
+        }
+      }
+
+      // ============================================
       // 🎯 FASE 5: REGISTRAR EVENTOS NO HISTÓRICO
       // Registrar decisões explícitas do operador
       // ============================================
@@ -338,6 +397,8 @@ export default function AssetSubstitution() {
       });
 
       queryClient.invalidateQueries({ queryKey: ["assets"] });
+      queryClient.invalidateQueries({ queryKey: ["rental-equipment"] });
+      queryClient.invalidateQueries({ queryKey: ["rental-equipment-history"] });
       toast.success("✅ Substituição realizada com sucesso!");
       navigate("/assets");
     } catch (error) {
