@@ -196,10 +196,14 @@ export const useUpdateRentalEquipment = () => {
     onSuccess: async (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["rental-equipment", data.rental_company_id] });
       queryClient.invalidateQueries({ queryKey: ["rental-companies"] });
+      queryClient.invalidateQueries({ queryKey: ["rental-company", data.rental_company_id] });
+      queryClient.invalidateQueries({ queryKey: ["rental-companies-with-equipment"] });
       
       // Se foi uma devolução (return_date foi atualizado), verificar se todos equipamentos foram devolvidos
       if ('return_date' in variables && variables.return_date) {
         await checkAndUpdateContractEndDate(data.rental_company_id, variables.return_date as string);
+        // Re-invalidar após atualização do contrato
+        queryClient.invalidateQueries({ queryKey: ["rental-company", data.rental_company_id] });
       }
       
       toast({

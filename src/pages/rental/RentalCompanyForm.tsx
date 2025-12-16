@@ -579,33 +579,51 @@ export default function RentalCompanyForm() {
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="contract_end_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data Final do Contrato</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="date" />
-                    </FormControl>
-                    <p className="text-sm text-muted-foreground">
-                      💡 Data final será definida automaticamente quando todos os equipamentos forem devolvidos
-                    </p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {form.watch("contract_end_date") && (
-                <div className="p-4 bg-muted rounded-lg space-y-2">
+              {/* Data final só aparece se já estiver preenchida (editável pelo operador) */}
+              {form.watch("contract_end_date") ? (
+                <div className="p-4 bg-muted rounded-lg space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="font-medium">Data de Término:</span>
-                    <span>{format(parseISO(form.watch("contract_end_date")), "dd/MM/yyyy")}</span>
+                    <div className="flex items-center gap-2">
+                      <span>{format(parseISO(form.watch("contract_end_date")), "dd/MM/yyyy")}</span>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => form.setValue("contract_end_date", "")}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <ContractExpirationBadge 
                     contractEndDate={form.watch("contract_end_date")} 
                     allEquipmentReturned={allEquipmentReturned}
                   />
+                </div>
+              ) : (
+                <div className="p-4 border border-dashed rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Data Final do Contrato</p>
+                      <p className="text-xs text-muted-foreground">
+                        💡 Será definida automaticamente quando todos os equipamentos forem devolvidos, ou você pode definir manualmente.
+                      </p>
+                    </div>
+                    <Dialog>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          const today = format(new Date(), "yyyy-MM-dd");
+                          form.setValue("contract_end_date", today);
+                        }}
+                      >
+                        Definir Data
+                      </Button>
+                    </Dialog>
+                  </div>
                 </div>
               )}
 
