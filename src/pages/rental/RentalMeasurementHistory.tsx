@@ -8,8 +8,7 @@ import { ArrowLeft, Eye, Plus, FileText } from "lucide-react";
 import { BackButton } from "@/components/BackButton";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useRentalMeasurements } from "@/hooks/useRentalMeasurements";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatBelemDate } from "@/lib/dateUtils";
 
 export default function RentalMeasurementHistory() {
   const { companyId } = useParams<{ companyId: string }>();
@@ -42,7 +41,7 @@ export default function RentalMeasurementHistory() {
 
   const formatDate = (dateStr: string) => {
     try {
-      return format(new Date(dateStr), "dd/MM/yyyy", { locale: ptBR });
+      return formatBelemDate(dateStr, "dd/MM/yyyy");
     } catch {
       return dateStr;
     }

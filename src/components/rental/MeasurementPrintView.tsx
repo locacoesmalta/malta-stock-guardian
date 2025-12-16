@@ -1,5 +1,4 @@
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatBelemDate } from "@/lib/dateUtils";
 import { MeasurementItem } from "@/hooks/useRentalMeasurements";
 
 interface MeasurementPrintViewProps {
@@ -46,7 +45,7 @@ export function MeasurementPrintView({
 
   const formatDate = (dateStr: string) => {
     try {
-      return format(new Date(dateStr), "dd/MM/yyyy", { locale: ptBR });
+      return formatBelemDate(dateStr, "dd/MM/yyyy");
     } catch {
       return dateStr;
     }
@@ -55,8 +54,8 @@ export function MeasurementPrintView({
   const formatPeriod = (start?: string, end?: string) => {
     if (!start || !end) return "-";
     try {
-      const startDate = format(new Date(start), "dd/MM/yy", { locale: ptBR });
-      const endDate = format(new Date(end), "dd/MM/yy", { locale: ptBR });
+      const startDate = formatBelemDate(start, "dd/MM/yy");
+      const endDate = formatBelemDate(end, "dd/MM/yy");
       return `${startDate} a ${endDate}`;
     } catch {
       return "-";
