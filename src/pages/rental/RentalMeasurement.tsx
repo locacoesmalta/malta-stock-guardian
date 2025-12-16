@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,9 +19,11 @@ import {
   useRentalEquipmentForMeasurement,
   useNextMeasurementNumber,
   useCreateMeasurement,
+  useUpdateMeasurement,
+  useMeasurementDetails,
   MeasurementItem
 } from "@/hooks/useRentalMeasurements";
-import { getTodayLocalDate, parseLocalDate, getNowInBelem } from "@/lib/dateUtils";
+import { getTodayLocalDate, parseLocalDate, getNowInBelem, formatBelemDate } from "@/lib/dateUtils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import html2canvas from "html2canvas";
@@ -46,10 +48,15 @@ function toDateInputValue(date: Date): string {
 
 export default function RentalMeasurement() {
   const { companyId } = useParams<{ companyId: string }>();
+  const [searchParams] = useSearchParams();
+  const measurementId = searchParams.get('measurementId');
+  const isEditMode = !!measurementId;
+  
   const navigate = useNavigate();
   const { user } = useAuth();
   const printRef = useRef<HTMLDivElement>(null);
   const [showPrintView, setShowPrintView] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   // Estado para data de corte
   const [cutDateStr, setCutDateStr] = useState<string>("");
@@ -69,25 +76,28 @@ export default function RentalMeasurement() {
     enabled: !!companyId
   });
 
-  // Inicializar data de corte baseada no dia de corte do contrato
+  // Fetch existing measurement if editing
+  const { data: existingMeasurement, isLoading: loadingMeasurement } = useMeasurementDetails(measurementId || undefined);
+
+  // Inicializar data de corte baseada no dia de corte do contrato ou medição existente
   useEffect(() => {
-    if (company && !cutDateStr) {
+    if (isEditMode && existingMeasurement && !cutDateStr) {
+      // Em modo edição, usar a data de corte da medição existente
+      setCutDateStr(existingMeasurement.period_end);
+    } else if (company && !cutDateStr && !isEditMode) {
       const diaCorte = company.dia_corte || 1;
-      const today = getNowInBelem(); // Usar timezone correto de Belém
+      const today = getNowInBelem();
       let cutDate: Date;
       
-      // Se hoje é antes do dia de corte, usar mês atual
-      // Se hoje é depois do dia de corte, usar mês atual
       if (today.getDate() >= diaCorte) {
         cutDate = new Date(today.getFullYear(), today.getMonth(), diaCorte);
       } else {
-        // Ainda não chegou o dia de corte deste mês, usar mês anterior
         cutDate = new Date(today.getFullYear(), today.getMonth() - 1, diaCorte);
       }
       
       setCutDateStr(toDateInputValue(cutDate));
     }
-  }, [company, cutDateStr]);
+  }, [company, cutDateStr, isEditMode, existingMeasurement]);
 
   // Calcular período baseado na data de corte
   const { periodStart, periodEnd, totalDays } = useMemo(() => {
@@ -118,11 +128,17 @@ export default function RentalMeasurement() {
     periodEnd
   );
 
-  // Fetch next measurement number
+  // Fetch next measurement number (apenas para criar nova)
   const { data: nextNumber } = useNextMeasurementNumber(companyId || '');
 
-  // Create mutation
+  // Número da medição: usar existente em modo edição, ou próximo para criar
+  const measurementNumber = isEditMode && existingMeasurement 
+    ? existingMeasurement.measurement_number 
+    : nextNumber;
+
+  // Mutations
   const createMeasurement = useCreateMeasurement();
+  const updateMeasurement = useUpdateMeasurement();
 
   // State for items
   const [rentalItems, setRentalItems] = useState<MeasurementItem[]>([]);
@@ -130,31 +146,61 @@ export default function RentalMeasurement() {
   const [maintenanceItems, setMaintenanceItems] = useState<MeasurementItem[]>([]);
   const [notes, setNotes] = useState("");
 
-  // Initialize rental items from equipment
+  // Initialize from existing measurement (edit mode)
   useEffect(() => {
-    if (equipment && equipment.length > 0) {
-      const items: MeasurementItem[] = equipment.map((eq, index) => ({
-        rental_equipment_id: eq.id,
-        category: 'rentals' as const,
-        item_order: index + 1,
-        equipment_code: eq.asset_code,
-        description: eq.equipment_name,
-        unit: 'UN',
-        quantity: eq.dias_cobrados,
-        unit_price: eq.valor_diaria,
-        total_price: eq.total_price,
-        period_start: toDateInputValue(periodStart),
-        period_end: toDateInputValue(periodEnd),
-        days_count: eq.dias_cobrados,
-        dias_reais: eq.dias_reais,
-        monthly_price: eq.monthly_price,
-        unit_quantity: eq.unit_quantity
-      }));
-      setRentalItems(items);
-    } else {
-      setRentalItems([]);
+    if (isEditMode && existingMeasurement && existingMeasurement.items && !isInitialized) {
+      const rentals = existingMeasurement.items
+        .filter((i: any) => i.category === 'rentals')
+        .map((i: any) => ({ ...i, category: 'rentals' as const }));
+      const demobs = existingMeasurement.items
+        .filter((i: any) => i.category === 'demobilization')
+        .map((i: any) => ({ ...i, category: 'demobilization' as const }));
+      const maints = existingMeasurement.items
+        .filter((i: any) => i.category === 'maintenance')
+        .map((i: any) => ({ ...i, category: 'maintenance' as const }));
+      
+      setRentalItems(rentals);
+      setDemobilizationItems(demobs);
+      setMaintenanceItems(maints);
+      setNotes(existingMeasurement.notes || "");
+      setIsInitialized(true);
     }
-  }, [equipment, periodStart, periodEnd]);
+  }, [isEditMode, existingMeasurement, isInitialized]);
+
+  // Initialize rental items from equipment (create mode)
+  useEffect(() => {
+    if (!isEditMode && equipment && equipment.length > 0 && !isInitialized) {
+      const items: MeasurementItem[] = equipment.map((eq, index) => {
+        // CORREÇÃO: Usar data de locação real do equipamento (pickup_date)
+        const pickupDate = parseLocalDate(eq.pickup_date);
+        // Data de início = MAX(pickup_date, periodStart)
+        const effectiveStart = pickupDate < periodStart ? periodStart : pickupDate;
+        // Data de fim = MIN(return_date, periodEnd)
+        const returnDate = eq.return_date ? parseLocalDate(eq.return_date) : null;
+        const effectiveEnd = returnDate && returnDate < periodEnd ? returnDate : periodEnd;
+        
+        return {
+          rental_equipment_id: eq.id,
+          category: 'rentals' as const,
+          item_order: index + 1,
+          equipment_code: eq.asset_code,
+          description: eq.equipment_name,
+          unit: 'UN',
+          quantity: eq.dias_cobrados,
+          unit_price: eq.valor_diaria,
+          total_price: eq.total_price,
+          period_start: toDateInputValue(effectiveStart),
+          period_end: toDateInputValue(effectiveEnd),
+          days_count: eq.dias_reais,
+          dias_reais: eq.dias_reais,
+          monthly_price: eq.monthly_price,
+          unit_quantity: eq.unit_quantity
+        };
+      });
+      setRentalItems(items);
+      setIsInitialized(true);
+    }
+  }, [equipment, periodStart, periodEnd, isEditMode, isInitialized]);
 
   // Calculate totals
   const subtotalRentals = rentalItems.reduce((sum, item) => sum + item.total_price, 0);
@@ -232,7 +278,7 @@ export default function RentalMeasurement() {
 
   // Save measurement
   const handleSave = async () => {
-    if (!companyId || !nextNumber || !user) return;
+    if (!companyId || !measurementNumber || !user) return;
 
     const allItems = [
       ...rentalItems,
@@ -240,9 +286,9 @@ export default function RentalMeasurement() {
       ...maintenanceItems.map((item, i) => ({ ...item, item_order: i + 1 }))
     ];
 
-    await createMeasurement.mutateAsync({
+    const measurementData = {
       rental_company_id: companyId,
-      measurement_number: nextNumber,
+      measurement_number: measurementNumber,
       measurement_date: getTodayLocalDate(),
       period_start: toDateInputValue(periodStart),
       period_end: toDateInputValue(periodEnd),
@@ -254,7 +300,18 @@ export default function RentalMeasurement() {
       notes: notes || undefined,
       created_by: user.id,
       items: allItems
-    });
+    };
+
+    if (isEditMode && measurementId) {
+      // Atualizar medição existente
+      await updateMeasurement.mutateAsync({
+        ...measurementData,
+        id: measurementId
+      });
+    } else {
+      // Criar nova medição
+      await createMeasurement.mutateAsync(measurementData);
+    }
   };
 
   // Generate PDF
@@ -283,7 +340,7 @@ export default function RentalMeasurement() {
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
         pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-        pdf.save(`medicao-${company?.company_name}-${nextNumber}.pdf`);
+        pdf.save(`medicao-${company?.company_name}-${measurementNumber}.pdf`);
       } catch (error) {
         console.error('Error generating PDF:', error);
       } finally {
@@ -292,7 +349,12 @@ export default function RentalMeasurement() {
     }, 100);
   };
 
-  if (loadingCompany || loadingEquipment) {
+  // Handle back navigation
+  const handleBack = () => {
+    navigate(`/rental-companies/${companyId}`);
+  };
+
+  if (loadingCompany || loadingEquipment || (isEditMode && loadingMeasurement)) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <LoadingSpinner />
@@ -311,16 +373,18 @@ export default function RentalMeasurement() {
     );
   }
 
+  const isPending = createMeasurement.isPending || updateMeasurement.isPending;
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <BackButton fallbackPath="/rental-companies" />
+          <BackButton fallbackPath={`/rental-companies/${companyId}`} />
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <FileText className="h-6 w-6" />
-              Medição de Equipamentos
+              {isEditMode ? 'Editar Medição' : 'Medição de Equipamentos'}
             </h1>
             <p className="text-muted-foreground">{company.company_name}</p>
           </div>
@@ -337,9 +401,9 @@ export default function RentalMeasurement() {
             <Printer className="h-4 w-4 mr-2" />
             Gerar PDF
           </Button>
-          <Button onClick={handleSave} disabled={createMeasurement.isPending}>
+          <Button onClick={handleSave} disabled={isPending}>
             <Save className="h-4 w-4 mr-2" />
-            Salvar Medição
+            {isEditMode ? 'Atualizar Medição' : 'Salvar Medição'}
           </Button>
         </div>
       </div>
@@ -356,8 +420,12 @@ export default function RentalMeasurement() {
               <Input
                 type="date"
                 value={cutDateStr}
-                onChange={(e) => setCutDateStr(e.target.value)}
+                onChange={(e) => {
+                  setCutDateStr(e.target.value);
+                  setIsInitialized(false); // Permite recarregar itens com novo período
+                }}
                 className="max-w-[200px]"
+                disabled={isEditMode} // Não permite alterar data em modo edição
               />
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <Info className="h-3 w-3" />
@@ -387,7 +455,7 @@ export default function RentalMeasurement() {
             <div>
               <p className="text-sm text-muted-foreground">Fatura Nº</p>
               <p className="text-xl font-bold text-primary">
-                {String(nextNumber || 1).padStart(3, '0')}
+                {String(measurementNumber || 1).padStart(3, '0')}
               </p>
             </div>
             <div>
@@ -461,7 +529,7 @@ export default function RentalMeasurement() {
               companyName={company.company_name}
               cnpj={company.cnpj}
               contractNumber={company.contract_number}
-              measurementNumber={nextNumber || 1}
+              measurementNumber={measurementNumber || 1}
               periodStart={toDateInputValue(periodStart)}
               periodEnd={toDateInputValue(periodEnd)}
               totalDays={totalDays}
