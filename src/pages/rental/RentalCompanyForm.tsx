@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { addDays, differenceInDays, format, parseISO } from "date-fns";
-import { ArrowLeft, Upload, X, FileText, Printer, Search, Loader2, Plus, Trash2, Package, Pencil } from "lucide-react";
+import { ArrowLeft, Upload, X, FileText, Printer, Search, Loader2, Plus, Trash2, Package, Pencil, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRentalCompany, useCreateRentalCompany, useUpdateRentalCompany } from "@/hooks/useRentalCompanies";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -33,6 +34,7 @@ import {
 } from "@/hooks/useRentalEquipment";
 import { ReturnEquipmentDialog } from "@/components/ReturnEquipmentDialog";
 import { useEquipmentsByCompany } from "@/hooks/useEquipmentsByCompany";
+import { ContractHistoryTab } from "@/components/rental/ContractHistoryTab";
 import "@/styles/contract-print.css";
 
 const formSchema = z.object({
@@ -726,21 +728,25 @@ export default function RentalCompanyForm() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Equipamentos Locados</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {!isEditMode && (
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm text-muted-foreground">
-                    Salve o contrato primeiro para adicionar equipamentos
-                  </p>
-                </div>
-              )}
-
-              {isEditMode && (
-                <>
+          {isEditMode ? (
+            <Tabs defaultValue="equipment" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="equipment" className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Equipamentos Locados
+                </TabsTrigger>
+                <TabsTrigger value="history" className="flex items-center gap-2">
+                  <History className="h-4 w-4" />
+                  Histórico do Contrato
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="equipment" className="mt-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Equipamentos Locados</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
                   {/* Seção de Equipamentos Sugeridos */}
                   {filteredSuggestions.length > 0 && (
                     <div className="space-y-4 p-4 border rounded-lg bg-primary/5 border-primary/20">
@@ -1026,15 +1032,39 @@ export default function RentalCompanyForm() {
                       </div>
                     </>
                   )}
-                </>
-              )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="history" className="mt-4">
+                <ContractHistoryTab companyId={id!} />
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Equipamentos Locados</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    Salve o contrato primeiro para adicionar equipamentos
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
+          <Card>
+            <CardHeader>
+              <CardTitle>Observações</CardTitle>
+            </CardHeader>
+            <CardContent>
               <FormField
                 control={form.control}
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Observações</FormLabel>
                     <FormControl>
                       <Textarea {...field} placeholder="Observações adicionais sobre o contrato" />
                     </FormControl>

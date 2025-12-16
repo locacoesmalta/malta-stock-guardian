@@ -17,6 +17,10 @@ export interface RentalEquipment {
   work_site: string | null;
   created_at: string;
   updated_at: string;
+  // Campos de substituição
+  substitution_date: string | null;
+  substituted_from_asset_id: string | null;
+  substitution_count: number;
 }
 
 export interface RentalEquipmentInput {
