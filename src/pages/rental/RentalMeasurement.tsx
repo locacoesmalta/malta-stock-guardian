@@ -25,25 +25,35 @@ import {
   useMeasurementDetails,
   MeasurementItem
 } from "@/hooks/useRentalMeasurements";
-import { getTodayLocalDate, parseLocalDate, getNowInBelem, formatBelemDate, toLocalDateString } from "@/lib/dateUtils";
+import { 
+  getTodayLocalDate, 
+  getNowInBelem, 
+  formatBelemDate, 
+  safeParseDateString, 
+  safeDateToString,
+  formatBRFromYYYYMMDD
+} from "@/lib/dateUtils";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
-// Calcula o período baseado na data de corte
-function calculateMeasurementPeriod(cutDate: Date) {
+// Calcula o período baseado na data de corte (string YYYY-MM-DD)
+function calculateMeasurementPeriod(cutDateStr: string) {
+  // SAFE: Parse sem conversão UTC
+  const cutDate = safeParseDateString(cutDateStr);
   const periodEnd = cutDate;
-  // Calcular mês anterior mantendo o mesmo dia (evita edge cases do subMonths)
+  // Calcular mês anterior mantendo o mesmo dia
   const periodStart = new Date(
     cutDate.getFullYear(),
     cutDate.getMonth() - 1,
-    cutDate.getDate()
+    cutDate.getDate(),
+    12, 0, 0 // Meio-dia para evitar edge cases
   );
   return { periodStart, periodEnd };
 }
 
-// Formata data para input date - USA toLocalDateString para timezone correto
+// SAFE: Formata Date para input date SEM conversão timezone dupla
 function toDateInputValue(date: Date): string {
-  return toLocalDateString(date);
+  return safeDateToString(date);
 }
 
 export default function RentalMeasurement() {
@@ -104,8 +114,8 @@ export default function RentalMeasurement() {
   // Calcular período baseado na data de corte
   const { periodStart, periodEnd, totalDays } = useMemo(() => {
     if (!cutDateStr) {
-      const today = parseLocalDate(getTodayLocalDate());
-      const periodStart = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+      const today = safeParseDateString(getTodayLocalDate());
+      const periodStart = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate(), 12, 0, 0);
       return { 
         periodStart, 
         periodEnd: today,
@@ -113,8 +123,8 @@ export default function RentalMeasurement() {
       };
     }
     
-    const cutDate = parseLocalDate(cutDateStr);
-    const { periodStart, periodEnd } = calculateMeasurementPeriod(cutDate);
+    // SAFE: Usar calculateMeasurementPeriod que já usa safeParseDateString
+    const { periodStart, periodEnd } = calculateMeasurementPeriod(cutDateStr);
     
     // Calcular total de dias no período
     const diffTime = periodEnd.getTime() - periodStart.getTime();
@@ -173,12 +183,12 @@ export default function RentalMeasurement() {
   useEffect(() => {
     if (!isEditMode && equipment && equipment.length > 0 && !isInitialized) {
       const items: MeasurementItem[] = equipment.map((eq, index) => {
-        // CORREÇÃO: Usar data de locação real do equipamento (pickup_date)
-        const pickupDate = parseLocalDate(eq.pickup_date);
+        // SAFE: Usar safeParseDateString para datas do equipamento
+        const pickupDate = safeParseDateString(eq.pickup_date);
         // Data de início = MAX(pickup_date, periodStart)
         const effectiveStart = pickupDate < periodStart ? periodStart : pickupDate;
         // Data de fim = MIN(return_date, periodEnd)
-        const returnDate = eq.return_date ? parseLocalDate(eq.return_date) : null;
+        const returnDate = eq.return_date ? safeParseDateString(eq.return_date) : null;
         const effectiveEnd = returnDate && returnDate < periodEnd ? returnDate : periodEnd;
         
         return {

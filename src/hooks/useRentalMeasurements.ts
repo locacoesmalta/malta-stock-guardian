@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { getNowInBelem, getTodayLocalDate, parseLocalDate } from "@/lib/dateUtils";
+import { getISOStringInBelem, getTodayLocalDate, safeParseDateString } from "@/lib/dateUtils";
 
 export interface MeasurementItem {
   id?: string;
@@ -110,15 +110,15 @@ export function useRentalEquipmentForMeasurement(
       if (error) throw error;
 
       // Se não tiver período definido, usar hoje como referência
-      const today = parseLocalDate(getTodayLocalDate());
+      const today = safeParseDateString(getTodayLocalDate());
       const pEnd = periodEnd || today;
-      const pStart = periodStart || new Date(pEnd.getFullYear(), pEnd.getMonth() - 1, pEnd.getDate());
+      const pStart = periodStart || new Date(pEnd.getFullYear(), pEnd.getMonth() - 1, pEnd.getDate(), 12, 0, 0);
       
       return (data || [])
         .map(eq => {
-          // CRÍTICO: usar parseLocalDate para interpretar datas no timezone correto (Belém UTC-3)
-          const pickupDate = parseLocalDate(eq.pickup_date);
-          const returnDate = eq.return_date ? parseLocalDate(eq.return_date) : null;
+          // SAFE: usar safeParseDateString para interpretar datas SEM conversão timezone dupla
+          const pickupDate = safeParseDateString(eq.pickup_date);
+          const returnDate = eq.return_date ? safeParseDateString(eq.return_date) : null;
           
           // Calcular dias dentro do período da medição
           const dias_reais = calculateDaysInPeriod(pickupDate, returnDate, pStart, pEnd);
@@ -335,7 +335,7 @@ export function useUpdateMeasurement() {
           subtotal_maintenance: measurementData.subtotal_maintenance,
           total_value: measurementData.total_value,
           notes: measurementData.notes,
-          updated_at: getNowInBelem().toISOString()
+          updated_at: getISOStringInBelem()
         })
         .eq('id', id);
 
