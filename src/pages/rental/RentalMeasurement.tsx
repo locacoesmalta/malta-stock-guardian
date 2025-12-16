@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Save, Printer, History, FileText, Calendar, Info, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Save, Printer, History, FileText, Calendar, Info, AlertTriangle, CheckCircle } from "lucide-react";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { toast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/BackButton";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -59,6 +60,7 @@ export default function RentalMeasurement() {
   const [showPrintView, setShowPrintView] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isSaved, setIsSaved] = useState(isEditMode); // Em modo edição, já está salvo
+  const [showFinalizeDialog, setShowFinalizeDialog] = useState(false);
   
   // Estado para data de corte
   const [cutDateStr, setCutDateStr] = useState<string>("");
@@ -404,6 +406,13 @@ export default function RentalMeasurement() {
 
   const isPending = createMeasurement.isPending || updateMeasurement.isPending;
 
+  // Validação para permitir salvar
+  // Em modo edição: só pode salvar se existingMeasurement carregou
+  // Em modo criação: só pode salvar se tem nextNumber
+  const canSave = isEditMode 
+    ? (!!existingMeasurement && !hasInvalidRentalPrices && !isPending)
+    : (!!nextNumber && !hasInvalidRentalPrices && !isPending);
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
@@ -430,15 +439,26 @@ export default function RentalMeasurement() {
             variant="outline" 
             onClick={handlePrint}
             disabled={!isSaved || hasInvalidRentalPrices}
-            title={!isSaved ? "Salve a medição primeiro" : hasInvalidRentalPrices ? "Preencha todos os valores mensais" : ""}
+            title={!isSaved ? "Finalize a medição primeiro" : hasInvalidRentalPrices ? "Preencha todos os valores mensais" : ""}
           >
             <Printer className="h-4 w-4 mr-2" />
             Gerar PDF
           </Button>
-          <Button onClick={handleSave} disabled={isPending || hasInvalidRentalPrices}>
-            <Save className="h-4 w-4 mr-2" />
-            {isEditMode ? 'Atualizar Medição' : 'Salvar Medição'}
-          </Button>
+          {isEditMode ? (
+            <Button onClick={handleSave} disabled={!canSave}>
+              <Save className="h-4 w-4 mr-2" />
+              Atualizar Medição
+            </Button>
+          ) : (
+            <Button 
+              onClick={() => setShowFinalizeDialog(true)} 
+              disabled={!canSave}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Finalizar Medição
+            </Button>
+          )}
         </div>
       </div>
 
@@ -594,6 +614,20 @@ export default function RentalMeasurement() {
           </div>
         </div>
       )}
+
+      {/* Diálogo de confirmação para finalizar medição */}
+      <ConfirmDialog
+        open={showFinalizeDialog}
+        onOpenChange={setShowFinalizeDialog}
+        title="Finalizar Medição"
+        description={`Confirma a criação da Fatura Nº ${String(measurementNumber || 1).padStart(3, '0')}? Após finalizar, a medição será salva no banco de dados.`}
+        confirmText="Finalizar"
+        onConfirm={() => {
+          setShowFinalizeDialog(false);
+          handleSave();
+        }}
+        onCancel={() => setShowFinalizeDialog(false)}
+      />
     </div>
   );
 }

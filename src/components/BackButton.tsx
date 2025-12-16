@@ -10,12 +10,8 @@ export function BackButton({ fallbackPath = "/assets" }: BackButtonProps) {
   const navigate = useNavigate();
 
   const handleBack = () => {
-    // Se há histórico suficiente, volta. Senão, vai para fallbackPath
-    if (window.history.length > 2) {
-      navigate(-1);
-    } else {
-      navigate(fallbackPath);
-    }
+    // Sempre navegar para fallbackPath para comportamento previsível
+    navigate(fallbackPath);
   };
 
   return (
