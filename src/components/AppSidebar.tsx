@@ -1,4 +1,4 @@
-import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3, ClipboardList, TrendingUp, Building2, Wallet, FileCheck, FileBarChart, MessageSquare, AlertTriangle, ShoppingCart, Activity, CheckCircle2, Database, Wrench, type LucideIcon } from "lucide-react";
+import { Package, FileText, Users, Settings, LogOut, PackageMinus, History, QrCode, Shield, BarChart3, ClipboardList, TrendingUp, Building2, Wallet, FileCheck, FileBarChart, MessageSquare, AlertTriangle, ShoppingCart, Activity, CheckCircle2, Database, Wrench, Calculator, DollarSign, Receipt, type LucideIcon } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -171,11 +171,46 @@ export function AppSidebar() {
     },
   ];
 
+  // PRECIFICAÇÃO
+  const pricingMenuItems = [
+    {
+      path: "/pricing",
+      icon: Calculator,
+      label: "Dashboard de Precificação",
+      show: isAdmin,
+    },
+    {
+      path: "/pricing/calculator",
+      icon: DollarSign,
+      label: "Calculadora de Preços",
+      show: isAdmin,
+    },
+    {
+      path: "/pricing/viability",
+      icon: TrendingUp,
+      label: "Análise de Viabilidade",
+      show: isAdmin,
+    },
+    {
+      path: "/pricing/tax-config",
+      icon: Receipt,
+      label: "Configuração de Impostos",
+      show: isAdmin,
+    },
+    {
+      path: "/pricing/asset-costs",
+      icon: Wrench,
+      label: "Custos Operacionais",
+      show: isAdmin,
+    },
+  ];
+
   // Filtrar itens visíveis
   const visibleInventoryItems = inventoryMenuItems.filter(item => item.show);
   const visibleAssetsItems = assetsMenuItems.filter(item => item.show);
   const visibleReportsItems = reportsMenuItems.filter(item => item.show);
   const visibleReceiptsItems = receiptsMenuItems.filter(item => item.show);
+  const visiblePricingItems = pricingMenuItems.filter(item => item.show);
 
   // Só mostrar o menu principal se houver permissão ou se for admin
   const showMainMenu = permissions.can_access_main_menu || isAdmin;
@@ -300,6 +335,35 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {visibleReceiptsItems.map((item) => (
+                  <SidebarMenuItem key={item.path}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <SidebarMenuButton asChild>
+                          <NavLink to={item.path} className={getNavCls} onClick={handleNavClick}>
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.label}</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </TooltipTrigger>
+                      {!open && (
+                        <TooltipContent side="right" className="font-normal">
+                          {item.label}
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {visiblePricingItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Precificação</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {visiblePricingItems.map((item) => (
                   <SidebarMenuItem key={item.path}>
                     <Tooltip>
                       <TooltipTrigger asChild>
