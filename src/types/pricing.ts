@@ -150,10 +150,42 @@ export interface PricingCalculationInput {
   distance_km: number;
   rental_days: number;
   custom_profit_margin?: number;
+  employee_cost?: number;
+  include_employee?: boolean;
 }
 
 /**
- * Resultado detalhado do cálculo de precificação
+ * Resultado detalhado do cálculo de precificação (extendido)
+ */
+export interface PricingCalculationResultExtended {
+  asset_code: string;
+  equipment_name: string;
+  depreciation_cost: number;
+  maintenance_cost: number;
+  transport_cost: number;
+  employee_cost: number;
+  operational_cost: number;
+  subtotal_costs: number;
+  tax_iss: number;
+  tax_pis: number;
+  tax_cofins: number;
+  tax_csll: number;
+  tax_irpj: number;
+  tax_total: number;
+  total_cost: number;
+  profit_margin_percentage: number;
+  profit_amount: number;
+  suggested_price: number;
+  breakdown: {
+    depreciation_daily: number;
+    maintenance_daily: number;
+    transport_total: number;
+    operational_hours_estimated: number;
+  };
+}
+
+/**
+ * Resultado simplificado do cálculo de precificação
  */
 export interface PricingCalculationResult {
   employee_cost: number;
