@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calculator, TrendingUp, Settings } from "lucide-react";
+import { Calculator, TrendingUp, Settings, Wrench } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { usePricingHistory } from "@/hooks/usePricingCalculator";
 
@@ -67,6 +67,21 @@ export default function PricingDashboard() {
           </CardHeader>
           <CardContent>
             <Button className="w-full">Configurar Impostos</Button>
+          </CardContent>
+        </Card>
+
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/pricing/asset-costs')}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Wrench className="h-5 w-5 text-primary" />
+              Custos Operacionais
+            </CardTitle>
+            <CardDescription>
+              Configure custos por equipamento
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button className="w-full">Gerenciar Custos</Button>
           </CardContent>
         </Card>
       </div>

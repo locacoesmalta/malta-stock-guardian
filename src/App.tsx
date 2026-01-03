@@ -76,6 +76,7 @@ const PricingDashboard = lazy(() => import("./pages/pricing/PricingDashboard"));
 const PricingCalculatorPage = lazy(() => import("./pages/pricing/PricingCalculatorPage"));
 const ViabilityAnalysisPage = lazy(() => import("./pages/pricing/ViabilityAnalysisPage"));
 const TaxConfigPage = lazy(() => import("./pages/pricing/TaxConfigPage"));
+const AssetCostsManagement = lazy(() => import("./pages/pricing/AssetCostsManagement"));
 
 
 
@@ -520,6 +521,7 @@ const App = () => (
               <Route path="/pricing/calculator" element={<ProtectedLayout><AdminRoute><PricingCalculatorPage /></AdminRoute></ProtectedLayout>} />
               <Route path="/pricing/viability" element={<ProtectedLayout><AdminRoute><ViabilityAnalysisPage /></AdminRoute></ProtectedLayout>} />
               <Route path="/pricing/tax-config" element={<ProtectedLayout><AdminRoute><TaxConfigPage /></AdminRoute></ProtectedLayout>} />
+              <Route path="/pricing/asset-costs" element={<ProtectedLayout><AdminRoute><AssetCostsManagement /></AdminRoute></ProtectedLayout>} />
               
               <Route path="*" element={<NotFound />} />
               </Routes>
