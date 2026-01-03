@@ -3,6 +3,13 @@
 // Exemplo: "1.0.0" -> "1.0.1" (patch), "1.1.0" (minor), "2.0.0" (major)
 //
 // CHANGELOG:
+// 1.3.0 (03/01/2026) - Padronização PAT 6 dígitos e correções de timezone
+//   - Todos os hooks de busca por PAT agora formatam internamente para 6 dígitos
+//   - Corrigido useDuplicateValidation para usar formatPAT ao invés de normalizeText
+//   - Corrigido useAssetUnifiedHistory, useAvailablePartsByPAT, usePatrimonioHistorico
+//   - Corrigido usePricingCalculator para usar getTodayLocalDate()
+//   - Corrigido calculateEquipmentAge para usar timezone Belém
+//
 // 1.2.0 (16/12/2024) - Correções críticas de timezone e sistema de medições
 //   - Corrigidas funções de data para SEMPRE usar timezone Belém explícito
 //   - safeParseDateString e safeDateToString agora usam formatInTimeZone/toZonedTime
@@ -15,7 +22,7 @@
 //   - Criado botão manual de correção de dados no Admin
 //   - Implementado checklist de deploy
 //   - Melhorado sistema de logs e versionamento
-export const APP_VERSION = "1.2.0";
+export const APP_VERSION = "1.3.0";
 
 export const getStoredVersion = (): string | null => {
   return localStorage.getItem('app_version');

@@ -14,6 +14,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPAT } from "@/lib/patUtils";
+import { getTodayLocalDate } from "@/lib/dateUtils";
 import { toast } from "@/hooks/use-toast";
 import type { 
   PricingCalculationInput, 
@@ -177,7 +178,7 @@ export const usePricingCalculator = () => {
         .from("pricing_calculations")
         .insert({
           asset_code: params.calculation.asset_code,
-          calculation_date: new Date().toISOString().split('T')[0],
+          calculation_date: getTodayLocalDate(),
           location_type: params.input.location_type,
           distance_km: params.input.distance_km,
           rental_days: params.input.rental_days,

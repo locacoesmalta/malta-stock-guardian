@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeText } from "@/lib/textNormalization";
+import { formatPAT } from "@/lib/patUtils";
 
 export interface DuplicateValidationResult {
   isValid: boolean;
@@ -20,15 +21,24 @@ export async function validateDuplicate(
     return { isValid: true, status: "valid" };
   }
 
-  const normalized = normalizeText(value);
-
   try {
     // Buscar duplicatas de forma simplificada
     if (tableName === "assets") {
+      // CRÍTICO: Para assets, SEMPRE usar formatPAT para garantir 6 dígitos
+      const normalizedPAT = formatPAT(value);
+      
+      if (!normalizedPAT) {
+        return { 
+          isValid: false, 
+          message: "PAT inválido - deve conter apenas números (máx 6 dígitos)", 
+          status: "invalid" 
+        };
+      }
+
       const { data, error } = await supabase
         .from("assets")
         .select("id, asset_code")
-        .eq("asset_code", normalized)
+        .eq("asset_code", normalizedPAT)
         .is("deleted_at", null)
         .neq("id", excludeId || "00000000-0000-0000-0000-000000000000")
         .limit(1);
@@ -46,6 +56,9 @@ export async function validateDuplicate(
         };
       }
     } else {
+      // Para produtos, usar normalizeText (não é PAT)
+      const normalized = normalizeText(value);
+      
       const { data, error } = await supabase
         .from("products")
         .select("id, name, code")

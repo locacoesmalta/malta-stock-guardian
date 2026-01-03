@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { formatPAT } from "@/lib/patUtils";
 
 export interface UnifiedHistoryEvent {
   id: string;
@@ -21,6 +22,8 @@ interface UseAssetUnifiedHistoryParams {
 /**
  * Hook para buscar histórico unificado de um equipamento (PAT)
  * Combina retiradas, relatórios, manutenções e movimentações
+ * 
+ * IMPORTANTE: O PAT é SEMPRE formatado para 6 dígitos internamente
  */
 export const useAssetUnifiedHistory = ({
   assetCode,
@@ -32,6 +35,13 @@ export const useAssetUnifiedHistory = ({
     queryKey: ["asset-unified-history", assetCode, startDate, endDate, eventTypes],
     queryFn: async () => {
       if (!assetCode) return [];
+
+      // CRÍTICO: Formatar PAT para 6 dígitos ANTES de qualquer query
+      const formattedAssetCode = formatPAT(assetCode);
+      if (!formattedAssetCode) {
+        console.error("PAT inválido:", assetCode);
+        return [];
+      }
 
       const events: UnifiedHistoryEvent[] = [];
 
@@ -51,7 +61,7 @@ export const useAssetUnifiedHistory = ({
             products:product_id (name, code),
             profiles:withdrawn_by (full_name, email)
           `)
-          .eq("equipment_code", assetCode)
+          .eq("equipment_code", formattedAssetCode)
           .order("withdrawal_date", { ascending: false });
 
         if (!withdrawalsError && withdrawals) {
@@ -98,7 +108,7 @@ export const useAssetUnifiedHistory = ({
               products:product_id (name, code)
             )
           `)
-          .eq("equipment_code", assetCode)
+          .eq("equipment_code", formattedAssetCode)
           .is("deleted_at", null)
           .order("report_date", { ascending: false });
 
@@ -133,7 +143,7 @@ export const useAssetUnifiedHistory = ({
         const { data: asset } = await supabase
           .from("assets")
           .select("id")
-          .eq("asset_code", assetCode)
+          .eq("asset_code", formattedAssetCode)
           .maybeSingle();
 
         if (asset) {
@@ -187,7 +197,7 @@ export const useAssetUnifiedHistory = ({
         const { data: history, error: historyError } = await supabase
           .from("patrimonio_historico")
           .select("*")
-          .eq("codigo_pat", assetCode)
+          .eq("codigo_pat", formattedAssetCode)
           .order("data_modificacao", { ascending: false });
 
         if (!historyError && history) {

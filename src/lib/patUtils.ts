@@ -56,21 +56,29 @@ export const validatePAT = (pat: string): { valid: boolean; error?: string } => 
 
 /**
  * Calcula o tempo em meses desde a data de compra até hoje
+ * Usa timezone de Belém (UTC-3) para cálculos consistentes
+ * 
  * @param purchaseDate - Data da compra no formato YYYY-MM-DD
  * @returns Número de meses ou null se data inválida
  */
 export const calculateEquipmentAge = (purchaseDate: string): number | null => {
   if (!purchaseDate) return null;
   
-  const purchase = new Date(purchaseDate);
-  const today = new Date();
-  
-  if (isNaN(purchase.getTime())) return null;
-  
-  const months = (today.getFullYear() - purchase.getFullYear()) * 12 +
-                 (today.getMonth() - purchase.getMonth());
-  
-  return Math.max(0, months);
+  try {
+    // CRÍTICO: Importação dinâmica para evitar dependência circular
+    // Usar safeParseDateString e getNowInBelem do dateUtils
+    const { safeParseDateString, getNowInBelem } = require("@/lib/dateUtils");
+    
+    const purchase = safeParseDateString(purchaseDate);
+    const today = getNowInBelem();
+    
+    const months = (today.getFullYear() - purchase.getFullYear()) * 12 +
+                   (today.getMonth() - purchase.getMonth());
+    
+    return Math.max(0, months);
+  } catch {
+    return null;
+  }
 };
 
 /**

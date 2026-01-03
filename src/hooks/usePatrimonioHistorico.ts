@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { formatPAT } from "@/lib/patUtils";
 
 interface HistoricoItem {
   historico_id: string;
@@ -47,6 +48,11 @@ export const usePatrimonioHistorico = (patId?: string) => {
   });
 };
 
+/**
+ * Hook para buscar histórico filtrado por código PAT
+ * 
+ * IMPORTANTE: O PAT é SEMPRE formatado para 6 dígitos internamente
+ */
 export const usePatrimonioHistoricoFiltered = (filters: HistoricoFilters) => {
   return useQuery({
     queryKey: ["patrimonio-historico-filtered", filters],
@@ -56,8 +62,12 @@ export const usePatrimonioHistoricoFiltered = (filters: HistoricoFilters) => {
         .select("*")
         .order("data_modificacao", { ascending: false });
 
+      // CRÍTICO: Formatar PAT para 6 dígitos ANTES da query
       if (filters.codigo_pat) {
-        query = query.eq("codigo_pat", filters.codigo_pat);
+        const formattedPAT = formatPAT(filters.codigo_pat);
+        if (formattedPAT) {
+          query = query.eq("codigo_pat", formattedPAT);
+        }
       }
 
       if (filters.data_inicio) {
