@@ -6,7 +6,7 @@ import { formatPAT } from "@/lib/patUtils";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface AssetForPricing {
+export interface AssetForPricing {
   id: string;
   asset_code: string;
   equipment_name: string;
