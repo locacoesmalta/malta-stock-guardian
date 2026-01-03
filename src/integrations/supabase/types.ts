@@ -145,12 +145,16 @@ export type Database = {
           current_hourmeter: number
           effective_maintenance_date: string | null
           id: string
+          is_client_misuse: boolean | null
+          is_recurring_problem: boolean | null
           labor_cost: number | null
           maintenance_date: string
           maintenance_type: string
           observations: string | null
           parts_cost: number | null
           previous_hourmeter: number
+          problem_description: string | null
+          recurrence_count: number | null
           registered_by: string
           services_performed: string
           technician_name: string | null
@@ -164,12 +168,16 @@ export type Database = {
           current_hourmeter?: number
           effective_maintenance_date?: string | null
           id?: string
+          is_client_misuse?: boolean | null
+          is_recurring_problem?: boolean | null
           labor_cost?: number | null
           maintenance_date?: string
           maintenance_type: string
           observations?: string | null
           parts_cost?: number | null
           previous_hourmeter?: number
+          problem_description?: string | null
+          recurrence_count?: number | null
           registered_by: string
           services_performed: string
           technician_name?: string | null
@@ -183,12 +191,16 @@ export type Database = {
           current_hourmeter?: number
           effective_maintenance_date?: string | null
           id?: string
+          is_client_misuse?: boolean | null
+          is_recurring_problem?: boolean | null
           labor_cost?: number | null
           maintenance_date?: string
           maintenance_type?: string
           observations?: string | null
           parts_cost?: number | null
           previous_hourmeter?: number
+          problem_description?: string | null
+          recurrence_count?: number | null
           registered_by?: string
           services_performed?: string
           technician_name?: string | null
@@ -1421,6 +1433,144 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pricing_asset_costs: {
+        Row: {
+          asset_code: string
+          corrective_maintenance_margin: number
+          created_at: string
+          depreciation_months: number
+          employee_cost_per_day: number
+          id: string
+          monthly_maintenance_cost: number
+          operational_cost_per_hour: number
+          profit_margin_percentage: number
+          transport_cost_per_km: number
+          updated_at: string
+        }
+        Insert: {
+          asset_code: string
+          corrective_maintenance_margin?: number
+          created_at?: string
+          depreciation_months?: number
+          employee_cost_per_day?: number
+          id?: string
+          monthly_maintenance_cost?: number
+          operational_cost_per_hour?: number
+          profit_margin_percentage?: number
+          transport_cost_per_km?: number
+          updated_at?: string
+        }
+        Update: {
+          asset_code?: string
+          corrective_maintenance_margin?: number
+          created_at?: string
+          depreciation_months?: number
+          employee_cost_per_day?: number
+          id?: string
+          monthly_maintenance_cost?: number
+          operational_cost_per_hour?: number
+          profit_margin_percentage?: number
+          transport_cost_per_km?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pricing_calculations: {
+        Row: {
+          asset_code: string
+          calculation_date: string
+          created_at: string
+          created_by: string
+          depreciation_cost: number
+          distance_km: number
+          employee_cost: number
+          id: string
+          location_type: string
+          maintenance_cost: number
+          profit_margin: number
+          rental_days: number
+          suggested_price: number
+          tax_total: number
+          total_cost: number
+          transport_cost: number
+        }
+        Insert: {
+          asset_code: string
+          calculation_date?: string
+          created_at?: string
+          created_by: string
+          depreciation_cost?: number
+          distance_km?: number
+          employee_cost?: number
+          id?: string
+          location_type: string
+          maintenance_cost?: number
+          profit_margin?: number
+          rental_days?: number
+          suggested_price?: number
+          tax_total?: number
+          total_cost?: number
+          transport_cost?: number
+        }
+        Update: {
+          asset_code?: string
+          calculation_date?: string
+          created_at?: string
+          created_by?: string
+          depreciation_cost?: number
+          distance_km?: number
+          employee_cost?: number
+          id?: string
+          location_type?: string
+          maintenance_cost?: number
+          profit_margin?: number
+          rental_days?: number
+          suggested_price?: number
+          tax_total?: number
+          total_cost?: number
+          transport_cost?: number
+        }
+        Relationships: []
+      }
+      pricing_tax_config: {
+        Row: {
+          cofins_rate: number
+          created_at: string
+          csll_rate: number
+          id: string
+          irpj_rate: number
+          is_active: boolean
+          iss_rate: number
+          location_type: string
+          pis_rate: number
+          updated_at: string
+        }
+        Insert: {
+          cofins_rate?: number
+          created_at?: string
+          csll_rate?: number
+          id?: string
+          irpj_rate?: number
+          is_active?: boolean
+          iss_rate?: number
+          location_type: string
+          pis_rate?: number
+          updated_at?: string
+        }
+        Update: {
+          cofins_rate?: number
+          created_at?: string
+          csll_rate?: number
+          id?: string
+          irpj_rate?: number
+          is_active?: boolean
+          iss_rate?: number
+          location_type?: string
+          pis_rate?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       product_purchases: {
         Row: {
