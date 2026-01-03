@@ -71,6 +71,12 @@ const MaintenancePlan = lazy(() => import("./pages/maintenance/MaintenancePlan")
 const MaintenancePlansList = lazy(() => import("./pages/maintenance/MaintenancePlansList"));
 const MaintenancePlanView = lazy(() => import("./pages/maintenance/MaintenancePlanView"));
 
+// Pricing module
+const PricingDashboard = lazy(() => import("./pages/pricing/PricingDashboard"));
+const PricingCalculatorPage = lazy(() => import("./pages/pricing/PricingCalculatorPage"));
+const ViabilityAnalysisPage = lazy(() => import("./pages/pricing/ViabilityAnalysisPage"));
+const TaxConfigPage = lazy(() => import("./pages/pricing/TaxConfigPage"));
+
 
 
 const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
@@ -508,6 +514,13 @@ const App = () => (
               <Route path="/maintenance/plan" element={<ProtectedLayout><PermissionRoute permission="can_edit_assets"><MaintenancePlan /></PermissionRoute></ProtectedLayout>} />
               <Route path="/maintenance/plans" element={<ProtectedLayout><PermissionRoute permission="can_access_assets"><MaintenancePlansList /></PermissionRoute></ProtectedLayout>} />
               <Route path="/maintenance/plan/:id" element={<ProtectedLayout><PermissionRoute permission="can_edit_assets"><MaintenancePlanView /></PermissionRoute></ProtectedLayout>} />
+              
+              {/* Pricing module */}
+              <Route path="/pricing" element={<ProtectedLayout><AdminRoute><PricingDashboard /></AdminRoute></ProtectedLayout>} />
+              <Route path="/pricing/calculator" element={<ProtectedLayout><AdminRoute><PricingCalculatorPage /></AdminRoute></ProtectedLayout>} />
+              <Route path="/pricing/viability" element={<ProtectedLayout><AdminRoute><ViabilityAnalysisPage /></AdminRoute></ProtectedLayout>} />
+              <Route path="/pricing/tax-config" element={<ProtectedLayout><AdminRoute><TaxConfigPage /></AdminRoute></ProtectedLayout>} />
+              
               <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
