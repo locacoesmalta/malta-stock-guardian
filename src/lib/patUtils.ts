@@ -22,6 +22,16 @@ export const formatPAT = (pat: string | number): string | null => {
 };
 
 /**
+ * Alias para formatPAT - busca por PAT aceitando formatos flexíveis
+ * Aceita "1258" ou "001258" e retorna "001258"
+ * @param pat - Número do PAT em qualquer formato
+ * @returns String com 6 dígitos ou null se inválido
+ */
+export const searchByPAT = (pat: string): string | null => {
+  return formatPAT(pat);
+};
+
+/**
  * Valida se o PAT está no formato correto
  * @param pat - Número do PAT
  * @returns Objeto com status de validação e mensagem de erro se houver
