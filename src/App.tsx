@@ -115,7 +115,10 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
 };
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAdmin, permissions, loading } = useAuth();
+  const { isAdmin, isSuperuser, permissions, loading } = useAuth();
+  
+  // isStaff = admin ou superuser (acesso operacional completo)
+  const isStaff = isAdmin || isSuperuser;
 
   if (loading) {
     return (
@@ -125,7 +128,8 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (!isAdmin && (!permissions || !permissions.can_access_admin)) {
+  // Permite acesso para: admin, superuser, ou quem tem can_access_admin
+  if (!isStaff && (!permissions || !permissions.can_access_admin)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
         <div className="text-center">

@@ -86,6 +86,7 @@ interface AuthContextType {
   session: Session | null;
   isAdmin: boolean;
   isSuperuser: boolean;
+  isStaff: boolean; // admin || superuser - acesso operacional completo
   isActive: boolean;
   isSystemOwner: boolean;
   permissions: UserPermissions | null;
@@ -504,8 +505,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [user]);
 
+  // isStaff = admin ou superuser (acesso operacional completo)
+  const isStaff = isAdmin || isSuperuser;
+
   return (
-    <AuthContext.Provider value={{ user, session, isAdmin, isSuperuser, isActive, isSystemOwner, permissions, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, isAdmin, isSuperuser, isStaff, isActive, isSystemOwner, permissions, loading, signOut }}>
       {children}
       <IdleWarningDialog 
         open={showIdleWarning && isWarningShown} 
