@@ -8,7 +8,10 @@ interface PermissionRouteProps {
 }
 
 export const PermissionRoute = ({ children, permission }: PermissionRouteProps) => {
-  const { isAdmin, permissions, loading } = useAuth();
+  const { isAdmin, isSuperuser, permissions, loading } = useAuth();
+  
+  // isStaff = admin ou superuser (acesso operacional completo)
+  const isStaff = isAdmin || isSuperuser;
 
   if (loading) {
     return (
@@ -18,8 +21,8 @@ export const PermissionRoute = ({ children, permission }: PermissionRouteProps) 
     );
   }
 
-  // Admins têm acesso a tudo
-  if (isAdmin) {
+  // Staff (admins e superusers) têm acesso a tudo
+  if (isStaff) {
     return <>{children}</>;
   }
 

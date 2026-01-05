@@ -51,7 +51,7 @@ import {
 } from "@/components/ui/tooltip";
 
 export function AppSidebar() {
-  const { isAdmin, signOut, user, permissions } = useAuth();
+  const { isAdmin, isSuperuser, isStaff, isSystemOwner, signOut, user, permissions } = useAuth();
   const { open, isMobile, setOpenMobile } = useSidebar();
 
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
@@ -131,7 +131,7 @@ export function AppSidebar() {
       path: "/assets/unified-history",
       icon: History,
       label: "Histórico Unificado",
-      show: isAdmin,
+      show: isStaff,
     },
   ];
 
@@ -205,49 +205,49 @@ export function AppSidebar() {
       path: "/pricing",
       icon: CircleDollarSign,
       label: "Precificação",
-      show: isAdmin,
+      show: isStaff,
     },
     {
       path: "/pricing/calculator",
       icon: Calculator,
       label: "Calculadora",
-      show: isAdmin,
+      show: isStaff,
     },
     {
       path: "/pricing/viability",
       icon: TrendingUp,
       label: "Viabilidade",
-      show: isAdmin,
+      show: isStaff,
     },
     {
       path: "/pricing/tax-config",
       icon: Percent,
       label: "Impostos",
-      show: isAdmin,
+      show: isStaff,
     },
     {
       path: "/pricing/asset-costs",
       icon: Wrench,
       label: "Custos",
-      show: isAdmin,
+      show: isStaff,
     },
     {
       path: "/admin/cash-box",
       icon: Wallet,
       label: "Caixa",
-      show: isAdmin,
+      show: isStaff,
     },
     {
       path: "/admin/financial-forecast",
       icon: TrendingUp,
       label: "Previsão",
-      show: isAdmin,
+      show: isStaff,
     },
     {
       path: "/admin/predictive-purchases",
       icon: ShoppingCart,
       label: "Compras",
-      show: isAdmin,
+      show: isStaff,
     },
   ];
 
@@ -257,61 +257,61 @@ export function AppSidebar() {
       path: "/admin/users",
       icon: Users,
       label: "Usuários",
-      show: isAdmin,
+      show: isSystemOwner, // APENAS owner pode gerenciar usuários
     },
     {
       path: "/admin/user-activities",
       icon: Activity,
       label: "Atividades",
-      show: isAdmin,
+      show: isStaff,
     },
     {
       path: "/admin/logs",
       icon: ScrollText,
       label: "Logs",
-      show: isAdmin,
+      show: isStaff,
     },
     {
       path: "/admin/error-logs",
       icon: AlertTriangle,
       label: "Erros",
-      show: isAdmin,
+      show: isStaff,
     },
     {
       path: "/admin/active-sessions",
       icon: Activity,
       label: "Sessões",
-      show: isAdmin,
+      show: isStaff,
     },
     {
       path: "/admin/session-health",
       icon: Activity,
       label: "Health",
-      show: isAdmin,
+      show: isStaff,
     },
     {
       path: "/admin/edge-functions-health",
       icon: Activity,
       label: "Edge",
-      show: isAdmin,
+      show: isStaff,
     },
     {
       path: "/admin/system-integrity",
       icon: ShieldCheck,
       label: "Integridade",
-      show: isAdmin,
+      show: isStaff,
     },
     {
       path: "/admin/external-sync",
       icon: RefreshCcw,
       label: "Sincronização",
-      show: isAdmin,
+      show: isSystemOwner, // APENAS owner pode sincronizar externamente
     },
     {
       path: "/admin/settings",
       icon: Settings,
       label: "Configurações",
-      show: isAdmin,
+      show: isStaff,
     },
   ];
 
