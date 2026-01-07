@@ -22,7 +22,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PackageCheck, Calendar, Building2, MapPin, User, Clock, Printer } from "lucide-react";
+import { PackageCheck, Calendar, Building2, MapPin, User, Clock, Printer, RefreshCw } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { AssetReturnsPrintView } from "./AssetReturnsPrintView";
@@ -229,6 +230,7 @@ export const AssetReturnsView = () => {
                         Status Atual
                       </div>
                     </TableHead>
+                    <TableHead className="w-[100px]">Tipo</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -296,6 +298,33 @@ export const AssetReturnsView = () => {
                           </Badge>
                         ) : (
                           <span className="text-muted-foreground italic">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {item.was_substitution ? (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge 
+                                  variant="outline" 
+                                  className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-300"
+                                >
+                                  <RefreshCw className="h-3 w-3 mr-1" />
+                                  Substituição
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {item.substituted_by_pat 
+                                  ? `Substituído pelo PAT ${item.substituted_by_pat}`
+                                  : "Devolução por substituição de equipamento"
+                                }
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : (
+                          <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-300">
+                            Normal
+                          </Badge>
                         )}
                       </TableCell>
                     </TableRow>

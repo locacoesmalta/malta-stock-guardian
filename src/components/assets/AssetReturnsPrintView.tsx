@@ -57,15 +57,16 @@ export const AssetReturnsPrintView = ({ returns, periodLabel }: AssetReturnsPrin
         <table className="print-assets-table">
           <thead>
             <tr>
-              <th style={{ width: "70px" }}>PAT</th>
+              <th style={{ width: "65px" }}>PAT</th>
               <th>Equipamento</th>
-              <th style={{ width: "130px" }}>Empresa</th>
-              <th style={{ width: "130px" }}>Obra</th>
-              <th style={{ width: "80px" }}>Início</th>
-              <th style={{ width: "80px" }}>Devolução</th>
-              <th style={{ width: "70px" }}>Duração</th>
-              <th style={{ width: "100px" }}>Registrado</th>
-              <th style={{ width: "110px" }}>Status Atual</th>
+              <th style={{ width: "120px" }}>Empresa</th>
+              <th style={{ width: "120px" }}>Obra</th>
+              <th style={{ width: "70px" }}>Início</th>
+              <th style={{ width: "70px" }}>Devolução</th>
+              <th style={{ width: "60px" }}>Duração</th>
+              <th style={{ width: "90px" }}>Registrado</th>
+              <th style={{ width: "90px" }}>Status</th>
+              <th style={{ width: "85px" }}>Tipo</th>
             </tr>
           </thead>
           <tbody>
@@ -94,6 +95,16 @@ export const AssetReturnsPrintView = ({ returns, periodLabel }: AssetReturnsPrin
                     </span>
                   ) : (
                     "-"
+                  )}
+                </td>
+                <td>
+                  {item.was_substitution ? (
+                    <span className="print-status-badge print-type-substitution">
+                      Substituição
+                      {item.substituted_by_pat && <span className="print-subst-pat"> ({item.substituted_by_pat})</span>}
+                    </span>
+                  ) : (
+                    <span className="print-status-badge print-type-normal">Normal</span>
                   )}
                 </td>
               </tr>

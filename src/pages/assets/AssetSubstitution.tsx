@@ -376,6 +376,25 @@ export default function AssetSubstitution() {
         dataEventoReal: data.substitution_date,
       });
 
+      // 🎯 NOVO: Se o equipamento estava em LOCAÇÃO, registrar também "FIM DE LOCAÇÃO"
+      // Isso permite que apareça no controle de devoluções para medição
+      if (effectiveOriginalLocation === "locacao" && asset.rental_company) {
+        const fimLocacaoDetails = 
+          `Locação encerrada em ${formatBelemDate(data.substitution_date, "dd/MM/yyyy")} por SUBSTITUIÇÃO. ` +
+          `Início: ${asset.rental_start_date ? formatBelemDate(asset.rental_start_date, "dd/MM/yyyy") : 'N/A'}. ` +
+          `Empresa: ${asset.rental_company}. ` +
+          `Obra: ${asset.rental_work_site || 'N/A'}. ` +
+          `Substituído pelo PAT ${substituteAsset.asset_code}.`;
+
+        await registrarEvento({
+          patId: asset.id,
+          codigoPat: asset.asset_code,
+          tipoEvento: "FIM DE LOCAÇÃO",
+          detalhesEvento: fimLocacaoDetails,
+          dataEventoReal: data.substitution_date,
+        });
+      }
+
       // Evento do equipamento NOVO (usando localização efetiva)
       const inheritedLocationLabel = getLocationLabel(effectiveOriginalLocation);
       
