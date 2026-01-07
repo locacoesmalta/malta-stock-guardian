@@ -19,6 +19,7 @@ import { AssetGridView } from "@/components/assets/AssetGridView";
 import { AssetUrgencyFilter } from "@/components/assets/AssetUrgencyFilter";
 import { AssetSummaryCard } from "@/components/assets/AssetSummaryCard";
 import { AssetStatusTabs } from "@/components/assets/AssetStatusTabs";
+import { AssetReturnsView } from "@/components/assets/AssetReturnsView";
 
 export default function AssetsList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -140,8 +141,8 @@ export default function AssetsList() {
     filteredAssets = filteredAssets.filter((asset) => asset.location_type === activeStatusFilter);
   }
 
-  // Filtro por tabs
-  if (activeTab !== "all") {
+  // Filtro por tabs (exceto devolução que é tratado separadamente)
+  if (activeTab !== "all" && activeTab !== "devolucao") {
     filteredAssets = filteredAssets.filter((asset) => asset.location_type === activeTab);
   }
 
@@ -342,8 +343,10 @@ export default function AssetsList() {
         <AssetViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
       </div>
 
-      {/* Renderização condicional: Grid ou Kanban */}
-      {viewMode === "grid" ? (
+      {/* Renderização condicional: Devoluções, Grid ou Kanban */}
+      {activeTab === "devolucao" ? (
+        <AssetReturnsView />
+      ) : viewMode === "grid" ? (
         <AssetGridView assets={filteredAssets} />
       ) : (
         <AssetKanbanView assets={filteredAssets} />
