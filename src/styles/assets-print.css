@@ -3,34 +3,45 @@
    ============================================= */
 
 @media print {
-  /* Ocultar toda a interface exceto conteúdo de impressão */
-  body > *:not(.print-assets-wrapper) {
-    display: none !important;
+  /* Ocultar TUDO por padrão */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
   }
-  
+
+  /* Ocultar container principal da aplicação e todos os elementos de UI */
+  #root,
   .no-print,
-  .print\\:hidden,
   header,
   nav,
   aside,
   [data-sidebar],
   [data-radix-popper-content-wrapper],
-  button:not(.print-visible),
   .fixed,
   .sticky {
     display: none !important;
+    visibility: hidden !important;
   }
 
-  /* Mostrar área de impressão */
+  /* Mostrar APENAS a área de impressão */
   .print-assets-wrapper {
     display: block !important;
-    position: absolute !important;
+    visibility: visible !important;
+    position: fixed !important;
     top: 0 !important;
     left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
     width: 100% !important;
+    height: auto !important;
     background: white !important;
+    z-index: 999999 !important;
     padding: 0 !important;
     margin: 0 !important;
+    overflow: visible !important;
   }
 
   .print-assets-content {

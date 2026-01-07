@@ -1,5 +1,5 @@
 import { formatPAT } from "@/lib/patUtils";
-import { formatBelemDate } from "@/lib/dateUtils";
+import { formatBelemDate, formatBRFromYYYYMMDD } from "@/lib/dateUtils";
 import type { AssetReturn } from "@/hooks/useAssetReturns";
 
 interface AssetReturnsPrintViewProps {
@@ -73,8 +73,8 @@ export const AssetReturnsPrintView = ({ returns, periodLabel }: AssetReturnsPrin
                 <td>{item.equipment_name}</td>
                 <td>{item.empresa}</td>
                 <td>{item.obra}</td>
-                <td>{item.data_inicio_locacao || "-"}</td>
-                <td>{item.data_devolucao}</td>
+                <td>{item.data_inicio_locacao ? formatBRFromYYYYMMDD(item.data_inicio_locacao.split('T')[0]) : "-"}</td>
+                <td>{item.data_devolucao ? formatBRFromYYYYMMDD(item.data_devolucao.split('T')[0]) : "-"}</td>
                 <td>
                   {item.duracao_dias !== null ? (
                     <span className={`print-duration-badge ${getDurationClass(item.duracao_dias)}`}>
