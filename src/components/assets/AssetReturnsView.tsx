@@ -92,7 +92,7 @@ export const AssetReturnsView = () => {
 
   const handleRowClick = (assetId: string | null, codigoPat: string) => {
     if (assetId) {
-      navigate(`/assets/${assetId}`);
+      navigate(`/assets/view/${assetId}`);
     } else {
       navigate(`/assets/traceability?pat=${codigoPat}`);
     }
