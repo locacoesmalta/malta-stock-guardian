@@ -8,6 +8,7 @@ export interface AssetReturn {
   asset_id: string | null;
   empresa: string | null;
   obra: string | null;
+  data_inicio_locacao: string | null;
   data_devolucao: string;
   usuario_nome: string | null;
   detalhes_evento: string | null;
@@ -54,22 +55,30 @@ export const useAssetReturns = (params?: UseAssetReturnsParams) => {
       if (historicoError) throw historicoError;
       if (!historico || historico.length === 0) return [];
 
-      // Buscar informações dos assets relacionados
+      // Buscar informações dos assets relacionados (incluindo rental_start_date)
       const patIds = [...new Set(historico.map((h) => h.pat_id).filter(Boolean))];
       
-      let assetsMap: Record<string, { equipment_name: string; id: string }> = {};
+      let assetsMap: Record<string, { 
+        equipment_name: string; 
+        id: string;
+        rental_start_date: string | null;
+      }> = {};
       
       if (patIds.length > 0) {
         const { data: assets } = await supabase
           .from("assets")
-          .select("id, equipment_name")
+          .select("id, equipment_name, rental_start_date")
           .in("id", patIds);
 
         if (assets) {
           assetsMap = assets.reduce((acc, asset) => {
-            acc[asset.id] = { equipment_name: asset.equipment_name, id: asset.id };
+            acc[asset.id] = { 
+              equipment_name: asset.equipment_name, 
+              id: asset.id,
+              rental_start_date: asset.rental_start_date 
+            };
             return acc;
-          }, {} as Record<string, { equipment_name: string; id: string }>);
+          }, {} as Record<string, { equipment_name: string; id: string; rental_start_date: string | null }>);
         }
       }
 
@@ -78,13 +87,13 @@ export const useAssetReturns = (params?: UseAssetReturnsParams) => {
         const assetInfo = item.pat_id ? assetsMap[item.pat_id] : null;
         
         // Extrair empresa e obra do detalhes_evento
-        // Formato típico: "Finalizada locação na empresa X, obra Y"
+        // Formato típico: "Locação encerrada em XX/XX/XXXX. Empresa: X. Obra: Y"
         let empresa: string | null = null;
         let obra: string | null = null;
         
         if (item.detalhes_evento) {
-          const empresaMatch = item.detalhes_evento.match(/empresa[:\s]+([^,]+)/i);
-          const obraMatch = item.detalhes_evento.match(/obra[:\s]+([^,.\n]+)/i);
+          const empresaMatch = item.detalhes_evento.match(/Empresa[:\s]+([^.]+)/i);
+          const obraMatch = item.detalhes_evento.match(/Obra[:\s]+([^.]+)/i);
           
           if (empresaMatch) empresa = empresaMatch[1].trim();
           if (obraMatch) obra = obraMatch[1].trim();
@@ -97,6 +106,7 @@ export const useAssetReturns = (params?: UseAssetReturnsParams) => {
           asset_id: assetInfo?.id || item.pat_id,
           empresa,
           obra,
+          data_inicio_locacao: assetInfo?.rental_start_date || null,
           data_devolucao: item.data_evento_real || item.data_modificacao,
           usuario_nome: item.usuario_nome,
           detalhes_evento: item.detalhes_evento,
