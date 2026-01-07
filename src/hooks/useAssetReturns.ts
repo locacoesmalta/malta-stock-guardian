@@ -14,6 +14,10 @@ export interface AssetReturn {
   duracao_dias: number | null;
   usuario_nome: string | null;
   detalhes_evento: string | null;
+  // Status atual do equipamento
+  current_location_type: string | null;
+  current_rental_company: string | null;
+  current_rental_work_site: string | null;
 }
 
 interface UseAssetReturnsParams {
@@ -95,12 +99,15 @@ export const useAssetReturns = (params?: UseAssetReturnsParams) => {
         equipment_name: string; 
         id: string;
         rental_start_date: string | null;
+        location_type: string | null;
+        rental_company: string | null;
+        rental_work_site: string | null;
       }> = {};
       
       if (patIds.length > 0) {
         const { data: assets } = await supabase
           .from("assets")
-          .select("id, equipment_name, rental_start_date")
+          .select("id, equipment_name, rental_start_date, location_type, rental_company, rental_work_site")
           .in("id", patIds);
 
         if (assets) {
@@ -108,10 +115,20 @@ export const useAssetReturns = (params?: UseAssetReturnsParams) => {
             acc[asset.id] = { 
               equipment_name: asset.equipment_name, 
               id: asset.id,
-              rental_start_date: asset.rental_start_date 
+              rental_start_date: asset.rental_start_date,
+              location_type: asset.location_type,
+              rental_company: asset.rental_company,
+              rental_work_site: asset.rental_work_site
             };
             return acc;
-          }, {} as Record<string, { equipment_name: string; id: string; rental_start_date: string | null }>);
+          }, {} as Record<string, { 
+            equipment_name: string; 
+            id: string; 
+            rental_start_date: string | null;
+            location_type: string | null;
+            rental_company: string | null;
+            rental_work_site: string | null;
+          }>);
         }
       }
 
@@ -151,6 +168,9 @@ export const useAssetReturns = (params?: UseAssetReturnsParams) => {
           duracao_dias: duracaoDias,
           usuario_nome: item.usuario_nome,
           detalhes_evento: item.detalhes_evento,
+          current_location_type: assetInfo?.location_type || null,
+          current_rental_company: assetInfo?.rental_company || null,
+          current_rental_work_site: assetInfo?.rental_work_site || null,
         };
       });
 
