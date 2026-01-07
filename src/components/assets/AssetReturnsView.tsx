@@ -162,7 +162,13 @@ export const AssetReturnsView = () => {
                   <TableHead>
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3.5 w-3.5" />
-                      Data Devolução
+                      Início Locação
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5" />
+                      Devolução
                     </div>
                   </TableHead>
                   <TableHead>
@@ -197,6 +203,13 @@ export const AssetReturnsView = () => {
                     </TableCell>
                     <TableCell>
                       {item.obra || (
+                        <span className="text-muted-foreground italic">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {item.data_inicio_locacao ? (
+                        formatBRFromYYYYMMDD(item.data_inicio_locacao)
+                      ) : (
                         <span className="text-muted-foreground italic">-</span>
                       )}
                     </TableCell>
