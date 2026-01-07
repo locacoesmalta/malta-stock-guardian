@@ -21,6 +21,7 @@ import { AssetSummaryCard } from "@/components/assets/AssetSummaryCard";
 import { AssetStatusTabs } from "@/components/assets/AssetStatusTabs";
 import { AssetReturnsView } from "@/components/assets/AssetReturnsView";
 import { AssetsPrintView } from "@/components/assets/AssetsPrintView";
+import { PrintPortal, usePrintWithDiagnostics } from "@/components/PrintPortal";
 import "@/styles/assets-print.css";
 
 export default function AssetsList() {
@@ -36,6 +37,7 @@ export default function AssetsList() {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const { data: assets = [], isLoading, error } = useAssetsQuery();
+  const { triggerPrint } = usePrintWithDiagnostics();
 
   // Atalhos de teclado
   useEffect(() => {
@@ -246,7 +248,12 @@ export default function AssetsList() {
   };
 
   const handlePrint = () => {
-    window.print();
+    if (filteredAssets.length === 0) {
+      toast.warning("Nenhum equipamento para imprimir com os filtros atuais");
+      return;
+    }
+    console.log("[ASSETS_LIST] Printing", filteredAssets.length, "assets");
+    triggerPrint();
   };
 
   if (isLoading) {
@@ -259,7 +266,7 @@ export default function AssetsList() {
 
   return (
     <>
-      {/* Conteúdo da UI - oculto na impressão */}
+      {/* Conteúdo da UI - visível na tela, oculto na impressão */}
       <div className="no-print container mx-auto p-3 sm:p-4 md:p-6 max-w-7xl">
         <div className="space-y-3 mb-4 sm:mb-6">
           <BackButton />
@@ -308,16 +315,19 @@ export default function AssetsList() {
               </Button>
               {isAdmin && (
                 <>
-                  <Button
-                    onClick={handlePrint}
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 sm:flex-none print:hidden"
-                  >
-                    <Printer className="h-4 w-4 mr-2" />
-                    <span className="hidden lg:inline">Imprimir</span>
-                    <span className="lg:hidden">Imprimir</span>
-                  </Button>
+                  {activeTab !== "devolucao" && (
+                    <Button
+                      onClick={handlePrint}
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 sm:flex-none"
+                      disabled={filteredAssets.length === 0}
+                    >
+                      <Printer className="h-4 w-4 mr-2" />
+                      <span className="hidden lg:inline">Imprimir</span>
+                      <span className="lg:hidden">Imprimir</span>
+                    </Button>
+                  )}
                   <Button
                     onClick={() => navigate("/assets/register")}
                     size="sm"
@@ -440,12 +450,14 @@ export default function AssetsList() {
         )}
       </div>
 
-      {/* Área de impressão - FORA do no-print para aparecer na impressão */}
+      {/* Portal de impressão - renderiza FORA do #root */}
       {activeTab !== "devolucao" && (
-        <AssetsPrintView 
-          assets={filteredAssets} 
-          filterTitle={getFilterTitle()} 
-        />
+        <PrintPortal>
+          <AssetsPrintView 
+            assets={filteredAssets} 
+            filterTitle={getFilterTitle()} 
+          />
+        </PrintPortal>
       )}
     </>
   );

@@ -24,7 +24,9 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { PackageCheck, Calendar, Building2, MapPin, User, Clock, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { AssetReturnsPrintView } from "./AssetReturnsPrintView";
+import { PrintPortal, usePrintWithDiagnostics } from "@/components/PrintPortal";
 import "@/styles/assets-print.css";
 
 const MONTHS = [
@@ -69,6 +71,8 @@ export const AssetReturnsView = () => {
     String(now.getMonth() + 1).padStart(2, "0")
   );
   const [selectedYear, setSelectedYear] = useState(now.getFullYear().toString());
+  
+  const { triggerPrint } = usePrintWithDiagnostics();
 
   // Calcular datas de início e fim do mês selecionado
   const startDate = `${selectedYear}-${selectedMonth}-01`;
@@ -97,12 +101,17 @@ export const AssetReturnsView = () => {
   const periodLabel = `${selectedMonthLabel} de ${selectedYear}`;
 
   const handlePrint = () => {
-    window.print();
+    if (returns.length === 0) {
+      toast.warning("Nenhuma devolução para imprimir neste período");
+      return;
+    }
+    console.log("[RETURNS_VIEW] Printing", returns.length, "returns for", periodLabel);
+    triggerPrint();
   };
 
   return (
     <>
-      {/* Conteúdo da UI - oculto na impressão */}
+      {/* Conteúdo da UI - visível na tela, oculto na impressão */}
       <Card className="no-print">
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -121,7 +130,7 @@ export const AssetReturnsView = () => {
                 variant="outline"
                 size="sm"
                 className="mr-2"
-                disabled={returns.length === 0}
+                disabled={returns.length === 0 || isLoading}
               >
                 <Printer className="h-4 w-4 mr-2" />
                 Imprimir
@@ -282,11 +291,13 @@ export const AssetReturnsView = () => {
         </CardContent>
       </Card>
 
-      {/* Área de impressão para devoluções */}
-      <AssetReturnsPrintView 
-        returns={returns} 
-        periodLabel={periodLabel} 
-      />
+      {/* Portal de impressão - renderiza FORA do #root */}
+      <PrintPortal>
+        <AssetReturnsPrintView 
+          returns={returns} 
+          periodLabel={periodLabel} 
+        />
+      </PrintPortal>
     </>
   );
 };
