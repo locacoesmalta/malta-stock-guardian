@@ -102,7 +102,8 @@ export const AssetReturnsView = () => {
 
   return (
     <>
-      <Card className="print:hidden">
+      {/* Conteúdo da UI - oculto na impressão */}
+      <Card className="no-print">
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center gap-3">

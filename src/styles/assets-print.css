@@ -3,24 +3,26 @@
    ============================================= */
 
 @media print {
-  /* Ocultar TUDO por padrão */
+  /* Reset básico para impressão */
   html, body {
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
     height: auto !important;
     overflow: visible !important;
+    background: white !important;
   }
 
-  /* Ocultar container principal da aplicação e todos os elementos de UI */
-  #root,
+  /* IMPORTANTE: NÃO esconder #root, apenas seu conteúdo via .no-print */
+  
+  /* Ocultar elementos de UI que não devem aparecer na impressão */
   .no-print,
   header,
   nav,
   aside,
   [data-sidebar],
   [data-radix-popper-content-wrapper],
-  .fixed,
+  .fixed:not(.print-assets-wrapper),
   .sticky {
     display: none !important;
     visibility: hidden !important;
@@ -30,11 +32,10 @@
   .print-assets-wrapper {
     display: block !important;
     visibility: visible !important;
-    position: fixed !important;
+    position: absolute !important;
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    bottom: 0 !important;
     width: 100% !important;
     height: auto !important;
     background: white !important;
@@ -48,7 +49,7 @@
     display: block !important;
     width: 100% !important;
     max-width: 100% !important;
-    padding: 15mm !important;
+    padding: 0 !important;
     margin: 0 !important;
     background: white !important;
     color: black !important;
@@ -109,6 +110,8 @@
     text-align: left !important;
     font-weight: 600 !important;
     border: 1px solid #2d3748 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .print-assets-table td {
@@ -119,10 +122,8 @@
 
   .print-assets-table tr:nth-child(even) td {
     background: #f7fafc !important;
-  }
-
-  .print-assets-table tr:hover td {
-    background: #edf2f7 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   /* Badges de status */
@@ -132,6 +133,8 @@
     border-radius: 4px !important;
     font-size: 10px !important;
     font-weight: 600 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .print-status-deposito {
@@ -161,6 +164,8 @@
     border-radius: 4px !important;
     font-size: 10px !important;
     font-weight: 500 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .print-duration-green {
@@ -199,10 +204,10 @@
     color: #2d3748 !important;
   }
 
-  /* Configurações de página */
+  /* Configurações de página - Padrão Malta */
   @page {
     size: A4 landscape;
-    margin: 10mm;
+    margin: 20mm 15mm;
   }
 
   /* Evitar quebras dentro de linhas */
