@@ -258,9 +258,11 @@ export default function AssetsList() {
   }
 
   return (
-    <div className="container mx-auto p-3 sm:p-4 md:p-6 max-w-7xl">
-      <div className="space-y-3 mb-4 sm:mb-6">
-        <BackButton />
+    <>
+      {/* Conteúdo da UI - oculto na impressão */}
+      <div className="no-print container mx-auto p-3 sm:p-4 md:p-6 max-w-7xl">
+        <div className="space-y-3 mb-4 sm:mb-6">
+          <BackButton />
         
         {/* Alerta de Dados Incompletos */}
         <AssetDataWarning />
@@ -428,22 +430,23 @@ export default function AssetsList() {
         <AssetViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
       </div>
 
-      {/* Renderização condicional: Devoluções, Grid ou Kanban */}
-      {activeTab === "devolucao" ? (
-        <AssetReturnsView />
-      ) : viewMode === "grid" ? (
-        <AssetGridView assets={filteredAssets} />
-      ) : (
-        <AssetKanbanView assets={filteredAssets} />
-      )}
+        {/* Renderização condicional: Devoluções, Grid ou Kanban */}
+        {activeTab === "devolucao" ? (
+          <AssetReturnsView />
+        ) : viewMode === "grid" ? (
+          <AssetGridView assets={filteredAssets} />
+        ) : (
+          <AssetKanbanView assets={filteredAssets} />
+        )}
+      </div>
 
-      {/* Área de impressão (oculta na tela, visível na impressão) */}
+      {/* Área de impressão - FORA do no-print para aparecer na impressão */}
       {activeTab !== "devolucao" && (
         <AssetsPrintView 
           assets={filteredAssets} 
           filterTitle={getFilterTitle()} 
         />
       )}
-    </div>
+    </>
   );
 }
