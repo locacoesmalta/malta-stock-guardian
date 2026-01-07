@@ -1,5 +1,6 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { useAssetReturnsCount } from "@/hooks/useAssetReturns";
 
 interface AssetStatusTabsProps {
   activeTab: string;
@@ -14,11 +15,12 @@ interface AssetStatusTabsProps {
 
 export const AssetStatusTabs = ({ activeTab, onTabChange, statusCounts }: AssetStatusTabsProps) => {
   const totalAssets = Object.values(statusCounts).reduce((a, b) => a + b, 0);
+  const { data: returnsCount = 0 } = useAssetReturnsCount();
 
   return (
     <div className="mb-6">
       <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-        <TabsList className="w-full grid grid-cols-2 lg:grid-cols-5 h-auto">
+        <TabsList className="w-full grid grid-cols-3 lg:grid-cols-6 h-auto">
           <TabsTrigger value="all" className="gap-2">
             Todos
             <Badge variant="outline" className="ml-1">
@@ -50,6 +52,13 @@ export const AssetStatusTabs = ({ activeTab, onTabChange, statusCounts }: AssetS
             <span className="sm:hidden">Laudo</span>
             <Badge variant="warning" className="ml-1">
               {statusCounts.aguardando_laudo}
+            </Badge>
+          </TabsTrigger>
+          <TabsTrigger value="devolucao" className="gap-2">
+            <span className="hidden sm:inline">Devolução</span>
+            <span className="sm:hidden">Devol.</span>
+            <Badge variant="outline" className="ml-1 bg-green-100 text-green-700 border-green-300">
+              {returnsCount}
             </Badge>
           </TabsTrigger>
         </TabsList>
