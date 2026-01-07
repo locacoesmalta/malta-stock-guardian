@@ -1,5 +1,6 @@
 /* =============================================
    ESTILOS DE IMPRESSÃO - LISTA DE EQUIPAMENTOS
+   Sistema robusto com #print-root (Portal)
    ============================================= */
 
 @media print {
@@ -11,35 +12,39 @@
     height: auto !important;
     overflow: visible !important;
     background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  /* IMPORTANTE: NÃO esconder #root, apenas seu conteúdo via .no-print */
-  
-  /* Ocultar elementos de UI que não devem aparecer na impressão */
-  .no-print,
-  header,
-  nav,
-  aside,
-  [data-sidebar],
-  [data-radix-popper-content-wrapper],
-  .fixed:not(.print-assets-wrapper),
-  .sticky {
+  /* ESCONDER toda a aplicação normal */
+  #root {
     display: none !important;
     visibility: hidden !important;
   }
 
-  /* Mostrar APENAS a área de impressão */
+  /* Esconder elementos marcados com .no-print */
+  .no-print {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* MOSTRAR apenas o portal de impressão */
+  #print-root {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Container principal de impressão */
   .print-assets-wrapper {
     display: block !important;
     visibility: visible !important;
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
+    position: static !important;
     width: 100% !important;
     height: auto !important;
     background: white !important;
-    z-index: 999999 !important;
     padding: 0 !important;
     margin: 0 !important;
     overflow: visible !important;
@@ -216,7 +221,12 @@
   }
 }
 
-/* Ocultar por padrão na tela */
+/* Ocultar portal de impressão na tela (apenas visível em @media print) */
+#print-root {
+  display: none;
+}
+
+/* Fallback: se alguém adicionar .print-assets-wrapper fora do portal */
 .print-assets-wrapper {
   display: none;
 }
