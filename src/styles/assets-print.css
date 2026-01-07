@@ -249,6 +249,22 @@
     background-color: #fef3c7 !important;
     color: #d97706 !important;
   }
+
+  /* Tipo de devolução */
+  .print-type-substitution {
+    background-color: #e9d5ff !important;
+    color: #7c3aed !important;
+  }
+
+  .print-type-normal {
+    background-color: #d1fae5 !important;
+    color: #065f46 !important;
+  }
+
+  .print-subst-pat {
+    font-size: 8px;
+    font-weight: 500;
+  }
 }
 
 /* Ocultar portal de impressão na tela (apenas visível em @media print) */

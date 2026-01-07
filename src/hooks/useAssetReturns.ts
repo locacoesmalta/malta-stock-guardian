@@ -18,6 +18,9 @@ export interface AssetReturn {
   current_location_type: string | null;
   current_rental_company: string | null;
   current_rental_work_site: string | null;
+  // Indicador de substituição
+  was_substitution: boolean;
+  substituted_by_pat: string | null;
 }
 
 interface UseAssetReturnsParams {
@@ -39,6 +42,26 @@ function extractStartDateFromDetails(detalhes: string | null): string | null {
     return `${ano}-${mes}-${dia}`;
   }
   return null;
+}
+
+/**
+ * Extrai informações de substituição do campo detalhes_evento
+ * Procura por "Substituído pelo PAT XXXXXX"
+ */
+function extractSubstitutionInfo(detalhes: string | null): { wasSubstitution: boolean; substitutedByPat: string | null } {
+  if (!detalhes) return { wasSubstitution: false, substitutedByPat: null };
+  
+  const match = detalhes.match(/Substituído pelo PAT\s+(\d{6})/i);
+  if (match) {
+    return { wasSubstitution: true, substitutedByPat: match[1] };
+  }
+  
+  // Verifica se há menção de SUBSTITUIÇÃO
+  if (detalhes.toLowerCase().includes('substituição')) {
+    return { wasSubstitution: true, substitutedByPat: null };
+  }
+  
+  return { wasSubstitution: false, substitutedByPat: null };
 }
 
 /**
@@ -156,6 +179,9 @@ export const useAssetReturns = (params?: UseAssetReturnsParams) => {
         const dataDevolucao = item.data_evento_real || item.data_modificacao;
         const duracaoDias = calculateDuration(dataInicio, dataDevolucao);
 
+        // Extrair informações de substituição
+        const substitutionInfo = extractSubstitutionInfo(item.detalhes_evento);
+
         return {
           id: item.historico_id,
           codigo_pat: item.codigo_pat,
@@ -171,6 +197,8 @@ export const useAssetReturns = (params?: UseAssetReturnsParams) => {
           current_location_type: assetInfo?.location_type || null,
           current_rental_company: assetInfo?.rental_company || null,
           current_rental_work_site: assetInfo?.rental_work_site || null,
+          was_substitution: substitutionInfo.wasSubstitution,
+          substituted_by_pat: substitutionInfo.substitutedByPat,
         };
       });
 
