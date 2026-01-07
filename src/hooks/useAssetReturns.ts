@@ -73,7 +73,7 @@ export const useAssetReturns = (params?: UseAssetReturnsParams) => {
           usuario_nome
         `)
         .eq("tipo_evento", "FIM DE LOCAÇÃO")
-        .order("data_evento_real", { ascending: false, nullsFirst: false });
+        .order("data_evento_real", { ascending: true, nullsFirst: false });
 
       // Filtrar por período se especificado
       if (params?.startDate) {

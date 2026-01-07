@@ -155,13 +155,42 @@ export default function AssetsList() {
     filteredAssets = filteredAssets.filter((asset) => !getAssetUrgency(asset));
   }
 
-  // Calcular estatísticas
+  // Calcular estatísticas totais
   const statusCounts = {
     deposito_malta: assets.filter((a) => a.location_type === "deposito_malta" && a.manufacturer).length,
     em_manutencao: assets.filter((a) => a.location_type === "em_manutencao" && a.manufacturer).length,
     locacao: assets.filter((a) => a.location_type === "locacao" && a.manufacturer).length,
     aguardando_laudo: assets.filter((a) => a.location_type === "aguardando_laudo" && a.manufacturer).length,
   };
+
+  // Calcular estatísticas filtradas (antes do filtro por tab/status)
+  const assetsAfterFilters = assets.filter((asset) => {
+    if (!asset.manufacturer || asset.manufacturer.trim() === "") return false;
+    if (selectedManufacturer && asset.manufacturer !== selectedManufacturer) return false;
+    if (selectedEquipmentType && asset.equipment_name !== selectedEquipmentType) return false;
+    if (selectedModel && asset.model !== selectedModel) return false;
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      return (
+        asset.asset_code.toLowerCase().includes(term) ||
+        asset.equipment_name.toLowerCase().includes(term) ||
+        asset.manufacturer?.toLowerCase().includes(term) ||
+        asset.rental_company?.toLowerCase().includes(term) ||
+        asset.rental_work_site?.toLowerCase().includes(term)
+      );
+    }
+    return true;
+  });
+
+  const filteredStatusCounts = {
+    deposito_malta: assetsAfterFilters.filter((a) => a.location_type === "deposito_malta").length,
+    em_manutencao: assetsAfterFilters.filter((a) => a.location_type === "em_manutencao").length,
+    locacao: assetsAfterFilters.filter((a) => a.location_type === "locacao").length,
+    aguardando_laudo: assetsAfterFilters.filter((a) => a.location_type === "aguardando_laudo").length,
+  };
+
+  // Verifica se há filtros ativos
+  const hasActiveFilters = selectedManufacturer || selectedEquipmentType || selectedModel || searchTerm;
 
   const urgentCount = assets.filter((a) => a.manufacturer && getAssetUrgency(a)).length;
 
@@ -323,6 +352,7 @@ export default function AssetsList() {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         statusCounts={statusCounts}
+        filteredCounts={hasActiveFilters ? filteredStatusCounts : undefined}
       />
 
       {/* Filtros Hierárquicos */}
