@@ -5,6 +5,7 @@ import { formatPAT } from "@/lib/patUtils";
 import { formatBRFromYYYYMMDD } from "@/lib/dateUtils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -21,8 +22,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PackageCheck, Calendar, Building2, MapPin, User, Clock } from "lucide-react";
+import { PackageCheck, Calendar, Building2, MapPin, User, Clock, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AssetReturnsPrintView } from "./AssetReturnsPrintView";
+import "@/styles/assets-print.css";
 
 const MONTHS = [
   { value: "01", label: "Janeiro" },
@@ -85,182 +88,204 @@ export const AssetReturnsView = () => {
     if (assetId) {
       navigate(`/assets/${assetId}`);
     } else {
-      // Fallback: buscar por código PAT na rastreabilidade
       navigate(`/assets/traceability?pat=${codigoPat}`);
     }
   };
 
   const yearOptions = getYearOptions();
   const selectedMonthLabel = MONTHS.find((m) => m.value === selectedMonth)?.label || "";
+  const periodLabel = `${selectedMonthLabel} de ${selectedYear}`;
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   return (
-    <Card>
-      <CardHeader className="pb-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-3">
-            <PackageCheck className="h-5 w-5 text-green-600" />
-            <CardTitle className="text-lg">Devoluções de Equipamentos</CardTitle>
-            <Badge variant="secondary" className="ml-2">
-              {returns.length} {returns.length === 1 ? "devolução" : "devoluções"}
-            </Badge>
+    <>
+      <Card className="print:hidden">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <PackageCheck className="h-5 w-5 text-green-600" />
+              <CardTitle className="text-lg">Devoluções de Equipamentos</CardTitle>
+              <Badge variant="secondary" className="ml-2">
+                {returns.length} {returns.length === 1 ? "devolução" : "devoluções"}
+              </Badge>
+            </div>
+            
+            {/* Filtros de Período e Impressão */}
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handlePrint}
+                variant="outline"
+                size="sm"
+                className="mr-2"
+                disabled={returns.length === 0}
+              >
+                <Printer className="h-4 w-4 mr-2" />
+                Imprimir
+              </Button>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map((month) => (
+                    <SelectItem key={month.value} value={month.value}>
+                      {month.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger className="w-[90px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {yearOptions.map((year) => (
+                    <SelectItem key={year.value} value={year.value}>
+                      {year.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          
-          {/* Filtros de Período */}
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger className="w-[130px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {MONTHS.map((month) => (
-                  <SelectItem key={month.value} value={month.value}>
-                    {month.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-[90px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {yearOptions.map((year) => (
-                  <SelectItem key={year.value} value={year.value}>
-                    {year.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </CardHeader>
-      
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <Skeleton key={i} className="h-12 w-full" />
-            ))}
-          </div>
-        ) : returns.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <PackageCheck className="h-12 w-12 mx-auto mb-4 opacity-30" />
-            <p className="text-lg font-medium">Nenhuma devolução encontrada</p>
-            <p className="text-sm">
-              Não há registros de devolução para {selectedMonthLabel} de {selectedYear}
-            </p>
-          </div>
-        ) : (
-          <div className="rounded-md border overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[100px]">PAT</TableHead>
-                  <TableHead>Equipamento</TableHead>
-                  <TableHead>
-                    <div className="flex items-center gap-1">
-                      <Building2 className="h-3.5 w-3.5" />
-                      Empresa
-                    </div>
-                  </TableHead>
-                  <TableHead>
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-3.5 w-3.5" />
-                      Obra
-                    </div>
-                  </TableHead>
-                  <TableHead>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5" />
-                      Início
-                    </div>
-                  </TableHead>
-                  <TableHead>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5" />
-                      Devolução
-                    </div>
-                  </TableHead>
-                  <TableHead>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5" />
-                      Duração
-                    </div>
-                  </TableHead>
-                  <TableHead>
-                    <div className="flex items-center gap-1">
-                      <User className="h-3.5 w-3.5" />
-                      Registrado por
-                    </div>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {returns.map((item) => (
-                  <TableRow
-                    key={item.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleRowClick(item.asset_id, item.codigo_pat)}
-                  >
-                    <TableCell className="font-mono font-medium">
-                      {formatPAT(item.codigo_pat)}
-                    </TableCell>
-                    <TableCell>
-                      {item.equipment_name || (
-                        <span className="text-muted-foreground italic">
-                          Não identificado
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {item.empresa || (
-                        <span className="text-muted-foreground italic">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {item.obra || (
-                        <span className="text-muted-foreground italic">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {item.data_inicio_locacao ? (
-                        formatBRFromYYYYMMDD(item.data_inicio_locacao)
-                      ) : (
-                        <span className="text-muted-foreground italic">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {item.data_devolucao ? (
-                        formatBRFromYYYYMMDD(item.data_devolucao.split("T")[0])
-                      ) : (
-                        <span className="text-muted-foreground italic">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {item.duracao_dias !== null ? (
-                        <Badge 
-                          variant="outline" 
-                          className={cn("font-medium", getDurationBadgeClass(item.duracao_dias))}
-                        >
-                          {item.duracao_dias} {item.duracao_dias === 1 ? "dia" : "dias"}
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground italic">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {item.usuario_nome || (
-                        <span className="text-muted-foreground italic">Sistema</span>
-                      )}
-                    </TableCell>
+        </CardHeader>
+        
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : returns.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <PackageCheck className="h-12 w-12 mx-auto mb-4 opacity-30" />
+              <p className="text-lg font-medium">Nenhuma devolução encontrada</p>
+              <p className="text-sm">
+                Não há registros de devolução para {selectedMonthLabel} de {selectedYear}
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-md border overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[100px]">PAT</TableHead>
+                    <TableHead>Equipamento</TableHead>
+                    <TableHead>
+                      <div className="flex items-center gap-1">
+                        <Building2 className="h-3.5 w-3.5" />
+                        Empresa
+                      </div>
+                    </TableHead>
+                    <TableHead>
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-3.5 w-3.5" />
+                        Obra
+                      </div>
+                    </TableHead>
+                    <TableHead>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5" />
+                        Início
+                      </div>
+                    </TableHead>
+                    <TableHead>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5" />
+                        Devolução
+                      </div>
+                    </TableHead>
+                    <TableHead>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5" />
+                        Duração
+                      </div>
+                    </TableHead>
+                    <TableHead>
+                      <div className="flex items-center gap-1">
+                        <User className="h-3.5 w-3.5" />
+                        Registrado por
+                      </div>
+                    </TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                </TableHeader>
+                <TableBody>
+                  {returns.map((item) => (
+                    <TableRow
+                      key={item.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleRowClick(item.asset_id, item.codigo_pat)}
+                    >
+                      <TableCell className="font-mono font-medium">
+                        {formatPAT(item.codigo_pat)}
+                      </TableCell>
+                      <TableCell>
+                        {item.equipment_name || (
+                          <span className="text-muted-foreground italic">
+                            Não identificado
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {item.empresa || (
+                          <span className="text-muted-foreground italic">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {item.obra || (
+                          <span className="text-muted-foreground italic">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {item.data_inicio_locacao ? (
+                          formatBRFromYYYYMMDD(item.data_inicio_locacao)
+                        ) : (
+                          <span className="text-muted-foreground italic">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {item.data_devolucao ? (
+                          formatBRFromYYYYMMDD(item.data_devolucao.split("T")[0])
+                        ) : (
+                          <span className="text-muted-foreground italic">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {item.duracao_dias !== null ? (
+                          <Badge 
+                            variant="outline" 
+                            className={cn("font-medium", getDurationBadgeClass(item.duracao_dias))}
+                          >
+                            {item.duracao_dias} {item.duracao_dias === 1 ? "dia" : "dias"}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground italic">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {item.usuario_nome || (
+                          <span className="text-muted-foreground italic">Sistema</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Área de impressão para devoluções */}
+      <AssetReturnsPrintView 
+        returns={returns} 
+        periodLabel={periodLabel} 
+      />
+    </>
   );
 };
