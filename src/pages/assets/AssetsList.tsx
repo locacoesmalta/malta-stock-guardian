@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Plus, Search, QrCode, FileText } from "lucide-react";
+import { Plus, Search, QrCode, FileText, Printer } from "lucide-react";
 import { differenceInDays, parseISO } from "date-fns";
 import { useAssetsQuery } from "@/hooks/useAssetsQuery";
 import { BackButton } from "@/components/BackButton";
@@ -20,6 +20,8 @@ import { AssetUrgencyFilter } from "@/components/assets/AssetUrgencyFilter";
 import { AssetSummaryCard } from "@/components/assets/AssetSummaryCard";
 import { AssetStatusTabs } from "@/components/assets/AssetStatusTabs";
 import { AssetReturnsView } from "@/components/assets/AssetReturnsView";
+import { AssetsPrintView } from "@/components/assets/AssetsPrintView";
+import "@/styles/assets-print.css";
 
 export default function AssetsList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -177,6 +179,47 @@ export default function AssetsList() {
   const totalAssets = Object.values(statusCounts).reduce((a, b) => a + b, 0);
   const rentalPercentage = totalAssets > 0 ? (statusCounts.locacao / totalAssets) * 100 : 0;
 
+  // Gerar título do filtro para impressão
+  const getFilterTitle = () => {
+    const parts: string[] = [];
+    
+    if (activeTab === "devolucao") {
+      return "Devoluções";
+    }
+    
+    if (activeTab !== "all") {
+      const tabLabels: Record<string, string> = {
+        deposito_malta: "Depósito Malta",
+        em_manutencao: "Em Manutenção",
+        locacao: "Em Locação",
+        aguardando_laudo: "Aguardando Laudo",
+      };
+      parts.push(tabLabels[activeTab] || activeTab);
+    } else if (activeStatusFilter) {
+      const statusLabels: Record<string, string> = {
+        deposito_malta: "Depósito Malta",
+        em_manutencao: "Em Manutenção",
+        locacao: "Em Locação",
+        aguardando_laudo: "Aguardando Laudo",
+      };
+      parts.push(statusLabels[activeStatusFilter] || activeStatusFilter);
+    } else {
+      parts.push("Todos os Equipamentos");
+    }
+
+    if (selectedManufacturer) parts.push(selectedManufacturer);
+    if (selectedEquipmentType) parts.push(selectedEquipmentType);
+    if (selectedModel) parts.push(selectedModel);
+    if (urgencyFilter === "attention") parts.push("(Atenção)");
+    if (searchTerm) parts.push(`"${searchTerm}"`);
+
+    return parts.join(" - ");
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto p-4 md:p-6">
@@ -233,15 +276,27 @@ export default function AssetsList() {
                 Scanner
               </Button>
               {isAdmin && (
-                <Button
-                  onClick={() => navigate("/assets/register")}
-                  size="sm"
-                  className="flex-1 sm:flex-none"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  <span className="hidden lg:inline">Cadastro de Equipamento</span>
-                  <span className="lg:hidden">Cadastrar</span>
-                </Button>
+                <>
+                  <Button
+                    onClick={handlePrint}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 sm:flex-none print:hidden"
+                  >
+                    <Printer className="h-4 w-4 mr-2" />
+                    <span className="hidden lg:inline">Imprimir</span>
+                    <span className="lg:hidden">Imprimir</span>
+                  </Button>
+                  <Button
+                    onClick={() => navigate("/assets/register")}
+                    size="sm"
+                    className="flex-1 sm:flex-none"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    <span className="hidden lg:inline">Cadastro de Equipamento</span>
+                    <span className="lg:hidden">Cadastrar</span>
+                  </Button>
+                </>
               )}
             </div>
           </div>
@@ -350,6 +405,14 @@ export default function AssetsList() {
         <AssetGridView assets={filteredAssets} />
       ) : (
         <AssetKanbanView assets={filteredAssets} />
+      )}
+
+      {/* Área de impressão (oculta na tela, visível na impressão) */}
+      {activeTab !== "devolucao" && (
+        <AssetsPrintView 
+          assets={filteredAssets} 
+          filterTitle={getFilterTitle()} 
+        />
       )}
     </div>
   );

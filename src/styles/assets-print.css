@@ -1,0 +1,206 @@
+/* =============================================
+   ESTILOS DE IMPRESSÃO - LISTA DE EQUIPAMENTOS
+   ============================================= */
+
+@media print {
+  /* Ocultar toda a interface exceto conteúdo de impressão */
+  body > *:not(.print-assets-wrapper) {
+    display: none !important;
+  }
+  
+  .no-print,
+  .print\\:hidden,
+  header,
+  nav,
+  aside,
+  [data-sidebar],
+  [data-radix-popper-content-wrapper],
+  button:not(.print-visible),
+  .fixed,
+  .sticky {
+    display: none !important;
+  }
+
+  /* Mostrar área de impressão */
+  .print-assets-wrapper {
+    display: block !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .print-assets-content {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 15mm !important;
+    margin: 0 !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Cabeçalho do documento */
+  .print-assets-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    border-bottom: 2px solid #1a365d !important;
+    padding-bottom: 12px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .print-assets-header-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+  }
+
+  .print-assets-logo {
+    width: 60px !important;
+    height: auto !important;
+  }
+
+  .print-assets-title {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: #1a365d !important;
+    margin: 0 !important;
+  }
+
+  .print-assets-subtitle {
+    font-size: 14px !important;
+    color: #4a5568 !important;
+    margin: 4px 0 0 0 !important;
+  }
+
+  .print-assets-meta {
+    text-align: right !important;
+    font-size: 11px !important;
+    color: #718096 !important;
+  }
+
+  /* Tabela de equipamentos */
+  .print-assets-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 11px !important;
+    margin-top: 16px !important;
+  }
+
+  .print-assets-table th {
+    background: #2d3748 !important;
+    color: white !important;
+    padding: 8px 10px !important;
+    text-align: left !important;
+    font-weight: 600 !important;
+    border: 1px solid #2d3748 !important;
+  }
+
+  .print-assets-table td {
+    padding: 6px 10px !important;
+    border: 1px solid #e2e8f0 !important;
+    vertical-align: top !important;
+  }
+
+  .print-assets-table tr:nth-child(even) td {
+    background: #f7fafc !important;
+  }
+
+  .print-assets-table tr:hover td {
+    background: #edf2f7 !important;
+  }
+
+  /* Badges de status */
+  .print-status-badge {
+    display: inline-block !important;
+    padding: 2px 8px !important;
+    border-radius: 4px !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+  }
+
+  .print-status-deposito {
+    background: #c6f6d5 !important;
+    color: #22543d !important;
+  }
+
+  .print-status-locacao {
+    background: #bee3f8 !important;
+    color: #2a4365 !important;
+  }
+
+  .print-status-manutencao {
+    background: #feebc8 !important;
+    color: #744210 !important;
+  }
+
+  .print-status-laudo {
+    background: #fed7d7 !important;
+    color: #742a2a !important;
+  }
+
+  /* Badge de duração */
+  .print-duration-badge {
+    display: inline-block !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    font-size: 10px !important;
+    font-weight: 500 !important;
+  }
+
+  .print-duration-green {
+    background: #c6f6d5 !important;
+    color: #22543d !important;
+  }
+
+  .print-duration-yellow {
+    background: #fefcbf !important;
+    color: #744210 !important;
+  }
+
+  .print-duration-orange {
+    background: #feebc8 !important;
+    color: #7b341e !important;
+  }
+
+  .print-duration-red {
+    background: #fed7d7 !important;
+    color: #742a2a !important;
+  }
+
+  /* Rodapé do documento */
+  .print-assets-footer {
+    margin-top: 20px !important;
+    padding-top: 12px !important;
+    border-top: 1px solid #e2e8f0 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    font-size: 11px !important;
+    color: #718096 !important;
+  }
+
+  .print-assets-total {
+    font-weight: 600 !important;
+    color: #2d3748 !important;
+  }
+
+  /* Configurações de página */
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+
+  /* Evitar quebras dentro de linhas */
+  .print-assets-table tr {
+    page-break-inside: avoid !important;
+  }
+}
+
+/* Ocultar por padrão na tela */
+.print-assets-wrapper {
+  display: none;
+}
