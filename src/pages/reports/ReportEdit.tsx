@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useReportDetails } from "@/hooks/useReportDetails";
 import { useWithdrawalsByPAT } from "@/hooks/useWithdrawalsByPAT";
 import { useEquipmentByPAT } from "@/hooks/useEquipmentByPAT";
+import { useEquipmentFormAutofill } from "@/hooks/useEquipmentFormAutofill";
 import { formatPAT } from "@/lib/patUtils";
 import { BackButton } from "@/components/BackButton";
 import { getTodayLocalDate, parseInputDateToBelem, getISOStringInBelem } from "@/lib/dateUtils";
@@ -69,6 +70,13 @@ const ReportEdit = () => {
   const { data: equipment, isLoading: loadingEquipment } = useEquipmentByPAT(
     formData.equipment_code
   );
+
+  // Usar hook de autofill para preencher campos automaticamente
+  useEquipmentFormAutofill({
+    equipment,
+    equipmentCode: formData.equipment_code,
+    setFormData,
+  });
 
   // Buscar retiradas disponíveis para o PAT
   const { data: withdrawals = [], isLoading: loadingWithdrawals } = useWithdrawalsByPAT(
