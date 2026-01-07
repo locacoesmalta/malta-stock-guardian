@@ -29,7 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ArrowLeft, Check, Wrench, Building2, RefreshCw, AlertTriangle } from "lucide-react";
 import { DeadlineStatusBadge } from "@/components/DeadlineStatusBadge";
-import { getTodayLocalDate } from "@/lib/dateUtils";
+import { getTodayLocalDate, formatBRFromYYYYMMDD, getCurrentDateBR } from "@/lib/dateUtils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type DecisionType = "approve" | "maintenance" | "return" | "replace" | null;
@@ -219,7 +219,25 @@ export default function PostInspection() {
 
       if (error) throw error;
 
-      // 5️⃣ REGISTRAR EVENTO ENRIQUECIDO
+      // 5️⃣ REGISTRAR FIM DE LOCAÇÃO (equipamento voltou ao depósito = devolvido)
+      const detalhesLocacao = [];
+      if (currentAsset.rental_company) detalhesLocacao.push(`Empresa: ${currentAsset.rental_company}`);
+      if (currentAsset.rental_work_site) detalhesLocacao.push(`Obra: ${currentAsset.rental_work_site}`);
+      if (currentAsset.rental_start_date) {
+        detalhesLocacao.push(`Início locação: ${formatBRFromYYYYMMDD(currentAsset.rental_start_date)}`);
+      }
+      if (currentAsset.maintenance_company) detalhesLocacao.push(`Manutenção: ${currentAsset.maintenance_company}`);
+      if (currentAsset.maintenance_work_site) detalhesLocacao.push(`Local manutenção: ${currentAsset.maintenance_work_site}`);
+
+      await registrarEvento({
+        patId: asset.id,
+        codigoPat: asset.asset_code,
+        tipoEvento: "FIM DE LOCAÇÃO",
+        detalhesEvento: `Locação encerrada em ${getCurrentDateBR()}. ${detalhesLocacao.join(" | ")}. Retorno via aprovação de laudo.`,
+        dataEventoReal: getTodayLocalDate(),
+      });
+
+      // 6️⃣ REGISTRAR EVENTO DE DECISÃO
       const historicoDetalhes = [];
       if (currentAsset.rental_company) historicoDetalhes.push(`Empresa: ${currentAsset.rental_company}`);
       if (currentAsset.rental_work_site) historicoDetalhes.push(`Obra: ${currentAsset.rental_work_site}`);
