@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { AssetReturnsPrintView } from "./AssetReturnsPrintView";
 import { PrintPortal, usePrintWithDiagnostics } from "@/components/PrintPortal";
+import { getLocationLabel, getLocationVariant } from "@/lib/locationUtils";
 import "@/styles/assets-print.css";
 
 const MONTHS = [
@@ -222,6 +223,12 @@ export const AssetReturnsView = () => {
                         Registrado por
                       </div>
                     </TableHead>
+                    <TableHead>
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-3.5 w-3.5" />
+                        Status Atual
+                      </div>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -280,6 +287,15 @@ export const AssetReturnsView = () => {
                       <TableCell>
                         {item.usuario_nome || (
                           <span className="text-muted-foreground italic">Sistema</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {item.current_location_type ? (
+                          <Badge variant={getLocationVariant(item.current_location_type)}>
+                            {getLocationLabel(item.current_location_type)}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground italic">-</span>
                         )}
                       </TableCell>
                     </TableRow>

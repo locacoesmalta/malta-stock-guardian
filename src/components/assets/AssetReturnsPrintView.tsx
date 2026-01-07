@@ -1,5 +1,6 @@
 import { formatPAT } from "@/lib/patUtils";
 import { formatBelemDate, formatBRFromYYYYMMDD } from "@/lib/dateUtils";
+import { getLocationLabel } from "@/lib/locationUtils";
 import type { AssetReturn } from "@/hooks/useAssetReturns";
 
 interface AssetReturnsPrintViewProps {
@@ -56,14 +57,15 @@ export const AssetReturnsPrintView = ({ returns, periodLabel }: AssetReturnsPrin
         <table className="print-assets-table">
           <thead>
             <tr>
-              <th style={{ width: "80px" }}>PAT</th>
+              <th style={{ width: "70px" }}>PAT</th>
               <th>Equipamento</th>
-              <th style={{ width: "150px" }}>Empresa</th>
-              <th style={{ width: "150px" }}>Obra</th>
-              <th style={{ width: "90px" }}>Início</th>
-              <th style={{ width: "90px" }}>Devolução</th>
-              <th style={{ width: "80px" }}>Duração</th>
-              <th style={{ width: "120px" }}>Registrado por</th>
+              <th style={{ width: "130px" }}>Empresa</th>
+              <th style={{ width: "130px" }}>Obra</th>
+              <th style={{ width: "80px" }}>Início</th>
+              <th style={{ width: "80px" }}>Devolução</th>
+              <th style={{ width: "70px" }}>Duração</th>
+              <th style={{ width: "100px" }}>Registrado</th>
+              <th style={{ width: "110px" }}>Status Atual</th>
             </tr>
           </thead>
           <tbody>
@@ -85,6 +87,15 @@ export const AssetReturnsPrintView = ({ returns, periodLabel }: AssetReturnsPrin
                   )}
                 </td>
                 <td>{item.usuario_nome || "-"}</td>
+                <td>
+                  {item.current_location_type ? (
+                    <span className={`print-status-badge print-status-${item.current_location_type.replace(/_/g, '-')}`}>
+                      {getLocationLabel(item.current_location_type)}
+                    </span>
+                  ) : (
+                    "-"
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
