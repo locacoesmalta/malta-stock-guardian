@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { differenceInDays, parse } from "date-fns";
 
 export interface AssetReturn {
   id: string;
@@ -10,6 +11,7 @@ export interface AssetReturn {
   obra: string | null;
   data_inicio_locacao: string | null;
   data_devolucao: string;
+  duracao_dias: number | null;
   usuario_nome: string | null;
   detalhes_evento: string | null;
 }
@@ -17,6 +19,37 @@ export interface AssetReturn {
 interface UseAssetReturnsParams {
   startDate?: string; // YYYY-MM-DD
   endDate?: string; // YYYY-MM-DD
+}
+
+/**
+ * Extrai a data de início da locação do campo detalhes_evento
+ * Formato esperado: "Locação encerrada em DD/MM/YYYY. Início: DD/MM/YYYY. Empresa: X. Obra: Y"
+ */
+function extractStartDateFromDetails(detalhes: string | null): string | null {
+  if (!detalhes) return null;
+  
+  const match = detalhes.match(/Início[:\s]+(\d{2}\/\d{2}\/\d{4})/i);
+  if (match) {
+    // Converter DD/MM/YYYY para YYYY-MM-DD
+    const [dia, mes, ano] = match[1].split('/');
+    return `${ano}-${mes}-${dia}`;
+  }
+  return null;
+}
+
+/**
+ * Calcula a duração em dias entre duas datas
+ */
+function calculateDuration(startDate: string | null, endDate: string | null): number | null {
+  if (!startDate || !endDate) return null;
+  
+  try {
+    const start = parse(startDate, 'yyyy-MM-dd', new Date());
+    const end = parse(endDate.split('T')[0], 'yyyy-MM-dd', new Date());
+    return differenceInDays(end, start);
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -55,7 +88,7 @@ export const useAssetReturns = (params?: UseAssetReturnsParams) => {
       if (historicoError) throw historicoError;
       if (!historico || historico.length === 0) return [];
 
-      // Buscar informações dos assets relacionados (incluindo rental_start_date)
+      // Buscar informações dos assets relacionados (para fallback do rental_start_date)
       const patIds = [...new Set(historico.map((h) => h.pat_id).filter(Boolean))];
       
       let assetsMap: Record<string, { 
@@ -82,12 +115,11 @@ export const useAssetReturns = (params?: UseAssetReturnsParams) => {
         }
       }
 
-      // Processar e extrair empresa/obra dos detalhes
+      // Processar e extrair empresa/obra/início dos detalhes
       const returns: AssetReturn[] = historico.map((item) => {
         const assetInfo = item.pat_id ? assetsMap[item.pat_id] : null;
         
         // Extrair empresa e obra do detalhes_evento
-        // Formato típico: "Locação encerrada em XX/XX/XXXX. Empresa: X. Obra: Y"
         let empresa: string | null = null;
         let obra: string | null = null;
         
@@ -99,6 +131,14 @@ export const useAssetReturns = (params?: UseAssetReturnsParams) => {
           if (obraMatch) obra = obraMatch[1].trim();
         }
 
+        // Extrair data de início do detalhes_evento (prioridade)
+        // Fallback: usar rental_start_date do asset (apenas se não encontrar no detalhes)
+        const dataInicioDoDetalhes = extractStartDateFromDetails(item.detalhes_evento);
+        const dataInicio = dataInicioDoDetalhes || assetInfo?.rental_start_date || null;
+        
+        const dataDevolucao = item.data_evento_real || item.data_modificacao;
+        const duracaoDias = calculateDuration(dataInicio, dataDevolucao);
+
         return {
           id: item.historico_id,
           codigo_pat: item.codigo_pat,
@@ -106,8 +146,9 @@ export const useAssetReturns = (params?: UseAssetReturnsParams) => {
           asset_id: assetInfo?.id || item.pat_id,
           empresa,
           obra,
-          data_inicio_locacao: assetInfo?.rental_start_date || null,
-          data_devolucao: item.data_evento_real || item.data_modificacao,
+          data_inicio_locacao: dataInicio,
+          data_devolucao: dataDevolucao,
+          duracao_dias: duracaoDias,
           usuario_nome: item.usuario_nome,
           detalhes_evento: item.detalhes_evento,
         };
