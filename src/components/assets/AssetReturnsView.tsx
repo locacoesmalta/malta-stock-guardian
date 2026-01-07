@@ -21,7 +21,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PackageCheck, Calendar, Building2, MapPin, User } from "lucide-react";
+import { PackageCheck, Calendar, Building2, MapPin, User, Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const MONTHS = [
   { value: "01", label: "Janeiro" },
@@ -46,6 +47,16 @@ const getYearOptions = () => {
   }
   return years;
 };
+
+/**
+ * Retorna a classe de cor do badge baseado na duração em dias
+ */
+function getDurationBadgeClass(dias: number): string {
+  if (dias <= 30) return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+  if (dias <= 90) return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
+  if (dias <= 180) return "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400";
+  return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
+}
 
 export const AssetReturnsView = () => {
   const navigate = useNavigate();
@@ -162,13 +173,19 @@ export const AssetReturnsView = () => {
                   <TableHead>
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3.5 w-3.5" />
-                      Início Locação
+                      Início
                     </div>
                   </TableHead>
                   <TableHead>
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3.5 w-3.5" />
                       Devolução
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5" />
+                      Duração
                     </div>
                   </TableHead>
                   <TableHead>
@@ -216,6 +233,18 @@ export const AssetReturnsView = () => {
                     <TableCell>
                       {item.data_devolucao ? (
                         formatBRFromYYYYMMDD(item.data_devolucao.split("T")[0])
+                      ) : (
+                        <span className="text-muted-foreground italic">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {item.duracao_dias !== null ? (
+                        <Badge 
+                          variant="outline" 
+                          className={cn("font-medium", getDurationBadgeClass(item.duracao_dias))}
+                        >
+                          {item.duracao_dias} {item.duracao_dias === 1 ? "dia" : "dias"}
+                        </Badge>
                       ) : (
                         <span className="text-muted-foreground italic">-</span>
                       )}

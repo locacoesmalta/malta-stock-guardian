@@ -1089,7 +1089,7 @@ export default function AssetMovement() {
           patId: asset.id,
           codigoPat: asset.asset_code,
           tipoEvento: "FIM DE LOCAÇÃO",
-          detalhesEvento: `Locação encerrada em ${format(parseISO(data.rentalEndDateForHistory), 'dd/MM/yyyy')}. Empresa: ${data.rental_company}. Obra: ${data.rental_work_site}`,
+          detalhesEvento: `Locação encerrada em ${format(parseISO(data.rentalEndDateForHistory), 'dd/MM/yyyy')}. Início: ${asset.rental_start_date ? format(parseISO(asset.rental_start_date), 'dd/MM/yyyy') : 'N/A'}. Empresa: ${data.rental_company}. Obra: ${data.rental_work_site}`,
           dataEventoReal: data.rentalEndDateForHistory,
         });
 
