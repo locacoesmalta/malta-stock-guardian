@@ -446,7 +446,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Hook de rastreamento de presença em tempo real
   useRealtimePresence({
     user,
-    isEnabled: !!user && !loading,
+    isEnabled: false, // TEMPORARIAMENTE DESATIVADO - sobrecarregando BD
   });
 
   // FASE 3: Health check de sessão
