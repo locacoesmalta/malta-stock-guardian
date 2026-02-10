@@ -1,41 +1,21 @@
 
-## Plano: Desativar Temporariamente Escritas de Presença no Banco
 
-### Problema Identificado
-O hook `useRealtimePresence` (em `src/hooks/useRealtimePresence.ts`) esta fazendo **upsert na tabela `user_presence` a cada 30 segundos** para cada usuario logado. Com multiplas sessoes abertas, isso acumulou **140.785 updates** no banco. E chamado direto no `AuthContext.tsx` (linha 447), ou seja, esta ativo para TODOS os usuarios logados.
+## Plano: Limpar TODOS os registros da tabela user_presence
 
-### Solucao: Desativar o Hook Temporariamente
+### O que sera feito
+Executar o comando SQL para deletar todos os registros da tabela `user_presence`, ja que o hook de presenca esta desativado e esses dados sao apenas temporarios (quem esta online).
 
-**Arquivo: `src/contexts/AuthContext.tsx`**
-
-Desativar o hook passando `isEnabled: false`:
-
-```typescript
-// ANTES:
-useRealtimePresence({
-  user,
-  isEnabled: !!user && !loading,
-});
-
-// DEPOIS (temporariamente desativado):
-useRealtimePresence({
-  user,
-  isEnabled: false, // TEMPORARIAMENTE DESATIVADO - sobrecarregando BD
-});
-```
-
-Isso e uma alteracao de 1 linha que:
-- Para IMEDIATAMENTE todas as escritas de presenca no banco
-- Nao quebra nenhuma funcionalidade critica do sistema
-- Pode ser reativado depois mudando `false` de volta para `!!user && !loading`
-
-### Impacto
-- A funcionalidade de "usuarios online" no chat ficara temporariamente indisponivel
-- Todas as outras funcionalidades do sistema continuam normais
-- Nenhum dado sera perdido
-
-### Limpeza Adicional (Opcional)
-Apos desativar, podemos limpar os registros antigos de presenca para liberar espaco:
 ```sql
-DELETE FROM user_presence WHERE is_online = false;
+DELETE FROM user_presence;
 ```
+
+### Por que limpar tudo (e nao so is_online = false)
+- O hook ja esta desativado, entao nenhum registro novo sera criado
+- Mesmo registros com `is_online = true` estao desatualizados e inuteis
+- Libera mais espaco no banco de dados
+
+### Seguranca
+- Zero impacto em dados de negocio (equipamentos, estoque, relatorios, auditoria)
+- Tabela contem apenas dados temporarios de sessao
+- Quando reativarmos o hook futuramente, os registros serao recriados automaticamente
+
